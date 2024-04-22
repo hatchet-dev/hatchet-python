@@ -123,6 +123,7 @@ from .client import new_client
 from .clients.listener import StepRunEventType
 from .context import Context
 from .hatchet import Hatchet
+from .hatchet import ClientConfig
 from .worker import Worker
 from .workflows_pb2 import (
     ConcurrencyLimitStrategy,
