@@ -4,6 +4,7 @@ import signal
 import sys
 import threading
 import time
+import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
@@ -72,7 +73,7 @@ class Worker:
 
                     # This except is coming from the application itself, so we want to send that to the Hatchet instance
                     event = self.get_step_action_event(action, STEP_EVENT_TYPE_FAILED)
-                    event.eventPayload = str(e)
+                    event.eventPayload = str(errorWithTraceback(f"{e}", e))
 
                     try:
                         self.client.dispatcher.send_step_action_event(event)
@@ -103,7 +104,9 @@ class Worker:
                     res = action_func(context)
                     return res
                 except Exception as e:
-                    logger.error(f"Could not execute action: {e}")
+                    logger.error(
+                        errorWithTraceback(f"Could not execute action: {e}", e)
+                    )
                     raise e
                 finally:
                     if action.step_run_id in self.threads:
@@ -151,7 +154,7 @@ class Worker:
                     event = self.get_group_key_action_event(
                         action, GROUP_KEY_EVENT_TYPE_FAILED
                     )
-                    event.eventPayload = str(e)
+                    event.eventPayload = str(errorWithTraceback(f"{e}", e))
 
                     try:
                         self.client.dispatcher.send_group_key_action_event(event)
@@ -182,7 +185,9 @@ class Worker:
                     res = action_func(context)
                     return res
                 except Exception as e:
-                    logger.error(f"Could not execute action: {e}")
+                    logger.error(
+                        errorWithTraceback(f"Could not execute action: {e}", e)
+                    )
                     raise e
                 finally:
                     if action.get_group_key_run_id in self.threads:
@@ -397,3 +402,8 @@ class Worker:
 
         if not self.killing:
             logger.info("Could not start worker")
+
+
+def errorWithTraceback(message: str, e: Exception):
+    trace = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+    return f"{message}\n{trace}"
