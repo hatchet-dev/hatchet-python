@@ -259,6 +259,7 @@ class ActionListenerImpl(WorkerActionListener):
         if self.listen_strategy == "v2":
             listener = self.client.ListenV2(
                 WorkerListenRequest(workerId=self.worker_id),
+                timeout=self.config.listener_v2_timeout,
                 metadata=get_metadata(self.token),
             )
 
