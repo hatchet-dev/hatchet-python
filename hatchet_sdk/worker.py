@@ -11,6 +11,8 @@ from typing import Any, Callable, Dict
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
+from hatchet_sdk.loader import ClientConfig
+
 from .client import new_client
 from .clients.dispatcher import Action, ActionListenerImpl, GetActionListenerRequest
 from .context import Context
@@ -33,9 +35,9 @@ from .workflow import WorkflowMeta
 
 class Worker:
     def __init__(
-        self, name: str, max_runs: int | None = None, debug=False, handle_kill=True
+        self, name: str, max_runs: int | None = None, debug=False, handle_kill=True, config: ClientConfig={}
     ):
-        self.client = new_client()
+        self.client = new_client(config)
         self.name = self.client.config.namespace + name
         self.threads: Dict[str, Thread] = {}  # Store step run ids and threads
         self.max_runs = max_runs

@@ -25,12 +25,13 @@ class ClientTLSConfig:
 class ClientConfig:
     def __init__(
         self,
-        tenant_id: str,
-        tls_config: ClientTLSConfig,
-        token: str,
+        tenant_id: str = None,
+        tls_config: ClientTLSConfig = None,
+        token: str = None,
         host_port: str = "localhost:7070",
         server_url: str = "https://app.dev.hatchet-tools.com",
         namespace: str = None,
+        listener_v2_timeout: int = None,
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -38,56 +39,40 @@ class ClientConfig:
         self.token = token
         self.server_url = server_url
         self.namespace = (f"{namespace}_" if namespace else "").lower()
+        self.listener_v2_timeout = listener_v2_timeout
 
 
 class ConfigLoader:
     def __init__(self, directory: str):
         self.directory = directory
 
-    def load_client_config(self) -> ClientConfig:
+    def load_client_config(self, defaults: ClientConfig) -> ClientConfig:
         config_file_path = os.path.join(self.directory, "client.yaml")
-
-        config_data: Any = {
-            "tls": {},
-        }
+        config_data: Any = {"tls": {}}
 
         # determine if client.yaml exists
         if os.path.exists(config_file_path):
             with open(config_file_path, "r") as file:
                 config_data = yaml.safe_load(file)
 
-        namespace = (
-            config_data["namespace"]
-            if "namespace" in config_data
-            else self._get_env_var("HATCHET_CLIENT_NAMESPACE")
-        )
-        tenant_id = (
-            config_data["tenantId"]
-            if "tenantId" in config_data
-            else self._get_env_var("HATCHET_CLIENT_TENANT_ID")
-        )
-        token = (
-            config_data["token"]
-            if "token" in config_data
-            else self._get_env_var("HATCHET_CLIENT_TOKEN")
-        )
+        def get_config_value(key, env_var):
+            default = getattr(defaults, key, None)
+            return default if default is not None else config_data.get(key, self._get_env_var(env_var))
+
+        namespace = get_config_value("namespace", "HATCHET_CLIENT_NAMESPACE")
+        tenant_id = get_config_value("tenantId", "HATCHET_CLIENT_TENANT_ID")
+        token = get_config_value("token", "HATCHET_CLIENT_TOKEN")
+        listener_v2_timeout = get_config_value("listener_v2_timeout", "HATCHET_CLIENT_LISTENER_V2_TIMEOUT")
 
         if not token:
-            raise ValueError(
-                "Token must be set via HATCHET_CLIENT_TOKEN environment variable"
-            )
+            raise ValueError("Token must be set via HATCHET_CLIENT_TOKEN environment variable")
 
-        host_port = (
-            config_data["hostPort"]
-            if "hostPort" in config_data
-            else self._get_env_var("HATCHET_CLIENT_HOST_PORT")
-        )
+        host_port = get_config_value("hostPort", "HATCHET_CLIENT_HOST_PORT")
         server_url: str | None = None
 
         if not host_port:
             # extract host and port from token
             server_url, grpc_broadcast_address = get_addresses_from_jwt(token)
-
             host_port = grpc_broadcast_address
 
         if not tenant_id:
@@ -96,7 +81,13 @@ class ConfigLoader:
         tls_config = self._load_tls_config(config_data["tls"], host_port)
 
         return ClientConfig(
-            tenant_id, tls_config, token, host_port, server_url, namespace
+            tenant_id,
+            tls_config,
+            token,
+            host_port,
+            server_url,
+            namespace,
+            listener_v2_timeout,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
