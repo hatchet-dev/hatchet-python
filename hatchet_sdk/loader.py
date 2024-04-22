@@ -69,6 +69,8 @@ class ConfigLoader:
         listener_v2_timeout = get_config_value(
             "listener_v2_timeout", "HATCHET_CLIENT_LISTENER_V2_TIMEOUT"
         )
+        listener_v2_timeout = int(listener_v2_timeout) if listener_v2_timeout else None
+
 
         if not token:
             raise ValueError(
