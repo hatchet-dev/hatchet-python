@@ -35,7 +35,12 @@ from .workflow import WorkflowMeta
 
 class Worker:
     def __init__(
-        self, name: str, max_runs: int | None = None, debug=False, handle_kill=True, config: ClientConfig={}
+        self,
+        name: str,
+        max_runs: int | None = None,
+        debug=False,
+        handle_kill=True,
+        config: ClientConfig = {},
     ):
         self.client = new_client(config)
         self.name = self.client.config.namespace + name

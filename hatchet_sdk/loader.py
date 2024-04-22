@@ -57,15 +57,23 @@ class ConfigLoader:
 
         def get_config_value(key, env_var):
             default = getattr(defaults, key, None)
-            return default if default is not None else config_data.get(key, self._get_env_var(env_var))
+            return (
+                default
+                if default is not None
+                else config_data.get(key, self._get_env_var(env_var))
+            )
 
         namespace = get_config_value("namespace", "HATCHET_CLIENT_NAMESPACE")
         tenant_id = get_config_value("tenantId", "HATCHET_CLIENT_TENANT_ID")
         token = get_config_value("token", "HATCHET_CLIENT_TOKEN")
-        listener_v2_timeout = get_config_value("listener_v2_timeout", "HATCHET_CLIENT_LISTENER_V2_TIMEOUT")
+        listener_v2_timeout = get_config_value(
+            "listener_v2_timeout", "HATCHET_CLIENT_LISTENER_V2_TIMEOUT"
+        )
 
         if not token:
-            raise ValueError("Token must be set via HATCHET_CLIENT_TOKEN environment variable")
+            raise ValueError(
+                "Token must be set via HATCHET_CLIENT_TOKEN environment variable"
+            )
 
         host_port = get_config_value("hostPort", "HATCHET_CLIENT_HOST_PORT")
         server_url: str | None = None
