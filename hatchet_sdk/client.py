@@ -52,8 +52,8 @@ def with_host_port(host: str, port: int):
     return with_host_port_impl
 
 
-def new_client(*opts_functions):
-    config: ClientConfig = ConfigLoader(".").load_client_config()
+def new_client(defaults: ClientConfig = {}, *opts_functions):
+    config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
 
     for opt_function in opts_functions:
         opt_function(config)

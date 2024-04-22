@@ -29,7 +29,7 @@ from .events import proto_timestamp_now
 def new_dispatcher(conn, config: ClientConfig):
     return DispatcherClientImpl(
         client=DispatcherStub(conn),
-        token=config.token,
+        config=config,
     )
 
 
@@ -105,9 +105,12 @@ START_GET_GROUP_KEY = 2
 
 
 class ActionListenerImpl(WorkerActionListener):
-    def __init__(self, client: DispatcherStub, token, worker_id):
+    config: ClientConfig
+
+    def __init__(self, client: DispatcherStub, config: ClientConfig, worker_id):
         self.client = client
-        self.token = token
+        self.config = config
+        self.token = config.token
         self.worker_id = worker_id
         self.retries = 0
         self.last_connection_attempt = 0
@@ -256,6 +259,7 @@ class ActionListenerImpl(WorkerActionListener):
         if self.listen_strategy == "v2":
             listener = self.client.ListenV2(
                 WorkerListenRequest(workerId=self.worker_id),
+                timeout=self.config.listener_v2_timeout,
                 metadata=get_metadata(self.token),
             )
 
@@ -287,9 +291,12 @@ class ActionListenerImpl(WorkerActionListener):
 
 
 class DispatcherClientImpl(DispatcherClient):
-    def __init__(self, client: DispatcherStub, token):
+    config: ClientConfig
+
+    def __init__(self, client: DispatcherStub, config: ClientConfig):
         self.client = client
-        self.token = token
+        self.token = config.token
+        self.config = config
         # self.logger = logger
         # self.validator = validator
 
@@ -306,7 +313,7 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-        return ActionListenerImpl(self.client, self.token, response.workerId)
+        return ActionListenerImpl(self.client, self.config, response.workerId)
 
     def send_step_action_event(self, in_: StepActionEvent):
         response: ActionEventResponse = self.client.SendStepActionEvent(

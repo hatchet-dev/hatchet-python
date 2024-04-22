@@ -2,6 +2,7 @@ import asyncio
 from functools import wraps
 from typing import List
 
+from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
 from .client import ClientImpl, new_client
@@ -14,9 +15,9 @@ from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
 class Hatchet:
     client: ClientImpl
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, config: ClientConfig = {}):
         # initialize a client
-        self.client = new_client()
+        self.client = new_client(config)
 
         if not debug:
             logger.disable("hatchet_sdk")
@@ -92,4 +93,4 @@ class Hatchet:
         return inner
 
     def worker(self, name: str, max_runs: int | None = None):
-        return Worker(name=name, max_runs=max_runs)
+        return Worker(name=name, max_runs=max_runs, config=self.client.config)
