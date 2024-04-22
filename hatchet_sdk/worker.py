@@ -4,10 +4,10 @@ import signal
 import sys
 import threading
 import time
+import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
-import traceback
 
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -104,7 +104,9 @@ class Worker:
                     res = action_func(context)
                     return res
                 except Exception as e:
-                    logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
+                    logger.error(
+                        errorWithTraceback(f"Could not execute action: {e}", e)
+                    )
                     raise e
                 finally:
                     if action.step_run_id in self.threads:
@@ -182,7 +184,10 @@ class Worker:
                 try:
                     res = action_func(context)
                     return res
-                    logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
+                except Exception as e:
+                    logger.error(
+                        errorWithTraceback(f"Could not execute action: {e}", e)
+                    )
                     raise e
                 finally:
                     if action.get_group_key_run_id in self.threads:
