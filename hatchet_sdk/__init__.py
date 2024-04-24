@@ -129,3 +129,6 @@ from .workflows_pb2 import (
     CreateWorkflowVersionOpts,
     RateLimitDuration,
 )
+
+import nest_asyncio
+nest_asyncio.apply() # patch nested asyncio event loops
