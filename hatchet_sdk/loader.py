@@ -71,7 +71,6 @@ class ConfigLoader:
         )
         listener_v2_timeout = int(listener_v2_timeout) if listener_v2_timeout else None
 
-
         if not token:
             raise ValueError(
                 "Token must be set via HATCHET_CLIENT_TOKEN environment variable"

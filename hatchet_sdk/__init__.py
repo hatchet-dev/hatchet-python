@@ -122,8 +122,7 @@ from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersio
 from .client import new_client
 from .clients.listener import StepRunEventType
 from .context import Context
-from .hatchet import Hatchet
-from .hatchet import ClientConfig
+from .hatchet import ClientConfig, Hatchet
 from .worker import Worker
 from .workflows_pb2 import (
     ConcurrencyLimitStrategy,
