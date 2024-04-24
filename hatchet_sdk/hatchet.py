@@ -14,13 +14,21 @@ from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
 
 class Hatchet:
     client: ClientImpl
+    loop: asyncio.AbstractEventLoop | None = None
 
     def __init__(self, debug=False, config: ClientConfig = {}):
         # initialize a client
         self.client = new_client(config)
+        self.refresh_loop()
 
         if not debug:
             logger.disable("hatchet_sdk")
+
+    def refresh_loop(self):
+        if not self.loop or self.loop.is_closed():
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
+        return self.loop
 
     def concurrency(
         self,
@@ -72,7 +80,7 @@ class Hatchet:
             @wraps(func)
             def wrapper(*args, **kwargs):
                 if asyncio.iscoroutinefunction(func):
-                    return asyncio.run(func(*args, **kwargs))
+                    return self.refresh_loop().run_until_complete(func(*args, **kwargs))
                 else:
                     return func(*args, **kwargs)
 
