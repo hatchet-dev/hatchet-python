@@ -68,6 +68,7 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
+
             def callback(result: Any, error: Exception = None):
                 if error is None:
                     # Create an action event
@@ -118,7 +119,9 @@ class Worker:
                         del self.threads[action.step_run_id]
 
             loop = asyncio.get_event_loop()
-            future = loop.run_in_executor(self.thread_pool, wrapped_action_func, context)
+            future = loop.run_in_executor(
+                self.thread_pool, wrapped_action_func, context
+            )
 
             self.futures[action.step_run_id] = future
 
@@ -141,6 +144,7 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
+
             def callback(result: Any, error: Exception = None):
                 if error is None:
                     # Create an action event
@@ -190,7 +194,9 @@ class Worker:
                         del self.threads[action.get_group_key_run_id]
 
             loop = asyncio.get_event_loop()
-            future = loop.run_in_executor(self.thread_pool, wrapped_action_func, context)
+            future = loop.run_in_executor(
+                self.thread_pool, wrapped_action_func, context
+            )
 
             self.futures[action.get_group_key_run_id] = future
 

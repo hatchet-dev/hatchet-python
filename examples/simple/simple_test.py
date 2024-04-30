@@ -1,8 +1,11 @@
+import asyncio
+import logging
+
+import pytest
+
 from examples.simple.worker import MyWorkflow
 from hatchet_sdk.hatchet import Hatchet
-import asyncio
-import pytest
-import logging
+
 
 @pytest.mark.asyncio
 async def test_simple_e2e():
@@ -35,12 +38,11 @@ async def test_simple_e2e():
             break
         await asyncio.sleep(10)
 
-
     logging.info("Waiting for worker to complete")
 
     await asyncio.sleep(1)
-    
+
     await asyncio.wait_for(worker_task, timeout=10)
     logging.info("Worker completed")
 
-    assert res['status'] == "COMPLETED"
+    assert res["status"] == "COMPLETED"

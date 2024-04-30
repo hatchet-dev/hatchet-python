@@ -22,7 +22,7 @@ class MyWorkflow:
 
         print(test)
         print(test2)
-        
+
         time.sleep(10)
 
         print("executed step1")
@@ -36,6 +36,7 @@ class MyWorkflow:
         print("started step2")
         context.sleep(1)
         print("finished step2")
+
 
 if __name__ == "__main__":
     workflow = MyWorkflow()
