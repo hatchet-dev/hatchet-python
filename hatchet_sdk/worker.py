@@ -92,7 +92,6 @@ class Worker:
                 except Exception as e:
                     logger.error(f"Could not send action event: {e}")
 
-
                 # Remove the future from the dictionary
                 if action.step_run_id in self.futures:
                     del self.futures[action.step_run_id]
