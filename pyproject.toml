@@ -19,6 +19,13 @@ urllib3 = "^2.2.1"
 aiostream = "^0.5.2"
 nest-asyncio = "^1.6.0"
 pytest = "^8.2.0"
+pytest-asyncio = "^0.23.6"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
 [build-system]
 requires = ["poetry-core"]
