@@ -1,4 +1,5 @@
 import json
+import time
 
 from dotenv import load_dotenv
 
@@ -18,13 +19,17 @@ class MyWorkflow:
     def step1(self, context: Context):
         test = context.playground("test", "test")
         test2 = context.playground("test2", 100)
-        test3 = context.playground("test3", None)
 
         print(test)
         print(test2)
+        
+        time.sleep(10)
 
         print("executed step1")
-        pass
+
+        return {
+            "result": "step1",
+        }
 
     @hatchet.step(parents=["step1"], timeout="4s")
     def step2(self, context):
@@ -32,20 +37,9 @@ class MyWorkflow:
         context.sleep(1)
         print("finished step2")
 
+if __name__ == "__main__":
+    workflow = MyWorkflow()
+    worker = hatchet.worker("test-worker", max_runs=4)
+    worker.register_workflow(workflow)
 
-workflow = MyWorkflow()
-worker = hatchet.worker("test-worker", max_runs=4)
-worker.register_workflow(workflow)
-
-# workflow1 = hatchet.client.admin.put_workflow(
-#     "workflow-copy-2",
-#     MyWorkflow(),
-#     overrides=CreateWorkflowVersionOpts(
-#         cron_triggers=["* * * * *"],
-#         cron_input=json.dumps({"test": "test"}),
-#     ),
-# )
-
-# print(workflow1)
-
-worker.start()
+    worker.start()
