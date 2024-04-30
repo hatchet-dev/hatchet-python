@@ -87,8 +87,11 @@ class Worker:
                     except Exception as e:
                         logger.error(f"Could not send action event: {e}")
 
-                # Send the action event to the dispatcher
-                self.client.dispatcher.send_step_action_event(event)
+                try:
+                    self.client.dispatcher.send_step_action_event(event)
+                except Exception as e:
+                    logger.error(f"Could not send action event: {e}")
+
 
                 # Remove the future from the dictionary
                 if action.step_run_id in self.futures:
