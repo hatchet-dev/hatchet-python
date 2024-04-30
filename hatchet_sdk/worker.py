@@ -1,8 +1,8 @@
+import asyncio
 import ctypes
 import json
 import signal
 import sys
-import threading
 import time
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -68,35 +68,26 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
-
-            def callback(future: Future):
-                errored = False
-
-                # Get the output from the future
-                try:
-                    output = future.result()
-                except Exception as e:
-                    errored = True
-
+            def callback(result: Any, error: Exception = None):
+                if error is None:
+                    # Create an action event
+                    try:
+                        event = self.get_step_action_finished_event(action, result)
+                    except Exception as e:
+                        logger.error(f"Could not get action finished event: {e}")
+                        raise e
+                else:
                     # This except is coming from the application itself, so we want to send that to the Hatchet instance
                     event = self.get_step_action_event(action, STEP_EVENT_TYPE_FAILED)
-                    event.eventPayload = str(errorWithTraceback(f"{e}", e))
+                    event.eventPayload = str(errorWithTraceback(f"{error}", error))
 
                     try:
                         self.client.dispatcher.send_step_action_event(event)
                     except Exception as e:
                         logger.error(f"Could not send action event: {e}")
 
-                if not errored:
-                    # Create an action event
-                    try:
-                        event = self.get_step_action_finished_event(action, output)
-                    except Exception as e:
-                        logger.error(f"Could not get action finished event: {e}")
-                        raise e
-
-                    # Send the action event to the dispatcher
-                    self.client.dispatcher.send_step_action_event(event)
+                # Send the action event to the dispatcher
+                self.client.dispatcher.send_step_action_event(event)
 
                 # Remove the future from the dictionary
                 if action.step_run_id in self.futures:
@@ -109,8 +100,10 @@ class Worker:
 
                 try:
                     res = action_func(context)
+                    callback(res, None)
                     return res
                 except Exception as e:
+                    callback(None, e)
                     logger.error(
                         errorWithTraceback(f"Could not execute action: {e}", e)
                     )
@@ -124,8 +117,9 @@ class Worker:
 
                         del self.threads[action.step_run_id]
 
-            future = self.thread_pool.submit(wrapped_action_func, context)
-            future.add_done_callback(callback)
+            loop = asyncio.get_event_loop()
+            future = loop.run_in_executor(self.thread_pool, wrapped_action_func, context)
+
             self.futures[action.step_run_id] = future
 
             # send an event that the step run has started
@@ -147,37 +141,25 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
-
-            def callback(future: Future):
-                errored = False
-
-                # Get the output from the future
-                try:
-                    output = future.result()
-                except Exception as e:
-                    errored = True
-
+            def callback(result: Any, error: Exception = None):
+                if error is None:
+                    # Create an action event
+                    try:
+                        event = self.get_group_key_action_finished_event(action, result)
+                    except Exception as e:
+                        logger.error(f"Could not get action finished event: {e}")
+                        raise e
+                else:
                     # This except is coming from the application itself, so we want to send that to the Hatchet instance
                     event = self.get_group_key_action_event(
                         action, GROUP_KEY_EVENT_TYPE_FAILED
                     )
                     event.eventPayload = str(errorWithTraceback(f"{e}", e))
 
-                    try:
-                        self.client.dispatcher.send_group_key_action_event(event)
-                    except Exception as e:
-                        logger.error(f"Could not send action event: {e}")
-
-                if not errored:
-                    # Create an action event
-                    try:
-                        event = self.get_group_key_action_finished_event(action, output)
-                    except Exception as e:
-                        logger.error(f"Could not get action finished event: {e}")
-                        raise e
-
-                    # Send the action event to the dispatcher
+                try:
                     self.client.dispatcher.send_group_key_action_event(event)
+                except Exception as e:
+                    logger.error(f"Could not send action event: {e}")
 
                 # Remove the future from the dictionary
                 if action.get_group_key_run_id in self.futures:
@@ -190,8 +172,10 @@ class Worker:
 
                 try:
                     res = action_func(context)
+                    callback(res, None)
                     return res
                 except Exception as e:
+                    callback(None, e)
                     logger.error(
                         errorWithTraceback(f"Could not execute action: {e}", e)
                     )
@@ -205,8 +189,9 @@ class Worker:
 
                         del self.threads[action.get_group_key_run_id]
 
-            future = self.thread_pool.submit(wrapped_action_func, context)
-            future.add_done_callback(callback)
+            loop = asyncio.get_event_loop()
+            future = loop.run_in_executor(self.thread_pool, wrapped_action_func, context)
+
             self.futures[action.get_group_key_run_id] = future
 
             # send an event that the step run has started
