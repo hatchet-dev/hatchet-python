@@ -95,7 +95,6 @@ class WorkflowMeta(type):
                 jobs=[
                     CreateWorkflowJobOpts(
                         name=name,
-                        timeout=workflowTimeout,
                         steps=createStepOpts,
                     )
                 ],

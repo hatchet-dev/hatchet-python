@@ -1,6 +1,7 @@
+from dataclasses import dataclass
 import json
 from datetime import datetime
-from typing import List, Optional, TypedDict, Union
+from typing import Dict, List, Optional, TypedDict, Union
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -27,13 +28,14 @@ def new_admin(conn, config: ClientConfig):
         token=config.token,
     )
 
-
-class TriggerWorkflowParentOptions(TypedDict):
+class ScheduleTriggerWorkflowOptions(TypedDict):
     parent_id: Optional[str]
     parent_step_run_id: Optional[str]
     child_index: Optional[int]
     child_key: Optional[str]
 
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
+    additional_metadata: Dict[str, str] | None = None
 
 class AdminClientImpl:
     def __init__(self, client: WorkflowServiceStub, token):
@@ -91,7 +93,7 @@ class AdminClientImpl:
         name: str,
         schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
-        options: TriggerWorkflowParentOptions = None,
+        options: ScheduleTriggerWorkflowOptions = None,
     ):
         timestamp_schedules = []
         for schedule in schedules:
@@ -126,10 +128,18 @@ class AdminClientImpl:
         self,
         workflow_name: str,
         input: any,
-        options: TriggerWorkflowParentOptions = None,
+        options: TriggerWorkflowOptions = None,
     ):
         try:
             payload_data = json.dumps(input)
+
+            try:
+                meta = None if options is None else options['additional_metadata']
+                options['additional_metadata'] = None if meta is None else json.dumps(meta).encode("utf-8")
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Error encoding payload: {e}")
+
+
 
             resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
                 TriggerWorkflowRequest(

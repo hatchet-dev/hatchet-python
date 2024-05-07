@@ -132,4 +132,7 @@ from .workflows_pb2 import (
     RateLimitDuration,
 )
 
+from .clients.events import PushEventOptions
+from .clients.admin import ScheduleTriggerWorkflowOptions, TriggerWorkflowOptions
+
 nest_asyncio.apply()  # patch nested asyncio event loops

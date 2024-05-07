@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 
 from hatchet_sdk import new_client
+from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.listener import StepRunEventType
 
 
@@ -13,7 +14,10 @@ async def main():
     load_dotenv()
     hatchet = new_client()
     workflowRunId = hatchet.admin.run_workflow(
-        "ManualTriggerWorkflow", {"test": "test"}
+        "ManualTriggerWorkflow", {"test": "test"},
+        options={
+            'additional_metadata': {"hello": "moon"}
+        }
     )
     listener = hatchet.listener.stream(workflowRunId)
 

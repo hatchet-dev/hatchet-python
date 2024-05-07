@@ -9,7 +9,7 @@ from aiostream.stream import merge
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 
 from .client import ClientImpl
-from .clients.admin import TriggerWorkflowParentOptions
+from .clients.admin import ScheduleTriggerWorkflowOptions
 from .clients.dispatcher import Action
 from .clients.listener import StepRunEvent, WorkflowRunEventType
 from .dispatcher_pb2 import OverridesData
@@ -196,7 +196,7 @@ class Context:
         workflow_run_id = self.action.workflow_run_id
         step_run_id = self.action.step_run_id
 
-        options: TriggerWorkflowParentOptions = {
+        options: ScheduleTriggerWorkflowOptions = {
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,

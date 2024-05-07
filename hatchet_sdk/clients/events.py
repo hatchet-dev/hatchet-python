@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 import datetime
 import json
+from typing import Dict, TypedDict
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -24,6 +26,8 @@ def proto_timestamp_now():
 
     return timestamp_pb2.Timestamp(seconds=seconds, nanos=nanos)
 
+class PushEventOptions(TypedDict):
+    additional_metadata: Dict[str, str] | None = None
 
 class EventClientImpl:
     def __init__(self, client: EventsServiceStub, config: ClientConfig):
@@ -31,10 +35,16 @@ class EventClientImpl:
         self.token = config.token
         self.namespace = config.namespace
 
-    def push(self, event_key, payload):
+    def push(self, event_key, payload, options: PushEventOptions = None):
 
         namespaced_event_key = self.namespace + event_key
 
+        try:
+            meta = None if options is None else options['additional_metadata']
+            meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
+        except e:
+            raise ValueError(f"Error encoding meta: {e}")
+        
         try:
             payload_bytes = json.dumps(payload).encode("utf-8")
         except json.UnicodeEncodeError as e:
@@ -44,6 +54,7 @@ class EventClientImpl:
             key=namespaced_event_key,
             payload=payload_bytes,
             eventTimestamp=proto_timestamp_now(),
+            additionalMetadata= meta_bytes
         )
 
         try:
