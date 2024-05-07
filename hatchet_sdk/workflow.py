@@ -27,6 +27,11 @@ class WorkflowMeta(type):
             for func_name, func in list(attrs.items())
             if hasattr(func, "_step_name")
         ]
+        onFailureSteps: stepsType = [
+            (func_name, attrs.pop(func_name))
+            for func_name, func in list(attrs.items())
+            if hasattr(func, "_on_failure_step_name")
+        ]
 
         # Define __init__ and get_step_order methods
         original_init = attrs.get("__init__")  # Get the original __init__ if it exists
@@ -43,8 +48,12 @@ class WorkflowMeta(type):
                 (serviceName + ":" + func_name, func)
                 for func_name, func in concurrencyActions
             ]
+            onFailure_actions = [
+                (serviceName + ":" + func_name, func)
+                for func_name, func in onFailureSteps
+            ]
 
-            return func_actions + concurrency_actions
+            return func_actions + concurrency_actions + onFailure_actions
 
         # Add these methods and steps to class attributes
         attrs["__init__"] = __init__
@@ -57,7 +66,6 @@ class WorkflowMeta(type):
         event_triggers = [namespace + event for event in attrs["on_events"]]
         cron_triggers = attrs["on_crons"]
         version = attrs["version"]
-        workflowTimeout = attrs["timeout"]
         schedule_timeout = attrs["schedule_timeout"]
 
         createStepOpts: List[CreateWorkflowStepOpts] = [
@@ -85,6 +93,25 @@ class WorkflowMeta(type):
                 limit_strategy=action[1]._concurrency_limit_strategy,
             )
 
+        on_failure_job: List[CreateWorkflowJobOpts] | None = None
+
+        if len(onFailureSteps) > 0:
+            func_name, func = onFailureSteps[0]
+            on_failure_job = CreateWorkflowJobOpts(
+                    name=name + "-on-failure",
+                    steps=[
+                        CreateWorkflowStepOpts(
+                            readable_id=func_name,
+                            action=serviceName + ":" + func_name,
+                            timeout=func._on_failure_step_timeout or "60s",
+                            inputs="{}",
+                            parents=[],
+                            retries=func._on_failure_step_retries,
+                            rate_limits=func._on_failure_step_rate_limits,
+                        )
+                    ],
+                )
+
         def get_create_opts(self):
             return CreateWorkflowVersionOpts(
                 name=name,
@@ -98,6 +125,7 @@ class WorkflowMeta(type):
                         steps=createStepOpts,
                     )
                 ],
+                on_failure_job=on_failure_job,
                 concurrency=concurrency,
             )
 
