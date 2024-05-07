@@ -98,19 +98,19 @@ class WorkflowMeta(type):
         if len(onFailureSteps) > 0:
             func_name, func = onFailureSteps[0]
             on_failure_job = CreateWorkflowJobOpts(
-                    name=name + "-on-failure",
-                    steps=[
-                        CreateWorkflowStepOpts(
-                            readable_id=func_name,
-                            action=serviceName + ":" + func_name,
-                            timeout=func._on_failure_step_timeout or "60s",
-                            inputs="{}",
-                            parents=[],
-                            retries=func._on_failure_step_retries,
-                            rate_limits=func._on_failure_step_rate_limits,
-                        )
-                    ],
-                )
+                name=name + "-on-failure",
+                steps=[
+                    CreateWorkflowStepOpts(
+                        readable_id=func_name,
+                        action=serviceName + ":" + func_name,
+                        timeout=func._on_failure_step_timeout or "60s",
+                        inputs="{}",
+                        parents=[],
+                        retries=func._on_failure_step_retries,
+                        rate_limits=func._on_failure_step_rate_limits,
+                    )
+                ],
+            )
 
         def get_create_opts(self):
             return CreateWorkflowVersionOpts(

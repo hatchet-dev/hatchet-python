@@ -15,11 +15,11 @@ class OnFailureWorkflow:
     def step1(self, context: Context):
         raise Exception("step1 failed")
 
-
     @hatchet.on_failure_step()
     def on_failure(self, context):
         print("executed on_failure")
         print(context)
+
 
 workflow = OnFailureWorkflow()
 worker = hatchet.worker("test-worker", max_runs=4)

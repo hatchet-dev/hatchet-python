@@ -14,10 +14,9 @@ async def main():
     load_dotenv()
     hatchet = new_client()
     workflowRunId = hatchet.admin.run_workflow(
-        "ManualTriggerWorkflow", {"test": "test"},
-        options={
-            'additional_metadata': {"hello": "moon"}
-        }
+        "ManualTriggerWorkflow",
+        {"test": "test"},
+        options={"additional_metadata": {"hello": "moon"}},
     )
     listener = hatchet.listener.stream(workflowRunId)
 
