@@ -269,7 +269,7 @@ class EventApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -529,7 +529,7 @@ class EventApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -598,6 +598,10 @@ class EventApi:
         order_by_direction: Annotated[
             Optional[EventOrderByDirection], Field(description="The order direction")
         ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -632,6 +636,8 @@ class EventApi:
         :type order_by_field: EventOrderByField
         :param order_by_direction: The order direction
         :type order_by_direction: EventOrderByDirection
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -664,6 +670,7 @@ class EventApi:
             search=search,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
+            additional_metadata=additional_metadata,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -719,6 +726,10 @@ class EventApi:
         order_by_direction: Annotated[
             Optional[EventOrderByDirection], Field(description="The order direction")
         ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -753,6 +764,8 @@ class EventApi:
         :type order_by_field: EventOrderByField
         :param order_by_direction: The order direction
         :type order_by_direction: EventOrderByDirection
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -785,6 +798,7 @@ class EventApi:
             search=search,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
+            additional_metadata=additional_metadata,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -840,6 +854,10 @@ class EventApi:
         order_by_direction: Annotated[
             Optional[EventOrderByDirection], Field(description="The order direction")
         ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -874,6 +892,8 @@ class EventApi:
         :type order_by_field: EventOrderByField
         :param order_by_direction: The order direction
         :type order_by_direction: EventOrderByDirection
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -906,6 +926,7 @@ class EventApi:
             search=search,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
+            additional_metadata=additional_metadata,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -933,6 +954,7 @@ class EventApi:
         search,
         order_by_field,
         order_by_direction,
+        additional_metadata,
         _request_auth,
         _content_type,
         _headers,
@@ -945,13 +967,14 @@ class EventApi:
             "keys": "multi",
             "workflows": "multi",
             "statuses": "multi",
+            "additionalMetadata": "multi",
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -989,6 +1012,10 @@ class EventApi:
         if order_by_direction is not None:
 
             _query_params.append(("orderByDirection", order_by_direction.value))
+
+        if additional_metadata is not None:
+
+            _query_params.append(("additionalMetadata", additional_metadata))
 
         # process the header parameters
         # process the form parameters
@@ -1262,7 +1289,7 @@ class EventApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters

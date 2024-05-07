@@ -1,3 +1,5 @@
+import nest_asyncio
+
 from hatchet_sdk.clients.rest.models.accept_invite_request import AcceptInviteRequest
 
 # import models into sdk package
@@ -130,5 +132,4 @@ from .workflows_pb2 import (
     RateLimitDuration,
 )
 
-import nest_asyncio
-nest_asyncio.apply() # patch nested asyncio event loops
+nest_asyncio.apply()  # patch nested asyncio event loops

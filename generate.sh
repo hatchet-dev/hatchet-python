@@ -11,9 +11,9 @@ version=7.3.0
 
 openapi-generator-cli version || npm install @openapitools/openapi-generator-cli -g
 
-if [ "$(openapi-generator-cli version)" != "$version" ]; then
-  version-manager set "$version"
-fi
+# if [ "$(openapi-generator-cli version)" != "$version" ]; then
+#   version-manager set "$version"
+# fi
 
 # generate deps from hatchet repo
 cd hatchet/ && sh ./hack/oas/generate-server.sh && cd $ROOT_DIR

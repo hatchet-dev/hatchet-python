@@ -52,6 +52,7 @@ from hatchet_sdk.clients.rest.models.api_errors import APIErrors
 from hatchet_sdk.clients.rest.models.api_meta import APIMeta
 from hatchet_sdk.clients.rest.models.api_meta_auth import APIMetaAuth
 from hatchet_sdk.clients.rest.models.api_meta_integration import APIMetaIntegration
+from hatchet_sdk.clients.rest.models.api_meta_posthog import APIMetaPosthog
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.api_token import APIToken
 from hatchet_sdk.clients.rest.models.create_api_token_request import (
@@ -136,6 +137,7 @@ from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
 from hatchet_sdk.clients.rest.models.update_tenant_invite_request import (
     UpdateTenantInviteRequest,
 )
+from hatchet_sdk.clients.rest.models.update_tenant_request import UpdateTenantRequest
 from hatchet_sdk.clients.rest.models.user import User
 from hatchet_sdk.clients.rest.models.user_change_password_request import (
     UserChangePasswordRequest,
@@ -160,6 +162,10 @@ from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import (
     WorkflowRunTriggeredBy,
+)
+from hatchet_sdk.clients.rest.models.workflow_runs_metrics import WorkflowRunsMetrics
+from hatchet_sdk.clients.rest.models.workflow_runs_metrics_counts import (
+    WorkflowRunsMetricsCounts,
 )
 from hatchet_sdk.clients.rest.models.workflow_tag import WorkflowTag
 from hatchet_sdk.clients.rest.models.workflow_trigger_cron_ref import (

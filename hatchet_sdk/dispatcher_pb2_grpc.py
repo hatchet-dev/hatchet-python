@@ -38,6 +38,11 @@ class DispatcherStub(object):
                 request_serializer=dispatcher__pb2.SubscribeToWorkflowEventsRequest.SerializeToString,
                 response_deserializer=dispatcher__pb2.WorkflowEvent.FromString,
                 )
+        self.SubscribeToWorkflowRuns = channel.stream_stream(
+                '/Dispatcher/SubscribeToWorkflowRuns',
+                request_serializer=dispatcher__pb2.SubscribeToWorkflowRunsRequest.SerializeToString,
+                response_deserializer=dispatcher__pb2.WorkflowRunEvent.FromString,
+                )
         self.SendStepActionEvent = channel.unary_unary(
                 '/Dispatcher/SendStepActionEvent',
                 request_serializer=dispatcher__pb2.StepActionEvent.SerializeToString,
@@ -96,6 +101,12 @@ class DispatcherServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SubscribeToWorkflowRuns(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def SendStepActionEvent(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -147,6 +158,11 @@ def add_DispatcherServicer_to_server(servicer, server):
                     servicer.SubscribeToWorkflowEvents,
                     request_deserializer=dispatcher__pb2.SubscribeToWorkflowEventsRequest.FromString,
                     response_serializer=dispatcher__pb2.WorkflowEvent.SerializeToString,
+            ),
+            'SubscribeToWorkflowRuns': grpc.stream_stream_rpc_method_handler(
+                    servicer.SubscribeToWorkflowRuns,
+                    request_deserializer=dispatcher__pb2.SubscribeToWorkflowRunsRequest.FromString,
+                    response_serializer=dispatcher__pb2.WorkflowRunEvent.SerializeToString,
             ),
             'SendStepActionEvent': grpc.unary_unary_rpc_method_handler(
                     servicer.SendStepActionEvent,
@@ -260,6 +276,23 @@ class Dispatcher(object):
         return grpc.experimental.unary_stream(request, target, '/Dispatcher/SubscribeToWorkflowEvents',
             dispatcher__pb2.SubscribeToWorkflowEventsRequest.SerializeToString,
             dispatcher__pb2.WorkflowEvent.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SubscribeToWorkflowRuns(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_stream(request_iterator, target, '/Dispatcher/SubscribeToWorkflowRuns',
+            dispatcher__pb2.SubscribeToWorkflowRunsRequest.SerializeToString,
+            dispatcher__pb2.WorkflowRunEvent.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

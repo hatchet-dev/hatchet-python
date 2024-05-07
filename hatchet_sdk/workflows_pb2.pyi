@@ -34,7 +34,7 @@ class PutWorkflowRequest(_message.Message):
     def __init__(self, opts: _Optional[_Union[CreateWorkflowVersionOpts, _Mapping]] = ...) -> None: ...
 
 class CreateWorkflowVersionOpts(_message.Message):
-    __slots__ = ("name", "description", "version", "event_triggers", "cron_triggers", "scheduled_triggers", "jobs", "concurrency", "schedule_timeout", "cron_input")
+    __slots__ = ("name", "description", "version", "event_triggers", "cron_triggers", "scheduled_triggers", "jobs", "concurrency", "schedule_timeout", "cron_input", "on_failure_job")
     NAME_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
@@ -45,6 +45,7 @@ class CreateWorkflowVersionOpts(_message.Message):
     CONCURRENCY_FIELD_NUMBER: _ClassVar[int]
     SCHEDULE_TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     CRON_INPUT_FIELD_NUMBER: _ClassVar[int]
+    ON_FAILURE_JOB_FIELD_NUMBER: _ClassVar[int]
     name: str
     description: str
     version: str
@@ -55,7 +56,8 @@ class CreateWorkflowVersionOpts(_message.Message):
     concurrency: WorkflowConcurrencyOpts
     schedule_timeout: str
     cron_input: str
-    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., version: _Optional[str] = ..., event_triggers: _Optional[_Iterable[str]] = ..., cron_triggers: _Optional[_Iterable[str]] = ..., scheduled_triggers: _Optional[_Iterable[_Union[_timestamp_pb2.Timestamp, _Mapping]]] = ..., jobs: _Optional[_Iterable[_Union[CreateWorkflowJobOpts, _Mapping]]] = ..., concurrency: _Optional[_Union[WorkflowConcurrencyOpts, _Mapping]] = ..., schedule_timeout: _Optional[str] = ..., cron_input: _Optional[str] = ...) -> None: ...
+    on_failure_job: CreateWorkflowJobOpts
+    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., version: _Optional[str] = ..., event_triggers: _Optional[_Iterable[str]] = ..., cron_triggers: _Optional[_Iterable[str]] = ..., scheduled_triggers: _Optional[_Iterable[_Union[_timestamp_pb2.Timestamp, _Mapping]]] = ..., jobs: _Optional[_Iterable[_Union[CreateWorkflowJobOpts, _Mapping]]] = ..., concurrency: _Optional[_Union[WorkflowConcurrencyOpts, _Mapping]] = ..., schedule_timeout: _Optional[str] = ..., cron_input: _Optional[str] = ..., on_failure_job: _Optional[_Union[CreateWorkflowJobOpts, _Mapping]] = ...) -> None: ...
 
 class WorkflowConcurrencyOpts(_message.Message):
     __slots__ = ("action", "max_runs", "limit_strategy")
@@ -68,16 +70,14 @@ class WorkflowConcurrencyOpts(_message.Message):
     def __init__(self, action: _Optional[str] = ..., max_runs: _Optional[int] = ..., limit_strategy: _Optional[_Union[ConcurrencyLimitStrategy, str]] = ...) -> None: ...
 
 class CreateWorkflowJobOpts(_message.Message):
-    __slots__ = ("name", "description", "timeout", "steps")
+    __slots__ = ("name", "description", "steps")
     NAME_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
-    TIMEOUT_FIELD_NUMBER: _ClassVar[int]
     STEPS_FIELD_NUMBER: _ClassVar[int]
     name: str
     description: str
-    timeout: str
     steps: _containers.RepeatedCompositeFieldContainer[CreateWorkflowStepOpts]
-    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., timeout: _Optional[str] = ..., steps: _Optional[_Iterable[_Union[CreateWorkflowStepOpts, _Mapping]]] = ...) -> None: ...
+    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., steps: _Optional[_Iterable[_Union[CreateWorkflowStepOpts, _Mapping]]] = ...) -> None: ...
 
 class CreateWorkflowStepOpts(_message.Message):
     __slots__ = ("readable_id", "action", "timeout", "inputs", "parents", "user_data", "retries", "rate_limits")
@@ -162,20 +162,22 @@ class WorkflowTriggerCronRef(_message.Message):
     def __init__(self, parent_id: _Optional[str] = ..., cron: _Optional[str] = ...) -> None: ...
 
 class TriggerWorkflowRequest(_message.Message):
-    __slots__ = ("name", "input", "parent_id", "parent_step_run_id", "child_index", "child_key")
+    __slots__ = ("name", "input", "parent_id", "parent_step_run_id", "child_index", "child_key", "additional_metadata")
     NAME_FIELD_NUMBER: _ClassVar[int]
     INPUT_FIELD_NUMBER: _ClassVar[int]
     PARENT_ID_FIELD_NUMBER: _ClassVar[int]
     PARENT_STEP_RUN_ID_FIELD_NUMBER: _ClassVar[int]
     CHILD_INDEX_FIELD_NUMBER: _ClassVar[int]
     CHILD_KEY_FIELD_NUMBER: _ClassVar[int]
+    ADDITIONAL_METADATA_FIELD_NUMBER: _ClassVar[int]
     name: str
     input: str
     parent_id: str
     parent_step_run_id: str
     child_index: int
     child_key: str
-    def __init__(self, name: _Optional[str] = ..., input: _Optional[str] = ..., parent_id: _Optional[str] = ..., parent_step_run_id: _Optional[str] = ..., child_index: _Optional[int] = ..., child_key: _Optional[str] = ...) -> None: ...
+    additional_metadata: str
+    def __init__(self, name: _Optional[str] = ..., input: _Optional[str] = ..., parent_id: _Optional[str] = ..., parent_step_run_id: _Optional[str] = ..., child_index: _Optional[int] = ..., child_key: _Optional[str] = ..., additional_metadata: _Optional[str] = ...) -> None: ...
 
 class TriggerWorkflowResponse(_message.Message):
     __slots__ = ("workflow_run_id",)

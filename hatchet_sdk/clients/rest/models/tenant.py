@@ -19,7 +19,7 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
@@ -33,13 +33,18 @@ class Tenant(BaseModel):
     metadata: APIResourceMeta
     name: StrictStr = Field(description="The name of the tenant.")
     slug: StrictStr = Field(description="The slug of the tenant.")
-    __properties: ClassVar[List[str]] = ["metadata", "name", "slug"]
+    analytics_opt_out: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether the tenant has opted out of analytics.",
+        alias="analyticsOptOut",
+    )
+    __properties: ClassVar[List[str]] = ["metadata", "name", "slug", "analyticsOptOut"]
 
-    model_config = {
-        "populate_by_name": True,
-        "validate_assignment": True,
-        "protected_namespaces": (),
-    }
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -95,6 +100,7 @@ class Tenant(BaseModel):
                 ),
                 "name": obj.get("name"),
                 "slug": obj.get("slug"),
+                "analyticsOptOut": obj.get("analyticsOptOut"),
             }
         )
         return _obj
