@@ -92,5 +92,35 @@ class Hatchet:
 
         return inner
 
+    def on_failure_step(
+        self,
+        name: str = "",
+        timeout: str = "",
+        retries: int = 0,
+        rate_limits: List[RateLimit] | None = None,
+    ):
+        def inner(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                if asyncio.iscoroutinefunction(func):
+                    return asyncio.run(func(*args, **kwargs))
+                else:
+                    return func(*args, **kwargs)
+
+            limits = None
+            if rate_limits:
+                limits = [
+                    CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
+                    for rate_limit in rate_limits or []
+                ]
+
+            wrapper._on_failure_step_name = name or func.__name__
+            wrapper._on_failure_step_timeout = timeout
+            wrapper._on_failure_step_retries = retries
+            wrapper._on_failure_step_rate_limits = limits
+            return wrapper
+
+        return inner
+
     def worker(self, name: str, max_runs: int | None = None):
         return Worker(name=name, max_runs=max_runs, config=self.client.config)
