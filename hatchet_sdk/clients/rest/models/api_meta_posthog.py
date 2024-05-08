@@ -23,13 +23,18 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Self
 
 
-class CreatePullRequestFromStepRun(BaseModel):
+class APIMetaPosthog(BaseModel):
     """
-    CreatePullRequestFromStepRun
+    APIMetaPosthog
     """  # noqa: E501
 
-    branch_name: StrictStr = Field(alias="branchName")
-    __properties: ClassVar[List[str]] = ["branchName"]
+    api_key: Optional[StrictStr] = Field(
+        default=None, description="the PostHog API key", alias="apiKey"
+    )
+    api_host: Optional[StrictStr] = Field(
+        default=None, description="the PostHog API host", alias="apiHost"
+    )
+    __properties: ClassVar[List[str]] = ["apiKey", "apiHost"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +53,7 @@ class CreatePullRequestFromStepRun(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CreatePullRequestFromStepRun from a JSON string"""
+        """Create an instance of APIMetaPosthog from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,12 +77,14 @@ class CreatePullRequestFromStepRun(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CreatePullRequestFromStepRun from a dict"""
+        """Create an instance of APIMetaPosthog from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({"branchName": obj.get("branchName")})
+        _obj = cls.model_validate(
+            {"apiKey": obj.get("apiKey"), "apiHost": obj.get("apiHost")}
+        )
         return _obj

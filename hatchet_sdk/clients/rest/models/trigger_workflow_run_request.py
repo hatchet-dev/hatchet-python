@@ -19,7 +19,7 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Self
 
 
@@ -29,13 +29,16 @@ class TriggerWorkflowRunRequest(BaseModel):
     """  # noqa: E501
 
     input: Dict[str, Any]
-    __properties: ClassVar[List[str]] = ["input"]
+    additional_metadata: Optional[Dict[str, Any]] = Field(
+        default=None, alias="additionalMetadata"
+    )
+    __properties: ClassVar[List[str]] = ["input", "additionalMetadata"]
 
-    model_config = {
-        "populate_by_name": True,
-        "validate_assignment": True,
-        "protected_namespaces": (),
-    }
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -79,5 +82,10 @@ class TriggerWorkflowRunRequest(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({"input": obj.get("input")})
+        _obj = cls.model_validate(
+            {
+                "input": obj.get("input"),
+                "additionalMetadata": obj.get("additionalMetadata"),
+            }
+        )
         return _obj

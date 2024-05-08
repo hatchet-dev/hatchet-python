@@ -42,6 +42,10 @@ class ResourceEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     RESOURCE_EVENT_TYPE_CANCELLED: _ClassVar[ResourceEventType]
     RESOURCE_EVENT_TYPE_TIMED_OUT: _ClassVar[ResourceEventType]
     RESOURCE_EVENT_TYPE_STREAM: _ClassVar[ResourceEventType]
+
+class WorkflowRunEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    WORKFLOW_RUN_EVENT_TYPE_FINISHED: _ClassVar[WorkflowRunEventType]
 START_STEP_RUN: ActionType
 CANCEL_STEP_RUN: ActionType
 START_GET_GROUP_KEY: ActionType
@@ -63,6 +67,7 @@ RESOURCE_EVENT_TYPE_FAILED: ResourceEventType
 RESOURCE_EVENT_TYPE_CANCELLED: ResourceEventType
 RESOURCE_EVENT_TYPE_TIMED_OUT: ResourceEventType
 RESOURCE_EVENT_TYPE_STREAM: ResourceEventType
+WORKFLOW_RUN_EVENT_TYPE_FINISHED: WorkflowRunEventType
 
 class WorkerRegisterRequest(_message.Message):
     __slots__ = ("workerName", "actions", "services", "maxRuns")
@@ -188,6 +193,12 @@ class SubscribeToWorkflowEventsRequest(_message.Message):
     workflowRunId: str
     def __init__(self, workflowRunId: _Optional[str] = ...) -> None: ...
 
+class SubscribeToWorkflowRunsRequest(_message.Message):
+    __slots__ = ("workflowRunId",)
+    WORKFLOWRUNID_FIELD_NUMBER: _ClassVar[int]
+    workflowRunId: str
+    def __init__(self, workflowRunId: _Optional[str] = ...) -> None: ...
+
 class WorkflowEvent(_message.Message):
     __slots__ = ("workflowRunId", "resourceType", "eventType", "resourceId", "eventTimestamp", "eventPayload", "hangup", "stepRetries", "retryCount")
     WORKFLOWRUNID_FIELD_NUMBER: _ClassVar[int]
@@ -209,6 +220,32 @@ class WorkflowEvent(_message.Message):
     stepRetries: int
     retryCount: int
     def __init__(self, workflowRunId: _Optional[str] = ..., resourceType: _Optional[_Union[ResourceType, str]] = ..., eventType: _Optional[_Union[ResourceEventType, str]] = ..., resourceId: _Optional[str] = ..., eventTimestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., eventPayload: _Optional[str] = ..., hangup: bool = ..., stepRetries: _Optional[int] = ..., retryCount: _Optional[int] = ...) -> None: ...
+
+class WorkflowRunEvent(_message.Message):
+    __slots__ = ("workflowRunId", "eventType", "eventTimestamp", "results")
+    WORKFLOWRUNID_FIELD_NUMBER: _ClassVar[int]
+    EVENTTYPE_FIELD_NUMBER: _ClassVar[int]
+    EVENTTIMESTAMP_FIELD_NUMBER: _ClassVar[int]
+    RESULTS_FIELD_NUMBER: _ClassVar[int]
+    workflowRunId: str
+    eventType: WorkflowRunEventType
+    eventTimestamp: _timestamp_pb2.Timestamp
+    results: _containers.RepeatedCompositeFieldContainer[StepRunResult]
+    def __init__(self, workflowRunId: _Optional[str] = ..., eventType: _Optional[_Union[WorkflowRunEventType, str]] = ..., eventTimestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., results: _Optional[_Iterable[_Union[StepRunResult, _Mapping]]] = ...) -> None: ...
+
+class StepRunResult(_message.Message):
+    __slots__ = ("stepRunId", "stepReadableId", "jobRunId", "error", "output")
+    STEPRUNID_FIELD_NUMBER: _ClassVar[int]
+    STEPREADABLEID_FIELD_NUMBER: _ClassVar[int]
+    JOBRUNID_FIELD_NUMBER: _ClassVar[int]
+    ERROR_FIELD_NUMBER: _ClassVar[int]
+    OUTPUT_FIELD_NUMBER: _ClassVar[int]
+    stepRunId: str
+    stepReadableId: str
+    jobRunId: str
+    error: str
+    output: str
+    def __init__(self, stepRunId: _Optional[str] = ..., stepReadableId: _Optional[str] = ..., jobRunId: _Optional[str] = ..., error: _Optional[str] = ..., output: _Optional[str] = ...) -> None: ...
 
 class OverridesData(_message.Message):
     __slots__ = ("stepRunId", "path", "value", "callerFilename")

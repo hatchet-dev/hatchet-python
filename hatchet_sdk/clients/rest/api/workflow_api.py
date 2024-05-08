@@ -38,6 +38,7 @@ from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
+from hatchet_sdk.clients.rest.models.workflow_runs_metrics import WorkflowRunsMetrics
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
 from hatchet_sdk.clients.rest.models.workflow_version_definition import (
     WorkflowVersionDefinition,
@@ -286,7 +287,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -571,7 +572,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -846,7 +847,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1106,7 +1107,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1410,7 +1411,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1678,7 +1679,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1975,7 +1976,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1999,6 +2000,398 @@ class WorkflowApi:
         return self.api_client.param_serialize(
             method="GET",
             resource_path="/api/v1/tenants/{tenant}/workflow-runs/{workflow-run}",
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth,
+        )
+
+    @validate_call
+    def workflow_run_get_metrics(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        event_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The event id to get runs for."),
+        ] = None,
+        workflow_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The workflow id to get runs for."),
+        ] = None,
+        parent_workflow_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent workflow run id"),
+        ] = None,
+        parent_step_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent step run id"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> WorkflowRunsMetrics:
+        """Get workflow runs
+
+        Get a summary of  workflow run metrics for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param event_id: The event id to get runs for.
+        :type event_id: str
+        :param workflow_id: The workflow id to get runs for.
+        :type workflow_id: str
+        :param parent_workflow_run_id: The parent workflow run id
+        :type parent_workflow_run_id: str
+        :param parent_step_run_id: The parent step run id
+        :type parent_step_run_id: str
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_run_get_metrics_serialize(
+            tenant=tenant,
+            event_id=event_id,
+            workflow_id=workflow_id,
+            parent_workflow_run_id=parent_workflow_run_id,
+            parent_step_run_id=parent_step_run_id,
+            additional_metadata=additional_metadata,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "200": "WorkflowRunsMetrics",
+            "400": "APIErrors",
+            "403": "APIErrors",
+        }
+        response_data = self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+    @validate_call
+    def workflow_run_get_metrics_with_http_info(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        event_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The event id to get runs for."),
+        ] = None,
+        workflow_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The workflow id to get runs for."),
+        ] = None,
+        parent_workflow_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent workflow run id"),
+        ] = None,
+        parent_step_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent step run id"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[WorkflowRunsMetrics]:
+        """Get workflow runs
+
+        Get a summary of  workflow run metrics for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param event_id: The event id to get runs for.
+        :type event_id: str
+        :param workflow_id: The workflow id to get runs for.
+        :type workflow_id: str
+        :param parent_workflow_run_id: The parent workflow run id
+        :type parent_workflow_run_id: str
+        :param parent_step_run_id: The parent step run id
+        :type parent_step_run_id: str
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_run_get_metrics_serialize(
+            tenant=tenant,
+            event_id=event_id,
+            workflow_id=workflow_id,
+            parent_workflow_run_id=parent_workflow_run_id,
+            parent_step_run_id=parent_step_run_id,
+            additional_metadata=additional_metadata,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "200": "WorkflowRunsMetrics",
+            "400": "APIErrors",
+            "403": "APIErrors",
+        }
+        response_data = self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+    @validate_call
+    def workflow_run_get_metrics_without_preload_content(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        event_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The event id to get runs for."),
+        ] = None,
+        workflow_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The workflow id to get runs for."),
+        ] = None,
+        parent_workflow_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent workflow run id"),
+        ] = None,
+        parent_step_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent step run id"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get workflow runs
+
+        Get a summary of  workflow run metrics for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param event_id: The event id to get runs for.
+        :type event_id: str
+        :param workflow_id: The workflow id to get runs for.
+        :type workflow_id: str
+        :param parent_workflow_run_id: The parent workflow run id
+        :type parent_workflow_run_id: str
+        :param parent_step_run_id: The parent step run id
+        :type parent_step_run_id: str
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_run_get_metrics_serialize(
+            tenant=tenant,
+            event_id=event_id,
+            workflow_id=workflow_id,
+            parent_workflow_run_id=parent_workflow_run_id,
+            parent_step_run_id=parent_step_run_id,
+            additional_metadata=additional_metadata,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "200": "WorkflowRunsMetrics",
+            "400": "APIErrors",
+            "403": "APIErrors",
+        }
+        response_data = self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+    def _workflow_run_get_metrics_serialize(
+        self,
+        tenant,
+        event_id,
+        workflow_id,
+        parent_workflow_run_id,
+        parent_step_run_id,
+        additional_metadata,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+            "additionalMetadata": "multi",
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if tenant is not None:
+            _path_params["tenant"] = tenant
+        # process the query parameters
+        if event_id is not None:
+
+            _query_params.append(("eventId", event_id))
+
+        if workflow_id is not None:
+
+            _query_params.append(("workflowId", workflow_id))
+
+        if parent_workflow_run_id is not None:
+
+            _query_params.append(("parentWorkflowRunId", parent_workflow_run_id))
+
+        if parent_step_run_id is not None:
+
+            _query_params.append(("parentStepRunId", parent_step_run_id))
+
+        if additional_metadata is not None:
+
+            _query_params.append(("additionalMetadata", additional_metadata))
+
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+        # set the HTTP header `Accept`
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
+
+        # authentication setting
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+
+        return self.api_client.param_serialize(
+            method="GET",
+            resource_path="/api/v1/tenants/{tenant}/workflows/runs/metrics",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2042,6 +2435,14 @@ class WorkflowApi:
             Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
             Field(description="The parent step run id"),
         ] = None,
+        statuses: Annotated[
+            Optional[List[WorkflowRunStatus]],
+            Field(description="A list of workflow run statuses to filter by"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2072,6 +2473,10 @@ class WorkflowApi:
         :type parent_workflow_run_id: str
         :param parent_step_run_id: The parent step run id
         :type parent_step_run_id: str
+        :param statuses: A list of workflow run statuses to filter by
+        :type statuses: List[WorkflowRunStatus]
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2102,6 +2507,8 @@ class WorkflowApi:
             workflow_id=workflow_id,
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
+            statuses=statuses,
+            additional_metadata=additional_metadata,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2153,6 +2560,14 @@ class WorkflowApi:
             Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
             Field(description="The parent step run id"),
         ] = None,
+        statuses: Annotated[
+            Optional[List[WorkflowRunStatus]],
+            Field(description="A list of workflow run statuses to filter by"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2183,6 +2598,10 @@ class WorkflowApi:
         :type parent_workflow_run_id: str
         :param parent_step_run_id: The parent step run id
         :type parent_step_run_id: str
+        :param statuses: A list of workflow run statuses to filter by
+        :type statuses: List[WorkflowRunStatus]
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2213,6 +2632,8 @@ class WorkflowApi:
             workflow_id=workflow_id,
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
+            statuses=statuses,
+            additional_metadata=additional_metadata,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2264,6 +2685,14 @@ class WorkflowApi:
             Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
             Field(description="The parent step run id"),
         ] = None,
+        statuses: Annotated[
+            Optional[List[WorkflowRunStatus]],
+            Field(description="A list of workflow run statuses to filter by"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2294,6 +2723,10 @@ class WorkflowApi:
         :type parent_workflow_run_id: str
         :param parent_step_run_id: The parent step run id
         :type parent_step_run_id: str
+        :param statuses: A list of workflow run statuses to filter by
+        :type statuses: List[WorkflowRunStatus]
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2324,6 +2757,8 @@ class WorkflowApi:
             workflow_id=workflow_id,
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
+            statuses=statuses,
+            additional_metadata=additional_metadata,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2349,6 +2784,8 @@ class WorkflowApi:
         workflow_id,
         parent_workflow_run_id,
         parent_step_run_id,
+        statuses,
+        additional_metadata,
         _request_auth,
         _content_type,
         _headers,
@@ -2357,13 +2794,16 @@ class WorkflowApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+            "statuses": "multi",
+            "additionalMetadata": "multi",
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -2393,6 +2833,14 @@ class WorkflowApi:
         if parent_step_run_id is not None:
 
             _query_params.append(("parentStepRunId", parent_step_run_id))
+
+        if statuses is not None:
+
+            _query_params.append(("statuses", statuses))
+
+        if additional_metadata is not None:
+
+            _query_params.append(("additionalMetadata", additional_metadata))
 
         # process the header parameters
         # process the form parameters
@@ -2703,7 +3151,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -2994,7 +3442,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -3297,7 +3745,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -3592,7 +4040,7 @@ class WorkflowApi:
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[str, Union[str, bytes]] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters

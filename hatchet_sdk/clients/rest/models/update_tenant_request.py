@@ -19,17 +19,21 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
 from typing_extensions import Self
 
 
-class CreatePullRequestFromStepRun(BaseModel):
+class UpdateTenantRequest(BaseModel):
     """
-    CreatePullRequestFromStepRun
+    UpdateTenantRequest
     """  # noqa: E501
 
-    branch_name: StrictStr = Field(alias="branchName")
-    __properties: ClassVar[List[str]] = ["branchName"]
+    analytics_opt_out: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether the tenant has opted out of analytics.",
+        alias="analyticsOptOut",
+    )
+    __properties: ClassVar[List[str]] = ["analyticsOptOut"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +52,7 @@ class CreatePullRequestFromStepRun(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CreatePullRequestFromStepRun from a JSON string"""
+        """Create an instance of UpdateTenantRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,12 +76,12 @@ class CreatePullRequestFromStepRun(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CreatePullRequestFromStepRun from a dict"""
+        """Create an instance of UpdateTenantRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({"branchName": obj.get("branchName")})
+        _obj = cls.model_validate({"analyticsOptOut": obj.get("analyticsOptOut")})
         return _obj

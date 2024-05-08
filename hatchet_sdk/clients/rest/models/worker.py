@@ -20,8 +20,8 @@ import re  # noqa: F401
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, Field, StrictStr
-from typing_extensions import Self
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from typing_extensions import Annotated, Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.step_run import StepRun
@@ -47,19 +47,53 @@ class Worker(BaseModel):
         description="The recent step runs for this worker.",
         alias="recentStepRuns",
     )
+    status: Optional[StrictStr] = Field(
+        default=None, description="The status of the worker."
+    )
+    max_runs: Optional[StrictInt] = Field(
+        default=None,
+        description="The maximum number of runs this worker can execute concurrently.",
+        alias="maxRuns",
+    )
+    available_runs: Optional[StrictInt] = Field(
+        default=None,
+        description="The number of runs this worker can execute concurrently.",
+        alias="availableRuns",
+    )
+    dispatcher_id: Optional[
+        Annotated[str, Field(min_length=36, strict=True, max_length=36)]
+    ] = Field(
+        default=None,
+        description="the id of the assigned dispatcher, in UUID format",
+        alias="dispatcherId",
+    )
     __properties: ClassVar[List[str]] = [
         "metadata",
         "name",
         "lastHeartbeatAt",
         "actions",
         "recentStepRuns",
+        "status",
+        "maxRuns",
+        "availableRuns",
+        "dispatcherId",
     ]
 
-    model_config = {
-        "populate_by_name": True,
-        "validate_assignment": True,
-        "protected_namespaces": (),
-    }
+    @field_validator("status")
+    def status_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(["ACTIVE", "INACTIVE"]):
+            raise ValueError("must be one of enum values ('ACTIVE', 'INACTIVE')")
+        return value
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -128,6 +162,10 @@ class Worker(BaseModel):
                     if obj.get("recentStepRuns") is not None
                     else None
                 ),
+                "status": obj.get("status"),
+                "maxRuns": obj.get("maxRuns"),
+                "availableRuns": obj.get("availableRuns"),
+                "dispatcherId": obj.get("dispatcherId"),
             }
         )
         return _obj
