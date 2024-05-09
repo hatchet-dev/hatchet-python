@@ -274,3 +274,13 @@ class HeartbeatRequest(_message.Message):
 class HeartbeatResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class ReleaseSlotRequest(_message.Message):
+    __slots__ = ("stepRunId",)
+    STEPRUNID_FIELD_NUMBER: _ClassVar[int]
+    stepRunId: str
+    def __init__(self, stepRunId: _Optional[str] = ...) -> None: ...
+
+class ReleaseSlotResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...

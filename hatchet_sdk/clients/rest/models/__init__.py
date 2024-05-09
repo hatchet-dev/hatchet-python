@@ -36,6 +36,9 @@ from hatchet_sdk.clients.rest.models.create_pull_request_from_step_run import (
 from hatchet_sdk.clients.rest.models.create_sns_integration_request import (
     CreateSNSIntegrationRequest,
 )
+from hatchet_sdk.clients.rest.models.create_tenant_alert_email_group_request import (
+    CreateTenantAlertEmailGroupRequest,
+)
 from hatchet_sdk.clients.rest.models.create_tenant_invite_request import (
     CreateTenantInviteRequest,
 )
@@ -74,6 +77,7 @@ from hatchet_sdk.clients.rest.models.list_github_app_installations_response impo
 from hatchet_sdk.clients.rest.models.list_pull_requests_response import (
     ListPullRequestsResponse,
 )
+from hatchet_sdk.clients.rest.models.list_slack_webhooks import ListSlackWebhooks
 from hatchet_sdk.clients.rest.models.list_sns_integrations import ListSNSIntegrations
 from hatchet_sdk.clients.rest.models.log_line import LogLine
 from hatchet_sdk.clients.rest.models.log_line_level import LogLineLevel
@@ -88,12 +92,22 @@ from hatchet_sdk.clients.rest.models.pull_request_state import PullRequestState
 from hatchet_sdk.clients.rest.models.reject_invite_request import RejectInviteRequest
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
 from hatchet_sdk.clients.rest.models.rerun_step_run_request import RerunStepRunRequest
+from hatchet_sdk.clients.rest.models.slack_webhook import SlackWebhook
 from hatchet_sdk.clients.rest.models.sns_integration import SNSIntegration
 from hatchet_sdk.clients.rest.models.step import Step
 from hatchet_sdk.clients.rest.models.step_run import StepRun
 from hatchet_sdk.clients.rest.models.step_run_diff import StepRunDiff
 from hatchet_sdk.clients.rest.models.step_run_status import StepRunStatus
 from hatchet_sdk.clients.rest.models.tenant import Tenant
+from hatchet_sdk.clients.rest.models.tenant_alert_email_group import (
+    TenantAlertEmailGroup,
+)
+from hatchet_sdk.clients.rest.models.tenant_alert_email_group_list import (
+    TenantAlertEmailGroupList,
+)
+from hatchet_sdk.clients.rest.models.tenant_alerting_settings import (
+    TenantAlertingSettings,
+)
 from hatchet_sdk.clients.rest.models.tenant_invite import TenantInvite
 from hatchet_sdk.clients.rest.models.tenant_invite_list import TenantInviteList
 from hatchet_sdk.clients.rest.models.tenant_list import TenantList
@@ -102,6 +116,9 @@ from hatchet_sdk.clients.rest.models.tenant_member_list import TenantMemberList
 from hatchet_sdk.clients.rest.models.tenant_member_role import TenantMemberRole
 from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
     TriggerWorkflowRunRequest,
+)
+from hatchet_sdk.clients.rest.models.update_tenant_alert_email_group_request import (
+    UpdateTenantAlertEmailGroupRequest,
 )
 from hatchet_sdk.clients.rest.models.update_tenant_invite_request import (
     UpdateTenantInviteRequest,
