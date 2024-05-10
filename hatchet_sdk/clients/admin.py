@@ -137,7 +137,7 @@ class AdminClientImpl:
             payload_data = json.dumps(input)
 
             try:
-                meta = None if options is None else options.get("additional_metadata") 
+                meta = None if options is None else options.get("additional_metadata")
                 options["additional_metadata"] = (
                     None if meta is None else json.dumps(meta).encode("utf-8")
                 )
