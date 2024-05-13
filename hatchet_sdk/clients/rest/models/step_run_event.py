@@ -13,45 +13,39 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from hatchet_sdk.clients.rest.models.step_run_event_reason import StepRunEventReason
+from hatchet_sdk.clients.rest.models.step_run_event_severity import StepRunEventSeverity
+from typing import Optional, Set
 from typing_extensions import Self
 
-
-class UpdateTenantRequest(BaseModel):
+class StepRunEvent(BaseModel):
     """
-    UpdateTenantRequest
-    """  # noqa: E501
-
-    name: Optional[StrictStr] = Field(
-        default=None, description="The name of the tenant."
-    )
-    analytics_opt_out: Optional[StrictBool] = Field(
-        default=None,
-        description="Whether the tenant has opted out of analytics.",
-        alias="analyticsOptOut",
-    )
-    max_alerting_frequency: Optional[StrictStr] = Field(
-        default=None,
-        description="The max frequency at which to alert.",
-        alias="maxAlertingFrequency",
-    )
-    __properties: ClassVar[List[str]] = [
-        "name",
-        "analyticsOptOut",
-        "maxAlertingFrequency",
-    ]
+    StepRunEvent
+    """ # noqa: E501
+    id: StrictInt
+    time_first_seen: datetime = Field(alias="timeFirstSeen")
+    time_last_seen: datetime = Field(alias="timeLastSeen")
+    step_run_id: StrictStr = Field(alias="stepRunId")
+    reason: StepRunEventReason
+    severity: StepRunEventSeverity
+    message: StrictStr
+    count: StrictInt
+    data: Optional[Dict[str, Any]] = None
+    __properties: ClassVar[List[str]] = ["id", "timeFirstSeen", "timeLastSeen", "stepRunId", "reason", "severity", "message", "count", "data"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -64,7 +58,7 @@ class UpdateTenantRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdateTenantRequest from a JSON string"""
+        """Create an instance of StepRunEvent from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,7 +71,8 @@ class UpdateTenantRequest(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -88,18 +83,24 @@ class UpdateTenantRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdateTenantRequest from a dict"""
+        """Create an instance of StepRunEvent from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "analyticsOptOut": obj.get("analyticsOptOut"),
-                "maxAlertingFrequency": obj.get("maxAlertingFrequency"),
-            }
-        )
+        _obj = cls.model_validate({
+            "id": obj.get("id"),
+            "timeFirstSeen": obj.get("timeFirstSeen"),
+            "timeLastSeen": obj.get("timeLastSeen"),
+            "stepRunId": obj.get("stepRunId"),
+            "reason": obj.get("reason"),
+            "severity": obj.get("severity"),
+            "message": obj.get("message"),
+            "count": obj.get("count"),
+            "data": obj.get("data")
+        })
         return _obj
+
+
