@@ -13,8 +13,10 @@
 
 
 from __future__ import annotations
+
 import json
 from enum import Enum
+
 from typing_extensions import Self
 
 
@@ -26,19 +28,17 @@ class StepRunEventReason(str, Enum):
     """
     allowed enum values
     """
-    REQUEUED_NO_WORKER = 'REQUEUED_NO_WORKER'
-    REQUEUED_RATE_LIMIT = 'REQUEUED_RATE_LIMIT'
-    SCHEDULING_TIMED_OUT = 'SCHEDULING_TIMED_OUT'
-    ASSIGNED = 'ASSIGNED'
-    STARTED = 'STARTED'
-    FINISHED = 'FINISHED'
-    FAILED = 'FAILED'
-    RETRYING = 'RETRYING'
-    CANCELLED = 'CANCELLED'
+    REQUEUED_NO_WORKER = "REQUEUED_NO_WORKER"
+    REQUEUED_RATE_LIMIT = "REQUEUED_RATE_LIMIT"
+    SCHEDULING_TIMED_OUT = "SCHEDULING_TIMED_OUT"
+    ASSIGNED = "ASSIGNED"
+    STARTED = "STARTED"
+    FINISHED = "FINISHED"
+    FAILED = "FAILED"
+    RETRYING = "RETRYING"
+    CANCELLED = "CANCELLED"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of StepRunEventReason from a JSON string"""
         return cls(json.loads(json_str))
-
-
