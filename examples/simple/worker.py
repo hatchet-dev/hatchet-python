@@ -1,4 +1,5 @@
 import json
+import time
 
 from dotenv import load_dotenv
 
@@ -16,9 +17,13 @@ class MyWorkflow:
 
     @hatchet.step()
     def step1(self, context: Context):
+        time.sleep(5)
+        context.refresh_timeout('10s')
+        time.sleep(10)
         test = context.playground("test", "test")
         test2 = context.playground("test2", 100)
         test3 = context.playground("test3", None)
+        context.refresh_timeout('10s')
 
         print(test)
         print(test2)

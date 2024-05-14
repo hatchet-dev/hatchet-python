@@ -12,6 +12,8 @@ from ..dispatcher_pb2 import (
     AssignedAction,
     GroupKeyActionEvent,
     HeartbeatRequest,
+    RefreshTimeoutRequest,
+    RefreshTimeoutResponse,
     OverridesData,
     StepActionEvent,
     WorkerListenRequest,
@@ -334,6 +336,17 @@ class DispatcherClientImpl(DispatcherClient):
     def put_overrides_data(self, data: OverridesData):
         response: ActionEventResponse = self.client.PutOverridesData(
             data,
+            metadata=get_metadata(self.token),
+        )
+
+        return response
+
+    def refresh_timeout(self, increment_by: str, step_run_id: str = None):
+        response: RefreshTimeoutResponse = self.client.RefreshTimeout(
+            RefreshTimeoutRequest(
+                stepRunId=step_run_id,
+                incrementTimeoutBy=increment_by,
+            ),
             metadata=get_metadata(self.token),
         )
 

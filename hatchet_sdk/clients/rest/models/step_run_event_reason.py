@@ -37,6 +37,10 @@ class StepRunEventReason(str, Enum):
     FAILED = "FAILED"
     RETRYING = "RETRYING"
     CANCELLED = "CANCELLED"
+    TIMEOUT_REFRESHED = "TIMEOUT_REFRESHED"
+    REASSIGNED = "REASSIGNED"
+    TIMED_OUT = "TIMED_OUT"
+    SLOT_RELEASED = "SLOT_RELEASED"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
