@@ -236,8 +236,9 @@ class Context:
         self.stream_event_thread_pool.submit(self._put_stream, data)
 
     def refresh_timeout(self, increment_by: str):
-        try: 
-            return self.client.dispatcher.refresh_timeout(step_run_id=self.stepRunId, increment_by=increment_by)
+        try:
+            return self.client.dispatcher.refresh_timeout(
+                step_run_id=self.stepRunId, increment_by=increment_by
+            )
         except Exception as e:
             logger.error(f"Error refreshing timeout: {e}")
-
