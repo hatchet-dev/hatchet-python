@@ -138,9 +138,8 @@ class AdminClientImpl:
 
             try:
                 meta = None if options is None else options.get("additional_metadata")
-                options["additional_metadata"] = (
-                    None if meta is None else json.dumps(meta).encode("utf-8")
-                )
+                if meta is not None:
+                    options["additional_metadata"] = json.dumps(meta).encode("utf-8")
             except json.JSONDecodeError as e:
                 raise ValueError(f"Error encoding payload: {e}")
 
