@@ -13,6 +13,7 @@ from ..dispatcher_pb2 import (
     GroupKeyActionEvent,
     HeartbeatRequest,
     OverridesData,
+    ReleaseSlotRequest,
     StepActionEvent,
     WorkerListenRequest,
     WorkerRegisterRequest,
@@ -338,3 +339,10 @@ class DispatcherClientImpl(DispatcherClient):
         )
 
         return response
+
+    def release_slot(self, step_run_id: str):
+        self.client.ReleaseSlot(
+            ReleaseSlotRequest(stepRunId=step_run_id),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
+            metadata=get_metadata(self.token),
+        )

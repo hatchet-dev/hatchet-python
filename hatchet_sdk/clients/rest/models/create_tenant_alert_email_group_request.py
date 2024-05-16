@@ -19,33 +19,17 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Self
 
 
-class UpdateTenantRequest(BaseModel):
+class CreateTenantAlertEmailGroupRequest(BaseModel):
     """
-    UpdateTenantRequest
+    CreateTenantAlertEmailGroupRequest
     """  # noqa: E501
 
-    name: Optional[StrictStr] = Field(
-        default=None, description="The name of the tenant."
-    )
-    analytics_opt_out: Optional[StrictBool] = Field(
-        default=None,
-        description="Whether the tenant has opted out of analytics.",
-        alias="analyticsOptOut",
-    )
-    max_alerting_frequency: Optional[StrictStr] = Field(
-        default=None,
-        description="The max frequency at which to alert.",
-        alias="maxAlertingFrequency",
-    )
-    __properties: ClassVar[List[str]] = [
-        "name",
-        "analyticsOptOut",
-        "maxAlertingFrequency",
-    ]
+    emails: List[StrictStr] = Field(description="A list of emails for users")
+    __properties: ClassVar[List[str]] = ["emails"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -64,7 +48,7 @@ class UpdateTenantRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdateTenantRequest from a JSON string"""
+        """Create an instance of CreateTenantAlertEmailGroupRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -88,18 +72,12 @@ class UpdateTenantRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdateTenantRequest from a dict"""
+        """Create an instance of CreateTenantAlertEmailGroupRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "analyticsOptOut": obj.get("analyticsOptOut"),
-                "maxAlertingFrequency": obj.get("maxAlertingFrequency"),
-            }
-        )
+        _obj = cls.model_validate({"emails": obj.get("emails")})
         return _obj

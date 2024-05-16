@@ -223,6 +223,9 @@ class Context:
 
         self.logger_thread_pool.submit(self._log, line)
 
+    def release_slot(self):
+        return self.client.dispatcher.release_slot(self.stepRunId)
+
     def _put_stream(self, data: str | bytes):
         try:
             self.client.event.stream(data=data, step_run_id=self.stepRunId)
@@ -234,3 +237,11 @@ class Context:
             return
 
         self.stream_event_thread_pool.submit(self._put_stream, data)
+
+    def refresh_timeout(self, increment_by: str):
+        try:
+            return self.client.dispatcher.refresh_timeout(
+                step_run_id=self.stepRunId, increment_by=increment_by
+            )
+        except Exception as e:
+            logger.error(f"Error refreshing timeout: {e}")

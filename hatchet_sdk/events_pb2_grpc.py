@@ -4,6 +4,7 @@ import grpc
 
 from . import events_pb2 as events__pb2
 
+
 class EventsServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 

@@ -274,3 +274,27 @@ class HeartbeatRequest(_message.Message):
 class HeartbeatResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class RefreshTimeoutRequest(_message.Message):
+    __slots__ = ("stepRunId", "incrementTimeoutBy")
+    STEPRUNID_FIELD_NUMBER: _ClassVar[int]
+    INCREMENTTIMEOUTBY_FIELD_NUMBER: _ClassVar[int]
+    stepRunId: str
+    incrementTimeoutBy: str
+    def __init__(self, stepRunId: _Optional[str] = ..., incrementTimeoutBy: _Optional[str] = ...) -> None: ...
+
+class RefreshTimeoutResponse(_message.Message):
+    __slots__ = ("timeoutAt",)
+    TIMEOUTAT_FIELD_NUMBER: _ClassVar[int]
+    timeoutAt: _timestamp_pb2.Timestamp
+    def __init__(self, timeoutAt: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...) -> None: ...
+
+class ReleaseSlotRequest(_message.Message):
+    __slots__ = ("stepRunId",)
+    STEPRUNID_FIELD_NUMBER: _ClassVar[int]
+    stepRunId: str
+    def __init__(self, stepRunId: _Optional[str] = ...) -> None: ...
+
+class ReleaseSlotResponse(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
