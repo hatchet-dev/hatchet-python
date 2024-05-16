@@ -19,6 +19,10 @@ class RateLimitDuration(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     SECOND: _ClassVar[RateLimitDuration]
     MINUTE: _ClassVar[RateLimitDuration]
     HOUR: _ClassVar[RateLimitDuration]
+    DAY: _ClassVar[RateLimitDuration]
+    WEEK: _ClassVar[RateLimitDuration]
+    MONTH: _ClassVar[RateLimitDuration]
+    YEAR: _ClassVar[RateLimitDuration]
 CANCEL_IN_PROGRESS: ConcurrencyLimitStrategy
 DROP_NEWEST: ConcurrencyLimitStrategy
 QUEUE_NEWEST: ConcurrencyLimitStrategy
@@ -26,6 +30,10 @@ GROUP_ROUND_ROBIN: ConcurrencyLimitStrategy
 SECOND: RateLimitDuration
 MINUTE: RateLimitDuration
 HOUR: RateLimitDuration
+DAY: RateLimitDuration
+WEEK: RateLimitDuration
+MONTH: RateLimitDuration
+YEAR: RateLimitDuration
 
 class PutWorkflowRequest(_message.Message):
     __slots__ = ("opts",)

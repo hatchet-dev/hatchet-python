@@ -40,6 +40,7 @@ class WorkflowVersion(BaseModel):
     workflow: Optional[Workflow] = None
     concurrency: Optional[WorkflowConcurrency] = None
     triggers: Optional[WorkflowTriggers] = None
+    schedule_timeout: Optional[StrictStr] = Field(default=None, alias="scheduleTimeout")
     jobs: Optional[List[Job]] = None
     __properties: ClassVar[List[str]] = [
         "metadata",
@@ -49,6 +50,7 @@ class WorkflowVersion(BaseModel):
         "workflow",
         "concurrency",
         "triggers",
+        "scheduleTimeout",
         "jobs",
     ]
 
@@ -144,6 +146,7 @@ class WorkflowVersion(BaseModel):
                     if obj.get("triggers") is not None
                     else None
                 ),
+                "scheduleTimeout": obj.get("scheduleTimeout"),
                 "jobs": (
                     [Job.from_dict(_item) for _item in obj["jobs"]]
                     if obj.get("jobs") is not None

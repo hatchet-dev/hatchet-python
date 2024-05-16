@@ -17,34 +17,40 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing_extensions import Self
 
+from hatchet_sdk.clients.rest.models.step_run_event_reason import StepRunEventReason
+from hatchet_sdk.clients.rest.models.step_run_event_severity import StepRunEventSeverity
 
-class UpdateTenantRequest(BaseModel):
+
+class StepRunEvent(BaseModel):
     """
-    UpdateTenantRequest
+    StepRunEvent
     """  # noqa: E501
 
-    name: Optional[StrictStr] = Field(
-        default=None, description="The name of the tenant."
-    )
-    analytics_opt_out: Optional[StrictBool] = Field(
-        default=None,
-        description="Whether the tenant has opted out of analytics.",
-        alias="analyticsOptOut",
-    )
-    max_alerting_frequency: Optional[StrictStr] = Field(
-        default=None,
-        description="The max frequency at which to alert.",
-        alias="maxAlertingFrequency",
-    )
+    id: StrictInt
+    time_first_seen: datetime = Field(alias="timeFirstSeen")
+    time_last_seen: datetime = Field(alias="timeLastSeen")
+    step_run_id: StrictStr = Field(alias="stepRunId")
+    reason: StepRunEventReason
+    severity: StepRunEventSeverity
+    message: StrictStr
+    count: StrictInt
+    data: Optional[Dict[str, Any]] = None
     __properties: ClassVar[List[str]] = [
-        "name",
-        "analyticsOptOut",
-        "maxAlertingFrequency",
+        "id",
+        "timeFirstSeen",
+        "timeLastSeen",
+        "stepRunId",
+        "reason",
+        "severity",
+        "message",
+        "count",
+        "data",
     ]
 
     model_config = ConfigDict(
@@ -64,7 +70,7 @@ class UpdateTenantRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdateTenantRequest from a JSON string"""
+        """Create an instance of StepRunEvent from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -88,7 +94,7 @@ class UpdateTenantRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdateTenantRequest from a dict"""
+        """Create an instance of StepRunEvent from a dict"""
         if obj is None:
             return None
 
@@ -97,9 +103,15 @@ class UpdateTenantRequest(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "name": obj.get("name"),
-                "analyticsOptOut": obj.get("analyticsOptOut"),
-                "maxAlertingFrequency": obj.get("maxAlertingFrequency"),
+                "id": obj.get("id"),
+                "timeFirstSeen": obj.get("timeFirstSeen"),
+                "timeLastSeen": obj.get("timeLastSeen"),
+                "stepRunId": obj.get("stepRunId"),
+                "reason": obj.get("reason"),
+                "severity": obj.get("severity"),
+                "message": obj.get("message"),
+                "count": obj.get("count"),
+                "data": obj.get("data"),
             }
         )
         return _obj
