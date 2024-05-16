@@ -2,7 +2,8 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from . import dispatcher_pb2 as dispatcher__pb2
+import dispatcher_pb2 as dispatcher__pb2
+
 
 class DispatcherStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -62,6 +63,11 @@ class DispatcherStub(object):
                 '/Dispatcher/Unsubscribe',
                 request_serializer=dispatcher__pb2.WorkerUnsubscribeRequest.SerializeToString,
                 response_deserializer=dispatcher__pb2.WorkerUnsubscribeResponse.FromString,
+                )
+        self.RefreshTimeout = channel.unary_unary(
+                '/Dispatcher/RefreshTimeout',
+                request_serializer=dispatcher__pb2.RefreshTimeoutRequest.SerializeToString,
+                response_deserializer=dispatcher__pb2.RefreshTimeoutResponse.FromString,
                 )
         self.ReleaseSlot = channel.unary_unary(
                 '/Dispatcher/ReleaseSlot',
@@ -136,6 +142,12 @@ class DispatcherServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RefreshTimeout(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def ReleaseSlot(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -194,6 +206,11 @@ def add_DispatcherServicer_to_server(servicer, server):
                     servicer.Unsubscribe,
                     request_deserializer=dispatcher__pb2.WorkerUnsubscribeRequest.FromString,
                     response_serializer=dispatcher__pb2.WorkerUnsubscribeResponse.SerializeToString,
+            ),
+            'RefreshTimeout': grpc.unary_unary_rpc_method_handler(
+                    servicer.RefreshTimeout,
+                    request_deserializer=dispatcher__pb2.RefreshTimeoutRequest.FromString,
+                    response_serializer=dispatcher__pb2.RefreshTimeoutResponse.SerializeToString,
             ),
             'ReleaseSlot': grpc.unary_unary_rpc_method_handler(
                     servicer.ReleaseSlot,
@@ -377,6 +394,23 @@ class Dispatcher(object):
         return grpc.experimental.unary_unary(request, target, '/Dispatcher/Unsubscribe',
             dispatcher__pb2.WorkerUnsubscribeRequest.SerializeToString,
             dispatcher__pb2.WorkerUnsubscribeResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def RefreshTimeout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Dispatcher/RefreshTimeout',
+            dispatcher__pb2.RefreshTimeoutRequest.SerializeToString,
+            dispatcher__pb2.RefreshTimeoutResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

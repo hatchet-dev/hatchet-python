@@ -180,6 +180,9 @@ from hatchet_sdk.clients.rest.models.workflow_deployment_config import (
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
 from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
+from hatchet_sdk.clients.rest.models.workflow_run_cancel200_response import (
+    WorkflowRunCancel200Response,
+)
 from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import (

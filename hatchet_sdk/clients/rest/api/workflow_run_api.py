@@ -19,11 +19,13 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.rest.api_response import ApiResponse
-from hatchet_sdk.clients.rest.models.step_run import StepRun
 from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
     TriggerWorkflowRunRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
+from hatchet_sdk.clients.rest.models.workflow_run_cancel200_response import (
+    WorkflowRunCancel200Response,
+)
 from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
@@ -66,7 +68,7 @@ class WorkflowRunApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[StepRun]:
+    ) -> WorkflowRunCancel200Response:
         """Cancel workflow runs
 
         Cancel a batch of workflow runs
@@ -107,7 +109,7 @@ class WorkflowRunApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[StepRun]",
+            "200": "WorkflowRunCancel200Response",
             "400": "APIErrors",
             "403": "APIErrors",
         }
@@ -144,7 +146,7 @@ class WorkflowRunApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[StepRun]]:
+    ) -> ApiResponse[WorkflowRunCancel200Response]:
         """Cancel workflow runs
 
         Cancel a batch of workflow runs
@@ -185,7 +187,7 @@ class WorkflowRunApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[StepRun]",
+            "200": "WorkflowRunCancel200Response",
             "400": "APIErrors",
             "403": "APIErrors",
         }
@@ -263,7 +265,7 @@ class WorkflowRunApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[StepRun]",
+            "200": "WorkflowRunCancel200Response",
             "400": "APIErrors",
             "403": "APIErrors",
         }
