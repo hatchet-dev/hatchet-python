@@ -13,8 +13,7 @@ from ..dispatcher_pb2 import (
     GroupKeyActionEvent,
     HeartbeatRequest,
     OverridesData,
-    RefreshTimeoutRequest,
-    RefreshTimeoutResponse,
+    ReleaseSlotRequest,
     StepActionEvent,
     WorkerListenRequest,
     WorkerRegisterRequest,
@@ -341,13 +340,9 @@ class DispatcherClientImpl(DispatcherClient):
 
         return response
 
-    def refresh_timeout(self, increment_by: str, step_run_id: str = None):
-        response: RefreshTimeoutResponse = self.client.RefreshTimeout(
-            RefreshTimeoutRequest(
-                stepRunId=step_run_id,
-                incrementTimeoutBy=increment_by,
-            ),
+    def release_slot(self, step_run_id: str):
+        self.client.ReleaseSlot(
+            ReleaseSlotRequest(stepRunId=step_run_id),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )
-
-        return response

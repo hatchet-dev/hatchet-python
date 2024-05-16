@@ -223,6 +223,9 @@ class Context:
 
         self.logger_thread_pool.submit(self._log, line)
 
+    def release_slot(self):
+        return self.client.dispatcher.release_slot(self.stepRunId)
+
     def _put_stream(self, data: str | bytes):
         try:
             self.client.event.stream(data=data, step_run_id=self.stepRunId)
