@@ -18,6 +18,7 @@ class MyWorkflow:
     @hatchet.step()
     def step1(self, context: Context):
 
+        time.sleep(100)
         test = context.playground("test", "test")
         test2 = context.playground("test2", 100)
         test3 = context.playground("test3", None)
