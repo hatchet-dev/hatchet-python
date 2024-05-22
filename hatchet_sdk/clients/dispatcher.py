@@ -77,7 +77,7 @@ class Action:
         action_id: str,
         action_payload: str,
         action_type: ActionType,
-        retry_count: int
+        retry_count: int,
     ):
         self.worker_id = worker_id
         self.workflow_run_id = workflow_run_id
@@ -190,7 +190,7 @@ class ActionListenerImpl(WorkerActionListener):
                         action_id=assigned_action.actionId,
                         action_payload=action_payload,
                         action_type=action_type,
-                        retry_count=assigned_action.retryCount
+                        retry_count=assigned_action.retryCount,
                     )
 
                     yield action

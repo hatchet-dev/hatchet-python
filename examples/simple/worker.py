@@ -15,7 +15,7 @@ class MyWorkflow:
     def __init__(self):
         self.my_value = "test"
 
-    @hatchet.step(timeout='2s', retries=3)
+    @hatchet.step(timeout="2s", retries=3)
     def step1(self, context: Context):
         print(context.retry_count())
 
