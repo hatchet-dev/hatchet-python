@@ -15,10 +15,11 @@ class MyWorkflow:
     def __init__(self):
         self.my_value = "test"
 
-    @hatchet.step()
+    @hatchet.step(timeout='2s', retries=3)
     def step1(self, context: Context):
+        print(context.retry_count())
 
-        time.sleep(100)
+        time.sleep(3)
         test = context.playground("test", "test")
         test2 = context.playground("test2", 100)
         test3 = context.playground("test3", None)
