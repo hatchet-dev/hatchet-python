@@ -28,10 +28,12 @@ class AsyncWorkflow:
         await asyncio.sleep(2)
         print("finished step2")
 
+
 async def main():
     workflow = AsyncWorkflow()
     worker = hatchet.worker("test-worker", max_runs=4)
     worker.register_workflow(workflow)
     await worker.async_start()
+
 
 asyncio.run(main())

@@ -6,6 +6,7 @@ import time
 from typing import AsyncGenerator, Callable, List, Union
 
 import grpc
+
 from hatchet_sdk.connection import new_conn
 
 from ..dispatcher_pb2 import (
@@ -107,7 +108,13 @@ START_GET_GROUP_KEY = 2
 class ActionListenerImpl(WorkerActionListener):
     config: ClientConfig
 
-    def __init__(self, client: DispatcherStub, aio_client: DispatcherStub, config: ClientConfig, worker_id):
+    def __init__(
+        self,
+        client: DispatcherStub,
+        aio_client: DispatcherStub,
+        config: ClientConfig,
+        worker_id,
+    ):
         self.aio_client = aio_client
         self.client = client
         self.config = config
@@ -311,7 +318,9 @@ class DispatcherClientImpl(DispatcherClient):
         # self.logger = logger
         # self.validator = validator
 
-    async def get_action_listener(self, req: GetActionListenerRequest) -> ActionListenerImpl:
+    async def get_action_listener(
+        self, req: GetActionListenerRequest
+    ) -> ActionListenerImpl:
         # Register the worker
         response: WorkerRegisterResponse = await self.aio_client.Register(
             WorkerRegisterRequest(
@@ -324,7 +333,9 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-        return ActionListenerImpl(self.client, self.aio_client, self.config, response.workerId)
+        return ActionListenerImpl(
+            self.client, self.aio_client, self.config, response.workerId
+        )
 
     def send_step_action_event(self, in_: StepActionEvent):
         response: ActionEventResponse = self.client.SendStepActionEvent(

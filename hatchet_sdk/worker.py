@@ -1,5 +1,4 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import ctypes
 import functools
 import json
@@ -8,6 +7,7 @@ import sys
 import threading
 import time
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
 
@@ -17,7 +17,12 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from hatchet_sdk.loader import ClientConfig
 
 from .client import new_client
-from .clients.dispatcher import Action, ActionListenerImpl, GetActionListenerRequest, new_dispatcher
+from .clients.dispatcher import (
+    Action,
+    ActionListenerImpl,
+    GetActionListenerRequest,
+    new_dispatcher,
+)
 from .context import Context
 from .dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_COMPLETED,
@@ -34,6 +39,7 @@ from .dispatcher_pb2 import (
 )
 from .logger import logger
 from .workflow import WorkflowMeta
+
 
 class Worker:
     def __init__(
@@ -53,7 +59,7 @@ class Worker:
         self.contexts: Dict[str, Context] = {}  # Store step run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
 
-        # The thread pool is used for synchronous functions which need to run concurrently 
+        # The thread pool is used for synchronous functions which need to run concurrently
         self.thread_pool = ThreadPoolExecutor(max_workers=max_runs)
         self.threads: Dict[str, Thread] = {}  # Store step run ids and threads
 
@@ -75,6 +81,7 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
+
             def callback(task: asyncio.Task):
                 errored = False
                 cancelled = task.cancelled()
@@ -120,8 +127,10 @@ class Worker:
                     if action_func._is_coroutine:
                         return await action_func(context)
                     else:
-                        
-                        pfunc = functools.partial(thread_action_func, context, action_func)
+
+                        pfunc = functools.partial(
+                            thread_action_func, context, action_func
+                        )
                         res = await self.loop.run_in_executor(self.thread_pool, pfunc)
 
                         if action.step_run_id in self.threads:
@@ -141,7 +150,7 @@ class Worker:
                 finally:
                     if action.step_run_id in self.tasks:
                         del self.tasks[action.step_run_id]
-            
+
             task = self.loop.create_task(async_wrapped_action_func(context))
             task.add_done_callback(callback)
             self.tasks[action.step_run_id] = task
@@ -167,6 +176,7 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
+
             def callback(task: asyncio.Task):
                 errored = False
                 cancelled = task.cancelled()
@@ -214,8 +224,10 @@ class Worker:
                     if action_func._is_coroutine:
                         return await action_func(context)
                     else:
-                        
-                        pfunc = functools.partial(thread_action_func, context, action_func)
+
+                        pfunc = functools.partial(
+                            thread_action_func, context, action_func
+                        )
                         res = await self.loop.run_in_executor(self.thread_pool, pfunc)
 
                         if action.step_run_id in self.threads:
@@ -384,7 +396,7 @@ class Worker:
         def create_action_function(action_func):
             def action_function(context):
                 return action_func(workflow, context)
-            
+
             if asyncio.iscoroutinefunction(action_func):
                 action_function._is_coroutine = True
             else:
@@ -414,7 +426,7 @@ class Worker:
 
         if self.handle_kill:
             logger.info("Exiting...")
-            sys.exit(0)        
+            sys.exit(0)
 
     def start(self, retry_count=1):
         try:
@@ -452,7 +464,7 @@ class Worker:
             )
 
             # It's important that this iterates async so it doesn't block the event loop. This is
-            # what allows self.loop.create_task to work. 
+            # what allows self.loop.create_task to work.
             async for action in self.listener:
                 if action.action_type == ActionType.START_STEP_RUN:
                     self.loop.create_task(self.handle_start_step_run(action))
