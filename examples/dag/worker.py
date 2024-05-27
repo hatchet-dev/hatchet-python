@@ -14,7 +14,7 @@ class MyWorkflow:
     def __init__(self):
         self.my_value = "test"
 
-    @hatchet.step()
+    @hatchet.step(timeout="5s")
     def step1(self, context: Context):
         print(
             "starting step1",
@@ -22,7 +22,7 @@ class MyWorkflow:
             context.workflow_input(),
         )
         overrideValue = context.playground("prompt", "You are an AI assistant...")
-        time.sleep(5)
+        time.sleep(3)
         # pretty-print time
         print("executed step1", time.strftime("%H:%M:%S", time.localtime()))
         return {

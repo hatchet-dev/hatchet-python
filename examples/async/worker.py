@@ -15,15 +15,11 @@ class AsyncWorkflow:
         self.my_value = "test"
 
     @hatchet.step(timeout="5s")
-    def step1(self, context: Context):
-        async def async_step1():
-            print("started step1")
-            await asyncio.sleep(2)
-            print("finished step1")
-            return "result"
+    async def step1(self, context: Context):
+        print("started step1")
+        await asyncio.sleep(2)
+        print("finished step1")
 
-        res = asyncio.run(async_step1())
-        print(res)
         return {"test": "test"}
 
     @hatchet.step(parents=["step1"], timeout="4s")
@@ -32,9 +28,10 @@ class AsyncWorkflow:
         await asyncio.sleep(2)
         print("finished step2")
 
+async def main():
+    workflow = AsyncWorkflow()
+    worker = hatchet.worker("test-worker", max_runs=4)
+    worker.register_workflow(workflow)
+    await worker.async_start()
 
-workflow = AsyncWorkflow()
-worker = hatchet.worker("test-worker", max_runs=4)
-worker.register_workflow(workflow)
-
-worker.start()
+asyncio.run(main())

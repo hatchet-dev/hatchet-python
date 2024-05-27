@@ -69,13 +69,6 @@ class Hatchet:
         rate_limits: List[RateLimit] | None = None,
     ):
         def inner(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                if asyncio.iscoroutinefunction(func):
-                    return asyncio.run(func(*args, **kwargs))
-                else:
-                    return func(*args, **kwargs)
-
             limits = None
             if rate_limits:
                 limits = [
@@ -83,12 +76,12 @@ class Hatchet:
                     for rate_limit in rate_limits or []
                 ]
 
-            wrapper._step_name = name or func.__name__
-            wrapper._step_parents = parents
-            wrapper._step_timeout = timeout
-            wrapper._step_retries = retries
-            wrapper._step_rate_limits = limits
-            return wrapper
+            func._step_name = name or func.__name__
+            func._step_parents = parents
+            func._step_timeout = timeout
+            func._step_retries = retries
+            func._step_rate_limits = limits
+            return func
 
         return inner
 
@@ -100,13 +93,6 @@ class Hatchet:
         rate_limits: List[RateLimit] | None = None,
     ):
         def inner(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                if asyncio.iscoroutinefunction(func):
-                    return asyncio.run(func(*args, **kwargs))
-                else:
-                    return func(*args, **kwargs)
-
             limits = None
             if rate_limits:
                 limits = [
@@ -114,11 +100,11 @@ class Hatchet:
                     for rate_limit in rate_limits or []
                 ]
 
-            wrapper._on_failure_step_name = name or func.__name__
-            wrapper._on_failure_step_timeout = timeout
-            wrapper._on_failure_step_retries = retries
-            wrapper._on_failure_step_rate_limits = limits
-            return wrapper
+            func._on_failure_step_name = name or func.__name__
+            func._on_failure_step_timeout = timeout
+            func._on_failure_step_retries = retries
+            func._on_failure_step_rate_limits = limits
+            return func
 
         return inner
 

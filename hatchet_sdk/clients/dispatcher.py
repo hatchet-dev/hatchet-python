@@ -1,10 +1,12 @@
 # relative imports
+import asyncio
 import json
 import threading
 import time
-from typing import Callable, List, Union
+from typing import AsyncGenerator, Callable, List, Union
 
 import grpc
+from hatchet_sdk.connection import new_conn
 
 from ..dispatcher_pb2 import (
     ActionEventResponse,
@@ -27,11 +29,8 @@ from ..metadata import get_metadata
 from .events import proto_timestamp_now
 
 
-def new_dispatcher(conn, config: ClientConfig):
-    return DispatcherClientImpl(
-        client=DispatcherStub(conn),
-        config=config,
-    )
+def new_dispatcher(config: ClientConfig):
+    return DispatcherClientImpl(config=config)
 
 
 class DispatcherClient:
@@ -108,7 +107,8 @@ START_GET_GROUP_KEY = 2
 class ActionListenerImpl(WorkerActionListener):
     config: ClientConfig
 
-    def __init__(self, client: DispatcherStub, config: ClientConfig, worker_id):
+    def __init__(self, client: DispatcherStub, aio_client: DispatcherStub, config: ClientConfig, worker_id):
+        self.aio_client = aio_client
         self.client = client
         self.config = config
         self.token = config.token
@@ -118,6 +118,7 @@ class ActionListenerImpl(WorkerActionListener):
         self.heartbeat_thread = None
         self.run_heartbeat = True
         self.listen_strategy = "v2"
+        self.stop_signal = False
 
     def heartbeat(self):
         # send a heartbeat every 4 seconds
@@ -153,12 +154,16 @@ class ActionListenerImpl(WorkerActionListener):
 
         self.heartbeat_thread = heartbeat_thread
 
-    def actions(self):
+    def __aiter__(self):
+        return self._generator()
+
+    async def _generator(self) -> AsyncGenerator[Action, None]:
         while True:
-            logger.info("Connecting to Hatchet to establish listener for actions...")
+            if self.stop_signal:
+                break
 
             try:
-                for assigned_action in self.get_listen_client():
+                async for assigned_action in await self.get_listen_client():
                     self.retries = 0
                     assigned_action: AssignedAction
 
@@ -236,7 +241,7 @@ class ActionListenerImpl(WorkerActionListener):
             # self.logger.error(f"Unknown action type: {action_type}")
             return None
 
-    def get_listen_client(self):
+    async def get_listen_client(self):
         current_time = int(time.time())
 
         if (
@@ -258,7 +263,7 @@ class ActionListenerImpl(WorkerActionListener):
             )
 
         if self.listen_strategy == "v2":
-            listener = self.client.ListenV2(
+            listener = self.aio_client.ListenV2(
                 WorkerListenRequest(workerId=self.worker_id),
                 timeout=self.config.listener_v2_timeout,
                 metadata=get_metadata(self.token),
@@ -267,7 +272,7 @@ class ActionListenerImpl(WorkerActionListener):
             self.start_heartbeater()
         else:
             # if ListenV2 is not available, fallback to Listen
-            listener = self.client.Listen(
+            listener = self.aio_client.Listen(
                 WorkerListenRequest(workerId=self.worker_id),
                 timeout=DEFAULT_ACTION_TIMEOUT,
                 metadata=get_metadata(self.token),
@@ -280,11 +285,12 @@ class ActionListenerImpl(WorkerActionListener):
 
     def unregister(self):
         self.run_heartbeat = False
+        self.stop_signal = True
 
         try:
             self.client.Unsubscribe(
                 WorkerUnsubscribeRequest(workerId=self.worker_id),
-                timeout=DEFAULT_REGISTER_TIMEOUT,
+                timeout=5,
                 metadata=get_metadata(self.token),
             )
         except grpc.RpcError as e:
@@ -294,16 +300,20 @@ class ActionListenerImpl(WorkerActionListener):
 class DispatcherClientImpl(DispatcherClient):
     config: ClientConfig
 
-    def __init__(self, client: DispatcherStub, config: ClientConfig):
-        self.client = client
+    def __init__(self, config: ClientConfig):
+        conn = new_conn(config)
+        self.client = DispatcherStub(conn)
+
+        aio_conn = new_conn(config, True)
+        self.aio_client = DispatcherStub(aio_conn)
         self.token = config.token
         self.config = config
         # self.logger = logger
         # self.validator = validator
 
-    def get_action_listener(self, req: GetActionListenerRequest) -> ActionListenerImpl:
+    async def get_action_listener(self, req: GetActionListenerRequest) -> ActionListenerImpl:
         # Register the worker
-        response: WorkerRegisterResponse = self.client.Register(
+        response: WorkerRegisterResponse = await self.aio_client.Register(
             WorkerRegisterRequest(
                 workerName=req.worker_name,
                 actions=req.actions,
@@ -314,7 +324,7 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-        return ActionListenerImpl(self.client, self.config, response.workerId)
+        return ActionListenerImpl(self.client, self.aio_client, self.config, response.workerId)
 
     def send_step_action_event(self, in_: StepActionEvent):
         response: ActionEventResponse = self.client.SendStepActionEvent(
