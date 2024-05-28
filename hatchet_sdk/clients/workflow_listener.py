@@ -69,7 +69,7 @@ class PooledWorkflowRunListener:
             if event.workflowRunId == workflow_run_id:
                 yield event
                 break  # FIXME this should only break on terminal events... but we're not broadcasting event types
-        
+
         del self.events[workflow_run_id]
 
     async def result(self, workflow_run_id: str):
