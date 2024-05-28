@@ -17,7 +17,7 @@ class AsyncWorkflow:
     @hatchet.step(timeout="2s")
     async def step1(self, context: Context):
         context.refresh_timeout("5s")
-        
+
         print("started step1")
         await asyncio.sleep(3)
         print("finished step1")
