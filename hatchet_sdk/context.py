@@ -33,30 +33,6 @@ class WorkflowRunRef:
         self.workflow_run_id = workflow_run_id
         self.client = client
 
-    def _fetch_result(self) -> StepRunEvent:
-        try:
-            res = self.client.rest.workflow_run_get(self.workflow_run_id)
-            step_runs = res.job_runs[0].step_runs if res.job_runs else []
-
-            step_run_output = {}
-            for run in step_runs:
-                stepId = run.step.readable_id if run.step else ""
-                step_run_output[stepId] = json.loads(run.output) if run.output else {}
-
-            terminalStatusMap = {
-                WorkflowRunStatus.SUCCEEDED: WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_COMPLETED,
-                WorkflowRunStatus.FAILED: WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FAILED,
-                WorkflowRunStatus.CANCELLED: WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_CANCELLED,
-            }
-
-            if res.status in terminalStatusMap:
-                return StepRunEvent(
-                    type=terminalStatusMap[res.status], payload=json.dumps(step_run_output)
-                )
-
-        except Exception as e:
-            raise Exception(str(e))
-
     def stream(self):
         return self.client.workflow_listener.subscribe(self.workflow_run_id)
 

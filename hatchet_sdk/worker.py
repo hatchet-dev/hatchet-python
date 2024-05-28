@@ -436,7 +436,7 @@ class Worker:
 
             if action_func._is_coroutine:
                 raise Exception(
-                    "Cannot register async actions with the synchronous worker, use async_start instead." 
+                    "Cannot register async actions with the synchronous worker, use async_start instead."
                 )
 
         try:

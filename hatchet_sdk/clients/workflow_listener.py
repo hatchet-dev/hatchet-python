@@ -1,16 +1,13 @@
 import asyncio
 import json
-from typing import AsyncGenerator
 from collections.abc import AsyncIterator
+from typing import AsyncGenerator
 
 import grpc
 
 from hatchet_sdk.connection import new_conn
 
-from ..dispatcher_pb2 import (
-    SubscribeToWorkflowRunsRequest,
-    WorkflowRunEvent
-)
+from ..dispatcher_pb2 import SubscribeToWorkflowRunsRequest, WorkflowRunEvent
 from ..dispatcher_pb2_grpc import DispatcherStub
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -18,10 +15,15 @@ from ..metadata import get_metadata
 DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 5  # seconds
 DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT = 5
 
+
 class PooledWorkflowRunListener:
     requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
-    listener = None
+    listener: AsyncGenerator[WorkflowRunEvent, None] = None
+
+    subscribers: list = []
+
+    events: asyncio.Queue[WorkflowRunEvent] = asyncio.Queue()
 
     def __init__(self, token: str, config: ClientConfig):
         conn = new_conn(config, True)
@@ -34,16 +36,16 @@ class PooledWorkflowRunListener:
         self.stop_signal = True
         self.requests.put_nowait(False)
 
-    async def _generator(self) -> AsyncGenerator[WorkflowRunEvent, None]: #FIXME WorkflowRunEventType?
+    async def _init_producer(self):
         if not self.listener:
             self.listener = await self._retry_subscribe()
 
-        async for workflow_event in self.listener:
-            yield workflow_event
+            async for workflow_event in self.listener:
+                self.events.put_nowait(workflow_event)
 
     async def _request(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
         while True:
-            request = await self.requests.get() # FIXME done in the signal
+            request = await self.requests.get()
 
             if request is False or self.stop_signal:
                 self.stop_signal = True
@@ -53,8 +55,9 @@ class PooledWorkflowRunListener:
             self.requests.task_done()
 
     async def subscribe(self, workflow_run_id: str):
-        # FIXME try? except?
-        listener = self._generator()
+        self.subscribers.append(workflow_run_id)
+
+        asyncio.create_task(self._init_producer())
 
         self.requests.put_nowait(
             SubscribeToWorkflowRunsRequest(
@@ -62,12 +65,15 @@ class PooledWorkflowRunListener:
             )
         )
 
-        # TODO track subscription
+        while True:
+            event = await self.events.get()
 
-        async for event in listener:
-            yield event
+            if event.workflowRunId in self.subscribers:
+                yield event
 
-        # TODO remove subscription
+            self.events.task_done()
+
+            break  # FIXME this should only break on terminal events... but we're not broadcasting event types
 
     async def result(self, workflow_run_id: str):
         async for event in self.subscribe(workflow_run_id):
@@ -78,11 +84,14 @@ class PooledWorkflowRunListener:
 
             if errors:
                 raise Exception(f"Child Errors: {errors}")
-            
-            results = {result.stepReadableId: json.loads(result.output) for result in event.results if result.output}
+
+            results = {
+                result.stepReadableId: json.loads(result.output)
+                for result in event.results
+                if result.output
+            }
 
             return results
-
 
     async def _retry_subscribe(self):
         retries = 0
