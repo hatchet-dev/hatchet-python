@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 
 import grpc
 
+from ..logger import logger
 from hatchet_sdk.connection import new_conn
 
 from ..dispatcher_pb2 import SubscribeToWorkflowRunsRequest, WorkflowRunEvent
@@ -12,7 +13,7 @@ from ..dispatcher_pb2_grpc import DispatcherStub
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 
-DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 5  # seconds
+DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 1  # seconds
 DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT = 5
 
 
@@ -35,12 +36,19 @@ class PooledWorkflowRunListener:
         self.requests.put_nowait(False)
 
     async def _init_producer(self):
-        if not self.listener:
-            self.listener = await self._retry_subscribe()
-
-            async for workflow_event in self.listener:
-                if workflow_event.workflowRunId in self.events:
-                    self.events[workflow_event.workflowRunId].put_nowait(workflow_event)
+        retry = 0
+        while retry < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
+            try:
+                if not self.listener:
+                    self.listener = await self._retry_subscribe()
+                    retry = 0
+                    async for workflow_event in self.listener:
+                        if workflow_event.workflowRunId in self.events:
+                            self.events[workflow_event.workflowRunId].put_nowait(workflow_event)
+            except grpc.RpcError as e:
+                await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
+                retry = retry + 1
+                self.listener = None
 
     async def _request(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
         while True:
@@ -102,6 +110,15 @@ class PooledWorkflowRunListener:
                     self._request(),
                     metadata=get_metadata(self.token),
                 )
+
+                for sub in self.events.keys():
+                    await self.requests.put(
+                        SubscribeToWorkflowRunsRequest(
+                            workflowRunId=sub,
+                        )
+                    )
+
+                logger.debug("Connected to workflow run listener")
 
                 return listener
             except grpc.RpcError as e:
