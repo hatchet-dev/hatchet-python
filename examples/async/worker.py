@@ -35,7 +35,7 @@ async def main():
     workflow = AsyncWorkflow()
     worker = hatchet.worker("test-worker", max_runs=4)
     worker.register_workflow(workflow)
-    await worker.start()
+    await worker.async_start()
 
 
 asyncio.run(main())
