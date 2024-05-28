@@ -16,6 +16,7 @@ from ..dispatcher_pb2 import (
     GroupKeyActionEvent,
     HeartbeatRequest,
     OverridesData,
+    RefreshTimeoutRequest,
     ReleaseSlotRequest,
     StepActionEvent,
     WorkerListenRequest,
@@ -364,6 +365,16 @@ class DispatcherClientImpl(DispatcherClient):
     def release_slot(self, step_run_id: str):
         self.client.ReleaseSlot(
             ReleaseSlotRequest(stepRunId=step_run_id),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
+            metadata=get_metadata(self.token),
+        )
+
+    def refresh_timeout(self, step_run_id: str, increment_by: str):
+        self.client.RefreshTimeout(
+            RefreshTimeoutRequest(
+                stepRunId=step_run_id,
+                incrementTimeoutBy=increment_by,
+            ),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )

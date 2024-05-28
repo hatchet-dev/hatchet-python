@@ -14,10 +14,12 @@ class AsyncWorkflow:
     def __init__(self):
         self.my_value = "test"
 
-    @hatchet.step(timeout="5s")
+    @hatchet.step(timeout="2s")
     async def step1(self, context: Context):
+        context.refresh_timeout("5s")
+
         print("started step1")
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
         print("finished step1")
 
         return {"test": "test"}
