@@ -7,11 +7,12 @@ from multiprocessing import Event
 from aiostream.stream import merge
 
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
+from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 
 from .client import ClientImpl
 from .clients.admin import ScheduleTriggerWorkflowOptions
 from .clients.dispatcher import Action
-from .clients.listener import StepRunEvent, WorkflowRunEventType
+from .clients.listener import HatchetListener, StepRunEvent, WorkflowRunEventType
 from .dispatcher_pb2 import OverridesData
 from .logger import logger
 
@@ -24,17 +25,15 @@ def get_caller_file_path():
     return caller_frame.filename
 
 
-class ChildWorkflowRef:
+class WorkflowRunRef:
     workflow_run_id: str
     client: ClientImpl
-    poll: bool = True
-    pollAttempts = 0
 
     def __init__(self, workflow_run_id: str, client: ClientImpl):
         self.workflow_run_id = workflow_run_id
         self.client = client
 
-    def getResult(self) -> StepRunEvent:
+    def _fetch_result(self) -> StepRunEvent:
         try:
             res = self.client.rest.workflow_run_get(self.workflow_run_id)
             step_runs = res.job_runs[0].step_runs if res.job_runs else []
@@ -44,68 +43,25 @@ class ChildWorkflowRef:
                 stepId = run.step.readable_id if run.step else ""
                 step_run_output[stepId] = json.loads(run.output) if run.output else {}
 
-            statusMap = {
+            terminalStatusMap = {
                 WorkflowRunStatus.SUCCEEDED: WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_COMPLETED,
                 WorkflowRunStatus.FAILED: WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FAILED,
                 WorkflowRunStatus.CANCELLED: WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_CANCELLED,
             }
 
-            if res.status in statusMap:
+            if res.status in terminalStatusMap:
                 return StepRunEvent(
-                    type=statusMap[res.status], payload=json.dumps(step_run_output)
+                    type=terminalStatusMap[res.status], payload=json.dumps(step_run_output)
                 )
 
         except Exception as e:
             raise Exception(str(e))
 
-    async def polling(self):
-        self.poll = True
-        self.pollAttempts = 0
-        while self.poll:
-            self.pollAttempts += 1
-            res = self.getResult()
-            if res:
-                yield res
-            await asyncio.sleep(
-                DEFAULT_WORKFLOW_POLLING_INTERVAL if self.pollAttempts > 10 else 0.5
-            )
-
-    async def stream(self):
-        listener_stream = self.client.listener.stream(self.workflow_run_id)
-        polling_stream = self.polling()
-        async with merge(listener_stream, polling_stream).stream() as stream:
-            async for event in stream:
-                if event.payload is None:
-                    res = self.getResult()
-                    if res:
-                        yield res
-                else:
-                    yield event
+    def stream(self):
+        return self.client.workflow_listener.subscribe(self.workflow_run_id)
 
     async def result(self):
-        try:
-            async for event in self.stream():
-                res = self.handle_event(event)
-                if res:
-                    return res
-        finally:
-            self.close()
-
-    def close(self):
-        self.poll = False
-
-    def handle_event(self, event: StepRunEvent):
-        if (
-            event.type == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FAILED
-            or event.type == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_CANCELLED
-            or event.type == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_TIMED_OUT
-        ):
-            self.close()
-            raise RuntimeError(event.type)
-
-        if event.type == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_COMPLETED:
-            self.close()
-            return json.loads(event.payload)
+        return await self.client.workflow_listener.result(self.workflow_run_id)
 
 
 class Context:
@@ -209,7 +165,7 @@ class Context:
             workflow_name, input, options
         )
 
-        return ChildWorkflowRef(child_workflow_run_id, self.client)
+        return WorkflowRunRef(child_workflow_run_id, self.client)
 
     def _log(self, line: str):
         try:

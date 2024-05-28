@@ -429,6 +429,16 @@ class Worker:
             sys.exit(0)
 
     def start(self, retry_count=1):
+        actions = self.action_registry.items()
+
+        for action_name, action_func in actions:
+            logger.info(f"Registered action: {action_name}")
+
+            if action_func._is_coroutine:
+                raise Exception(
+                    "Cannot register async actions with the synchronous worker, use async_start instead." 
+                )
+
         try:
             loop = asyncio.get_running_loop()
             self.loop = loop
