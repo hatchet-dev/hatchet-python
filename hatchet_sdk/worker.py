@@ -432,7 +432,7 @@ class Worker:
         actions = self.action_registry.items()
 
         for action_name, action_func in actions:
-            logger.info(f"Registered action: {action_name}")
+            logger.debug(f"Registered action: {action_name}")
 
             if action_func._is_coroutine:
                 raise Exception(
