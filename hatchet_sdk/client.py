@@ -69,7 +69,7 @@ def new_client(defaults: ClientConfig = {}, *opts_functions):
     # Instantiate client implementations
     event_client = new_event(conn, config)
     admin_client = new_admin(conn, config)
-    dispatcher_client = new_dispatcher(conn, config)
+    dispatcher_client = new_dispatcher(config)
     listener_client = new_listener(conn, config)
     rest_client = RestApi(config.server_url, config.token, config.tenant_id)
 

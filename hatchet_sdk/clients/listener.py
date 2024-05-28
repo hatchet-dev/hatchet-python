@@ -134,7 +134,6 @@ class HatchetListener:
 
                     if workflow_event.hangup:
                         listener = None
-                        print("hangup stopping listener...")
                         break
 
             except grpc.RpcError as e:
