@@ -21,9 +21,7 @@ class PooledWorkflowRunListener:
 
     listener: AsyncGenerator[WorkflowRunEvent, None] = None
 
-    subscribers: list = []
-
-    events: asyncio.Queue[WorkflowRunEvent] = asyncio.Queue()
+    events: dict[str, asyncio.Queue[WorkflowRunEvent]] = {}
 
     def __init__(self, token: str, config: ClientConfig):
         conn = new_conn(config, True)
@@ -41,7 +39,8 @@ class PooledWorkflowRunListener:
             self.listener = await self._retry_subscribe()
 
             async for workflow_event in self.listener:
-                self.events.put_nowait(workflow_event)
+                if workflow_event.workflowRunId in self.events:
+                    self.events[workflow_event.workflowRunId].put_nowait(workflow_event)
 
     async def _request(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
         while True:
@@ -55,25 +54,23 @@ class PooledWorkflowRunListener:
             self.requests.task_done()
 
     async def subscribe(self, workflow_run_id: str):
-        self.subscribers.append(workflow_run_id)
+        self.events[workflow_run_id] = asyncio.Queue()
 
         asyncio.create_task(self._init_producer())
 
-        self.requests.put_nowait(
+        await self.requests.put(
             SubscribeToWorkflowRunsRequest(
                 workflowRunId=workflow_run_id,
             )
         )
 
         while True:
-            event = await self.events.get()
-
-            if event.workflowRunId in self.subscribers:
+            event = await self.events[workflow_run_id].get()
+            if event.workflowRunId == workflow_run_id:
                 yield event
-
-            self.events.task_done()
-
-            break  # FIXME this should only break on terminal events... but we're not broadcasting event types
+                break  # FIXME this should only break on terminal events... but we're not broadcasting event types
+        
+        del self.events[workflow_run_id]
 
     async def result(self, workflow_run_id: str):
         async for event in self.subscribe(workflow_run_id):
