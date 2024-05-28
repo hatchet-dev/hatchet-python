@@ -42,12 +42,12 @@ class Child:
         return {"status2": "success"}
 
 
-async def main():
+def main():
     worker = hatchet.worker("fanout-worker", max_runs=40)
     worker.register_workflow(Parent())
     worker.register_workflow(Child())
-    await worker.async_start()
+    worker.start()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

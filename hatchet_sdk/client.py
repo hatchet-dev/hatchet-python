@@ -76,7 +76,7 @@ def new_client(defaults: ClientConfig = {}, *opts_functions):
     dispatcher_client = new_dispatcher(config)
     listener_client = new_listener(conn, config)
     rest_client = RestApi(config.server_url, config.token, config.tenant_id)
-    workflow_listener_client = PooledWorkflowRunListener(config.token, config)
+    workflow_listener_client = None
 
     return ClientImpl(
         event_client,

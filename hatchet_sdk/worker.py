@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
+from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
 
 from .client import new_client
@@ -434,10 +435,10 @@ class Worker:
         for action_name, action_func in actions:
             logger.debug(f"Registered action: {action_name}")
 
-            if action_func._is_coroutine:
-                raise Exception(
-                    "Cannot register async actions with the synchronous worker, use async_start instead."
-                )
+            # if action_func._is_coroutine:
+            #     raise Exception(
+            #         "Cannot register async actions with the synchronous worker, use async_start instead."
+            #     )
 
         try:
             loop = asyncio.get_running_loop()
@@ -461,6 +462,7 @@ class Worker:
             # We need to initialize a new dispatcher *after* we've started the event loop, otherwise
             # the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
+            self.client.workflow_listener = PooledWorkflowRunListener(self.config.token, self.config)
 
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
