@@ -5,12 +5,12 @@ from typing import AsyncGenerator
 
 import grpc
 
-from ..logger import logger
 from hatchet_sdk.connection import new_conn
 
 from ..dispatcher_pb2 import SubscribeToWorkflowRunsRequest, WorkflowRunEvent
 from ..dispatcher_pb2_grpc import DispatcherStub
 from ..loader import ClientConfig
+from ..logger import logger
 from ..metadata import get_metadata
 
 DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 1  # seconds
@@ -42,14 +42,18 @@ class PooledWorkflowRunListener:
                 logger.debug(f"Workflow run listener connected.")
                 async for workflow_event in self.listener:
                     if workflow_event.workflowRunId in self.events:
-                        self.events[workflow_event.workflowRunId].put_nowait(workflow_event)
+                        self.events[workflow_event.workflowRunId].put_nowait(
+                            workflow_event
+                        )
                     else:
-                        logger.warning(f"Received event for unknown workflow: {workflow_event.workflowRunId}")
+                        logger.warning(
+                            f"Received event for unknown workflow: {workflow_event.workflowRunId}"
+                        )
         except Exception as e:
             logger.error(f"Error in workflow run listener: {e}")
             self.listener = None
 
-            # signal all subscribers to stop 
+            # signal all subscribers to stop
             # FIXME this is a bit of a hack, ideally we re-establish the listener and re-subscribe
             for key in self.events.keys():
                 self.events[key].put_nowait(False)

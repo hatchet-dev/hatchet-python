@@ -462,7 +462,9 @@ class Worker:
             # We need to initialize a new dispatcher *after* we've started the event loop, otherwise
             # the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
-            self.client.workflow_listener = PooledWorkflowRunListener(self.config.token, self.config)
+            self.client.workflow_listener = PooledWorkflowRunListener(
+                self.config.token, self.config
+            )
 
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
