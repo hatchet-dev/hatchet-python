@@ -36,19 +36,23 @@ class PooledWorkflowRunListener:
         self.requests.put_nowait(False)
 
     async def _init_producer(self):
-        retry = 0
-        while retry < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
-            try:
-                if not self.listener:
-                    self.listener = await self._retry_subscribe()
-                    retry = 0
-                    async for workflow_event in self.listener:
-                        if workflow_event.workflowRunId in self.events:
-                            self.events[workflow_event.workflowRunId].put_nowait(workflow_event)
-            except grpc.RpcError as e:
-                await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
-                retry = retry + 1
-                self.listener = None
+        try:
+            if not self.listener:
+                self.listener = await self._retry_subscribe()
+                logger.debug(f"Workflow run listener connected.")
+                async for workflow_event in self.listener:
+                    if workflow_event.workflowRunId in self.events:
+                        self.events[workflow_event.workflowRunId].put_nowait(workflow_event)
+                    else:
+                        logger.warning(f"Received event for unknown workflow: {workflow_event.workflowRunId}")
+        except Exception as e:
+            logger.error(f"Error in workflow run listener: {e}")
+            self.listener = None
+
+            # signal all subscribers to stop 
+            # FIXME this is a bit of a hack, ideally we re-establish the listener and re-subscribe
+            for key in self.events.keys():
+                self.events[key].put_nowait(False)
 
     async def _request(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
         while True:
@@ -74,6 +78,8 @@ class PooledWorkflowRunListener:
 
         while True:
             event = await self.events[workflow_run_id].get()
+            if event is False:
+                break
             if event.workflowRunId == workflow_run_id:
                 yield event
                 break  # FIXME this should only break on terminal events... but we're not broadcasting event types
@@ -88,7 +94,7 @@ class PooledWorkflowRunListener:
                 errors = [result.error for result in event.results if result.error]
 
             if errors:
-                raise Exception(f"Child Errors: {errors}")
+                raise Exception(f"Workflow Errors: {errors}")
 
             results = {
                 result.stepReadableId: json.loads(result.output)
@@ -110,15 +116,6 @@ class PooledWorkflowRunListener:
                     self._request(),
                     metadata=get_metadata(self.token),
                 )
-
-                for sub in self.events.keys():
-                    await self.requests.put(
-                        SubscribeToWorkflowRunsRequest(
-                            workflowRunId=sub,
-                        )
-                    )
-
-                logger.debug("Connected to workflow run listener")
 
                 return listener
             except grpc.RpcError as e:
