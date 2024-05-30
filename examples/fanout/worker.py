@@ -20,7 +20,7 @@ class Parent:
         for i in range(100):
             results.append(
                 (
-                    await context.spawn_workflow(
+                    await context.aio.spawn_workflow(
                         "Child", {"a": str(i)}, key=f"child{i}"
                     )
                 ).result()
