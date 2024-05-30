@@ -24,11 +24,11 @@ class PooledWorkflowRunListener:
 
     events: dict[str, asyncio.Queue[WorkflowRunEvent]] = {}
 
-    def __init__(self, token: str, config: ClientConfig):
+    def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)
         self.client = DispatcherStub(conn)
         self.stop_signal = False
-        self.token = token
+        self.token = config.token
         self.config = config
 
     def abort(self):

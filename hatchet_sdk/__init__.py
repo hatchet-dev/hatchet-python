@@ -124,7 +124,7 @@ from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersio
 from .client import new_client
 from .clients.admin import ScheduleTriggerWorkflowOptions, TriggerWorkflowOptions
 from .clients.events import PushEventOptions
-from .clients.listener import StepRunEventType
+from .clients.run_event_listener import StepRunEventType
 from .context import Context
 from .hatchet import ClientConfig, Hatchet
 from .worker import Worker

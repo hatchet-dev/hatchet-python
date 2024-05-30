@@ -6,6 +6,8 @@ import threading
 import time
 from typing import Any, AsyncGenerator, Callable, List, Union
 
+from grpc._cython import cygrpc
+
 import grpc
 
 from hatchet_sdk.connection import new_conn
@@ -181,9 +183,14 @@ class ActionListenerImpl(WorkerActionListener):
         return self._generator()
 
     async def _generator(self) -> AsyncGenerator[Action, None]:
+        listener : Any = None
+
         while True:
             if self.stop_signal:
                 break
+
+            if listener is not None:
+                listener.cancel()
 
             listener = await self.get_listen_client()
 
@@ -202,6 +209,11 @@ class ActionListenerImpl(WorkerActionListener):
                         break
 
                     assigned_action = t.result()
+
+                    if assigned_action is cygrpc.EOF:
+                        self.retries = self.retries + 1
+                        break
+
                     self.retries = 0
                     assigned_action: AssignedAction
 
@@ -239,10 +251,8 @@ class ActionListenerImpl(WorkerActionListener):
                 if e.code() == grpc.StatusCode.CANCELLED:
                     # Context cancelled, unsubscribe and close
                     self.logger.debug("Context cancelled, closing listener")
-                    continue
                 elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
                     logger.info("Deadline exceeded, retrying subscription")
-                    continue
                 elif (
                     self.listen_strategy == "v2"
                     and e.code() == grpc.StatusCode.UNIMPLEMENTED
@@ -251,7 +261,6 @@ class ActionListenerImpl(WorkerActionListener):
                     self.listen_strategy = "v1"
                     self.run_heartbeat = False
                     logger.info("ListenV2 not available, falling back to Listen")
-                    continue
                 else:
                     # Unknown error, report and break
                     logger.error(f"Failed to receive message: {e}")

@@ -3,9 +3,10 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 from hatchet_sdk.clients.events import EventClientImpl
+from hatchet_sdk.clients.run_event_listener import RunEventListener, RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
-from .client import ClientImpl
 from .clients.admin import AdminClientImpl, ScheduleTriggerWorkflowOptions
 from .clients.dispatcher import Action, DispatcherClientImpl
 from .dispatcher_pb2 import OverridesData
@@ -18,26 +19,6 @@ def get_caller_file_path():
     caller_frame = inspect.stack()[2]
 
     return caller_frame.filename
-
-
-class WorkflowRunRef:
-    workflow_run_id: str
-    client: ClientImpl
-
-    def __init__(
-        self,
-        workflow_run_id: str,
-        workflow_listener: PooledWorkflowRunListener,
-    ):
-        self.workflow_run_id = workflow_run_id
-        self.workflow_listener = workflow_listener
-
-    def stream(self):
-        return self.workflow_listener.subscribe(self.workflow_run_id)
-
-    async def result(self):
-        return await self.workflow_listener.result(self.workflow_run_id)
-
 
 class BaseContext:
     def _prepare_workflow_options(self, key: str = None):
@@ -76,8 +57,6 @@ class ContextAioImpl(BaseContext):
     async def spawn_workflow(
         self, workflow_name: str, input: dict = {}, key: str = None
     ):
-        workflow_name = f"{self.namespace}{workflow_name}"
-
         options = self._prepare_workflow_options(key)
         child_workflow_run_id = await self.admin_client.aio.run_workflow(
             workflow_name, input, options

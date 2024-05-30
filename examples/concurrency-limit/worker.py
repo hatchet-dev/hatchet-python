@@ -1,3 +1,4 @@
+import time
 from dotenv import load_dotenv
 
 from hatchet_sdk import Hatchet
@@ -24,7 +25,7 @@ class ConcurrencyDemoWorkflow:
     @hatchet.step(parents=["step1"], timeout="4s")
     def step2(self, context):
         print("started step2")
-        context.sleep(1)
+        time.sleep(1)
         print("finished step2")
 
 

@@ -1,3 +1,4 @@
+import time
 from dotenv import load_dotenv
 
 from hatchet_sdk import Hatchet
@@ -16,7 +17,7 @@ class TimeoutWorkflow:
     def timeout(self, context):
         try:
             print("started step2")
-            context.sleep(5)
+            time.sleep(5)
             print("finished step2")
         except Exception as e:
             print("caught an exception: " + str(e))

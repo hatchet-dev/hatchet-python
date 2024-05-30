@@ -6,7 +6,10 @@ from typing import Dict, List, Optional, TypedDict, Union
 import grpc
 from google.protobuf import timestamp_pb2
 
+from hatchet_sdk.clients.run_event_listener import new_listener
+from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -40,6 +43,8 @@ class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
 
 
 class AdminClientBase:
+    pooled_workflow_listener: PooledWorkflowRunListener | None = None
+
     def _prepare_workflow_request(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ):
@@ -119,17 +124,28 @@ class AdminClientAioImpl(AdminClientBase):
         aio_conn = new_conn(config, True)
         self.aio_client = WorkflowServiceStub(aio_conn)
         self.token = config.token
+        self.listener_client = new_listener(config)
+        self.namespace = config.namespace
 
     async def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
-    ):
+    ) -> WorkflowRunRef:
         try:
+            if not self.pooled_workflow_listener:
+                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+
+            workflow_name = f"{self.namespace}{workflow_name}"
+
             request = self._prepare_workflow_request(workflow_name, input, options)
             resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
                 request,
                 metadata=get_metadata(self.token),
             )
-            return resp.workflow_run_id
+            return WorkflowRunRef(
+                workflow_run_id=resp.workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
+            )
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
@@ -190,9 +206,12 @@ class AdminClientAioImpl(AdminClientBase):
 class AdminClientImpl(AdminClientBase):
     def __init__(self, config: ClientConfig):
         conn = new_conn(config)
+        self.config = config
         self.client = WorkflowServiceStub(conn)
         self.aio = AdminClientAioImpl(config)
         self.token = config.token
+        self.listener_client = new_listener(config)
+        self.namespace = config.namespace
 
     def put_workflow(
         self,
@@ -251,13 +270,22 @@ class AdminClientImpl(AdminClientBase):
 
     def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
-    ):
+    ) -> WorkflowRunRef:
         try:
+            if not self.pooled_workflow_listener:
+                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+
+            workflow_name = f"{self.namespace}{workflow_name}"
+
             request = self._prepare_workflow_request(workflow_name, input, options)
             resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
                 request,
                 metadata=get_metadata(self.token),
             )
-            return resp.workflow_run_id
+            return WorkflowRunRef(
+                workflow_run_id=resp.workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
+            )
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")

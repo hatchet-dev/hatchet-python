@@ -1,5 +1,6 @@
 import base64
 import os
+import time
 
 from dotenv import load_dotenv
 
@@ -34,14 +35,14 @@ class ManualTriggerWorkflow:
         # Stream the base64-encoded image data
         context.put_stream(base64_image)
 
-        context.sleep(3)
+        time.sleep(3)
         print("executed step1")
         return {"step1": "data1 " + res}
 
     @hatchet.step(parents=["step1"], timeout="4s")
     def step2(self, context):
         print("started step2")
-        context.sleep(1)
+        time.sleep(1)
         print("finished step2")
         return {"step2": "data2"}
 

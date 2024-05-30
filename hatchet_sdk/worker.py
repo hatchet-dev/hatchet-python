@@ -179,7 +179,11 @@ class Worker:
             task.add_done_callback(self.callback(action))
             self.tasks[action.step_run_id] = task
 
-            await task
+            try:
+                await task
+            except Exception as e:
+                # do nothing, this should be caught in the callback
+                pass
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
@@ -285,7 +289,11 @@ class Worker:
             # Send the action event to the dispatcher
             self.dispatcher_client.send_group_key_action_event(event)
 
-            await task
+            try:
+                await task
+            except Exception as e:
+                # do nothing, this should be caught in the callback
+                pass
 
     def force_kill_thread(self, thread):
         """Terminate a python threading.Thread."""
@@ -474,9 +482,7 @@ class Worker:
             # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
             self.admin_client = new_admin(self.config)
-            self.client.workflow_listener = PooledWorkflowRunListener(
-                self.config.token, self.config
-            )
+            self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
