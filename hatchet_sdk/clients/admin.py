@@ -6,6 +6,8 @@ from typing import Dict, List, Optional, TypedDict, Union
 import grpc
 from google.protobuf import timestamp_pb2
 
+from hatchet_sdk.connection import new_conn
+
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 from ..workflow import WorkflowMeta
@@ -22,12 +24,10 @@ from ..workflows_pb2 import (
 from ..workflows_pb2_grpc import WorkflowServiceStub
 
 
-def new_admin(conn, config: ClientConfig):
+def new_admin(config: ClientConfig):
     return AdminClientImpl(
-        client=WorkflowServiceStub(conn),
-        token=config.token,
+        config
     )
-
 
 class ScheduleTriggerWorkflowOptions(TypedDict):
     parent_id: Optional[str]
@@ -41,9 +41,13 @@ class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
 
 
 class AdminClientImpl:
-    def __init__(self, client: WorkflowServiceStub, token):
-        self.client = client
-        self.token = token
+    def __init__(self, config: ClientConfig):
+        conn = new_conn(config)
+        self.client = WorkflowServiceStub(conn)
+
+        aio_conn = new_conn(config, True)
+        self.aio_client = WorkflowServiceStub(aio_conn)
+        self.token = config.token
 
     def put_workflow(
         self,
@@ -127,7 +131,7 @@ class AdminClientImpl:
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
-    def run_workflow(
+    async def run_workflow(
         self,
         workflow_name: str,
         input: any,
@@ -143,7 +147,7 @@ class AdminClientImpl:
             except json.JSONDecodeError as e:
                 raise ValueError(f"Error encoding payload: {e}")
 
-            resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
+            resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
                 TriggerWorkflowRequest(
                     name=workflow_name, input=payload_data, **(options or {})
                 ),
