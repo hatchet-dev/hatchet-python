@@ -4,6 +4,7 @@ from typing import Any
 
 import grpc
 
+from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
 
 from .clients.admin import AdminClientImpl, new_admin
@@ -24,6 +25,7 @@ class Client:
     event: EventClientImpl
     listener: ListenerClientImpl
     rest: RestApi
+    workflow_listener: PooledWorkflowRunListener
 
 
 class ClientImpl(Client):
@@ -33,6 +35,7 @@ class ClientImpl(Client):
         admin_client: AdminClientImpl,
         dispatcher_client: DispatcherClientImpl,
         listener_client: ListenerClientImpl,
+        workflow_listener: PooledWorkflowRunListener,
         rest_client: RestApi,
         config: ClientConfig,
     ):
@@ -42,6 +45,7 @@ class ClientImpl(Client):
         self.listener = listener_client
         self.rest = rest_client
         self.config = config
+        self.workflow_listener = workflow_listener
 
 
 def with_host_port(host: str, port: int):
@@ -68,16 +72,18 @@ def new_client(defaults: ClientConfig = {}, *opts_functions):
 
     # Instantiate client implementations
     event_client = new_event(conn, config)
-    admin_client = new_admin(conn, config)
+    admin_client = new_admin(config)
     dispatcher_client = new_dispatcher(config)
     listener_client = new_listener(conn, config)
     rest_client = RestApi(config.server_url, config.token, config.tenant_id)
+    workflow_listener_client = None
 
     return ClientImpl(
         event_client,
         admin_client,
         dispatcher_client,
         listener_client,
+        workflow_listener_client,
         rest_client,
         config,
     )

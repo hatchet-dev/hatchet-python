@@ -39,7 +39,7 @@ class DispatcherClient:
     def get_action_listener(self, ctx, req):
         raise NotImplementedError
 
-    def send_step_action_event(self, ctx, in_):
+    async def send_step_action_event(self, ctx, in_):
         raise NotImplementedError
 
 
@@ -338,13 +338,11 @@ class DispatcherClientImpl(DispatcherClient):
             self.client, self.aio_client, self.config, response.workerId
         )
 
-    def send_step_action_event(self, in_: StepActionEvent):
-        response: ActionEventResponse = self.client.SendStepActionEvent(
+    async def send_step_action_event(self, in_: StepActionEvent):
+        await self.aio_client.SendStepActionEvent(
             in_,
             metadata=get_metadata(self.token),
         )
-
-        return response
 
     def send_group_key_action_event(self, in_: GroupKeyActionEvent):
         response: ActionEventResponse = self.client.SendGroupKeyActionEvent(

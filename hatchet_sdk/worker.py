@@ -8,12 +8,15 @@ import threading
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
 
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
+from hatchet_sdk.clients.admin import new_admin
+from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
 
 from .client import new_client
@@ -69,106 +72,125 @@ class Worker:
         self.killing = False
         self.handle_kill = handle_kill
 
+    def callback(self, action: Action):
+        def inner_callback(task: asyncio.Task):
+            errored = False
+            cancelled = task.cancelled()
+
+            # Get the output from the future
+            try:
+                if not cancelled:
+                    output = task.result()
+            except Exception as e:
+                errored = True
+
+                # This except is coming from the application itself, so we want to send that to the Hatchet instance
+                event = self.get_step_action_event(action, STEP_EVENT_TYPE_FAILED)
+                event.eventPayload = str(errorWithTraceback(f"{e}", e))
+
+                try:
+                    asyncio.create_task(
+                        self.dispatcher_client.send_step_action_event(event)
+                    )
+                except Exception as e:
+                    logger.error(f"Could not send action event: {e}")
+
+            if not errored and not cancelled:
+                # Create an action event
+                try:
+                    event = self.get_step_action_finished_event(action, output)
+                except Exception as e:
+                    logger.error(f"Could not get action finished event: {e}")
+                    raise e
+
+                # Send the action event to the dispatcher
+                asyncio.create_task(
+                    self.dispatcher_client.send_step_action_event(event)
+                )
+
+            # Remove the future from the dictionary
+            if action.step_run_id in self.tasks:
+                del self.tasks[action.step_run_id]
+
+        return inner_callback
+
+    def thread_action_func(self, context, action_func, action: Action):
+        self.threads[action.step_run_id] = current_thread()
+        return action_func(context)
+
+    # We wrap all actions in an async func
+    async def async_wrapped_action_func(self, context, action_func, action: Action):
+        try:
+            if action_func._is_coroutine:
+                return await action_func(context)
+            else:
+                pfunc = functools.partial(
+                    self.thread_action_func, context, action_func, action
+                )
+                res = await self.loop.run_in_executor(self.thread_pool, pfunc)
+
+                if action.step_run_id in self.threads:
+                    # remove the thread id
+                    logger.debug(
+                        f"Removing step run id {action.step_run_id} from threads"
+                    )
+
+                    del self.threads[action.step_run_id]
+
+                return res
+        except Exception as e:
+            logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
+            raise e
+        finally:
+            if action.step_run_id in self.tasks:
+                del self.tasks[action.step_run_id]
+
     async def handle_start_step_run(self, action: Action):
-        await asyncio.sleep(0.0)
-
         action_name = action.action_id
-        context = Context(action, self.client)
-
+        context = Context(
+            action,
+            self.dispatcher_client,
+            self.admin_client,
+            self.client.event,
+            self.client.workflow_listener,
+            self.client.config.namespace,
+        )
         self.contexts[action.step_run_id] = context
 
         # Find the corresponding action function from the registry
         action_func = self.action_registry.get(action_name)
 
         if action_func:
-
-            def callback(task: asyncio.Task):
-                errored = False
-                cancelled = task.cancelled()
-
-                # Get the output from the future
-                try:
-                    if not cancelled:
-                        output = task.result()
-                except Exception as e:
-                    errored = True
-
-                    # This except is coming from the application itself, so we want to send that to the Hatchet instance
-                    event = self.get_step_action_event(action, STEP_EVENT_TYPE_FAILED)
-                    event.eventPayload = str(errorWithTraceback(f"{e}", e))
-
-                    try:
-                        self.dispatcher_client.send_step_action_event(event)
-                    except Exception as e:
-                        logger.error(f"Could not send action event: {e}")
-
-                if not errored and not cancelled:
-                    # Create an action event
-                    try:
-                        event = self.get_step_action_finished_event(action, output)
-                    except Exception as e:
-                        logger.error(f"Could not get action finished event: {e}")
-                        raise e
-
-                    # Send the action event to the dispatcher
-                    self.dispatcher_client.send_step_action_event(event)
-
-                # Remove the future from the dictionary
-                if action.step_run_id in self.tasks:
-                    del self.tasks[action.step_run_id]
-
-            def thread_action_func(context, action_func):
-                self.threads[action.step_run_id] = current_thread()
-                return action_func(context)
-
-            # We wrap all actions in an async func
-            async def async_wrapped_action_func(context):
-                try:
-                    if action_func._is_coroutine:
-                        return await action_func(context)
-                    else:
-
-                        pfunc = functools.partial(
-                            thread_action_func, context, action_func
-                        )
-                        res = await self.loop.run_in_executor(self.thread_pool, pfunc)
-
-                        if action.step_run_id in self.threads:
-                            # remove the thread id
-                            logger.debug(
-                                f"Removing step run id {action.step_run_id} from threads"
-                            )
-
-                            del self.threads[action.step_run_id]
-
-                        return res
-                except Exception as e:
-                    logger.error(
-                        errorWithTraceback(f"Could not execute action: {e}", e)
-                    )
-                    raise e
-                finally:
-                    if action.step_run_id in self.tasks:
-                        del self.tasks[action.step_run_id]
-
-            task = self.loop.create_task(async_wrapped_action_func(context))
-            task.add_done_callback(callback)
-            self.tasks[action.step_run_id] = task
-
             # send an event that the step run has started
             try:
                 event = self.get_step_action_event(action, STEP_EVENT_TYPE_STARTED)
-            except Exception as e:
-                logger.error(f"Could not create action event: {e}")
 
-            # Send the action event to the dispatcher
-            self.dispatcher_client.send_step_action_event(event)
+                # Send the action event to the dispatcher
+                asyncio.create_task(
+                    self.dispatcher_client.send_step_action_event(event)
+                )
+            except Exception as e:
+                logger.error(f"Could not send action event: {e}")
+
+            task = self.loop.create_task(
+                self.async_wrapped_action_func(context, action_func, action)
+            )
+
+            task.add_done_callback(self.callback(action))
+            self.tasks[action.step_run_id] = task
 
             await task
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
-        context = Context(action, self.client)
+        context = Context(
+            action,
+            self.dispatcher_client,
+            self.admin_client,
+            self.client.event,
+            self.client.workflow_listener,
+            self.client.config.namespace,
+        )
 
         self.contexts[action.get_group_key_run_id] = context
 
@@ -429,6 +451,16 @@ class Worker:
             sys.exit(0)
 
     def start(self, retry_count=1):
+        actions = self.action_registry.items()
+
+        for action_name, action_func in actions:
+            logger.debug(f"Registered action: {action_name}")
+
+            # if action_func._is_coroutine:
+            #     raise Exception(
+            #         "Cannot register async actions with the synchronous worker, use async_start instead."
+            #     )
+
         try:
             loop = asyncio.get_running_loop()
             self.loop = loop
@@ -448,9 +480,13 @@ class Worker:
         self.loop = asyncio.get_running_loop()
 
         try:
-            # We need to initialize a new dispatcher *after* we've started the event loop, otherwise
-            # the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
+            # We need to initialize a new admin and dispatcher client *after* we've started the event loop,
+            # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
+            self.admin_client = new_admin(self.config)
+            self.client.workflow_listener = PooledWorkflowRunListener(
+                self.config.token, self.config
+            )
 
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
