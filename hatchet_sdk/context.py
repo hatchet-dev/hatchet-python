@@ -1,22 +1,13 @@
-import asyncio
 import inspect
 import json
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from multiprocessing import Event
-
-from aiostream.stream import merge
 
 from hatchet_sdk.clients.events import EventClientImpl
-from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
-from hatchet_sdk.dispatcher_pb2_grpc import DispatcherStub
-from hatchet_sdk.workflows_pb2_grpc import WorkflowServiceStub
 
 from .client import ClientImpl
 from .clients.admin import AdminClientImpl, ScheduleTriggerWorkflowOptions
 from .clients.dispatcher import Action, DispatcherClientImpl
-from .clients.listener import HatchetListener, StepRunEvent, WorkflowRunEventType
 from .dispatcher_pb2 import OverridesData
 from .logger import logger
 
@@ -48,7 +39,53 @@ class WorkflowRunRef:
         return await self.workflow_listener.result(self.workflow_run_id)
 
 
-class Context:
+class BaseContext:
+    def _prepare_workflow_options(self, key: str = None):
+        workflow_run_id = self.action.workflow_run_id
+        step_run_id = self.action.step_run_id
+
+        options: ScheduleTriggerWorkflowOptions = {
+            "parent_id": workflow_run_id,
+            "parent_step_run_id": step_run_id,
+            "child_key": key,
+            "child_index": self.spawn_index,
+        }
+
+        self.spawn_index += 1
+        return options
+
+
+class ContextAioImpl(BaseContext):
+    def __init__(
+        self,
+        action: Action,
+        dispatcher_client: DispatcherClientImpl,
+        admin_client: AdminClientImpl,
+        event_client: EventClientImpl,
+        workflow_listener: PooledWorkflowRunListener,
+        namespace: str = "",
+    ):
+        self.action = action
+        self.dispatcher_client = dispatcher_client
+        self.admin_client = admin_client
+        self.event_client = event_client
+        self.workflow_listener = workflow_listener
+        self.namespace = namespace
+        self.spawn_index = -1
+
+    async def spawn_workflow(
+        self, workflow_name: str, input: dict = {}, key: str = None
+    ):
+        workflow_name = f"{self.namespace}{workflow_name}"
+
+        options = self._prepare_workflow_options(key)
+        child_workflow_run_id = await self.admin_client.aio.run_workflow(
+            workflow_name, input, options
+        )
+        return WorkflowRunRef(child_workflow_run_id, self.workflow_listener)
+
+
+class Context(BaseContext):
     spawn_index = -1
 
     def __init__(
@@ -58,7 +95,17 @@ class Context:
         admin_client: AdminClientImpl,
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
+        namespace: str = "",
     ):
+        self.aio = ContextAioImpl(
+            action,
+            dispatcher_client,
+            admin_client,
+            event_client,
+            workflow_listener,
+            namespace,
+        )
+
         # Check the type of action.action_payload before attempting to load it as JSON
         if isinstance(action.action_payload, (str, bytes, bytearray)):
             try:
@@ -80,6 +127,7 @@ class Context:
         self.admin_client = admin_client
         self.event_client = event_client
         self.workflow_listener = workflow_listener
+        self.namespace = namespace
 
         # FIXME: this limits the number of concurrent log requests to 1, which means we can do about
         # 100 log lines per second but this depends on network.
@@ -136,25 +184,13 @@ class Context:
 
         return default
 
-    async def spawn_workflow(
-        self, workflow_name: str, input: dict = {}, key: str = None
-    ):
-        workflow_run_id = self.action.workflow_run_id
-        step_run_id = self.action.step_run_id
+    def spawn_workflow(self, workflow_name: str, input: dict = {}, key: str = None):
+        workflow_name = f"{self.namespace}{workflow_name}"
 
-        options: ScheduleTriggerWorkflowOptions = {
-            "parent_id": workflow_run_id,
-            "parent_step_run_id": step_run_id,
-            "child_key": key,
-            "child_index": self.spawn_index,
-        }
-
-        self.spawn_index += 1
-
-        child_workflow_run_id = await self.admin_client.run_workflow(
+        options = self._prepare_workflow_options(key)
+        child_workflow_run_id = self.admin_client.run_workflow(
             workflow_name, input, options
         )
-
         return WorkflowRunRef(child_workflow_run_id, self.workflow_listener)
 
     def _log(self, line: str):

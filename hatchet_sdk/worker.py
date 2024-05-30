@@ -145,7 +145,7 @@ class Worker:
             if action.step_run_id in self.tasks:
                 del self.tasks[action.step_run_id]
 
-    async def handle_start_step_run(self, action: Action, sent_at: float = 0.0):
+    async def handle_start_step_run(self, action: Action):
         action_name = action.action_id
         context = Context(
             action,
@@ -153,6 +153,7 @@ class Worker:
             self.admin_client,
             self.client.event,
             self.client.workflow_listener,
+            self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
 
@@ -188,6 +189,7 @@ class Worker:
             self.admin_client,
             self.client.event,
             self.client.workflow_listener,
+            self.client.config.namespace,
         )
 
         self.contexts[action.get_group_key_run_id] = context
@@ -501,9 +503,7 @@ class Worker:
             # what allows self.loop.create_task to work.
             async for action in self.listener:
                 if action.action_type == ActionType.START_STEP_RUN:
-                    self.loop.create_task(
-                        self.handle_start_step_run(action, time.time())
-                    )
+                    self.loop.create_task(self.handle_start_step_run(action))
                 elif action.action_type == ActionType.CANCEL_STEP_RUN:
                     self.loop.create_task(self.handle_cancel_action(action.step_run_id))
                 elif action.action_type == ActionType.START_GET_GROUP_KEY:

@@ -39,21 +39,32 @@ class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
     additional_metadata: Dict[str, str] | None = None
 
 
-class AdminClientImpl:
-    def __init__(self, config: ClientConfig):
-        conn = new_conn(config)
-        self.client = WorkflowServiceStub(conn)
+class AdminClientBase:
+    def _prepare_workflow_request(
+        self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
+    ):
+        try:
+            payload_data = json.dumps(input)
 
-        aio_conn = new_conn(config, True)
-        self.aio_client = WorkflowServiceStub(aio_conn)
-        self.token = config.token
+            try:
+                meta = None if options is None else options.get("additional_metadata")
+                if meta is not None:
+                    options["additional_metadata"] = json.dumps(meta).encode("utf-8")
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Error encoding payload: {e}")
 
-    def put_workflow(
+            return TriggerWorkflowRequest(
+                name=workflow_name, input=payload_data, **(options or {})
+            )
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Error encoding payload: {e}")
+
+    def _prepare_put_workflow_request(
         self,
         name: str,
         workflow: CreateWorkflowVersionOpts | WorkflowMeta,
         overrides: CreateWorkflowVersionOpts | None = None,
-    ) -> WorkflowVersion:
+    ):
         try:
             opts: CreateWorkflowVersionOpts
 
@@ -67,12 +78,137 @@ class AdminClientImpl:
 
             opts.name = name
 
-            return self.client.PutWorkflow(
-                PutWorkflowRequest(
-                    opts=opts,
+            return PutWorkflowRequest(
+                opts=opts,
+            )
+        except grpc.RpcError as e:
+            raise ValueError(f"Could not put workflow: {e}")
+
+    def _prepare_schedule_workflow_request(
+        self,
+        name: str,
+        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
+        input={},
+        options: ScheduleTriggerWorkflowOptions = None,
+    ):
+        timestamp_schedules = []
+        for schedule in schedules:
+            if isinstance(schedule, datetime):
+                t = schedule.timestamp()
+                seconds = int(t)
+                nanos = int(t % 1 * 1e9)
+                timestamp = timestamp_pb2.Timestamp(seconds=seconds, nanos=nanos)
+                timestamp_schedules.append(timestamp)
+            elif isinstance(schedule, timestamp_pb2.Timestamp):
+                timestamp_schedules.append(schedule)
+            else:
+                raise ValueError(
+                    "Invalid schedule type. Must be datetime or timestamp_pb2.Timestamp."
+                )
+
+        return ScheduleWorkflowRequest(
+            name=name,
+            schedules=timestamp_schedules,
+            input=json.dumps(input),
+            **(options or {}),
+        )
+
+
+class AdminClientAioImpl(AdminClientBase):
+    def __init__(self, config: ClientConfig):
+        aio_conn = new_conn(config, True)
+        self.aio_client = WorkflowServiceStub(aio_conn)
+        self.token = config.token
+
+    async def run_workflow(
+        self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
+    ):
+        try:
+            request = self._prepare_workflow_request(workflow_name, input, options)
+            resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
+                request,
+                metadata=get_metadata(self.token),
+            )
+            return resp.workflow_run_id
+        except grpc.RpcError as e:
+            raise ValueError(f"gRPC error: {e}")
+
+    async def put_workflow(
+        self,
+        name: str,
+        workflow: CreateWorkflowVersionOpts | WorkflowMeta,
+        overrides: CreateWorkflowVersionOpts | None = None,
+    ) -> WorkflowVersion:
+        try:
+            opts = self._prepare_put_workflow_request(name, workflow, overrides)
+
+            return await self.aio_client.PutWorkflow(
+                opts,
+                metadata=get_metadata(self.token),
+            )
+        except grpc.RpcError as e:
+            raise ValueError(f"Could not put workflow: {e}")
+
+    async def put_rate_limit(
+        self,
+        key: str,
+        limit: int,
+        duration: RateLimitDuration = RateLimitDuration.SECOND,
+    ):
+        try:
+            await self.aio_client.PutRateLimit(
+                PutRateLimitRequest(
+                    key=key,
+                    limit=limit,
+                    duration=duration,
                 ),
                 metadata=get_metadata(self.token),
             )
+        except grpc.RpcError as e:
+            raise ValueError(f"Could not put rate limit: {e}")
+
+    async def schedule_workflow(
+        self,
+        name: str,
+        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
+        input={},
+        options: ScheduleTriggerWorkflowOptions = None,
+    ) -> WorkflowVersion:
+        try:
+            request = self._prepare_schedule_workflow_request(
+                name, schedules, input, options
+            )
+
+            return await self.aio_client.ScheduleWorkflow(
+                request,
+                metadata=get_metadata(self.token),
+            )
+        except grpc.RpcError as e:
+            raise ValueError(f"gRPC error: {e}")
+
+
+class AdminClientImpl(AdminClientBase):
+    def __init__(self, config: ClientConfig):
+        conn = new_conn(config)
+        self.client = WorkflowServiceStub(conn)
+        self.aio = AdminClientAioImpl(config)
+        self.token = config.token
+
+    def put_workflow(
+        self,
+        name: str,
+        workflow: CreateWorkflowVersionOpts | WorkflowMeta,
+        overrides: CreateWorkflowVersionOpts | None = None,
+    ) -> WorkflowVersion:
+        try:
+            opts = self._prepare_put_workflow_request(name, workflow, overrides)
+
+            resp: WorkflowVersion = self.client.PutWorkflow(
+                opts,
+                metadata=get_metadata(self.token),
+            )
+
+            return resp
         except grpc.RpcError as e:
             raise ValueError(f"Could not put workflow: {e}")
 
@@ -100,61 +236,28 @@ class AdminClientImpl:
         schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
         options: ScheduleTriggerWorkflowOptions = None,
-    ):
-        timestamp_schedules = []
-        for schedule in schedules:
-            if isinstance(schedule, datetime):
-                t = schedule.timestamp()
-                seconds = int(t)
-                nanos = int(t % 1 * 1e9)
-                timestamp = timestamp_pb2.Timestamp(seconds=seconds, nanos=nanos)
-                timestamp_schedules.append(timestamp)
-            elif isinstance(schedule, timestamp_pb2.Timestamp):
-                timestamp_schedules.append(schedule)
-            else:
-                raise ValueError(
-                    "Invalid schedule type. Must be datetime or timestamp_pb2.Timestamp."
-                )
-
+    ) -> WorkflowVersion:
         try:
-            self.client.ScheduleWorkflow(
-                ScheduleWorkflowRequest(
-                    name=name,
-                    schedules=timestamp_schedules,
-                    input=json.dumps(input),
-                    **(options or {}),
-                ),
-                metadata=get_metadata(self.token),
+            request = self._prepare_schedule_workflow_request(
+                name, schedules, input, options
             )
 
+            return self.client.ScheduleWorkflow(
+                request,
+                metadata=get_metadata(self.token),
+            )
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
-    async def run_workflow(
-        self,
-        workflow_name: str,
-        input: any,
-        options: TriggerWorkflowOptions = None,
+    def run_workflow(
+        self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ):
         try:
-            payload_data = json.dumps(input)
-
-            try:
-                meta = None if options is None else options.get("additional_metadata")
-                if meta is not None:
-                    options["additional_metadata"] = json.dumps(meta).encode("utf-8")
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Error encoding payload: {e}")
-
-            resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
-                TriggerWorkflowRequest(
-                    name=workflow_name, input=payload_data, **(options or {})
-                ),
+            request = self._prepare_workflow_request(workflow_name, input, options)
+            resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
+                request,
                 metadata=get_metadata(self.token),
             )
-
             return resp.workflow_run_id
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Error encoding payload: {e}")
