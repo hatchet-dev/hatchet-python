@@ -1,8 +1,8 @@
 import asyncio
-from datetime import datetime
 import inspect
 import json
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from multiprocessing import Event
 
 from aiostream.stream import merge
@@ -34,10 +34,10 @@ class WorkflowRunRef:
     client: ClientImpl
 
     def __init__(
-            self, 
-            workflow_run_id: str, 
-            workflow_listener: PooledWorkflowRunListener,
-        ):
+        self,
+        workflow_run_id: str,
+        workflow_listener: PooledWorkflowRunListener,
+    ):
         self.workflow_run_id = workflow_run_id
         self.workflow_listener = workflow_listener
 
@@ -47,17 +47,18 @@ class WorkflowRunRef:
     async def result(self):
         return await self.workflow_listener.result(self.workflow_run_id)
 
+
 class Context:
     spawn_index = -1
 
     def __init__(
-            self, 
-            action: Action, 
-            dispatcher_client: DispatcherClientImpl,
-            admin_client: AdminClientImpl,
-            event_client: EventClientImpl,
-            workflow_listener: PooledWorkflowRunListener,
-        ):        
+        self,
+        action: Action,
+        dispatcher_client: DispatcherClientImpl,
+        admin_client: AdminClientImpl,
+        event_client: EventClientImpl,
+        workflow_listener: PooledWorkflowRunListener,
+    ):
         # Check the type of action.action_payload before attempting to load it as JSON
         if isinstance(action.action_payload, (str, bytes, bytearray)):
             try:
@@ -135,7 +136,9 @@ class Context:
 
         return default
 
-    async def spawn_workflow(self, workflow_name: str, input: dict = {}, key: str = None):
+    async def spawn_workflow(
+        self, workflow_name: str, input: dict = {}, key: str = None
+    ):
         workflow_run_id = self.action.workflow_run_id
         step_run_id = self.action.step_run_id
 

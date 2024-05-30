@@ -19,7 +19,11 @@ class Parent:
 
         for i in range(100):
             results.append(
-                (await context.spawn_workflow("Child", {"a": str(i)}, key=f"child{i}")).result()
+                (
+                    await context.spawn_workflow(
+                        "Child", {"a": str(i)}, key=f"child{i}"
+                    )
+                ).result()
             )
 
         result = await asyncio.gather(*results)

@@ -25,9 +25,8 @@ from ..workflows_pb2_grpc import WorkflowServiceStub
 
 
 def new_admin(config: ClientConfig):
-    return AdminClientImpl(
-        config
-    )
+    return AdminClientImpl(config)
+
 
 class ScheduleTriggerWorkflowOptions(TypedDict):
     parent_id: Optional[str]

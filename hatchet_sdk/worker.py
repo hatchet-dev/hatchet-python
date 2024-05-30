@@ -1,6 +1,5 @@
 import asyncio
 import ctypes
-from datetime import datetime
 import functools
 import json
 import signal
@@ -9,6 +8,7 @@ import threading
 import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
 
@@ -117,7 +117,7 @@ class Worker:
     def thread_action_func(self, context, action_func, action: Action):
         self.threads[action.step_run_id] = current_thread()
         return action_func(context)
-    
+
     # We wrap all actions in an async func
     async def async_wrapped_action_func(self, context, action_func, action: Action):
         try:
@@ -139,9 +139,7 @@ class Worker:
 
                 return res
         except Exception as e:
-            logger.error(
-                errorWithTraceback(f"Could not execute action: {e}", e)
-            )
+            logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
             raise e
         finally:
             if action.step_run_id in self.tasks:
@@ -149,7 +147,13 @@ class Worker:
 
     async def handle_start_step_run(self, action: Action, sent_at: float = 0.0):
         action_name = action.action_id
-        context = Context(action, self.dispatcher_client, self.admin_client, self.client.event, self.client.workflow_listener)
+        context = Context(
+            action,
+            self.dispatcher_client,
+            self.admin_client,
+            self.client.event,
+            self.client.workflow_listener,
+        )
         self.contexts[action.step_run_id] = context
 
         # Find the corresponding action function from the registry
@@ -178,7 +182,13 @@ class Worker:
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
-        context = Context(action, self.dispatcher_client, self.admin_client, self.client.event, self.client.workflow_listener)
+        context = Context(
+            action,
+            self.dispatcher_client,
+            self.admin_client,
+            self.client.event,
+            self.client.workflow_listener,
+        )
 
         self.contexts[action.get_group_key_run_id] = context
 
@@ -468,7 +478,7 @@ class Worker:
         self.loop = asyncio.get_running_loop()
 
         try:
-            # We need to initialize a new admin and dispatcher client *after* we've started the event loop, 
+            # We need to initialize a new admin and dispatcher client *after* we've started the event loop,
             # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
             self.admin_client = new_admin(self.config)
@@ -491,7 +501,9 @@ class Worker:
             # what allows self.loop.create_task to work.
             async for action in self.listener:
                 if action.action_type == ActionType.START_STEP_RUN:
-                    self.loop.create_task(self.handle_start_step_run(action, time.time()))
+                    self.loop.create_task(
+                        self.handle_start_step_run(action, time.time())
+                    )
                 elif action.action_type == ActionType.CANCEL_STEP_RUN:
                     self.loop.create_task(self.handle_cancel_action(action.step_run_id))
                 elif action.action_type == ActionType.START_GET_GROUP_KEY:
