@@ -1,9 +1,10 @@
 # relative imports
 import asyncio
 import json
+import random
 import threading
 import time
-from typing import AsyncGenerator, Callable, List, Union
+from typing import Any, AsyncGenerator, Callable, List, Union
 
 import grpc
 
@@ -106,6 +107,19 @@ CANCEL_STEP_RUN = 1
 START_GET_GROUP_KEY = 2
 
 
+async def read_action(listener: Any, interrupt: asyncio.Event):
+    assigned_action = await listener.read()
+    interrupt.set()
+    return assigned_action
+
+
+async def exp_backoff_sleep(attempt: int, max_sleep_time: float = 5):
+    base_time = 0.1  # starting sleep time in seconds (100 milliseconds)
+    jitter = random.uniform(0, base_time)  # add random jitter
+    sleep_time = min(base_time * (2**attempt) + jitter, max_sleep_time)
+    await asyncio.sleep(sleep_time)
+
+
 class ActionListenerImpl(WorkerActionListener):
     config: ClientConfig
 
@@ -123,44 +137,45 @@ class ActionListenerImpl(WorkerActionListener):
         self.worker_id = worker_id
         self.retries = 0
         self.last_connection_attempt = 0
-        self.heartbeat_thread = None
+        self.heartbeat_task: asyncio.Task = None
         self.run_heartbeat = True
         self.listen_strategy = "v2"
         self.stop_signal = False
+        self.logger = logger.bind(worker_id=worker_id)
 
-    def heartbeat(self):
+    async def heartbeat(self):
         # send a heartbeat every 4 seconds
         while True:
             if not self.run_heartbeat:
                 break
 
             try:
-                self.client.Heartbeat(
+                await self.aio_client.Heartbeat(
                     HeartbeatRequest(
                         workerId=self.worker_id,
                         heartbeatAt=proto_timestamp_now(),
                     ),
-                    timeout=DEFAULT_REGISTER_TIMEOUT,
+                    timeout=5,
                     metadata=get_metadata(self.token),
                 )
             except grpc.RpcError as e:
                 # we don't reraise the error here, as we don't want to stop the heartbeat thread
                 logger.error(f"Failed to send heartbeat: {e}")
 
+                if self.interrupt is not None:
+                    self.interrupt.set()
+
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
 
-            time.sleep(4)
+            await asyncio.sleep(4)
 
     def start_heartbeater(self):
-        if self.heartbeat_thread is not None:
+        if self.heartbeat_task is not None:
             return
 
         # create a new thread to send heartbeats
-        heartbeat_thread = threading.Thread(target=self.heartbeat)
-        heartbeat_thread.start()
-
-        self.heartbeat_thread = heartbeat_thread
+        self.heartbeat_task = asyncio.create_task(self.heartbeat())
 
     def __aiter__(self):
         return self._generator()
@@ -170,8 +185,23 @@ class ActionListenerImpl(WorkerActionListener):
             if self.stop_signal:
                 break
 
+            listener = await self.get_listen_client()
+
             try:
-                async for assigned_action in await self.get_listen_client():
+                while True:
+                    self.interrupt = asyncio.Event()
+                    t = asyncio.create_task(read_action(listener, self.interrupt))
+                    await self.interrupt.wait()
+
+                    if not t.done():
+                        # print a warning
+                        logger.warning("Interrupted read_action task")
+
+                        t.cancel()
+                        listener.cancel()
+                        break
+
+                    assigned_action = t.result()
                     self.retries = 0
                     assigned_action: AssignedAction
 
@@ -204,13 +234,12 @@ class ActionListenerImpl(WorkerActionListener):
                     )
 
                     yield action
-
             except grpc.RpcError as e:
                 # Handle different types of errors
                 if e.code() == grpc.StatusCode.CANCELLED:
                     # Context cancelled, unsubscribe and close
-                    # self.logger.debug("Context cancelled, closing listener")
-                    break
+                    self.logger.debug("Context cancelled, closing listener")
+                    continue
                 elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
                     logger.info("Deadline exceeded, retrying subscription")
                     continue
@@ -225,8 +254,6 @@ class ActionListenerImpl(WorkerActionListener):
                     continue
                 else:
                     # Unknown error, report and break
-                    # self.logger.error(f"Failed to receive message: {e}")
-                    # err_ch(e)
                     logger.error(f"Failed to receive message: {e}")
 
                     self.retries = self.retries + 1
@@ -256,6 +283,7 @@ class ActionListenerImpl(WorkerActionListener):
             current_time - self.last_connection_attempt
             > DEFAULT_ACTION_LISTENER_RETRY_INTERVAL
         ):
+            print("RESETTING RETRIES!!!")
             self.retries = 0
 
         if self.retries > DEFAULT_ACTION_LISTENER_RETRY_COUNT:
@@ -265,7 +293,10 @@ class ActionListenerImpl(WorkerActionListener):
         elif self.retries >= 1:
             # logger.info
             # if we are retrying, we wait for a bit. this should eventually be replaced with exp backoff + jitter
-            time.sleep(DEFAULT_ACTION_LISTENER_RETRY_INTERVAL)
+            await exp_backoff_sleep(
+                self.retries, DEFAULT_ACTION_LISTENER_RETRY_INTERVAL
+            )
+
             logger.info(
                 f"Could not connect to Hatchet, retrying... {self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT}"
             )
@@ -288,7 +319,7 @@ class ActionListenerImpl(WorkerActionListener):
 
         self.last_connection_attempt = current_time
 
-        logger.info("Listener established.")
+        logger.info("Established listener.")
         return listener
 
     def unregister(self):
