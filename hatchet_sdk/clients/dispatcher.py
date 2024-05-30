@@ -127,14 +127,11 @@ class ActionListenerImpl(WorkerActionListener):
 
     def __init__(
         self,
-        client: DispatcherStub,
-        aio_client: DispatcherStub,
         config: ClientConfig,
         worker_id,
     ):
-        self.aio_client = aio_client
-        self.client = client
         self.config = config
+        self.aio_client = DispatcherStub(new_conn(config, True))
         self.token = config.token
         self.worker_id = worker_id
         self.retries = 0
@@ -309,6 +306,8 @@ class ActionListenerImpl(WorkerActionListener):
                 f"Could not connect to Hatchet, retrying... {self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT}"
             )
 
+        self.aio_client = DispatcherStub(new_conn(self.config, True))
+
         if self.listen_strategy == "v2":
             listener = self.aio_client.ListenV2(
                 WorkerListenRequest(workerId=self.worker_id),
@@ -374,7 +373,7 @@ class DispatcherClientImpl(DispatcherClient):
         )
 
         return ActionListenerImpl(
-            self.client, self.aio_client, self.config, response.workerId
+            self.config, response.workerId
         )
 
     async def send_step_action_event(self, in_: StepActionEvent):
