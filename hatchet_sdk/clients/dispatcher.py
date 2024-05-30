@@ -283,7 +283,6 @@ class ActionListenerImpl(WorkerActionListener):
             current_time - self.last_connection_attempt
             > DEFAULT_ACTION_LISTENER_RETRY_INTERVAL
         ):
-            print("RESETTING RETRIES!!!")
             self.retries = 0
 
         if self.retries > DEFAULT_ACTION_LISTENER_RETRY_COUNT:
