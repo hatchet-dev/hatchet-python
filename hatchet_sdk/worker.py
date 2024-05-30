@@ -332,7 +332,7 @@ class Worker:
                     del self.tasks[run_id]
 
         # grace period of 1 second
-        time.sleep(1)
+        await asyncio.sleep(1)
 
         # check if thread is still running, if so, kill it
         if run_id in self.threads:
