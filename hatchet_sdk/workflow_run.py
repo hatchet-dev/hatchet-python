@@ -1,4 +1,7 @@
-from hatchet_sdk.clients.run_event_listener import RunEventListener, RunEventListenerClient
+from hatchet_sdk.clients.run_event_listener import (
+    RunEventListener,
+    RunEventListenerClient,
+)
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 
 
@@ -14,6 +17,9 @@ class WorkflowRunRef:
         self.workflow_run_id = workflow_run_id
         self.workflow_listener = workflow_listener
         self.workflow_run_event_listener = workflow_run_event_listener
+
+    def __str__(self):
+        return self.workflow_run_id
 
     def stream(self) -> RunEventListener:
         return self.workflow_run_event_listener.stream(self.workflow_run_id)

@@ -18,7 +18,7 @@ async def main():
         "ManualTriggerWorkflow",
         {"test": "test"},
         options={"additional_metadata": {"hello": "moon"}},
-    )    
+    )
 
     listener = workflowRun.stream()
 
@@ -41,7 +41,9 @@ async def main():
             with open(payload_path, "wb") as f:
                 f.write(decoded_payload)
 
-            data = json.dumps({"type": event.type, "messageId": workflowRun.workflow_run_id})
+            data = json.dumps(
+                {"type": event.type, "messageId": workflowRun.workflow_run_id}
+            )
             print("data: " + data + "\n\n")
 
     result = await workflowRun.result()

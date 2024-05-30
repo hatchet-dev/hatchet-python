@@ -3,7 +3,10 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 from hatchet_sdk.clients.events import EventClientImpl
-from hatchet_sdk.clients.run_event_listener import RunEventListener, RunEventListenerClient
+from hatchet_sdk.clients.run_event_listener import (
+    RunEventListener,
+    RunEventListenerClient,
+)
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
@@ -19,6 +22,7 @@ def get_caller_file_path():
     caller_frame = inspect.stack()[2]
 
     return caller_frame.filename
+
 
 class BaseContext:
     def _prepare_workflow_options(self, key: str = None):

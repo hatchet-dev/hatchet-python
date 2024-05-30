@@ -6,9 +6,8 @@ import threading
 import time
 from typing import Any, AsyncGenerator, Callable, List, Union
 
-from grpc._cython import cygrpc
-
 import grpc
+from grpc._cython import cygrpc
 
 from hatchet_sdk.connection import new_conn
 
@@ -180,7 +179,7 @@ class ActionListenerImpl(WorkerActionListener):
         return self._generator()
 
     async def _generator(self) -> AsyncGenerator[Action, None]:
-        listener : Any = None
+        listener: Any = None
 
         while True:
             if self.stop_signal:
@@ -372,9 +371,7 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-        return ActionListenerImpl(
-            self.config, response.workerId
-        )
+        return ActionListenerImpl(self.config, response.workerId)
 
     async def send_step_action_event(self, in_: StepActionEvent):
         await self.aio_client.SendStepActionEvent(

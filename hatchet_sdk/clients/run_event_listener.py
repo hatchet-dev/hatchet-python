@@ -63,9 +63,8 @@ class StepRunEvent:
 
 
 def new_listener(config: ClientConfig):
-    return RunEventListenerClient(
-        config=config
-    )
+    return RunEventListenerClient(config=config)
+
 
 class RunEventListener:
     def __init__(self, workflow_run_id: str, client: DispatcherStub, token: str):
@@ -133,7 +132,7 @@ class RunEventListener:
                     if workflow_event.hangup:
                         listener = None
                         break
-                
+
                 break
             except grpc.RpcError as e:
                 # Handle different types of errors
