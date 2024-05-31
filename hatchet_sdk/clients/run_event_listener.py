@@ -62,20 +62,16 @@ class StepRunEvent:
         self.payload = payload
 
 
-def new_listener(conn, config: ClientConfig):
-    return ListenerClientImpl(
-        client=DispatcherStub(conn), token=config.token, config=config
-    )
+def new_listener(config: ClientConfig):
+    return RunEventListenerClient(config=config)
 
 
-class HatchetListener:
-    def __init__(self, workflow_run_id: str, token: str, config: ClientConfig):
-        conn = new_conn(config, True)
-        self.client = DispatcherStub(conn)
+class RunEventListener:
+    def __init__(self, workflow_run_id: str, client: DispatcherStub, token: str):
+        self.client = client
         self.stop_signal = False
         self.workflow_run_id = workflow_run_id
         self.token = token
-        self.config = config
 
     def abort(self):
         self.stop_signal = True
@@ -84,11 +80,12 @@ class HatchetListener:
         return self._generator()
 
     async def _generator(self) -> AsyncGenerator[StepRunEvent, None]:
-        listener = await self.retry_subscribe()
-        while listener:
+        while True:
             if self.stop_signal:
                 listener = None
                 break
+
+            listener = await self.retry_subscribe()
 
             try:
                 async for workflow_event in listener:
@@ -136,6 +133,7 @@ class HatchetListener:
                         listener = None
                         break
 
+                break
             except grpc.RpcError as e:
                 # Handle different types of errors
                 if e.code() == grpc.StatusCode.CANCELLED:
@@ -175,14 +173,15 @@ class HatchetListener:
                     raise ValueError(f"gRPC error: {e}")
 
 
-class ListenerClientImpl:
-    def __init__(self, client: DispatcherStub, token: str, config: ClientConfig):
-        self.client = client
-        self.token = token
+class RunEventListenerClient:
+    def __init__(self, config: ClientConfig):
+        self.token = config.token
         self.config = config
+        aio_conn = new_conn(config, True)
+        self.client = DispatcherStub(aio_conn)
 
     def stream(self, workflow_run_id: str):
-        return HatchetListener(workflow_run_id, self.token, self.config)
+        return RunEventListener(workflow_run_id, self.client, self.token)
 
     async def on(self, workflow_run_id: str, handler: callable = None):
         async for event in self.stream(workflow_run_id):

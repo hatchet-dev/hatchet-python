@@ -7,6 +7,7 @@ import time
 from typing import Any, AsyncGenerator, Callable, List, Union
 
 import grpc
+from grpc._cython import cygrpc
 
 from hatchet_sdk.connection import new_conn
 
@@ -125,14 +126,11 @@ class ActionListenerImpl(WorkerActionListener):
 
     def __init__(
         self,
-        client: DispatcherStub,
-        aio_client: DispatcherStub,
         config: ClientConfig,
         worker_id,
     ):
-        self.aio_client = aio_client
-        self.client = client
         self.config = config
+        self.aio_client = DispatcherStub(new_conn(config, True))
         self.token = config.token
         self.worker_id = worker_id
         self.retries = 0
@@ -181,9 +179,14 @@ class ActionListenerImpl(WorkerActionListener):
         return self._generator()
 
     async def _generator(self) -> AsyncGenerator[Action, None]:
+        listener: Any = None
+
         while True:
             if self.stop_signal:
                 break
+
+            if listener is not None:
+                listener.cancel()
 
             listener = await self.get_listen_client()
 
@@ -202,6 +205,11 @@ class ActionListenerImpl(WorkerActionListener):
                         break
 
                     assigned_action = t.result()
+
+                    if assigned_action is cygrpc.EOF:
+                        self.retries = self.retries + 1
+                        break
+
                     self.retries = 0
                     assigned_action: AssignedAction
 
@@ -239,10 +247,8 @@ class ActionListenerImpl(WorkerActionListener):
                 if e.code() == grpc.StatusCode.CANCELLED:
                     # Context cancelled, unsubscribe and close
                     self.logger.debug("Context cancelled, closing listener")
-                    continue
                 elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
                     logger.info("Deadline exceeded, retrying subscription")
-                    continue
                 elif (
                     self.listen_strategy == "v2"
                     and e.code() == grpc.StatusCode.UNIMPLEMENTED
@@ -251,7 +257,6 @@ class ActionListenerImpl(WorkerActionListener):
                     self.listen_strategy = "v1"
                     self.run_heartbeat = False
                     logger.info("ListenV2 not available, falling back to Listen")
-                    continue
                 else:
                     # Unknown error, report and break
                     logger.error(f"Failed to receive message: {e}")
@@ -299,6 +304,8 @@ class ActionListenerImpl(WorkerActionListener):
             logger.info(
                 f"Could not connect to Hatchet, retrying... {self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT}"
             )
+
+        self.aio_client = DispatcherStub(new_conn(self.config, True))
 
         if self.listen_strategy == "v2":
             listener = self.aio_client.ListenV2(
@@ -364,9 +371,7 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-        return ActionListenerImpl(
-            self.client, self.aio_client, self.config, response.workerId
-        )
+        return ActionListenerImpl(self.config, response.workerId)
 
     async def send_step_action_event(self, in_: StepActionEvent):
         await self.aio_client.SendStepActionEvent(
