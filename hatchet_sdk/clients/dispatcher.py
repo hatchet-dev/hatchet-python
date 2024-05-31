@@ -108,7 +108,20 @@ CANCEL_STEP_RUN = 1
 START_GET_GROUP_KEY = 2
 
 
-async def read_action(listener: Any, interrupt: asyncio.Event):
+class Event_ts(asyncio.Event):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self._loop is None:
+            self._loop = asyncio.get_event_loop()
+
+    def set(self):
+        self._loop.call_soon_threadsafe(super().set)
+
+    def clear(self):
+        self._loop.call_soon_threadsafe(super().clear)
+
+
+async def read_action(listener: Any, interrupt: Event_ts):
     assigned_action = await listener.read()
     interrupt.set()
     return assigned_action
@@ -130,25 +143,26 @@ class ActionListenerImpl(WorkerActionListener):
         worker_id,
     ):
         self.config = config
+        self.client = DispatcherStub(new_conn(config))
         self.aio_client = DispatcherStub(new_conn(config, True))
         self.token = config.token
         self.worker_id = worker_id
         self.retries = 0
         self.last_connection_attempt = 0
-        self.heartbeat_task: asyncio.Task = None
+        self.heartbeat_thread: threading.Thread = None
         self.run_heartbeat = True
         self.listen_strategy = "v2"
         self.stop_signal = False
         self.logger = logger.bind(worker_id=worker_id)
 
-    async def heartbeat(self):
+    def heartbeat(self):
         # send a heartbeat every 4 seconds
         while True:
             if not self.run_heartbeat:
                 break
 
             try:
-                await self.aio_client.Heartbeat(
+                self.client.Heartbeat(
                     HeartbeatRequest(
                         workerId=self.worker_id,
                         heartbeatAt=proto_timestamp_now(),
@@ -166,14 +180,17 @@ class ActionListenerImpl(WorkerActionListener):
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
 
-            await asyncio.sleep(4)
+            time.sleep(4)
 
     def start_heartbeater(self):
-        if self.heartbeat_task is not None:
+        if self.heartbeat_thread is not None:
             return
 
         # create a new thread to send heartbeats
-        self.heartbeat_task = asyncio.create_task(self.heartbeat())
+        heartbeat_thread = threading.Thread(target=self.heartbeat)
+        heartbeat_thread.start()
+
+        self.heartbeat_thread = heartbeat_thread
 
     def __aiter__(self):
         return self._generator()
@@ -192,7 +209,7 @@ class ActionListenerImpl(WorkerActionListener):
 
             try:
                 while True:
-                    self.interrupt = asyncio.Event()
+                    self.interrupt = Event_ts()
                     t = asyncio.create_task(read_action(listener, self.interrupt))
                     await self.interrupt.wait()
 
