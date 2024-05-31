@@ -48,6 +48,7 @@ class ContextAioImpl(BaseContext):
         admin_client: AdminClientImpl,
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
+        workflow_run_event_listener: RunEventListenerClient,
         namespace: str = "",
     ):
         self.action = action
@@ -55,18 +56,17 @@ class ContextAioImpl(BaseContext):
         self.admin_client = admin_client
         self.event_client = event_client
         self.workflow_listener = workflow_listener
+        self.workflow_run_event_listener = workflow_run_event_listener
         self.namespace = namespace
         self.spawn_index = -1
 
     async def spawn_workflow(
         self, workflow_name: str, input: dict = {}, key: str = None
-    ):
+    ) -> WorkflowRunRef:
         options = self._prepare_workflow_options(key)
-        child_workflow_run_id = await self.admin_client.aio.run_workflow(
+        return await self.admin_client.aio.run_workflow(
             workflow_name, input, options
         )
-        return WorkflowRunRef(child_workflow_run_id, self.workflow_listener)
-
 
 class Context(BaseContext):
     spawn_index = -1
@@ -78,6 +78,7 @@ class Context(BaseContext):
         admin_client: AdminClientImpl,
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
+        workflow_run_event_listener: RunEventListenerClient,
         namespace: str = "",
     ):
         self.aio = ContextAioImpl(
@@ -86,6 +87,7 @@ class Context(BaseContext):
             admin_client,
             event_client,
             workflow_listener,
+            workflow_run_event_listener,
             namespace,
         )
 
@@ -110,6 +112,7 @@ class Context(BaseContext):
         self.admin_client = admin_client
         self.event_client = event_client
         self.workflow_listener = workflow_listener
+        self.workflow_run_event_listener = workflow_run_event_listener
         self.namespace = namespace
 
         # FIXME: this limits the number of concurrent log requests to 1, which means we can do about
@@ -171,10 +174,10 @@ class Context(BaseContext):
         workflow_name = f"{self.namespace}{workflow_name}"
 
         options = self._prepare_workflow_options(key)
-        child_workflow_run_id = self.admin_client.run_workflow(
+
+        return self.admin_client.run_workflow(
             workflow_name, input, options
         )
-        return WorkflowRunRef(child_workflow_run_id, self.workflow_listener)
 
     def _log(self, line: str):
         try:
