@@ -107,6 +107,7 @@ START_STEP_RUN = 0
 CANCEL_STEP_RUN = 1
 START_GET_GROUP_KEY = 2
 
+
 class Event_ts(asyncio.Event):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -119,6 +120,7 @@ class Event_ts(asyncio.Event):
     def clear(self):
         self._loop.call_soon_threadsafe(super().clear)
 
+
 async def read_action(listener: Any, interrupt: Event_ts):
     assigned_action = await listener.read()
     interrupt.set()
@@ -130,6 +132,7 @@ async def exp_backoff_sleep(attempt: int, max_sleep_time: float = 5):
     jitter = random.uniform(0, base_time)  # add random jitter
     sleep_time = min(base_time * (2**attempt) + jitter, max_sleep_time)
     await asyncio.sleep(sleep_time)
+
 
 class ActionListenerImpl(WorkerActionListener):
     config: ClientConfig
