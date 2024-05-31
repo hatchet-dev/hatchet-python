@@ -64,9 +64,8 @@ class ContextAioImpl(BaseContext):
         self, workflow_name: str, input: dict = {}, key: str = None
     ) -> WorkflowRunRef:
         options = self._prepare_workflow_options(key)
-        return await self.admin_client.aio.run_workflow(
-            workflow_name, input, options
-        )
+        return await self.admin_client.aio.run_workflow(workflow_name, input, options)
+
 
 class Context(BaseContext):
     spawn_index = -1
@@ -175,9 +174,7 @@ class Context(BaseContext):
 
         options = self._prepare_workflow_options(key)
 
-        return self.admin_client.run_workflow(
-            workflow_name, input, options
-        )
+        return self.admin_client.run_workflow(workflow_name, input, options)
 
     def _log(self, line: str):
         try:
