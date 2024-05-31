@@ -24,5 +24,5 @@ class WorkflowRunRef:
     def stream(self) -> RunEventListener:
         return self.workflow_run_event_listener.stream(self.workflow_run_id)
 
-    async def result(self):
-        return await self.workflow_listener.result(self.workflow_run_id)
+    def result(self):
+        return self.workflow_listener.result(self.workflow_run_id)

@@ -122,6 +122,7 @@ class AdminClientBase:
 class AdminClientAioImpl(AdminClientBase):
     def __init__(self, config: ClientConfig):
         aio_conn = new_conn(config, True)
+        self.config = config
         self.aio_client = WorkflowServiceStub(aio_conn)
         self.token = config.token
         self.listener_client = new_listener(config)

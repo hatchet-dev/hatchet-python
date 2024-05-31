@@ -16,6 +16,7 @@ import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from hatchet_sdk.clients.admin import new_admin
+from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
 
@@ -153,6 +154,7 @@ class Worker:
             self.admin_client,
             self.client.event,
             self.client.workflow_listener,
+            self.workflow_run_event_listener,
             self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
@@ -193,6 +195,7 @@ class Worker:
             self.admin_client,
             self.client.event,
             self.client.workflow_listener,
+            self.workflow_run_event_listener,
             self.client.config.namespace,
         )
 
@@ -482,6 +485,7 @@ class Worker:
             # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
             self.admin_client = new_admin(self.config)
+            self.workflow_run_event_listener = new_listener(self.config)
             self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
             self.listener: ActionListenerImpl = (
