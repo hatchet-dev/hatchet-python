@@ -45,6 +45,7 @@ class ClientImpl(Client):
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
 
+
 def with_host_port(host: str, port: int):
     def with_host_port_impl(config: ClientConfig):
         config.host = host
