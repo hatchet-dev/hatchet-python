@@ -290,3 +290,16 @@ class AdminClientImpl(AdminClientBase):
             )
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
+
+    def get_workflow_run(self, workflow_run_id: str) -> WorkflowRunRef:
+        try:
+            if not self.pooled_workflow_listener:
+                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+
+            return WorkflowRunRef(
+                workflow_run_id=workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
+            )
+        except grpc.RpcError as e:
+            raise ValueError(f"Could not get workflow run: {e}")
