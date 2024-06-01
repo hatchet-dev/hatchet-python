@@ -4,6 +4,7 @@ from typing import Any
 
 import grpc
 
+from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
 
@@ -41,6 +42,7 @@ class ClientImpl(Client):
         self.event = event_client
         self.rest = rest_client
         self.config = config
+        self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
 
 
@@ -52,7 +54,7 @@ def with_host_port(host: str, port: int):
     return with_host_port_impl
 
 
-def new_client(defaults: ClientConfig = {}, *opts_functions):
+def new_client(defaults: ClientConfig = {}, *opts_functions) -> ClientImpl:
     config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
 
     for opt_function in opts_functions:

@@ -177,10 +177,16 @@ class RunEventListenerClient:
     def __init__(self, config: ClientConfig):
         self.token = config.token
         self.config = config
-        aio_conn = new_conn(config, True)
-        self.client = DispatcherStub(aio_conn)
+        self.client: DispatcherStub = None
 
     def stream(self, workflow_run_id: str):
+        if not isinstance(workflow_run_id, str) and hasattr(workflow_run_id, "__str__"):
+            workflow_run_id = str(workflow_run_id)
+
+        if not self.client:
+            aio_conn = new_conn(self.config, True)
+            self.client = DispatcherStub(aio_conn)
+
         return RunEventListener(workflow_run_id, self.client, self.token)
 
     async def on(self, workflow_run_id: str, handler: callable = None):
