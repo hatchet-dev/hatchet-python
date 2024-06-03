@@ -32,7 +32,7 @@ def new_conn(config, aio=False):
         ("grpc.keepalive_time_ms", 10 * 1000),
         ("grpc.keepalive_timeout_ms", 60 * 1000),
         ("grpc.client_idle_timeout_ms", 60 * 1000),
-        ("grpc.http2.max_pings_without_data", 5),
+        ("grpc.http2.max_pings_without_data", 0),
         ("grpc.keepalive_permit_without_calls", 1),
     ]
 
