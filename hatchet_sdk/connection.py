@@ -28,14 +28,27 @@ def new_conn(config, aio=False):
 
     strat = grpc if not aio else grpc.aio
 
+    channel_options = [
+        ("grpc.keepalive_time_ms", 10 * 1000),
+        ("grpc.keepalive_timeout_ms", 60 * 1000),
+        ("grpc.client_idle_timeout_ms", 60 * 1000),
+        ("grpc.http2.max_pings_without_data", 0),
+        ("grpc.keepalive_permit_without_calls", 1),
+    ]
+
     if config.tls_config.tls_strategy == "none":
         conn = strat.insecure_channel(
             target=config.host_port,
+            options=channel_options,
         )
     else:
+        channel_options.append(
+            ("grpc.ssl_target_name_override", config.tls_config.server_name)
+        )
+
         conn = strat.secure_channel(
             target=config.host_port,
             credentials=credentials,
-            options=[("grpc.ssl_target_name_override", config.tls_config.server_name)],
+            options=channel_options,
         )
     return conn

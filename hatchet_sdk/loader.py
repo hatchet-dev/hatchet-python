@@ -38,7 +38,16 @@ class ClientConfig:
         self.host_port = host_port
         self.token = token
         self.server_url = server_url
-        self.namespace = (f"{namespace}_" if namespace else "").lower()
+        self.namespace = ""
+
+        # case on whether the namespace already has a trailing underscore
+        if namespace and not namespace.endswith("_"):
+            self.namespace = f"{namespace}_"
+        elif namespace:
+            self.namespace = namespace
+
+        self.namespace = self.namespace.lower()
+
         self.listener_v2_timeout = listener_v2_timeout
 
 
