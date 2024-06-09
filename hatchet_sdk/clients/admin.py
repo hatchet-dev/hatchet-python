@@ -135,7 +135,9 @@ class AdminClientAioImpl(AdminClientBase):
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            workflow_name = f"{self.namespace}{workflow_name}"
+            # if workflow_name does not start with namespace, prepend it
+            if self.namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{self.namespace}{workflow_name}"
 
             request = self._prepare_workflow_request(workflow_name, input, options)
             resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
@@ -276,7 +278,8 @@ class AdminClientImpl(AdminClientBase):
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            workflow_name = f"{self.namespace}{workflow_name}"
+            if self.namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{self.namespace}{workflow_name}"
 
             request = self._prepare_workflow_request(workflow_name, input, options)
             resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
