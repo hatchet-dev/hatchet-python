@@ -184,6 +184,7 @@ class Worker:
             try:
                 await task
             except Exception as e:
+                print(e)
                 # do nothing, this should be caught in the callback
                 pass
 
