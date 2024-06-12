@@ -293,11 +293,11 @@ class Worker:
             # Send the action event to the dispatcher
             self.dispatcher_client.send_group_key_action_event(event)
 
-            try:
-                await task
-            except Exception as e:
-                # do nothing, this should be caught in the callback
-                pass
+            # try:
+            await task
+            # except Exception as e:
+            #     # do nothing, this should be caught in the callback
+            #     pass
 
     def force_kill_thread(self, thread):
         """Terminate a python threading.Thread."""
