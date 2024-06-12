@@ -181,12 +181,9 @@ class Worker:
             task.add_done_callback(self.callback(action))
             self.tasks[action.step_run_id] = task
 
-            try:
-                await task
-            except Exception as e:
-                print(e)
-                # do nothing, this should be caught in the callback
-                pass
+   
+            await task
+
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
@@ -293,11 +290,11 @@ class Worker:
             # Send the action event to the dispatcher
             self.dispatcher_client.send_group_key_action_event(event)
 
-            # try:
-            await task
-            # except Exception as e:
-            #     # do nothing, this should be caught in the callback
-            #     pass
+            try:
+                await task
+            except Exception as e:
+                # do nothing, this should be caught in the callback
+                pass
 
     def force_kill_thread(self, thread):
         """Terminate a python threading.Thread."""
