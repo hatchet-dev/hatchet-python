@@ -202,6 +202,7 @@ class Worker:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
+
             def callback(task: asyncio.Task):
                 errored = False
                 cancelled = task.cancelled()
@@ -448,7 +449,7 @@ class Worker:
 
         self.killing = True
 
-        logger.info(f'Exiting gracefully...')
+        logger.info(f"Exiting gracefully...")
 
         try:
             self.listener.unregister()
@@ -458,7 +459,7 @@ class Worker:
         try:
             logger.info("Waiting for tasks to finish...")
 
-            await self.wait_for_tasks()                
+            await self.wait_for_tasks()
         except Exception as e:
             logger.error(f"Could not wait for tasks: {e}")
 
@@ -504,8 +505,12 @@ class Worker:
 
         self.loop.create_task(self.async_start(retry_count))
 
-        self.loop.add_signal_handler(signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully()))
-        self.loop.add_signal_handler(signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully()))
+        self.loop.add_signal_handler(
+            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(
+            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
+        )
         self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
 
         if created_loop:
