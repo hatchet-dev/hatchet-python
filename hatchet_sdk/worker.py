@@ -9,6 +9,7 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from enum import Enum
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
 
@@ -45,6 +46,13 @@ from .logger import logger
 from .workflow import WorkflowMeta
 
 
+class WorkerStatus(Enum):
+    INITIALIZED = 1
+    STARTING = 2
+    HEALTHY = 3
+    UNHEALTHY = 4
+
+
 class Worker:
     def __init__(
         self,
@@ -62,6 +70,7 @@ class Worker:
         self.tasks: Dict[str, asyncio.Task] = {}  # Store step run ids and futures
         self.contexts: Dict[str, Context] = {}  # Store step run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
+        self.listener: ActionListenerImpl = None
 
         # The thread pool is used for synchronous functions which need to run concurrently
         self.thread_pool = ThreadPoolExecutor(max_workers=max_runs)
@@ -72,6 +81,8 @@ class Worker:
 
         self.killing = False
         self.handle_kill = handle_kill
+
+        self._status = WorkerStatus.INITIALIZED
 
     def callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
@@ -461,7 +472,20 @@ class Worker:
             logger.info("Exiting...")
             sys.exit(0)
 
+    def status(self) -> WorkerStatus:
+        if self.listener:
+            if self.listener.is_healthy():
+                self._status = WorkerStatus.HEALTHY
+                return WorkerStatus.HEALTHY
+            else:
+                self._status = WorkerStatus.UNHEALTHY
+                return WorkerStatus.UNHEALTHY
+
+        return self._status
+
     def start(self, retry_count=1):
+        self._status = WorkerStatus.STARTING
+
         try:
             loop = asyncio.get_running_loop()
             self.loop = loop
