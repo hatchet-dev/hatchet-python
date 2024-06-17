@@ -34,6 +34,7 @@ def new_conn(config, aio=False):
         ("grpc.client_idle_timeout_ms", 60 * 1000),
         ("grpc.http2.max_pings_without_data", 0),
         ("grpc.keepalive_permit_without_calls", 1),
+        ("grpc.enable_fork_support", False),
     ]
 
     if config.tls_config.tls_strategy == "none":
