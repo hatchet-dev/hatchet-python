@@ -1,5 +1,5 @@
 import os
-from logging import Logger
+from logging import Logger, getLogger
 from typing import Any, Dict, Optional
 
 import yaml
@@ -46,7 +46,7 @@ class ClientConfig:
         self.logger = logger
 
         if not self.logger:
-            self.logger = Logger("hatchet_sdk")
+            self.logger = getLogger()
 
         # case on whether the namespace already has a trailing underscore
         if namespace and not namespace.endswith("_"):

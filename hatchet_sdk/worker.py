@@ -108,7 +108,6 @@ def capture_logs(
 
         log_stream = StringIO()
         custom_handler = CustomLogHandler(event_client, log_stream)
-        # custom_handler.setFormatter(CustomLogFormatter(context))
         custom_handler.setLevel(logging.INFO)
         custom_handler.addFilter(InjectingFilter())
         logger.addHandler(custom_handler)
