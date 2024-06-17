@@ -1,5 +1,5 @@
-from logging import Logger
 import os
+from logging import Logger
 from typing import Any, Dict, Optional
 
 import yaml
@@ -35,7 +35,7 @@ class ClientConfig:
         server_url: str = "https://app.dev.hatchet-tools.com",
         namespace: str = None,
         listener_v2_timeout: int = None,
-        logger: Logger = None, 
+        logger: Logger = None,
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -44,6 +44,9 @@ class ClientConfig:
         self.server_url = server_url
         self.namespace = ""
         self.logger = logger
+
+        if not self.logger:
+            self.logger = Logger("hatchet_sdk")
 
         # case on whether the namespace already has a trailing underscore
         if namespace and not namespace.endswith("_"):

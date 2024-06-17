@@ -1,9 +1,9 @@
 import asyncio
+import logging
+import random
 from functools import wraps
 from io import StringIO
 from logging import Logger, StreamHandler
-import logging
-import random
 from typing import List
 
 from hatchet_sdk.loader import ClientConfig
@@ -20,10 +20,10 @@ class Hatchet:
     client: ClientImpl
 
     def __init__(
-        self, 
-        debug=False, 
-        config: ClientConfig = {},
-        ):
+        self,
+        debug=False,
+        config: ClientConfig = ClientConfig(),
+    ):
         # initialize a client
         self.client = new_client(config)
 
