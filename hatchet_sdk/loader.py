@@ -1,3 +1,4 @@
+from logging import Logger
 import os
 from typing import Any, Dict, Optional
 
@@ -23,6 +24,8 @@ class ClientTLSConfig:
 
 
 class ClientConfig:
+    logger: Logger
+
     def __init__(
         self,
         tenant_id: str = None,
@@ -32,6 +35,7 @@ class ClientConfig:
         server_url: str = "https://app.dev.hatchet-tools.com",
         namespace: str = None,
         listener_v2_timeout: int = None,
+        logger: Logger = None, 
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -39,6 +43,7 @@ class ClientConfig:
         self.token = token
         self.server_url = server_url
         self.namespace = ""
+        self.logger = logger
 
         # case on whether the namespace already has a trailing underscore
         if namespace and not namespace.endswith("_"):
@@ -106,6 +111,7 @@ class ConfigLoader:
             server_url,
             namespace,
             listener_v2_timeout,
+            defaults.logger,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:

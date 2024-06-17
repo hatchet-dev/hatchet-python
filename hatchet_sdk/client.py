@@ -1,4 +1,5 @@
 # relative imports
+from logging import Logger
 import os
 from typing import Any
 
@@ -25,9 +26,11 @@ class Client:
     event: EventClientImpl
     rest: RestApi
     workflow_listener: PooledWorkflowRunListener
+    logger: Logger
 
 
 class ClientImpl(Client):
+
     def __init__(
         self,
         event_client: EventClientImpl,
@@ -44,7 +47,7 @@ class ClientImpl(Client):
         self.config = config
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
-
+        self.logger = config.logger
 
 def with_host_port(host: str, port: int):
     def with_host_port_impl(config: ClientConfig):

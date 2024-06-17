@@ -1,7 +1,11 @@
 import asyncio
 import ctypes
 import functools
+from io import StringIO
 import json
+from logging import StreamHandler
+import logging
+import random
 import signal
 import sys
 import threading
@@ -45,6 +49,22 @@ from .logger import logger
 from .workflow import WorkflowMeta
 
 
+# Custom log handler to process log lines
+class CustomLogHandler(StreamHandler):
+    def __init__(self, stream=None, context=None):
+        super().__init__(stream)
+        self.context = context
+    
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.process_log_line(log_entry)
+        super().emit(record)
+    
+    def process_log_line(self, log_line):
+        # Perform a function on each log line using the context
+        print(f"Processed{self.context}: {log_line}")
+
+
 class Worker:
     def __init__(
         self,
@@ -72,6 +92,41 @@ class Worker:
 
         self.killing = False
         self.handle_kill = handle_kill
+
+
+    # Decorator to capture and process logs
+    def capture_logs(self, func):
+        print('capturing logs')
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            print('capturing logs wrapper')
+
+            print(self.client.logger)
+
+            if not self.client.logger:
+                raise Exception("No logger configured on client")
+
+            print('yoyoyoyo')
+
+            log_stream = StringIO()
+            random_int = random.randint(1000, 9999)
+            custom_handler = CustomLogHandler(log_stream, context=random_int)
+            custom_handler.setLevel(logging.INFO)
+            self.client.logger.addHandler(custom_handler)
+            
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                custom_handler.flush()
+                self.client.logger.removeHandler(custom_handler)
+                log_contents = log_stream.getvalue()
+                log_stream.close()
+                print(f"Captured logs for {func.__name__}:\n{log_contents}")
+
+            return result
+
+        return wrapper
 
     def callback(self, action: Action):
         def inner_callback(task: asyncio.Task):

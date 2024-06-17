@@ -1,5 +1,9 @@
 import asyncio
 from functools import wraps
+from io import StringIO
+from logging import Logger, StreamHandler
+import logging
+import random
 from typing import List
 
 from hatchet_sdk.loader import ClientConfig
@@ -15,7 +19,11 @@ from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
 class Hatchet:
     client: ClientImpl
 
-    def __init__(self, debug=False, config: ClientConfig = {}):
+    def __init__(
+        self, 
+        debug=False, 
+        config: ClientConfig = {},
+        ):
         # initialize a client
         self.client = new_client(config)
 
