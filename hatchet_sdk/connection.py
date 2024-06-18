@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 import grpc
@@ -34,8 +35,11 @@ def new_conn(config, aio=False):
         ("grpc.client_idle_timeout_ms", 60 * 1000),
         ("grpc.http2.max_pings_without_data", 0),
         ("grpc.keepalive_permit_without_calls", 1),
-        ("grpc.enable_fork_support", False),
     ]
+
+    # Set environment variable to disable fork support. Reference: https://github.com/grpc/grpc/issues/28557
+    # When steps execute via os.fork, we see `TSI_DATA_CORRUPTED` errors.
+    os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "False"
 
     if config.tls_config.tls_strategy == "none":
         conn = strat.insecure_channel(
