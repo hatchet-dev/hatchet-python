@@ -15,7 +15,7 @@ class MyWorkflow:
     def __init__(self):
         self.my_value = "test"
 
-    @hatchet.step()
+    @hatchet.step(timeout="2s", retries=3)
     def step1(self, context: Context):
         print("executed step1")
         time.sleep(10)
@@ -25,16 +25,4 @@ class MyWorkflow:
 workflow = MyWorkflow()
 worker = hatchet.worker("test-worker", max_runs=1)
 worker.register_workflow(workflow)
-
-# workflow1 = hatchet.client.admin.put_workflow(
-#     "workflow-copy-2",
-#     MyWorkflow(),
-#     overrides=CreateWorkflowVersionOpts(
-#         cron_triggers=["* * * * *"],
-#         cron_input=json.dumps({"test": "test"}),
-#     ),
-# )
-
-# print(workflow1)
-
 worker.start()

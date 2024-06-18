@@ -39,6 +39,11 @@ class Worker(BaseModel):
         description="The time this worker last sent a heartbeat.",
         alias="lastHeartbeatAt",
     )
+    last_listener_established: Optional[datetime] = Field(
+        default=None,
+        description="The time this worker last sent a heartbeat.",
+        alias="lastListenerEstablished",
+    )
     actions: Optional[List[StrictStr]] = Field(
         default=None, description="The actions this worker can perform."
     )
@@ -71,6 +76,7 @@ class Worker(BaseModel):
         "metadata",
         "name",
         "lastHeartbeatAt",
+        "lastListenerEstablished",
         "actions",
         "recentStepRuns",
         "status",
@@ -156,6 +162,7 @@ class Worker(BaseModel):
                 ),
                 "name": obj.get("name"),
                 "lastHeartbeatAt": obj.get("lastHeartbeatAt"),
+                "lastListenerEstablished": obj.get("lastListenerEstablished"),
                 "actions": obj.get("actions"),
                 "recentStepRuns": (
                     [StepRun.from_dict(_item) for _item in obj["recentStepRuns"]]

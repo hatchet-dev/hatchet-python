@@ -106,7 +106,10 @@ class Context(BaseContext):
             )
 
         self.action = action
+        # FIXME: stepRunId is a legacy field, we should remove it
         self.stepRunId = action.step_run_id
+
+        self.step_run_id = action.step_run_id
         self.exit_flag = False
         self.dispatcher_client = dispatcher_client
         self.admin_client = admin_client
@@ -209,3 +212,6 @@ class Context(BaseContext):
             )
         except Exception as e:
             logger.error(f"Error refreshing timeout: {e}")
+
+    def retry_count(self):
+        return self.action.retry_count

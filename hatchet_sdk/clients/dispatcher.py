@@ -80,6 +80,7 @@ class Action:
         action_id: str,
         action_payload: str,
         action_type: ActionType,
+        retry_count: int,
     ):
         self.worker_id = worker_id
         self.workflow_run_id = workflow_run_id
@@ -93,6 +94,7 @@ class Action:
         self.action_id = action_id
         self.action_payload = action_payload
         self.action_type = action_type
+        self.retry_count = retry_count
 
 
 class WorkerActionListener:
@@ -149,11 +151,15 @@ class ActionListenerImpl(WorkerActionListener):
         self.worker_id = worker_id
         self.retries = 0
         self.last_connection_attempt = 0
+        self.last_heartbeat_succeeded = True  # start in a healthy state
         self.heartbeat_thread: threading.Thread = None
         self.run_heartbeat = True
         self.listen_strategy = "v2"
         self.stop_signal = False
         self.logger = logger.bind(worker_id=worker_id)
+
+    def is_healthy(self):
+        return self.last_heartbeat_succeeded
 
     def heartbeat(self):
         # send a heartbeat every 4 seconds
@@ -170,9 +176,13 @@ class ActionListenerImpl(WorkerActionListener):
                     timeout=5,
                     metadata=get_metadata(self.token),
                 )
+
+                self.last_heartbeat_succeeded = True
             except grpc.RpcError as e:
                 # we don't reraise the error here, as we don't want to stop the heartbeat thread
                 logger.error(f"Failed to send heartbeat: {e}")
+
+                self.last_heartbeat_succeeded = False
 
                 if self.interrupt is not None:
                     self.interrupt.set()
@@ -256,6 +266,7 @@ class ActionListenerImpl(WorkerActionListener):
                         action_id=assigned_action.actionId,
                         action_payload=action_payload,
                         action_type=action_type,
+                        retry_count=assigned_action.retryCount,
                     )
 
                     yield action
@@ -396,13 +407,11 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-    def send_group_key_action_event(self, in_: GroupKeyActionEvent):
-        response: ActionEventResponse = self.client.SendGroupKeyActionEvent(
+    async def send_group_key_action_event(self, in_: GroupKeyActionEvent):
+        await self.aio_client.SendGroupKeyActionEvent(
             in_,
             metadata=get_metadata(self.token),
         )
-
-        return response
 
     def put_overrides_data(self, data: OverridesData):
         response: ActionEventResponse = self.client.PutOverridesData(
