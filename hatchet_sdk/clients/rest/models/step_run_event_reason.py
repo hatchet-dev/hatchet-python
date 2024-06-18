@@ -41,6 +41,7 @@ class StepRunEventReason(str, Enum):
     REASSIGNED = "REASSIGNED"
     TIMED_OUT = "TIMED_OUT"
     SLOT_RELEASED = "SLOT_RELEASED"
+    RETRIED_BY_USER = "RETRIED_BY_USER"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

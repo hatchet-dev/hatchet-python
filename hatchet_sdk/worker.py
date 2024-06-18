@@ -1,7 +1,10 @@
 import asyncio
+import contextvars
 import ctypes
 import functools
 import json
+import logging
+import random
 import signal
 import sys
 import threading
@@ -9,13 +12,17 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from enum import Enum
+from io import StringIO
+from logging import StreamHandler
 from threading import Thread, current_thread
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Coroutine, Dict
 
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from hatchet_sdk.clients.admin import new_admin
+from hatchet_sdk.clients.events import EventClientImpl
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
@@ -44,6 +51,86 @@ from .dispatcher_pb2 import (
 from .logger import logger
 from .workflow import WorkflowMeta
 
+wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "workflow_run_id", default=None
+)
+sr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "step_run_id", default=None
+)
+
+
+def copy_context_vars(ctx_vars, func, *args, **kwargs):
+    for var, value in ctx_vars:
+        var.set(value)
+    return func(*args, **kwargs)
+
+
+class InjectingFilter(logging.Filter):
+    # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
+    # otherwise we would use emit within the CustomLogHandler
+    def filter(self, record):
+        record.workflow_run_id = wr.get()
+        record.step_run_id = sr.get()
+        return True
+
+
+# Custom log handler to process log lines
+class CustomLogHandler(StreamHandler):
+    def __init__(self, event_client: EventClientImpl, stream=None):
+        super().__init__(stream)
+        self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
+        self.event_client = event_client
+
+    def _log(self, line: str, step_run_id: str | None):
+        try:
+            if not step_run_id:
+                return
+
+            self.event_client.log(message=line, step_run_id=step_run_id)
+        except Exception as e:
+            logger.error(f"Error logging: {e}")
+
+    def emit(self, record):
+        super().emit(record)
+
+        log_entry = self.format(record)
+        self.logger_thread_pool.submit(self._log, log_entry, record.step_run_id)
+
+
+def capture_logs(
+    logger: logging.Logger,
+    event_client: EventClientImpl,
+    func: Coroutine[Any, Any, Any],
+):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        if not logger:
+            raise Exception("No logger configured on client")
+
+        log_stream = StringIO()
+        custom_handler = CustomLogHandler(event_client, log_stream)
+        custom_handler.setLevel(logging.INFO)
+        custom_handler.addFilter(InjectingFilter())
+        logger.addHandler(custom_handler)
+
+        try:
+            result = await func(*args, **kwargs)
+        finally:
+            custom_handler.flush()
+            logger.removeHandler(custom_handler)
+            log_stream.close()
+
+        return result
+
+    return wrapper
+
+
+class WorkerStatus(Enum):
+    INITIALIZED = 1
+    STARTING = 2
+    HEALTHY = 3
+    UNHEALTHY = 4
+
 
 class Worker:
     def __init__(
@@ -59,19 +146,19 @@ class Worker:
         self.client = new_client(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
-        self.tasks: Dict[str, asyncio.Task] = {}  # Store step run ids and futures
-        self.contexts: Dict[str, Context] = {}  # Store step run ids and contexts
+        self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
+        self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
+        self.listener: ActionListenerImpl = None
 
         # The thread pool is used for synchronous functions which need to run concurrently
         self.thread_pool = ThreadPoolExecutor(max_workers=max_runs)
-        self.threads: Dict[str, Thread] = {}  # Store step run ids and threads
-
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
+        self.threads: Dict[str, Thread] = {}  # Store run ids and threads
 
         self.killing = False
         self.handle_kill = handle_kill
+
+        self._status = WorkerStatus.INITIALIZED
 
     def callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
@@ -120,31 +207,41 @@ class Worker:
         return action_func(context)
 
     # We wrap all actions in an async func
-    async def async_wrapped_action_func(self, context, action_func, action: Action):
+    async def async_wrapped_action_func(
+        self, context: Context, action_func, action: Action, run_id: str
+    ):
+        wr.set(context.workflow_run_id())
+        sr.set(context.step_run_id)
+
         try:
             if action_func._is_coroutine:
                 return await action_func(context)
             else:
                 pfunc = functools.partial(
-                    self.thread_action_func, context, action_func, action
+                    # we must copy the context vars to the new thread, as only asyncio natively supports
+                    # contextvars
+                    copy_context_vars,
+                    contextvars.copy_context().items(),
+                    self.thread_action_func,
+                    context,
+                    action_func,
+                    action,
                 )
                 res = await self.loop.run_in_executor(self.thread_pool, pfunc)
 
-                if action.step_run_id in self.threads:
+                if run_id in self.threads:
                     # remove the thread id
-                    logger.debug(
-                        f"Removing step run id {action.step_run_id} from threads"
-                    )
+                    logger.debug(f"Removing run id {run_id} from threads")
 
-                    del self.threads[action.step_run_id]
+                    del self.threads[run_id]
 
                 return res
         except Exception as e:
             logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
             raise e
         finally:
-            if action.step_run_id in self.tasks:
-                del self.tasks[action.step_run_id]
+            if run_id in self.tasks:
+                del self.tasks[run_id]
 
     async def handle_start_step_run(self, action: Action):
         action_name = action.action_id
@@ -175,7 +272,9 @@ class Worker:
                 logger.error(f"Could not send action event: {e}")
 
             task = self.loop.create_task(
-                self.async_wrapped_action_func(context, action_func, action)
+                self.async_wrapped_action_func(
+                    context, action_func, action, action.step_run_id
+                )
             )
 
             task.add_done_callback(self.callback(action))
@@ -224,7 +323,9 @@ class Worker:
                     event.eventPayload = str(errorWithTraceback(f"{e}", e))
 
                     try:
-                        self.dispatcher_client.send_group_key_action_event(event)
+                        asyncio.create_task(
+                            self.dispatcher_client.send_group_key_action_event(event)
+                        )
                     except Exception as e:
                         logger.error(f"Could not send action event: {e}")
 
@@ -237,47 +338,19 @@ class Worker:
                         raise e
 
                     # Send the action event to the dispatcher
-                    self.dispatcher_client.send_group_key_action_event(event)
+                    asyncio.create_task(
+                        self.dispatcher_client.send_group_key_action_event(event)
+                    )
 
                 # Remove the future from the dictionary
                 if action.get_group_key_run_id in self.tasks:
                     del self.tasks[action.get_group_key_run_id]
 
-            def thread_action_func(context, action_func):
-                self.threads[action.step_run_id] = current_thread()
-                return action_func(context)
-
-            # We wrap all actions in an async func
-            async def async_wrapped_action_func(context):
-                try:
-                    if action_func._is_coroutine:
-                        return await action_func(context)
-                    else:
-
-                        pfunc = functools.partial(
-                            thread_action_func, context, action_func
-                        )
-                        res = await self.loop.run_in_executor(self.thread_pool, pfunc)
-
-                        if action.step_run_id in self.threads:
-                            # remove the thread id
-                            logger.debug(
-                                f"Removing step run id {action.step_run_id} from threads"
-                            )
-
-                            del self.threads[action.step_run_id]
-
-                        return res
-                except Exception as e:
-                    logger.error(
-                        errorWithTraceback(f"Could not execute action: {e}", e)
-                    )
-                    raise e
-                finally:
-                    if action.step_run_id in self.tasks:
-                        del self.tasks[action.step_run_id]
-
-            task = self.loop.create_task(async_wrapped_action_func(context))
+            task = self.loop.create_task(
+                self.async_wrapped_action_func(
+                    context, action_func, action, action.get_group_key_run_id
+                )
+            )
             task.add_done_callback(callback)
             self.tasks[action.get_group_key_run_id] = task
 
@@ -289,8 +362,9 @@ class Worker:
             except Exception as e:
                 logger.error(f"Could not create action event: {e}")
 
-            # Send the action event to the dispatcher
-            self.dispatcher_client.send_group_key_action_event(event)
+            asyncio.create_task(
+                self.dispatcher_client.send_group_key_action_event(event)
+            )
 
             try:
                 await task
@@ -440,28 +514,71 @@ class Worker:
         for action_name, action_func in workflow.get_actions():
             self.action_registry[action_name] = create_action_function(action_func)
 
-    def exit_gracefully(self, signum, frame):
+    async def exit_gracefully(self):
+        if self.killing:
+            self.exit_forcefully()
+            return
+
         self.killing = True
 
-        logger.info("Gracefully exiting hatchet worker...")
+        logger.info(f"Exiting gracefully...")
 
         try:
             self.listener.unregister()
         except Exception as e:
             logger.error(f"Could not unregister worker: {e}")
 
-        # cancel all futures
-        # for future in self.tasks.values():
-        #     try:
-        #         future.result()
-        #     except Exception as e:
-        #         logger.error(f"Could not wait for future: {e}")
+        try:
+            logger.info("Waiting for tasks to finish...")
 
-        if self.handle_kill:
-            logger.info("Exiting...")
-            sys.exit(0)
+            await self.wait_for_tasks()
+        except Exception as e:
+            logger.error(f"Could not wait for tasks: {e}")
+
+        # Wait for 1 second to allow last calls to flush. These are calls which have been
+        # added to the event loop as callbacks to tasks, so we're not aware of them in the
+        # task list.
+        await asyncio.sleep(1)
+
+        self.loop.stop()
+
+    def exit_forcefully(self):
+        self.killing = True
+
+        logger.info("Forcefully exiting hatchet worker...")
+
+        try:
+            self.listener.unregister()
+        except Exception as e:
+            logger.error(f"Could not unregister worker: {e}")
+
+        self.loop.stop()
+
+    async def wait_for_tasks(self):
+        # wait for all futures to finish
+        for taskId in list(self.tasks.keys()):
+            try:
+                logger.info(f"Waiting for task {taskId} to finish...")
+
+                if taskId in self.tasks:
+                    await self.tasks.get(taskId)
+            except Exception as e:
+                pass
+
+    def status(self) -> WorkerStatus:
+        if self.listener:
+            if self.listener.is_healthy():
+                self._status = WorkerStatus.HEALTHY
+                return WorkerStatus.HEALTHY
+            else:
+                self._status = WorkerStatus.UNHEALTHY
+                return WorkerStatus.UNHEALTHY
+
+        return self._status
 
     def start(self, retry_count=1):
+        self._status = WorkerStatus.STARTING
+
         try:
             loop = asyncio.get_running_loop()
             self.loop = loop
@@ -473,10 +590,28 @@ class Worker:
 
         self.loop.create_task(self.async_start(retry_count))
 
+        self.loop.add_signal_handler(
+            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(
+            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
+
         if created_loop:
             self.loop.run_forever()
 
+            if self.handle_kill:
+                sys.exit(0)
+
     async def async_start(self, retry_count=1):
+        await capture_logs(
+            self.client.logger,
+            self.client.event,
+            self._async_start,
+        )(retry_count=retry_count)
+
+    async def _async_start(self, retry_count=1):
         logger.info("Starting worker...")
         self.loop = asyncio.get_running_loop()
 
