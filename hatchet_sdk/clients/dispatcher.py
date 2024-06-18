@@ -404,13 +404,11 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-    def send_group_key_action_event(self, in_: GroupKeyActionEvent):
-        response: ActionEventResponse = self.client.SendGroupKeyActionEvent(
+    async def send_group_key_action_event(self, in_: GroupKeyActionEvent):
+        await self.aio_client.SendGroupKeyActionEvent(
             in_,
             metadata=get_metadata(self.token),
         )
-
-        return response
 
     def put_overrides_data(self, data: OverridesData):
         response: ActionEventResponse = self.client.PutOverridesData(
