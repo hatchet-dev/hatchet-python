@@ -1,45 +1,28 @@
 import json
 import time
-from logging import Logger
 
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, CreateWorkflowVersionOpts, Hatchet
 
-import logging
-
-from hatchet_sdk.loader import ClientConfig
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
 load_dotenv()
 
-hatchet = Hatchet(
-    debug=True,
-    config=ClientConfig(
-        logger=logger
-    )
-)
+hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_crons=["* * * * *"])
-class ParentCron:
+@hatchet.workflow(on_events=["user:create"])
+class MyWorkflow:
+    def __init__(self):
+        self.my_value = "test"
+
     @hatchet.step()
     def step1(self, context: Context):
-        for i in range(12):
-            logger.info("executed step1 - {}".format(i))
-            time.sleep(5)
-        return {
-            "status": "success"
-        }
+        print("executed step1")
+        time.sleep(10)
+        pass
 
 
-worker = hatchet.worker("test-worker", max_runs=5)
-
-workflow = ParentCron()
+workflow = MyWorkflow()
+worker = hatchet.worker("test-worker", max_runs=1)
 worker.register_workflow(workflow)
-
-
 worker.start()
