@@ -209,3 +209,6 @@ class Context(BaseContext):
             )
         except Exception as e:
             logger.error(f"Error refreshing timeout: {e}")
+
+    def retry_count(self):
+        return self.action.retry_count

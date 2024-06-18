@@ -15,7 +15,7 @@ class MyWorkflow:
     def __init__(self):
         self.my_value = "test"
 
-    @hatchet.step()
+    @hatchet.step(timeout="2s", retries=3)
     def step1(self, context: Context):
         print("executed step1")
         time.sleep(10)
