@@ -12,6 +12,7 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from enum import Enum
 from io import StringIO
 from logging import StreamHandler
 from threading import Thread, current_thread
@@ -124,6 +125,13 @@ def capture_logs(
     return wrapper
 
 
+class WorkerStatus(Enum):
+    INITIALIZED = 1
+    STARTING = 2
+    HEALTHY = 3
+    UNHEALTHY = 4
+
+
 class Worker:
     def __init__(
         self,
@@ -141,16 +149,16 @@ class Worker:
         self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
         self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
+        self.listener: ActionListenerImpl = None
 
         # The thread pool is used for synchronous functions which need to run concurrently
         self.thread_pool = ThreadPoolExecutor(max_workers=max_runs)
         self.threads: Dict[str, Thread] = {}  # Store run ids and threads
 
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
-
         self.killing = False
         self.handle_kill = handle_kill
+
+        self._status = WorkerStatus.INITIALIZED
 
     def callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
@@ -315,7 +323,9 @@ class Worker:
                     event.eventPayload = str(errorWithTraceback(f"{e}", e))
 
                     try:
-                        self.dispatcher_client.send_group_key_action_event(event)
+                        asyncio.create_task(
+                            self.dispatcher_client.send_group_key_action_event(event)
+                        )
                     except Exception as e:
                         logger.error(f"Could not send action event: {e}")
 
@@ -328,7 +338,9 @@ class Worker:
                         raise e
 
                     # Send the action event to the dispatcher
-                    self.dispatcher_client.send_group_key_action_event(event)
+                    asyncio.create_task(
+                        self.dispatcher_client.send_group_key_action_event(event)
+                    )
 
                 # Remove the future from the dictionary
                 if action.get_group_key_run_id in self.tasks:
@@ -350,8 +362,9 @@ class Worker:
             except Exception as e:
                 logger.error(f"Could not create action event: {e}")
 
-            # Send the action event to the dispatcher
-            self.dispatcher_client.send_group_key_action_event(event)
+            asyncio.create_task(
+                self.dispatcher_client.send_group_key_action_event(event)
+            )
 
             try:
                 await task
@@ -501,28 +514,71 @@ class Worker:
         for action_name, action_func in workflow.get_actions():
             self.action_registry[action_name] = create_action_function(action_func)
 
-    def exit_gracefully(self, signum, frame):
+    async def exit_gracefully(self):
+        if self.killing:
+            self.exit_forcefully()
+            return
+
         self.killing = True
 
-        logger.info("Gracefully exiting hatchet worker...")
+        logger.info(f"Exiting gracefully...")
 
         try:
             self.listener.unregister()
         except Exception as e:
             logger.error(f"Could not unregister worker: {e}")
 
-        # cancel all futures
-        # for future in self.tasks.values():
-        #     try:
-        #         future.result()
-        #     except Exception as e:
-        #         logger.error(f"Could not wait for future: {e}")
+        try:
+            logger.info("Waiting for tasks to finish...")
 
-        if self.handle_kill:
-            logger.info("Exiting...")
-            sys.exit(0)
+            await self.wait_for_tasks()
+        except Exception as e:
+            logger.error(f"Could not wait for tasks: {e}")
+
+        # Wait for 1 second to allow last calls to flush. These are calls which have been
+        # added to the event loop as callbacks to tasks, so we're not aware of them in the
+        # task list.
+        await asyncio.sleep(1)
+
+        self.loop.stop()
+
+    def exit_forcefully(self):
+        self.killing = True
+
+        logger.info("Forcefully exiting hatchet worker...")
+
+        try:
+            self.listener.unregister()
+        except Exception as e:
+            logger.error(f"Could not unregister worker: {e}")
+
+        self.loop.stop()
+
+    async def wait_for_tasks(self):
+        # wait for all futures to finish
+        for taskId in list(self.tasks.keys()):
+            try:
+                logger.info(f"Waiting for task {taskId} to finish...")
+
+                if taskId in self.tasks:
+                    await self.tasks.get(taskId)
+            except Exception as e:
+                pass
+
+    def status(self) -> WorkerStatus:
+        if self.listener:
+            if self.listener.is_healthy():
+                self._status = WorkerStatus.HEALTHY
+                return WorkerStatus.HEALTHY
+            else:
+                self._status = WorkerStatus.UNHEALTHY
+                return WorkerStatus.UNHEALTHY
+
+        return self._status
 
     def start(self, retry_count=1):
+        self._status = WorkerStatus.STARTING
+
         try:
             loop = asyncio.get_running_loop()
             self.loop = loop
@@ -534,8 +590,19 @@ class Worker:
 
         self.loop.create_task(self.async_start(retry_count))
 
+        self.loop.add_signal_handler(
+            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(
+            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
+
         if created_loop:
             self.loop.run_forever()
+
+            if self.handle_kill:
+                sys.exit(0)
 
     async def async_start(self, retry_count=1):
         await capture_logs(
