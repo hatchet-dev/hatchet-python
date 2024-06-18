@@ -1,29 +1,13 @@
-import time
+from logging import getLogger
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from examples.logger.client import hatchet
+from examples.logger.workflow import LoggingWorkflow
 
-load_dotenv()
-
-hatchet = Hatchet()
-
-
-@hatchet.workflow(on_events=["user:create"], schedule_timeout="10m")
-class LoggingWorkflow:
-    @hatchet.step()
-    def logger(self, context: Context):
-
-        for i in range(1000):
-            context.log(f"Logging message {i}")
-
-        return {
-            "step1": "completed",
-        }
-
+worker = hatchet.worker("test-worker", max_runs=5)
 
 workflow = LoggingWorkflow()
-worker = hatchet.worker("logging-worker-py")
 worker.register_workflow(workflow)
 
 worker.start()
