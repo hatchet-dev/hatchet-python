@@ -4,11 +4,12 @@ import json
 import random
 import threading
 import time
-from typing import Any, AsyncGenerator, Callable, List, Union
+from typing import Any, AsyncGenerator, List
 
 import grpc
 from grpc._cython import cygrpc
 
+from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.connection import new_conn
 
 from ..dispatcher_pb2 import (
@@ -109,26 +110,6 @@ START_STEP_RUN = 0
 CANCEL_STEP_RUN = 1
 START_GET_GROUP_KEY = 2
 
-
-class Event_ts(asyncio.Event):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self._loop is None:
-            self._loop = asyncio.get_event_loop()
-
-    def set(self):
-        self._loop.call_soon_threadsafe(super().set)
-
-    def clear(self):
-        self._loop.call_soon_threadsafe(super().clear)
-
-
-async def read_action(listener: Any, interrupt: Event_ts):
-    assigned_action = await listener.read()
-    interrupt.set()
-    return assigned_action
-
-
 async def exp_backoff_sleep(attempt: int, max_sleep_time: float = 5):
     base_time = 0.1  # starting sleep time in seconds (100 milliseconds)
     jitter = random.uniform(0, base_time)  # add random jitter
@@ -220,12 +201,12 @@ class ActionListenerImpl(WorkerActionListener):
             try:
                 while True:
                     self.interrupt = Event_ts()
-                    t = asyncio.create_task(read_action(listener, self.interrupt))
+                    t = asyncio.create_task(read_with_interrupt(listener, self.interrupt))
                     await self.interrupt.wait()
 
                     if not t.done():
                         # print a warning
-                        logger.warning("Interrupted read_action task")
+                        logger.warning("Interrupted read_with_interrupt task of action listener")
 
                         t.cancel()
                         listener.cancel()
