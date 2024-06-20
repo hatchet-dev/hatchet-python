@@ -1,7 +1,7 @@
 import asyncio
 import json
-from collections.abc import AsyncIterator
 import time
+from collections.abc import AsyncIterator
 from typing import AsyncGenerator
 
 import grpc
@@ -19,24 +19,25 @@ DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 1  # seconds
 DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT = 5
 DEFAULT_WORKFLOW_LISTENER_INTERRUPT_INTERVAL = 1800  # 30 minutes
 
+
 class _Subscription:
     def __init__(self, id: int, workflow_run_id: str):
         self.id = id
         self.workflow_run_id = workflow_run_id
-        self.queue : asyncio.Queue[WorkflowRunEvent | None] = asyncio.Queue()
+        self.queue: asyncio.Queue[WorkflowRunEvent | None] = asyncio.Queue()
 
     async def __aiter__(self):
         return self
 
     async def __anext__(self) -> WorkflowRunEvent:
         return await self.queue.get()
-    
+
     async def get(self) -> WorkflowRunEvent:
         event = await self.queue.get()
 
         if event is None:
             raise StopAsyncIteration
-    
+
         return event
 
     async def put(self, item: WorkflowRunEvent):
@@ -94,28 +95,34 @@ class PooledWorkflowRunListener:
 
                         # spawn an interrupter task
                         asyncio.create_task(self._interrupter())
-                        
+
                         while True:
                             self.interrupt = Event_ts()
-                            t = asyncio.create_task(read_with_interrupt(self.listener, self.interrupt))
+                            t = asyncio.create_task(
+                                read_with_interrupt(self.listener, self.interrupt)
+                            )
                             await self.interrupt.wait()
 
                             if not t.done():
                                 # print a warning
-                                logger.warning("Interrupted read_with_interrupt task of workflow run listener")
+                                logger.warning(
+                                    "Interrupted read_with_interrupt task of workflow run listener"
+                                )
 
                                 t.cancel()
                                 self.listener.cancel()
                                 break
 
-                            workflow_event : WorkflowRunEvent = t.result()
+                            workflow_event: WorkflowRunEvent = t.result()
 
                             # get a list of subscriptions for this workflow
-                            subscriptions = self.workflowsToSubscriptions.get(workflow_event.workflowRunId, [])
+                            subscriptions = self.workflowsToSubscriptions.get(
+                                workflow_event.workflowRunId, []
+                            )
 
                             for subscription_id in subscriptions:
                                 await self.events[subscription_id].put(workflow_event)
-                            
+
                     except grpc.RpcError as e:
                         logger.error(f"grpc error in workflow run listener: {e}")
                         continue
@@ -127,7 +134,7 @@ class PooledWorkflowRunListener:
             # close all subscriptions
             for subscription_id in self.events:
                 await self.events[subscription_id].close()
-                
+
             raise e
 
     async def _request(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
@@ -164,7 +171,7 @@ class PooledWorkflowRunListener:
             await self.subscription_counter_lock.acquire()
             self.subscription_counter += 1
             subscription_id = self.subscription_counter
-            self.subscription_counter_lock.release()        
+            self.subscription_counter_lock.release()
 
             self.subscriptionsToWorkflows[subscription_id] = workflow_run_id
 
@@ -173,7 +180,9 @@ class PooledWorkflowRunListener:
             else:
                 self.workflowsToSubscriptions[workflow_run_id].append(subscription_id)
 
-            self.events[subscription_id] = _Subscription(subscription_id, workflow_run_id)
+            self.events[subscription_id] = _Subscription(
+                subscription_id, workflow_run_id
+            )
 
             asyncio.create_task(self._init_producer())
 

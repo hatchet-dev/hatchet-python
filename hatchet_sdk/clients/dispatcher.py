@@ -110,6 +110,7 @@ START_STEP_RUN = 0
 CANCEL_STEP_RUN = 1
 START_GET_GROUP_KEY = 2
 
+
 async def exp_backoff_sleep(attempt: int, max_sleep_time: float = 5):
     base_time = 0.1  # starting sleep time in seconds (100 milliseconds)
     jitter = random.uniform(0, base_time)  # add random jitter
@@ -201,12 +202,16 @@ class ActionListenerImpl(WorkerActionListener):
             try:
                 while True:
                     self.interrupt = Event_ts()
-                    t = asyncio.create_task(read_with_interrupt(listener, self.interrupt))
+                    t = asyncio.create_task(
+                        read_with_interrupt(listener, self.interrupt)
+                    )
                     await self.interrupt.wait()
 
                     if not t.done():
                         # print a warning
-                        logger.warning("Interrupted read_with_interrupt task of action listener")
+                        logger.warning(
+                            "Interrupted read_with_interrupt task of action listener"
+                        )
 
                         t.cancel()
                         listener.cancel()
