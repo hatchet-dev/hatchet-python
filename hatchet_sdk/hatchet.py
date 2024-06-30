@@ -4,12 +4,12 @@ import random
 from functools import wraps
 from io import StringIO
 from logging import Logger, StreamHandler
-from typing import List
+from typing import List, Optional
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
-from .client import ClientImpl, new_client
+from .client import ClientImpl, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
@@ -19,13 +19,24 @@ from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
 class Hatchet:
     client: ClientImpl
 
+    @classmethod
+    def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs):
+        return cls(client=new_client(defaults), **kwargs)
+
+    @classmethod
+    def from_config(cls, config: ClientConfig, **kwargs):
+        return cls(client=new_client_raw(config), **kwawrgs)
+
     def __init__(
         self,
-        debug=False,
+        client: Optional[ClientImpl] = None,
         config: ClientConfig = ClientConfig(),
+        debug=False,
     ):
-        # initialize a client
-        self.client = new_client(config)
+        if client is not None:
+            self.client = client
+        else:
+            self.client = new_client(config)
 
         if not debug:
             logger.disable("hatchet_sdk")
