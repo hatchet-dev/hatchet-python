@@ -498,7 +498,8 @@ class Worker:
         return event
 
     def register_workflow(self, workflow: WorkflowMeta):
-        self.client.admin.put_workflow(workflow.get_name(), workflow.get_create_opts())
+        namespace = self.client.config.namespace
+        self.client.admin.put_workflow(workflow.get_name(), workflow.get_create_opts(namespace))
 
         def create_action_function(action_func):
             def action_function(context):
@@ -511,7 +512,7 @@ class Worker:
 
             return action_function
 
-        for action_name, action_func in workflow.get_actions():
+        for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
 
     async def exit_gracefully(self):
