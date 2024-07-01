@@ -13,9 +13,6 @@ stepsType = List[Tuple[str, Callable[..., Any]]]
 
 class WorkflowMeta(type):
     def __new__(cls, name, bases, attrs):
-
-        namespace = attrs["client"].config.namespace
-
         concurrencyActions: stepsType = [
             (func_name, attrs.pop(func_name))
             for func_name, func in list(attrs.items())
@@ -66,8 +63,11 @@ class WorkflowMeta(type):
         for step_name, step_func in steps:
             attrs[step_name] = step_func
 
-        name = namespace + attrs["name"]
-        event_triggers = [namespace + event for event in attrs["on_events"]]
+        def get_name(self, namespace: str):
+            return namespace + attrs["name"]
+
+        attrs["get_name"] = get_name
+
         cron_triggers = attrs["on_crons"]
         version = attrs["version"]
         schedule_timeout = attrs["schedule_timeout"]
@@ -75,6 +75,8 @@ class WorkflowMeta(type):
         @functools.cache
         def get_create_opts(self, namespace: str):
             serviceName = get_service_name(namespace)
+            name = self.get_name(namespace)
+            event_triggers = [namespace + event for event in attrs["on_events"]]
             createStepOpts: List[CreateWorkflowStepOpts] = [
                 CreateWorkflowStepOpts(
                     readable_id=func_name,
@@ -135,10 +137,6 @@ class WorkflowMeta(type):
                 concurrency=concurrency,
             )
 
-        def get_name(self):
-            return name
-
         attrs["get_create_opts"] = get_create_opts
-        attrs["get_name"] = get_name
 
         return super(WorkflowMeta, cls).__new__(cls, name, bases, attrs)
