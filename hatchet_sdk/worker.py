@@ -27,7 +27,7 @@ from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
 
-from .client import new_client
+from .client import new_client, new_client_raw
 from .clients.dispatcher import (
     Action,
     ActionListenerImpl,
@@ -143,7 +143,7 @@ class Worker:
     ):
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
-        self.client = new_client(config)
+        self.client = new_client_raw(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
         self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
