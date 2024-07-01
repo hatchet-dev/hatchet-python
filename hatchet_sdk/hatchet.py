@@ -4,7 +4,7 @@ import random
 from functools import wraps
 from io import StringIO
 from logging import Logger, StreamHandler
-from typing import List
+from typing import List, Optional
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
@@ -14,6 +14,55 @@ from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
 from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
+
+
+def workflow(
+    name: str = "",
+    on_events: list | None = None,
+    on_crons: list | None = None,
+    version: str = "",
+    timeout: str = "60m",
+    schedule_timeout: str = "5m",
+):
+    on_events = on_events or []
+    on_crons = on_crons or []
+    def inner(cls):
+        cls.on_events = on_events
+        cls.on_crons = on_crons
+        cls.name = name or str(cls.__name__)
+        cls.version = version
+        cls.timeout = timeout
+        cls.schedule_timeout = schedule_timeout
+
+        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
+
+    return inner
+
+
+def step(
+    name: str = "",
+    timeout: str = "",
+    parents: List[str] | None = None,
+    retries: int = 0,
+    rate_limits: List[RateLimit] | None = None,
+):
+    parents = parents or []
+    def inner(func):
+        limits = None
+        if rate_limits:
+            limits = [
+                CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
+                for rate_limit in rate_limits or []
+            ]
+
+        func._step_name = name or func.__name__
+        func._step_parents = parents
+        func._step_timeout = timeout
+        func._step_retries = retries
+        func._step_rate_limits = limits
+        return func
+
+    return inner
 
 
 class Hatchet:
@@ -45,53 +94,9 @@ class Hatchet:
 
         return inner
 
-    def workflow(
-        self,
-        name: str = "",
-        on_events: list = [],
-        on_crons: list = [],
-        version: str = "",
-        timeout: str = "60m",
-        schedule_timeout: str = "5m",
-    ):
-        def inner(cls):
-            cls.on_events = on_events
-            cls.on_crons = on_crons
-            cls.name = name or str(cls.__name__)
-            cls.client = self.client
-            cls.version = version
-            cls.timeout = timeout
-            cls.schedule_timeout = schedule_timeout
+    workflow = staticmethod(workflow)
 
-            # Define a new class with the same name and bases as the original, but with WorkflowMeta as its metaclass
-            return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
-
-        return inner
-
-    def step(
-        self,
-        name: str = "",
-        timeout: str = "",
-        parents: List[str] = [],
-        retries: int = 0,
-        rate_limits: List[RateLimit] | None = None,
-    ):
-        def inner(func):
-            limits = None
-            if rate_limits:
-                limits = [
-                    CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
-                    for rate_limit in rate_limits or []
-                ]
-
-            func._step_name = name or func.__name__
-            func._step_parents = parents
-            func._step_timeout = timeout
-            func._step_retries = retries
-            func._step_rate_limits = limits
-            return func
-
-        return inner
+    step = staticmethod(step)
 
     def on_failure_step(
         self,
