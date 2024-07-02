@@ -25,7 +25,7 @@ class Hatchet:
 
     @classmethod
     def from_config(cls, config: ClientConfig, **kwargs):
-        return cls(client=new_client_raw(config), **kwawrgs)
+        return cls(client=new_client_raw(config), **kwargs)
 
     def __init__(
         self,
