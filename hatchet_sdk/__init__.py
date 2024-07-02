@@ -126,7 +126,7 @@ from .clients.admin import ScheduleTriggerWorkflowOptions, TriggerWorkflowOption
 from .clients.events import PushEventOptions
 from .clients.run_event_listener import StepRunEventType, WorkflowRunEventType
 from .context import Context
-from .hatchet import ClientConfig, Hatchet
+from .hatchet import ClientConfig, Hatchet, workflow, step
 from .worker import Worker, WorkerStatus
 from .workflows_pb2 import (
     ConcurrencyLimitStrategy,
