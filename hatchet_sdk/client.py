@@ -40,8 +40,7 @@ class ClientImpl(Client):
         return cls.new_from_config(config)
 
     @classmethod
-    def new_from_config(cls, config: ClientConfig = ClientConfig(), *opts_functions):
-
+    def new_from_config(cls, config: ClientConfig = ClientConfig()):
         if config.tls_config is None:
             raise ValueError("TLS config is required")
 
