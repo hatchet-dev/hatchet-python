@@ -67,6 +67,44 @@ def step(
     return inner
 
 
+def on_failure_step(
+    name: str = "",
+    timeout: str = "",
+    retries: int = 0,
+    rate_limits: List[RateLimit] | None = None,
+):
+    def inner(func):
+        limits = None
+        if rate_limits:
+            limits = [
+                CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
+                for rate_limit in rate_limits or []
+            ]
+
+        func._on_failure_step_name = name.lower() or str(func.__name__).lower()
+        func._on_failure_step_timeout = timeout
+        func._on_failure_step_retries = retries
+        func._on_failure_step_rate_limits = limits
+        return func
+
+    return inner
+
+
+def concurrency(
+    name: str = "",
+    max_runs: int = 1,
+    limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
+):
+    def inner(func):
+        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
+        func._concurrency_max_runs = max_runs
+        func._concurrency_limit_strategy = limit_strategy
+
+        return func
+
+    return inner
+
+
 class Hatchet:
     client: ClientImpl
 
@@ -81,48 +119,14 @@ class Hatchet:
         if not debug:
             logger.disable("hatchet_sdk")
 
-    def concurrency(
-        self,
-        name: str = "",
-        max_runs: int = 1,
-        limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-    ):
-        def inner(func):
-            func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
-            func._concurrency_max_runs = max_runs
-            func._concurrency_limit_strategy = limit_strategy
 
-            return func
-
-        return inner
-
+    concurrency = staticmethod(concurrency)
 
     workflow = staticmethod(workflow)
 
     step = staticmethod(step)
 
-    def on_failure_step(
-        self,
-        name: str = "",
-        timeout: str = "",
-        retries: int = 0,
-        rate_limits: List[RateLimit] | None = None,
-    ):
-        def inner(func):
-            limits = None
-            if rate_limits:
-                limits = [
-                    CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
-                    for rate_limit in rate_limits or []
-                ]
-
-            func._on_failure_step_name = name.lower() or str(func.__name__).lower()
-            func._on_failure_step_timeout = timeout
-            func._on_failure_step_retries = retries
-            func._on_failure_step_rate_limits = limits
-            return func
-
-        return inner
+    on_failure_step = staticmethod(on_failure_step)
 
     def worker(self, name: str, max_runs: int | None = None):
         return Worker(name=name, max_runs=max_runs, config=self.client.config)
