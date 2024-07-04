@@ -32,7 +32,9 @@ class Client:
 class ClientImpl(Client):
 
     @classmethod
-    def new_from_environment(cls, defaults: ClientConfig = ClientConfig(), *opts_functions):
+    def new_from_environment(
+        cls, defaults: ClientConfig = ClientConfig(), *opts_functions
+    ):
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
             opt_function(config)
