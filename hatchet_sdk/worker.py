@@ -199,7 +199,7 @@ class Worker:
                 )
 
         return inner_callback
-    
+
     def group_key_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
             self.cleanup_run_id(action.get_group_key_run_id)
@@ -215,7 +215,9 @@ class Worker:
                 errored = True
 
                 # This except is coming from the application itself, so we want to send that to the Hatchet instance
-                event = self.get_group_key_action_event(action, GROUP_KEY_EVENT_TYPE_FAILED)
+                event = self.get_group_key_action_event(
+                    action, GROUP_KEY_EVENT_TYPE_FAILED
+                )
                 event.eventPayload = str(errorWithTraceback(f"{e}", e))
 
                 try:
@@ -243,9 +245,12 @@ class Worker:
     def thread_action_func(self, context, action_func, action: Action):
         if action.step_run_id is not None and action.step_run_id != "":
             self.threads[action.step_run_id] = current_thread()
-        elif action.get_group_key_run_id is not None and action.get_group_key_run_id != "":
+        elif (
+            action.get_group_key_run_id is not None
+            and action.get_group_key_run_id != ""
+        ):
             self.threads[action.get_group_key_run_id] = current_thread()
-        
+
         return action_func(context)
 
     # We wrap all actions in an async func
@@ -350,7 +355,9 @@ class Worker:
         if action_func:
             # send an event that the group key run has started
             try:
-                event = self.get_group_key_action_event(action, GROUP_KEY_EVENT_TYPE_STARTED)
+                event = self.get_group_key_action_event(
+                    action, GROUP_KEY_EVENT_TYPE_STARTED
+                )
 
                 # Send the action event to the dispatcher
                 asyncio.create_task(
