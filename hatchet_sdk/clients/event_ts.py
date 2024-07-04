@@ -20,6 +20,8 @@ class Event_ts(asyncio.Event):
 
 
 async def read_with_interrupt(listener: Any, interrupt: Event_ts):
-    result = await listener.read()
-    interrupt.set()
-    return result
+    try:
+        result = await listener.read()
+        return result
+    finally:
+        interrupt.set()
