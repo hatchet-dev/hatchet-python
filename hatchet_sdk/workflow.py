@@ -18,17 +18,17 @@ class WorkflowMeta(type):
         serviceName = namespace + name.lower()
 
         concurrencyActions: stepsType = [
-            (func_name, attrs.pop(func_name))
+            (getattr(func, "_concurrency_fn_name"), attrs.pop(func_name))
             for func_name, func in list(attrs.items())
             if hasattr(func, "_concurrency_fn_name")
         ]
         steps: stepsType = [
-            (func_name, attrs.pop(func_name))
+            (getattr(func, "_step_name"), attrs.pop(func_name))
             for func_name, func in list(attrs.items())
             if hasattr(func, "_step_name")
         ]
         onFailureSteps: stepsType = [
-            (func_name, attrs.pop(func_name))
+            (getattr(func, "_on_failure_step_name"), attrs.pop(func_name))
             for func_name, func in list(attrs.items())
             if hasattr(func, "_on_failure_step_name")
         ]
@@ -70,16 +70,15 @@ class WorkflowMeta(type):
 
         createStepOpts: List[CreateWorkflowStepOpts] = [
             CreateWorkflowStepOpts(
-                readable_id=func_name,
-                action=serviceName + ":" + func_name,
+                readable_id=step_name,
+                action=serviceName + ":" + step_name,
                 timeout=func._step_timeout or "60s",
                 inputs="{}",
                 parents=[x for x in func._step_parents],
                 retries=func._step_retries,
                 rate_limits=func._step_rate_limits,
             )
-            for func_name, func in attrs.items()
-            if hasattr(func, "_step_name")
+            for step_name, func in steps
         ]
 
         concurrency: WorkflowConcurrencyOpts | None = None
