@@ -294,6 +294,8 @@ class Worker:
             del self.contexts[run_id]
 
     async def handle_start_step_run(self, action: Action):
+        logger.debug(f"Starting step run {action.step_run_id}")
+
         action_name = action.action_id
         context = Context(
             action,
@@ -335,6 +337,8 @@ class Worker:
             except Exception as e:
                 # do nothing, this should be caught in the callback
                 pass
+
+        logger.debug(f"Finished step run {action.step_run_id}")
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
@@ -642,8 +646,10 @@ class Worker:
             # what allows self.loop.create_task to work.
             async for action in self.listener:
                 if action.action_type == ActionType.START_STEP_RUN:
+                    logger.debug(f"Got start step run action: {action.step_run_id}")
                     self.loop.create_task(self.handle_start_step_run(action))
                 elif action.action_type == ActionType.CANCEL_STEP_RUN:
+                    logger.debug(f"Got cancel step run action: {action.step_run_id}")
                     self.loop.create_task(self.handle_cancel_action(action.step_run_id))
                 elif action.action_type == ActionType.START_GET_GROUP_KEY:
                     self.loop.create_task(self.handle_start_group_key_run(action))

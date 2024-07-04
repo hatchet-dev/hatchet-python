@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-grpcio = "^1.60.0"
+grpcio = "^1.64.1"
 python-dotenv = "^1.0.0"
 protobuf = "^4.25.2"
 pyyaml = "^6.0.1"
@@ -17,6 +17,7 @@ pydantic = "^2.6.3"
 python-dateutil = "^2.9.0.post0"
 urllib3 = "^2.2.1"
 aiostream = "^0.5.2"
+nest-asyncio = "^1.6.0"
 
 [build-system]
 requires = ["poetry-core"]
