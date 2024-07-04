@@ -1,5 +1,9 @@
 from typing import Any, Dict
 
+from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
+    WorkflowRunsCancelRequest,
+)
+
 from .rest.api.log_api import LogApi
 from .rest.api.step_run_api import StepRunApi
 from .rest.api.workflow_api import WorkflowApi
@@ -60,6 +64,14 @@ class RestApi:
         return self.workflow_api.workflow_run_get(
             tenant=self.tenant_id,
             workflow_run=workflow_run_id,
+        )
+
+    def workflow_run_cancel(self, workflow_run_id: str):
+        return self.workflow_run_api.workflow_run_cancel(
+            tenant=self.tenant_id,
+            workflow_runs_cancel_request=WorkflowRunsCancelRequest(
+                workflowRunIds=[workflow_run_id],
+            ),
         )
 
     def workflow_run_create(self, workflow_id: str, input: Dict[str, Any]):
