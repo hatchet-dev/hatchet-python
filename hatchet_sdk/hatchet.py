@@ -26,7 +26,7 @@ def workflow(
 ):
     on_events = on_events or []
     on_crons = on_crons or []
-    def inner(cls):
+    def inner(cls) -> WorkflowMeta:
         cls.on_events = on_events
         cls.on_crons = on_crons
         cls.name = name or str(cls.__name__)
@@ -34,6 +34,8 @@ def workflow(
         cls.timeout = timeout
         cls.schedule_timeout = schedule_timeout
 
+        # Define a new class with the same name and bases as the original, but
+        # with WorkflowMeta as its metaclass
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
     return inner
@@ -55,7 +57,7 @@ def step(
                 for rate_limit in rate_limits or []
             ]
 
-        func._step_name = name or func.__name__
+        func._step_name = name.lower() or str(func.__name__).lower()
         func._step_parents = parents
         func._step_timeout = timeout
         func._step_retries = retries
@@ -86,13 +88,14 @@ class Hatchet:
         limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
     ):
         def inner(func):
-            func._concurrency_fn_name = name or func.__name__
+            func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
             func._concurrency_max_runs = max_runs
             func._concurrency_limit_strategy = limit_strategy
 
             return func
 
         return inner
+
 
     workflow = staticmethod(workflow)
 
@@ -113,7 +116,7 @@ class Hatchet:
                     for rate_limit in rate_limits or []
                 ]
 
-            func._on_failure_step_name = name or func.__name__
+            func._on_failure_step_name = name.lower() or str(func.__name__).lower()
             func._on_failure_step_timeout = timeout
             func._on_failure_step_retries = retries
             func._on_failure_step_rate_limits = limits
