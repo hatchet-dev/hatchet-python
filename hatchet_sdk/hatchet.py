@@ -54,7 +54,7 @@ class Hatchet:
         timeout: str = "60m",
         schedule_timeout: str = "5m",
     ):
-        def inner(cls):
+        def inner(cls) -> WorkflowMeta:
             cls.on_events = on_events
             cls.on_crons = on_crons
             cls.name = name or str(cls.__name__)

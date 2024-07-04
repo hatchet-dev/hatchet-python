@@ -160,8 +160,10 @@ class Worker:
 
         self._status = WorkerStatus.INITIALIZED
 
-    def callback(self, action: Action):
+    def step_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
+            self.cleanup_run_id(action.step_run_id)
+
             errored = False
             cancelled = task.cancelled()
 
@@ -196,14 +198,54 @@ class Worker:
                     self.dispatcher_client.send_step_action_event(event)
                 )
 
-            # Remove the future from the dictionary
-            if action.step_run_id in self.tasks:
-                del self.tasks[action.step_run_id]
+        return inner_callback
+    
+    def group_key_run_callback(self, action: Action):
+        def inner_callback(task: asyncio.Task):
+            self.cleanup_run_id(action.get_group_key_run_id)
+
+            errored = False
+            cancelled = task.cancelled()
+
+            # Get the output from the future
+            try:
+                if not cancelled:
+                    output = task.result()
+            except Exception as e:
+                errored = True
+
+                # This except is coming from the application itself, so we want to send that to the Hatchet instance
+                event = self.get_group_key_action_event(action, GROUP_KEY_EVENT_TYPE_FAILED)
+                event.eventPayload = str(errorWithTraceback(f"{e}", e))
+
+                try:
+                    asyncio.create_task(
+                        self.dispatcher_client.send_group_key_action_event(event)
+                    )
+                except Exception as e:
+                    logger.error(f"Could not send action event: {e}")
+
+            if not errored and not cancelled:
+                # Create an action event
+                try:
+                    event = self.get_group_key_action_finished_event(action, output)
+                except Exception as e:
+                    logger.error(f"Could not get action finished event: {e}")
+                    raise e
+
+                # Send the action event to the dispatcher
+                asyncio.create_task(
+                    self.dispatcher_client.send_group_key_action_event(event)
+                )
 
         return inner_callback
 
     def thread_action_func(self, context, action_func, action: Action):
-        self.threads[action.step_run_id] = current_thread()
+        if action.step_run_id is not None and action.step_run_id != "":
+            self.threads[action.step_run_id] = current_thread()
+        elif action.get_group_key_run_id is not None and action.get_group_key_run_id != "":
+            self.threads[action.get_group_key_run_id] = current_thread()
+        
         return action_func(context)
 
     # We wrap all actions in an async func
@@ -229,19 +271,22 @@ class Worker:
                 )
                 res = await self.loop.run_in_executor(self.thread_pool, pfunc)
 
-                if run_id in self.threads:
-                    # remove the thread id
-                    logger.debug(f"Removing run id {run_id} from threads")
-
-                    del self.threads[run_id]
-
                 return res
         except Exception as e:
             logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
             raise e
         finally:
-            if run_id in self.tasks:
-                del self.tasks[run_id]
+            self.cleanup_run_id(run_id)
+
+    def cleanup_run_id(self, run_id: str):
+        if run_id in self.tasks:
+            del self.tasks[run_id]
+
+        if run_id in self.threads:
+            del self.threads[run_id]
+
+        if run_id in self.contexts:
+            del self.contexts[run_id]
 
     async def handle_start_step_run(self, action: Action):
         action_name = action.action_id
@@ -277,7 +322,7 @@ class Worker:
                 )
             )
 
-            task.add_done_callback(self.callback(action))
+            task.add_done_callback(self.step_run_callback(action))
             self.tasks[action.step_run_id] = task
 
             try:
@@ -297,74 +342,31 @@ class Worker:
             self.workflow_run_event_listener,
             self.client.config.namespace,
         )
-
         self.contexts[action.get_group_key_run_id] = context
 
         # Find the corresponding action function from the registry
         action_func = self.action_registry.get(action_name)
 
         if action_func:
+            # send an event that the group key run has started
+            try:
+                event = self.get_group_key_action_event(action, GROUP_KEY_EVENT_TYPE_STARTED)
 
-            def callback(task: asyncio.Task):
-                errored = False
-                cancelled = task.cancelled()
-
-                # Get the output from the future
-                try:
-                    if not cancelled:
-                        output = task.result()
-                except Exception as e:
-                    errored = True
-
-                    # This except is coming from the application itself, so we want to send that to the Hatchet instance
-                    event = self.get_group_key_action_event(
-                        action, GROUP_KEY_EVENT_TYPE_FAILED
-                    )
-                    event.eventPayload = str(errorWithTraceback(f"{e}", e))
-
-                    try:
-                        asyncio.create_task(
-                            self.dispatcher_client.send_group_key_action_event(event)
-                        )
-                    except Exception as e:
-                        logger.error(f"Could not send action event: {e}")
-
-                if not errored and not cancelled:
-                    # Create an action event
-                    try:
-                        event = self.get_group_key_action_finished_event(action, output)
-                    except Exception as e:
-                        logger.error(f"Could not get action finished event: {e}")
-                        raise e
-
-                    # Send the action event to the dispatcher
-                    asyncio.create_task(
-                        self.dispatcher_client.send_group_key_action_event(event)
-                    )
-
-                # Remove the future from the dictionary
-                if action.get_group_key_run_id in self.tasks:
-                    del self.tasks[action.get_group_key_run_id]
+                # Send the action event to the dispatcher
+                asyncio.create_task(
+                    self.dispatcher_client.send_group_key_action_event(event)
+                )
+            except Exception as e:
+                logger.error(f"Could not send action event: {e}")
 
             task = self.loop.create_task(
                 self.async_wrapped_action_func(
                     context, action_func, action, action.get_group_key_run_id
                 )
             )
-            task.add_done_callback(callback)
+
+            task.add_done_callback(self.group_key_run_callback(action))
             self.tasks[action.get_group_key_run_id] = task
-
-            # send an event that the step run has started
-            try:
-                event = self.get_group_key_action_event(
-                    action, GROUP_KEY_EVENT_TYPE_STARTED
-                )
-            except Exception as e:
-                logger.error(f"Could not create action event: {e}")
-
-            asyncio.create_task(
-                self.dispatcher_client.send_group_key_action_event(event)
-            )
 
             try:
                 await task
@@ -402,32 +404,28 @@ class Worker:
             logger.exception(f"Failed to terminate thread: {e}")
 
     async def handle_cancel_action(self, run_id: str):
-        # call cancel to signal the context to stop
-        if run_id in self.contexts:
-            context = self.contexts.get(run_id)
-            context.cancel()
+        try:
+            # call cancel to signal the context to stop
+            if run_id in self.contexts:
+                context = self.contexts.get(run_id)
+                context.cancel()
 
-        if run_id in self.tasks:
-            future = self.tasks.get(run_id)
+            await asyncio.sleep(1)
 
-            if future:
-                future.cancel()
+            if run_id in self.tasks:
+                future = self.tasks.get(run_id)
 
-                if run_id in self.tasks:
-                    del self.tasks[run_id]
+                if future:
+                    future.cancel()
 
-        # grace period of 1 second
-        await asyncio.sleep(1)
-
-        # check if thread is still running, if so, kill it
-        if run_id in self.threads:
-            thread = self.threads[run_id]
-
-            if thread:
-                self.force_kill_thread(thread)
-
-                if run_id in self.threads:
-                    del self.threads[run_id]
+            # check if thread is still running, if so, print a warning
+            if run_id in self.threads:
+                logger.warning(
+                    f"""Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. 
+                    This could cause the thread pool to get blocked and prevent new tasks from running."""
+                )
+        finally:
+            self.cleanup_run_id(run_id)
 
     def get_step_action_event(
         self, action: Action, event_type: StepActionEventType
