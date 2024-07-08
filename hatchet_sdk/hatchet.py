@@ -26,6 +26,7 @@ def workflow(
 ):
     on_events = on_events or []
     on_crons = on_crons or []
+
     def inner(cls) -> WorkflowMeta:
         cls.on_events = on_events
         cls.on_crons = on_crons
@@ -49,6 +50,7 @@ def step(
     rate_limits: List[RateLimit] | None = None,
 ):
     parents = parents or []
+
     def inner(func):
         limits = None
         if rate_limits:
@@ -118,7 +120,6 @@ class Hatchet:
 
         if not debug:
             logger.disable("hatchet_sdk")
-
 
     concurrency = staticmethod(concurrency)
 

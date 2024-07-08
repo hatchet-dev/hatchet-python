@@ -509,8 +509,7 @@ class Worker:
     def register_workflow(self, workflow: WorkflowMeta):
         namespace = self.client.config.namespace
         self.client.admin.put_workflow(
-            workflow.get_name(namespace),
-            workflow.get_create_opts(namespace)
+            workflow.get_name(namespace), workflow.get_create_opts(namespace)
         )
 
         def create_action_function(action_func):
