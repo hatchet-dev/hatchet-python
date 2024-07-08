@@ -32,17 +32,15 @@ class Client:
 class ClientImpl(Client):
 
     @classmethod
-    def new_from_environment(
-        cls, defaults: ClientConfig = ClientConfig(), *opts_functions
-    ):
+    def from_environment(cls, defaults: ClientConfig = ClientConfig(), *opts_functions):
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
             opt_function(config)
 
-        return cls.new_from_config(config)
+        return cls.from_config(config)
 
     @classmethod
-    def new_from_config(cls, config: ClientConfig = ClientConfig()):
+    def from_config(cls, config: ClientConfig = ClientConfig()):
         if config.tls_config is None:
             raise ValueError("TLS config is required")
 
@@ -94,5 +92,5 @@ def with_host_port(host: str, port: int):
     return with_host_port_impl
 
 
-new_client = ClientImpl.new_from_environment
-new_client_raw = ClientImpl.new_from_config
+new_client = ClientImpl.from_environment
+new_client_raw = ClientImpl.from_config

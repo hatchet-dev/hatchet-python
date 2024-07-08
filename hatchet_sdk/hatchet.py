@@ -120,9 +120,9 @@ class Hatchet:
 
     def __init__(
         self,
+        debug: bool = False,
         client: Optional[ClientImpl] = None,
         config: ClientConfig = ClientConfig(),
-        debug=False,
     ):
         if client is not None:
             self.client = client
