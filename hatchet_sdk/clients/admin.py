@@ -76,7 +76,7 @@ class AdminClientBase:
             if isinstance(workflow, CreateWorkflowVersionOpts):
                 opts = workflow
             else:
-                opts = workflow.get_create_opts()
+                opts = workflow.get_create_opts(self.client.config.namespace)
 
             if overrides is not None:
                 opts.MergeFrom(overrides)
