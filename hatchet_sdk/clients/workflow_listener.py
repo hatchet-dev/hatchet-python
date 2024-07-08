@@ -111,6 +111,7 @@ class PooledWorkflowRunListener:
 
                                 t.cancel()
                                 self.listener.cancel()
+                                await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
                                 break
 
                             workflow_event: WorkflowRunEvent = t.result()
@@ -125,10 +126,6 @@ class PooledWorkflowRunListener:
 
                     except grpc.RpcError as e:
                         logger.error(f"grpc error in workflow run listener: {e}")
-                        await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
-                        continue
-                    except Exception as e:
-                        logger.error(f"error in workflow run listener: {e}")
                         await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
                         continue
 
