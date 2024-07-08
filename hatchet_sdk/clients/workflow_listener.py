@@ -15,7 +15,7 @@ from ..loader import ClientConfig
 from ..logger import logger
 from ..metadata import get_metadata
 
-DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 1  # seconds
+DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 3  # seconds
 DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT = 5
 DEFAULT_WORKFLOW_LISTENER_INTERRUPT_INTERVAL = 1800  # 30 minutes
 
@@ -111,6 +111,9 @@ class PooledWorkflowRunListener:
 
                                 t.cancel()
                                 self.listener.cancel()
+                                await asyncio.sleep(
+                                    DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL
+                                )
                                 break
 
                             workflow_event: WorkflowRunEvent = t.result()
@@ -125,7 +128,9 @@ class PooledWorkflowRunListener:
 
                     except grpc.RpcError as e:
                         logger.error(f"grpc error in workflow run listener: {e}")
+                        await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
                         continue
+
         except Exception as e:
             logger.error(f"Error in workflow run listener: {e}")
 
