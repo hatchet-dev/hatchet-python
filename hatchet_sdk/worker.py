@@ -432,8 +432,7 @@ class Worker:
             # check if thread is still running, if so, print a warning
             if run_id in self.threads:
                 logger.warning(
-                    f"""Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. 
-                    This could cause the thread pool to get blocked and prevent new tasks from running."""
+                    f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
                 )
         finally:
             self.cleanup_run_id(run_id)
