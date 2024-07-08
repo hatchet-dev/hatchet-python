@@ -111,7 +111,9 @@ class PooledWorkflowRunListener:
 
                                 t.cancel()
                                 self.listener.cancel()
-                                await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
+                                await asyncio.sleep(
+                                    DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL
+                                )
                                 break
 
                             workflow_event: WorkflowRunEvent = t.result()
