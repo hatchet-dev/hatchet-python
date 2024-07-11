@@ -38,7 +38,11 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     child_key: Optional[str]
 
 
-class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
+class ChildTriggerWorkflowOptions(TypedDict):
+    additional_metadata: Dict[str, str] | None = None
+
+
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
 
 
