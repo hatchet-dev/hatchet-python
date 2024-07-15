@@ -138,7 +138,7 @@ class ActionListenerImpl(WorkerActionListener):
         self.run_heartbeat = True
         self.listen_strategy = "v2"
         self.stop_signal = False
-        self.logger = logger.bind(worker_id=worker_id)
+        self.logger = logger
 
     def is_healthy(self):
         return self.last_heartbeat_succeeded
