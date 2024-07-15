@@ -1,13 +1,13 @@
-import os
 import sys
+import logging
 
-from loguru import logger
+# logging config
+logging.basicConfig(
+    level=logging.ERROR,
+    format='[%(levelname)s] hatchet -- %(asctime)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
-# loguru config
-config = {
-    "handlers": [
-        {"sink": sys.stdout, "format": "[{level}] hatchet -- {time} - {message}"},
-    ],
-}
-
-logger.configure(**config)
+logger = logging.getLogger()

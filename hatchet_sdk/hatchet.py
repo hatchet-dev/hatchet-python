@@ -27,8 +27,8 @@ class Hatchet:
         # initialize a client
         self.client = new_client(config)
 
-        if not debug:
-            logger.disable("hatchet_sdk")
+        if debug:
+            logger.setLevel(logging.DEBUG)
 
     def concurrency(
         self,
