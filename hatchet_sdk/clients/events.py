@@ -6,7 +6,7 @@ from typing import Dict, TypedDict
 import grpc
 from google.protobuf import timestamp_pb2
 
-from ..events_pb2 import PushEventRequest, PutLogRequest, PutStreamEventRequest
+from ..events_pb2 import PushEventRequest, PutLogRequest, PutStreamEventRequest, Event
 from ..events_pb2_grpc import EventsServiceStub
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -37,7 +37,7 @@ class EventClientImpl:
         self.token = config.token
         self.namespace = config.namespace
 
-    def push(self, event_key, payload, options: PushEventOptions = None):
+    def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
 
         namespaced_event_key = self.namespace + event_key
 
@@ -60,7 +60,7 @@ class EventClientImpl:
         )
 
         try:
-            self.client.Push(request, metadata=get_metadata(self.token))
+            return self.client.Push(request, metadata=get_metadata(self.token))
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
