@@ -10,7 +10,12 @@ from hatchet_sdk.clients.run_event_listener import (
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
-from .clients.admin import AdminClientImpl, ScheduleTriggerWorkflowOptions
+from .clients.admin import (
+    AdminClientImpl,
+    ChildTriggerWorkflowOptions,
+    ScheduleTriggerWorkflowOptions,
+    TriggerWorkflowOptions,
+)
 from .clients.dispatcher import Action, DispatcherClientImpl
 from .dispatcher_pb2 import OverridesData
 from .logger import logger
@@ -25,19 +30,22 @@ def get_caller_file_path():
 
 
 class BaseContext:
-    def _prepare_workflow_options(self, key: str = None):
+    def _prepare_workflow_options(
+        self, key: str = None, options: ChildTriggerWorkflowOptions = None
+    ):
         workflow_run_id = self.action.workflow_run_id
         step_run_id = self.action.step_run_id
 
-        options: ScheduleTriggerWorkflowOptions = {
+        trigger_options: TriggerWorkflowOptions = {
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,
             "child_index": self.spawn_index,
+            "additional_metadata": options["additional_metadata"] if options else None,
         }
 
         self.spawn_index += 1
-        return options
+        return trigger_options
 
 
 class ContextAioImpl(BaseContext):
@@ -61,11 +69,17 @@ class ContextAioImpl(BaseContext):
         self.spawn_index = -1
 
     async def spawn_workflow(
-        self, workflow_name: str, input: dict = {}, key: str = None
+        self,
+        workflow_name: str,
+        input: dict = {},
+        key: str = None,
+        options: ChildTriggerWorkflowOptions = None,
     ) -> WorkflowRunRef:
-        options = self._prepare_workflow_options(key)
+        trigger_options = self._prepare_workflow_options(key, options)
 
-        return await self.admin_client.aio.run_workflow(workflow_name, input, options)
+        return await self.admin_client.aio.run_workflow(
+            workflow_name, input, trigger_options
+        )
 
 
 class Context(BaseContext):
@@ -173,10 +187,16 @@ class Context(BaseContext):
 
         return default
 
-    def spawn_workflow(self, workflow_name: str, input: dict = {}, key: str = None):
-        options = self._prepare_workflow_options(key)
+    def spawn_workflow(
+        self,
+        workflow_name: str,
+        input: dict = {},
+        key: str = None,
+        options: ChildTriggerWorkflowOptions = None,
+    ):
+        trigger_options = self._prepare_workflow_options(key, options)
 
-        return self.admin_client.run_workflow(workflow_name, input, options)
+        return self.admin_client.run_workflow(workflow_name, input, trigger_options)
 
     def _log(self, line: str):
         try:

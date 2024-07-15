@@ -31,6 +31,40 @@ class Client:
 
 class ClientImpl(Client):
 
+    @classmethod
+    def from_environment(cls, defaults: ClientConfig = ClientConfig(), *opts_functions):
+        config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
+        for opt_function in opts_functions:
+            opt_function(config)
+
+        return cls.from_config(config)
+
+    @classmethod
+    def from_config(cls, config: ClientConfig = ClientConfig()):
+        if config.tls_config is None:
+            raise ValueError("TLS config is required")
+
+        if config.host_port is None:
+            raise ValueError("Host and port are required")
+
+        conn: grpc.Channel = new_conn(config)
+
+        # Instantiate client implementations
+        event_client = new_event(conn, config)
+        admin_client = new_admin(config)
+        dispatcher_client = new_dispatcher(config)
+        rest_client = RestApi(config.server_url, config.token, config.tenant_id)
+        workflow_listener_client = None
+
+        return cls(
+            event_client,
+            admin_client,
+            dispatcher_client,
+            workflow_listener_client,
+            rest_client,
+            config,
+        )
+
     def __init__(
         self,
         event_client: EventClientImpl,
@@ -58,32 +92,5 @@ def with_host_port(host: str, port: int):
     return with_host_port_impl
 
 
-def new_client(defaults: ClientConfig = ClientConfig(), *opts_functions) -> ClientImpl:
-    config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
-
-    for opt_function in opts_functions:
-        opt_function(config)
-
-    if config.tls_config is None:
-        raise ValueError("TLS config is required")
-
-    if config.host_port is None:
-        raise ValueError("Host and port are required")
-
-    conn: grpc.Channel = new_conn(config)
-
-    # Instantiate client implementations
-    event_client = new_event(conn, config)
-    admin_client = new_admin(config)
-    dispatcher_client = new_dispatcher(config)
-    rest_client = RestApi(config.server_url, config.token, config.tenant_id)
-    workflow_listener_client = None
-
-    return ClientImpl(
-        event_client,
-        admin_client,
-        dispatcher_client,
-        workflow_listener_client,
-        rest_client,
-        config,
-    )
+new_client = ClientImpl.from_environment
+new_client_raw = ClientImpl.from_config

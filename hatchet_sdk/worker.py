@@ -27,7 +27,7 @@ from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
 
-from .client import new_client
+from .client import new_client, new_client_raw
 from .clients.dispatcher import (
     Action,
     ActionListenerImpl,
@@ -143,7 +143,7 @@ class Worker:
     ):
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
-        self.client = new_client(config)
+        self.client = new_client_raw(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
         self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
@@ -432,8 +432,7 @@ class Worker:
             # check if thread is still running, if so, print a warning
             if run_id in self.threads:
                 logger.warning(
-                    f"""Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. 
-                    This could cause the thread pool to get blocked and prevent new tasks from running."""
+                    f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
                 )
         finally:
             self.cleanup_run_id(run_id)
@@ -507,7 +506,10 @@ class Worker:
         return event
 
     def register_workflow(self, workflow: WorkflowMeta):
-        self.client.admin.put_workflow(workflow.get_name(), workflow.get_create_opts())
+        namespace = self.client.config.namespace
+        self.client.admin.put_workflow(
+            workflow.get_name(namespace), workflow.get_create_opts(namespace)
+        )
 
         def create_action_function(action_func):
             def action_function(context):
@@ -520,7 +522,7 @@ class Worker:
 
             return action_function
 
-        for action_name, action_func in workflow.get_actions():
+        for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
 
     async def exit_gracefully(self):

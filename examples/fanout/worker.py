@@ -21,7 +21,10 @@ class Parent:
             results.append(
                 (
                     await context.aio.spawn_workflow(
-                        "Child", {"a": str(i)}, key=f"child{i}"
+                        "Child",
+                        {"a": str(i)},
+                        key=f"child{i}",
+                        options={"additional_metadata": {"hello": "earth"}},
                     )
                 ).result()
             )
