@@ -1,4 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
+
+from pydantic import StrictStr
 
 from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
@@ -51,6 +53,7 @@ class RestApi:
         offset: int | None = None,
         limit: int | None = None,
         event_id: str | None = None,
+        additional_metadata: List[StrictStr] | None = None,
     ):
         return self.workflow_api.workflow_run_list(
             tenant=self.tenant_id,
@@ -58,6 +61,7 @@ class RestApi:
             limit=limit,
             workflow_id=workflow_id,
             event_id=event_id,
+            additional_metadata=additional_metadata,
         )
 
     def workflow_run_get(self, workflow_run_id: str):

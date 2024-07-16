@@ -13,47 +13,29 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List
+from typing import Optional, Set
 from typing_extensions import Self
-
 
 class WorkflowConcurrency(BaseModel):
     """
     WorkflowConcurrency
-    """  # noqa: E501
+    """ # noqa: E501
+    max_runs: StrictInt = Field(description="The maximum number of concurrent workflow runs.", alias="maxRuns")
+    limit_strategy: StrictStr = Field(description="The strategy to use when the concurrency limit is reached.", alias="limitStrategy")
+    get_concurrency_group: StrictStr = Field(description="An action which gets the concurrency group for the WorkflowRun.", alias="getConcurrencyGroup")
+    __properties: ClassVar[List[str]] = ["maxRuns", "limitStrategy", "getConcurrencyGroup"]
 
-    max_runs: StrictInt = Field(
-        description="The maximum number of concurrent workflow runs.", alias="maxRuns"
-    )
-    limit_strategy: StrictStr = Field(
-        description="The strategy to use when the concurrency limit is reached.",
-        alias="limitStrategy",
-    )
-    get_concurrency_group: StrictStr = Field(
-        description="An action which gets the concurrency group for the WorkflowRun.",
-        alias="getConcurrencyGroup",
-    )
-    __properties: ClassVar[List[str]] = [
-        "maxRuns",
-        "limitStrategy",
-        "getConcurrencyGroup",
-    ]
-
-    @field_validator("limit_strategy")
+    @field_validator('limit_strategy')
     def limit_strategy_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(
-            ["CANCEL_IN_PROGRESS", "DROP_NEWEST", "QUEUE_NEWEST", "GROUP_ROUND_ROBIN"]
-        ):
-            raise ValueError(
-                "must be one of enum values ('CANCEL_IN_PROGRESS', 'DROP_NEWEST', 'QUEUE_NEWEST', 'GROUP_ROUND_ROBIN')"
-            )
+        if value not in set(['CANCEL_IN_PROGRESS', 'DROP_NEWEST', 'QUEUE_NEWEST', 'GROUP_ROUND_ROBIN']):
+            raise ValueError("must be one of enum values ('CANCEL_IN_PROGRESS', 'DROP_NEWEST', 'QUEUE_NEWEST', 'GROUP_ROUND_ROBIN')")
         return value
 
     model_config = ConfigDict(
@@ -61,6 +43,7 @@ class WorkflowConcurrency(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -86,7 +69,8 @@ class WorkflowConcurrency(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -104,11 +88,11 @@ class WorkflowConcurrency(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "maxRuns": obj.get("maxRuns"),
-                "limitStrategy": obj.get("limitStrategy"),
-                "getConcurrencyGroup": obj.get("getConcurrencyGroup"),
-            }
-        )
+        _obj = cls.model_validate({
+            "maxRuns": obj.get("maxRuns"),
+            "limitStrategy": obj.get("limitStrategy"),
+            "getConcurrencyGroup": obj.get("getConcurrencyGroup")
+        })
         return _obj
+
+
