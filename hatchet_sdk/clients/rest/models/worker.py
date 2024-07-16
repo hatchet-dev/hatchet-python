@@ -13,43 +13,88 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
 from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional, Set
+
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Self
+
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.step_run import StepRun
-from typing import Optional, Set
-from typing_extensions import Self
+
 
 class Worker(BaseModel):
     """
     Worker
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: APIResourceMeta
     name: StrictStr = Field(description="The name of the worker.")
-    last_heartbeat_at: Optional[datetime] = Field(default=None, description="The time this worker last sent a heartbeat.", alias="lastHeartbeatAt")
-    last_listener_established: Optional[datetime] = Field(default=None, description="The time this worker last sent a heartbeat.", alias="lastListenerEstablished")
-    actions: Optional[List[StrictStr]] = Field(default=None, description="The actions this worker can perform.")
-    recent_step_runs: Optional[List[StepRun]] = Field(default=None, description="The recent step runs for this worker.", alias="recentStepRuns")
-    status: Optional[StrictStr] = Field(default=None, description="The status of the worker.")
-    max_runs: Optional[StrictInt] = Field(default=None, description="The maximum number of runs this worker can execute concurrently.", alias="maxRuns")
-    available_runs: Optional[StrictInt] = Field(default=None, description="The number of runs this worker can execute concurrently.", alias="availableRuns")
-    dispatcher_id: Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]] = Field(default=None, description="the id of the assigned dispatcher, in UUID format", alias="dispatcherId")
-    __properties: ClassVar[List[str]] = ["metadata", "name", "lastHeartbeatAt", "lastListenerEstablished", "actions", "recentStepRuns", "status", "maxRuns", "availableRuns", "dispatcherId"]
+    last_heartbeat_at: Optional[datetime] = Field(
+        default=None,
+        description="The time this worker last sent a heartbeat.",
+        alias="lastHeartbeatAt",
+    )
+    last_listener_established: Optional[datetime] = Field(
+        default=None,
+        description="The time this worker last sent a heartbeat.",
+        alias="lastListenerEstablished",
+    )
+    actions: Optional[List[StrictStr]] = Field(
+        default=None, description="The actions this worker can perform."
+    )
+    recent_step_runs: Optional[List[StepRun]] = Field(
+        default=None,
+        description="The recent step runs for this worker.",
+        alias="recentStepRuns",
+    )
+    status: Optional[StrictStr] = Field(
+        default=None, description="The status of the worker."
+    )
+    max_runs: Optional[StrictInt] = Field(
+        default=None,
+        description="The maximum number of runs this worker can execute concurrently.",
+        alias="maxRuns",
+    )
+    available_runs: Optional[StrictInt] = Field(
+        default=None,
+        description="The number of runs this worker can execute concurrently.",
+        alias="availableRuns",
+    )
+    dispatcher_id: Optional[
+        Annotated[str, Field(min_length=36, strict=True, max_length=36)]
+    ] = Field(
+        default=None,
+        description="the id of the assigned dispatcher, in UUID format",
+        alias="dispatcherId",
+    )
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "name",
+        "lastHeartbeatAt",
+        "lastListenerEstablished",
+        "actions",
+        "recentStepRuns",
+        "status",
+        "maxRuns",
+        "availableRuns",
+        "dispatcherId",
+    ]
 
-    @field_validator('status')
+    @field_validator("status")
     def status_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in set(['ACTIVE', 'INACTIVE', 'PAUSED']):
-            raise ValueError("must be one of enum values ('ACTIVE', 'INACTIVE', 'PAUSED')")
+        if value not in set(["ACTIVE", "INACTIVE", "PAUSED"]):
+            raise ValueError(
+                "must be one of enum values ('ACTIVE', 'INACTIVE', 'PAUSED')"
+            )
         return value
 
     model_config = ConfigDict(
@@ -57,7 +102,6 @@ class Worker(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -83,8 +127,7 @@ class Worker(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -93,14 +136,14 @@ class Worker(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in recent_step_runs (list)
         _items = []
         if self.recent_step_runs:
             for _item in self.recent_step_runs:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['recentStepRuns'] = _items
+            _dict["recentStepRuns"] = _items
         return _dict
 
     @classmethod
@@ -112,18 +155,26 @@ class Worker(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "name": obj.get("name"),
-            "lastHeartbeatAt": obj.get("lastHeartbeatAt"),
-            "lastListenerEstablished": obj.get("lastListenerEstablished"),
-            "actions": obj.get("actions"),
-            "recentStepRuns": [StepRun.from_dict(_item) for _item in obj["recentStepRuns"]] if obj.get("recentStepRuns") is not None else None,
-            "status": obj.get("status"),
-            "maxRuns": obj.get("maxRuns"),
-            "availableRuns": obj.get("availableRuns"),
-            "dispatcherId": obj.get("dispatcherId")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    APIResourceMeta.from_dict(obj["metadata"])
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "name": obj.get("name"),
+                "lastHeartbeatAt": obj.get("lastHeartbeatAt"),
+                "lastListenerEstablished": obj.get("lastListenerEstablished"),
+                "actions": obj.get("actions"),
+                "recentStepRuns": (
+                    [StepRun.from_dict(_item) for _item in obj["recentStepRuns"]]
+                    if obj.get("recentStepRuns") is not None
+                    else None
+                ),
+                "status": obj.get("status"),
+                "maxRuns": obj.get("maxRuns"),
+                "availableRuns": obj.get("availableRuns"),
+                "dispatcherId": obj.get("dispatcherId"),
+            }
+        )
         return _obj
-
-
