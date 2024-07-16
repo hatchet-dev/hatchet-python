@@ -1,13 +1,19 @@
 from typing import Any, Dict, List
 
-from pydantic import StrictStr
+from pydantic import StrictInt, StrictStr
 
+from hatchet_sdk.clients.rest.models.event_list import EventList
+from hatchet_sdk.clients.rest.models.event_order_by_direction import EventOrderByDirection
+from hatchet_sdk.clients.rest.models.event_order_by_field import EventOrderByField
+from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
+from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
 
 from .rest.api.log_api import LogApi
 from .rest.api.step_run_api import StepRunApi
+from .rest.api.event_api import EventApi
 from .rest.api.workflow_api import WorkflowApi
 from .rest.api.workflow_run_api import WorkflowRunApi
 from .rest.api_client import ApiClient
@@ -29,6 +35,7 @@ class RestApi:
         self.workflow_api = WorkflowApi(api_client)
         self.workflow_run_api = WorkflowRunApi(api_client)
         self.step_run_api = StepRunApi(api_client)
+        self.event_api = EventApi(api_client)
         self.log_api = LogApi(api_client)
 
     def workflow_list(self):
@@ -90,3 +97,38 @@ class RestApi:
         return self.log_api.log_line_list(
             step_run=step_run_id,
         )
+    
+    def events_list(self,
+                offset: StrictInt | None = None,
+                limit: StrictInt | None = None,
+                keys: List[StrictStr] | None = None,
+                workflows: List[StrictStr] | None = None,
+                statuses: List[WorkflowRunStatus] | None = None,
+                search: StrictStr | None = None,
+                order_by_field: EventOrderByField | None = None,
+                order_by_direction: EventOrderByDirection | None = None,
+                additional_metadata: List[StrictStr] | None = None) -> EventList:
+        return self.event_api.event_list(
+            tenant=self.tenant_id,
+            offset=offset,
+            limit=limit,
+            keys=keys,
+            workflows=workflows,
+            statuses=statuses,
+            search=search,
+            order_by_field=order_by_field,
+            order_by_direction=order_by_direction,
+            additional_metadata=additional_metadata
+        )
+
+    def events_replay(self, event_ids: List[StrictStr] | EventList) -> None:
+        if isinstance(event_ids, EventList):
+            event_ids = [r.metadata.id for r in event_ids.rows]
+
+        return self.event_api.event_update_replay(
+            tenant=self.tenant_id,
+            replay_event_request=ReplayEventRequest(
+                eventIds=event_ids
+            )
+        )
+    
