@@ -109,6 +109,8 @@ from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.models.workflow_run_cancel200_response import WorkflowRunCancel200Response
 from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import WorkflowRunOrderByDirection
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_field import WorkflowRunOrderByField
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import WorkflowRunTriggeredBy
 from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import WorkflowRunsCancelRequest

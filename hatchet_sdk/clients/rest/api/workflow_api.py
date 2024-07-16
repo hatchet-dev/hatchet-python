@@ -25,6 +25,8 @@ from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
 from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import WorkflowRunOrderByDirection
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_field import WorkflowRunOrderByField
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_runs_metrics import WorkflowRunsMetrics
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
@@ -2095,6 +2097,8 @@ class WorkflowApi:
         parent_step_run_id: Annotated[Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]], Field(description="The parent step run id")] = None,
         statuses: Annotated[Optional[List[WorkflowRunStatus]], Field(description="A list of workflow run statuses to filter by")] = None,
         additional_metadata: Annotated[Optional[List[StrictStr]], Field(description="A list of metadata key value pairs to filter by")] = None,
+        order_by_field: Annotated[Optional[WorkflowRunOrderByField], Field(description="The order by field")] = None,
+        order_by_direction: Annotated[Optional[WorkflowRunOrderByDirection], Field(description="The order by direction")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2130,6 +2134,10 @@ class WorkflowApi:
         :type statuses: List[WorkflowRunStatus]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param order_by_field: The order by field
+        :type order_by_field: WorkflowRunOrderByField
+        :param order_by_direction: The order by direction
+        :type order_by_direction: WorkflowRunOrderByDirection
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2162,6 +2170,8 @@ class WorkflowApi:
             parent_step_run_id=parent_step_run_id,
             statuses=statuses,
             additional_metadata=additional_metadata,
+            order_by_field=order_by_field,
+            order_by_direction=order_by_direction,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2196,6 +2206,8 @@ class WorkflowApi:
         parent_step_run_id: Annotated[Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]], Field(description="The parent step run id")] = None,
         statuses: Annotated[Optional[List[WorkflowRunStatus]], Field(description="A list of workflow run statuses to filter by")] = None,
         additional_metadata: Annotated[Optional[List[StrictStr]], Field(description="A list of metadata key value pairs to filter by")] = None,
+        order_by_field: Annotated[Optional[WorkflowRunOrderByField], Field(description="The order by field")] = None,
+        order_by_direction: Annotated[Optional[WorkflowRunOrderByDirection], Field(description="The order by direction")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2231,6 +2243,10 @@ class WorkflowApi:
         :type statuses: List[WorkflowRunStatus]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param order_by_field: The order by field
+        :type order_by_field: WorkflowRunOrderByField
+        :param order_by_direction: The order by direction
+        :type order_by_direction: WorkflowRunOrderByDirection
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2263,6 +2279,8 @@ class WorkflowApi:
             parent_step_run_id=parent_step_run_id,
             statuses=statuses,
             additional_metadata=additional_metadata,
+            order_by_field=order_by_field,
+            order_by_direction=order_by_direction,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2297,6 +2315,8 @@ class WorkflowApi:
         parent_step_run_id: Annotated[Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]], Field(description="The parent step run id")] = None,
         statuses: Annotated[Optional[List[WorkflowRunStatus]], Field(description="A list of workflow run statuses to filter by")] = None,
         additional_metadata: Annotated[Optional[List[StrictStr]], Field(description="A list of metadata key value pairs to filter by")] = None,
+        order_by_field: Annotated[Optional[WorkflowRunOrderByField], Field(description="The order by field")] = None,
+        order_by_direction: Annotated[Optional[WorkflowRunOrderByDirection], Field(description="The order by direction")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2332,6 +2352,10 @@ class WorkflowApi:
         :type statuses: List[WorkflowRunStatus]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param order_by_field: The order by field
+        :type order_by_field: WorkflowRunOrderByField
+        :param order_by_direction: The order by direction
+        :type order_by_direction: WorkflowRunOrderByDirection
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2364,6 +2388,8 @@ class WorkflowApi:
             parent_step_run_id=parent_step_run_id,
             statuses=statuses,
             additional_metadata=additional_metadata,
+            order_by_field=order_by_field,
+            order_by_direction=order_by_direction,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2393,6 +2419,8 @@ class WorkflowApi:
         parent_step_run_id,
         statuses,
         additional_metadata,
+        order_by_field,
+        order_by_direction,
         _request_auth,
         _content_type,
         _headers,
@@ -2448,6 +2476,14 @@ class WorkflowApi:
         if additional_metadata is not None:
             
             _query_params.append(('additionalMetadata', additional_metadata))
+            
+        if order_by_field is not None:
+            
+            _query_params.append(('orderByField', order_by_field.value))
+            
+        if order_by_direction is not None:
+            
+            _query_params.append(('orderByDirection', order_by_direction.value))
             
         # process the header parameters
         # process the form parameters

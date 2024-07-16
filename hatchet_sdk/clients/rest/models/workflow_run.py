@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
@@ -43,10 +43,11 @@ class WorkflowRun(BaseModel):
     error: Optional[StrictStr] = None
     started_at: Optional[datetime] = Field(default=None, alias="startedAt")
     finished_at: Optional[datetime] = Field(default=None, alias="finishedAt")
+    duration: Optional[StrictInt] = None
     parent_id: Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]] = Field(default=None, alias="parentId")
     parent_step_run_id: Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]] = Field(default=None, alias="parentStepRunId")
     additional_metadata: Optional[Dict[str, Any]] = Field(default=None, alias="additionalMetadata")
-    __properties: ClassVar[List[str]] = ["metadata", "tenantId", "workflowVersionId", "workflowVersion", "status", "displayName", "jobRuns", "triggeredBy", "input", "error", "startedAt", "finishedAt", "parentId", "parentStepRunId", "additionalMetadata"]
+    __properties: ClassVar[List[str]] = ["metadata", "tenantId", "workflowVersionId", "workflowVersion", "status", "displayName", "jobRuns", "triggeredBy", "input", "error", "startedAt", "finishedAt", "duration", "parentId", "parentStepRunId", "additionalMetadata"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -127,6 +128,7 @@ class WorkflowRun(BaseModel):
             "error": obj.get("error"),
             "startedAt": obj.get("startedAt"),
             "finishedAt": obj.get("finishedAt"),
+            "duration": obj.get("duration"),
             "parentId": obj.get("parentId"),
             "parentStepRunId": obj.get("parentStepRunId"),
             "additionalMetadata": obj.get("additionalMetadata")
