@@ -218,7 +218,6 @@ class PooledWorkflowRunListener:
         finally:
             self.cleanup_subscription(subscription_id, init_producer)
 
-
     async def result(self, workflow_run_id: str):
         event = await self.subscribe(workflow_run_id)
 
