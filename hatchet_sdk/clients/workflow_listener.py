@@ -64,6 +64,8 @@ class PooledWorkflowRunListener:
     # events have keys of the format workflow_run_id + subscription_id
     events: dict[int, _Subscription] = {}
 
+    interrupter: asyncio.Task = None
+
     def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)
         self.client = DispatcherStub(conn)
@@ -94,7 +96,10 @@ class PooledWorkflowRunListener:
                         logger.debug(f"Workflow run listener connected.")
 
                         # spawn an interrupter task
-                        asyncio.create_task(self._interrupter())
+                        if self.interrupter is not None and not self.interrupter.done():
+                            self.interrupter.cancel()
+
+                        self.interrupter = asyncio.create_task(self._interrupter())
 
                         while True:
                             self.interrupt = Event_ts()
@@ -161,7 +166,7 @@ class PooledWorkflowRunListener:
             yield request
             self.requests.task_done()
 
-    def cleanup_subscription(self, subscription_id: int):
+    def cleanup_subscription(self, subscription_id: int, init_producer: asyncio.Task):
         workflow_run_id = self.subscriptionsToWorkflows[subscription_id]
 
         if workflow_run_id in self.workflowsToSubscriptions:
@@ -170,7 +175,16 @@ class PooledWorkflowRunListener:
         del self.subscriptionsToWorkflows[subscription_id]
         del self.events[subscription_id]
 
+        if len(self.events) == 0:
+            if self.interrupter is not None and not self.interrupter.done():
+                self.interrupter.cancel()
+            self.interrupter = None
+
+            if not init_producer.done():
+                init_producer.cancel()
+
     async def subscribe(self, workflow_run_id: str):
+        init_producer: asyncio.Task = None
         try:
             # create a new subscription id, place a mutex on the counter
             await self.subscription_counter_lock.acquire()
@@ -189,7 +203,7 @@ class PooledWorkflowRunListener:
                 subscription_id, workflow_run_id
             )
 
-            asyncio.create_task(self._init_producer())
+            init_producer = asyncio.create_task(self._init_producer())
 
             await self.requests.put(
                 SubscribeToWorkflowRunsRequest(
@@ -199,12 +213,11 @@ class PooledWorkflowRunListener:
 
             event = await self.events[subscription_id].get()
 
-            self.cleanup_subscription(subscription_id)
-
             return event
         except asyncio.CancelledError:
-            self.cleanup_subscription(subscription_id)
             raise
+        finally:
+            self.cleanup_subscription(subscription_id, init_producer)
 
     async def result(self, workflow_run_id: str):
         event = await self.subscribe(workflow_run_id)
