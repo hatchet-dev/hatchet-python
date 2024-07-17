@@ -176,7 +176,8 @@ class PooledWorkflowRunListener:
         del self.events[subscription_id]
 
         if len(self.events) == 0:
-            self.interrupter.cancel()
+            if self.interrupter is not None and not self.interrupter.done():
+                self.interrupter.cancel()
             self.interrupter = None
 
             if not init_producer.done():
