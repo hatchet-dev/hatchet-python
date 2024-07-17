@@ -166,7 +166,7 @@ class PooledWorkflowRunListener:
             yield request
             self.requests.task_done()
 
-    def cleanup_subscription(self, subscription_id: int):
+    def cleanup_subscription(self, subscription_id: int, init_producer: asyncio.Task):
         workflow_run_id = self.subscriptionsToWorkflows[subscription_id]
 
         if workflow_run_id in self.workflowsToSubscriptions:
@@ -178,6 +178,9 @@ class PooledWorkflowRunListener:
         if len(self.events) == 0:
             self.interrupter.cancel()
             self.interrupter = None
+
+            if not init_producer.done():
+                init_producer.cancel()
 
     async def subscribe(self, workflow_run_id: str):
         init_producer: asyncio.Task = None
@@ -209,15 +212,12 @@ class PooledWorkflowRunListener:
 
             event = await self.events[subscription_id].get()
 
-            self.cleanup_subscription(subscription_id)
-
             return event
         except asyncio.CancelledError:
-            self.cleanup_subscription(subscription_id)
             raise
         finally:
-            if init_producer and not init_producer.done():
-                init_producer.cancel()
+            self.cleanup_subscription(subscription_id, init_producer)
+
 
     async def result(self, workflow_run_id: str):
         event = await self.subscribe(workflow_run_id)
