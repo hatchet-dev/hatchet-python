@@ -91,8 +91,10 @@ class Worker(BaseModel):
         if value is None:
             return value
 
-        if value not in set(["ACTIVE", "INACTIVE"]):
-            raise ValueError("must be one of enum values ('ACTIVE', 'INACTIVE')")
+        if value not in set(["ACTIVE", "INACTIVE", "PAUSED"]):
+            raise ValueError(
+                "must be one of enum values ('ACTIVE', 'INACTIVE', 'PAUSED')"
+            )
         return value
 
     model_config = ConfigDict(

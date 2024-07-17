@@ -23,20 +23,18 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Annotated, Self
 
 
-class CreateAPITokenRequest(BaseModel):
+class WebhookWorkerCreateRequest(BaseModel):
     """
-    CreateAPITokenRequest
+    WebhookWorkerCreateRequest
     """  # noqa: E501
 
-    name: Annotated[str, Field(strict=True, max_length=255)] = Field(
-        description="A name for the API token."
-    )
-    expires_in: Optional[StrictStr] = Field(
+    name: StrictStr = Field(description="The name of the webhook worker.")
+    url: StrictStr = Field(description="The webhook url.")
+    secret: Optional[Annotated[str, Field(min_length=32, strict=True)]] = Field(
         default=None,
-        description="The duration for which the token is valid.",
-        alias="expiresIn",
+        description="The secret key for validation. If not provided, a random secret will be generated.",
     )
-    __properties: ClassVar[List[str]] = ["name", "expiresIn"]
+    __properties: ClassVar[List[str]] = ["name", "url", "secret"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -55,7 +53,7 @@ class CreateAPITokenRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a JSON string"""
+        """Create an instance of WebhookWorkerCreateRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -79,7 +77,7 @@ class CreateAPITokenRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a dict"""
+        """Create an instance of WebhookWorkerCreateRequest from a dict"""
         if obj is None:
             return None
 
@@ -87,6 +85,10 @@ class CreateAPITokenRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate(
-            {"name": obj.get("name"), "expiresIn": obj.get("expiresIn")}
+            {
+                "name": obj.get("name"),
+                "url": obj.get("url"),
+                "secret": obj.get("secret"),
+            }
         )
         return _obj

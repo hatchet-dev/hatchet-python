@@ -19,24 +19,21 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing_extensions import Annotated, Self
+from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Self
+
+from hatchet_sdk.clients.rest.models.tenant_resource_limit import TenantResourceLimit
 
 
-class CreateAPITokenRequest(BaseModel):
+class TenantResourcePolicy(BaseModel):
     """
-    CreateAPITokenRequest
+    TenantResourcePolicy
     """  # noqa: E501
 
-    name: Annotated[str, Field(strict=True, max_length=255)] = Field(
-        description="A name for the API token."
+    limits: List[TenantResourceLimit] = Field(
+        description="A list of resource limits for the tenant."
     )
-    expires_in: Optional[StrictStr] = Field(
-        default=None,
-        description="The duration for which the token is valid.",
-        alias="expiresIn",
-    )
-    __properties: ClassVar[List[str]] = ["name", "expiresIn"]
+    __properties: ClassVar[List[str]] = ["limits"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -55,7 +52,7 @@ class CreateAPITokenRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a JSON string"""
+        """Create an instance of TenantResourcePolicy from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,11 +72,18 @@ class CreateAPITokenRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in limits (list)
+        _items = []
+        if self.limits:
+            for _item in self.limits:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict["limits"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a dict"""
+        """Create an instance of TenantResourcePolicy from a dict"""
         if obj is None:
             return None
 
@@ -87,6 +91,12 @@ class CreateAPITokenRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate(
-            {"name": obj.get("name"), "expiresIn": obj.get("expiresIn")}
+            {
+                "limits": (
+                    [TenantResourceLimit.from_dict(_item) for _item in obj["limits"]]
+                    if obj.get("limits") is not None
+                    else None
+                )
+            }
         )
         return _obj

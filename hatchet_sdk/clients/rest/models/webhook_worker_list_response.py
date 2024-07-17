@@ -19,24 +19,21 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing_extensions import Annotated, Self
+from pydantic import BaseModel, ConfigDict
+from typing_extensions import Self
+
+from hatchet_sdk.clients.rest.models.pagination_response import PaginationResponse
+from hatchet_sdk.clients.rest.models.webhook_worker import WebhookWorker
 
 
-class CreateAPITokenRequest(BaseModel):
+class WebhookWorkerListResponse(BaseModel):
     """
-    CreateAPITokenRequest
+    WebhookWorkerListResponse
     """  # noqa: E501
 
-    name: Annotated[str, Field(strict=True, max_length=255)] = Field(
-        description="A name for the API token."
-    )
-    expires_in: Optional[StrictStr] = Field(
-        default=None,
-        description="The duration for which the token is valid.",
-        alias="expiresIn",
-    )
-    __properties: ClassVar[List[str]] = ["name", "expiresIn"]
+    pagination: Optional[PaginationResponse] = None
+    rows: Optional[List[WebhookWorker]] = None
+    __properties: ClassVar[List[str]] = ["pagination", "rows"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -55,7 +52,7 @@ class CreateAPITokenRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a JSON string"""
+        """Create an instance of WebhookWorkerListResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,11 +72,21 @@ class CreateAPITokenRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of pagination
+        if self.pagination:
+            _dict["pagination"] = self.pagination.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in rows (list)
+        _items = []
+        if self.rows:
+            for _item in self.rows:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict["rows"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a dict"""
+        """Create an instance of WebhookWorkerListResponse from a dict"""
         if obj is None:
             return None
 
@@ -87,6 +94,17 @@ class CreateAPITokenRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate(
-            {"name": obj.get("name"), "expiresIn": obj.get("expiresIn")}
+            {
+                "pagination": (
+                    PaginationResponse.from_dict(obj["pagination"])
+                    if obj.get("pagination") is not None
+                    else None
+                ),
+                "rows": (
+                    [WebhookWorker.from_dict(_item) for _item in obj["rows"]]
+                    if obj.get("rows") is not None
+                    else None
+                ),
+            }
         )
         return _obj
