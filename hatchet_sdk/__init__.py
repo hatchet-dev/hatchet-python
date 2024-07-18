@@ -122,11 +122,15 @@ from hatchet_sdk.clients.rest.models.workflow_version_definition import (
 from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
 
 from .client import ClientImpl, new_client
-from .clients.admin import ScheduleTriggerWorkflowOptions, TriggerWorkflowOptions
+from .clients.admin import (
+    ChildTriggerWorkflowOptions,
+    ScheduleTriggerWorkflowOptions,
+    TriggerWorkflowOptions,
+)
 from .clients.events import PushEventOptions
 from .clients.run_event_listener import StepRunEventType, WorkflowRunEventType
 from .context import Context
-from .hatchet import ClientConfig, Hatchet
+from .hatchet import ClientConfig, Hatchet, concurrency, on_failure_step, step, workflow
 from .worker import Worker, WorkerStatus
 from .workflows_pb2 import (
     ConcurrencyLimitStrategy,

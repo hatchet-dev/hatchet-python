@@ -65,7 +65,7 @@ class ConfigLoader:
 
     def load_client_config(self, defaults: ClientConfig) -> ClientConfig:
         config_file_path = os.path.join(self.directory, "client.yaml")
-        config_data: Any = {"tls": {}}
+        config_data: object = {"tls": {}}
 
         # determine if client.yaml exists
         if os.path.exists(config_file_path):
@@ -73,14 +73,16 @@ class ConfigLoader:
                 config_data = yaml.safe_load(file)
 
         def get_config_value(key, env_var):
-            default = getattr(defaults, key, None)
-            return (
-                default
-                if default is not None
-                else config_data.get(key, self._get_env_var(env_var))
-            )
+            if key in config_data:
+                return config_data[key]
+
+            if self._get_env_var(env_var) is not None:
+                return self._get_env_var(env_var)
+
+            return getattr(defaults, key, None)
 
         namespace = get_config_value("namespace", "HATCHET_CLIENT_NAMESPACE")
+
         tenant_id = get_config_value("tenantId", "HATCHET_CLIENT_TENANT_ID")
         token = get_config_value("token", "HATCHET_CLIENT_TOKEN")
         listener_v2_timeout = get_config_value(

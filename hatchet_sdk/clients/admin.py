@@ -38,7 +38,11 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     child_key: Optional[str]
 
 
-class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
+class ChildTriggerWorkflowOptions(TypedDict):
+    additional_metadata: Dict[str, str] | None = None
+
+
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
 
 
@@ -76,7 +80,7 @@ class AdminClientBase:
             if isinstance(workflow, CreateWorkflowVersionOpts):
                 opts = workflow
             else:
-                opts = workflow.get_create_opts()
+                opts = workflow.get_create_opts(self.client.config.namespace)
 
             if overrides is not None:
                 opts.MergeFrom(overrides)
