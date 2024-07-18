@@ -14,15 +14,13 @@ hatchet = Hatchet(debug=True)
 class AffinityWorkflow:
     @hatchet.step(
         desired_worker_labels={
-            "affinity": {
-                "value": "true",
-                "required": True,
-                "weight": 1,
-                "comparator": WorkerLabelComparator.GREATER_THAN,
+            "model": {
+                "value": "fancy-ai-model-v2",
+                "weight": 10
             },
-            "lobsters": {
-                "value": 2,
-                "weight": 1,
+            "memory": {
+                "value": 256,
+                "required": True,
                 "comparator": WorkerLabelComparator.GREATER_THAN,
             }
         },
@@ -35,8 +33,8 @@ worker = hatchet.worker(
     "affinity-worker",
     max_runs=10,
     labels={
-        "affinity": "true",
-        "lobsters": 3,
+        "model": "fancy-ai-model-v2",
+        "memory": 512,
     },
 )
 worker.register_workflow(AffinityWorkflow())
