@@ -138,4 +138,5 @@ from .workflows_pb2 import (
     CreateWorkflowVersionOpts,
     RateLimitDuration,
     StickyStrategy,
+    WorkerLabelComparator,
 )

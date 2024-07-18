@@ -136,7 +136,7 @@ class Worker:
     worker_id: str
     registered_workflow_names: list[str] = []
 
-    labels: dict[str: str | int] = {}
+    labels: dict[str : str | int] = {}
 
     def __init__(
         self,
@@ -145,7 +145,7 @@ class Worker:
         debug=False,
         handle_kill=True,
         config: ClientConfig = {},
-        labels: dict[str: str | int] = {}
+        labels: dict[str : str | int] = {},
     ):
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
@@ -167,7 +167,7 @@ class Worker:
 
         self._status = WorkerStatus.INITIALIZED
 
-    def _upsert_labels(self, labels: dict[str: str | int]):
+    def _upsert_labels(self, labels: dict[str : str | int]):
         self.labels.update(labels)
         return self.labels
 

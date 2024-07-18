@@ -87,6 +87,7 @@ class WorkflowMeta(type):
                     parents=[x for x in func._step_parents],
                     retries=func._step_retries,
                     rate_limits=func._step_rate_limits,
+                    worker_labels=func._step_desired_worker_labels,
                 )
                 for step_name, func in steps
             ]

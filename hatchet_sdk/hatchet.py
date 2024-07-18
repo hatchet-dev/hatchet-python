@@ -4,7 +4,7 @@ import random
 from functools import wraps
 from io import StringIO
 from logging import Logger, StreamHandler
-from typing import List, Optional
+from typing import List, Mapping, Optional, TypedDict
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
@@ -13,7 +13,12 @@ from .client import ClientImpl, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
-from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit, StickyStrategy
+from .workflows_pb2 import (
+    ConcurrencyLimitStrategy,
+    CreateStepRateLimit,
+    DesiredWorkerLabels,
+    StickyStrategy,
+)
 
 
 def workflow(
@@ -44,12 +49,22 @@ def workflow(
     return inner
 
 
+class DesiredWorkerLabel(TypedDict):
+    value: str | int
+    required: bool | None = None
+    weight: int | None = None
+    comparator: int | None = (
+        None  # _ClassVar[WorkerLabelComparator] TODO figure out type
+    )
+
+
 def step(
     name: str = "",
     timeout: str = "",
     parents: List[str] | None = None,
     retries: int = 0,
     rate_limits: List[RateLimit] | None = None,
+    desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
 ):
     parents = parents or []
 
@@ -66,6 +81,19 @@ def step(
         func._step_timeout = timeout
         func._step_retries = retries
         func._step_rate_limits = limits
+
+        func._step_desired_worker_labels = {}
+
+        for key, d in desired_worker_labels.items():
+            value = d["value"] if "value" in d else None
+            func._step_desired_worker_labels[key] = DesiredWorkerLabels(
+                strValue=str(value) if not isinstance(value, int) else None,
+                intValue=value if isinstance(value, int) else None,
+                required=d["required"] if "required" in d else None,
+                weight=d["weight"] if "weight" in d else None,
+                comparator=d["comparator"] if "comparator" in d else None,
+            )
+
         return func
 
     return inner
@@ -142,5 +170,9 @@ class Hatchet:
 
     on_failure_step = staticmethod(on_failure_step)
 
-    def worker(self, name: str, max_runs: int | None = None, labels: dict[str: str | int] = {}):
-        return Worker(name=name, max_runs=max_runs, labels=labels, config=self.client.config)
+    def worker(
+        self, name: str, max_runs: int | None = None, labels: dict[str : str | int] = {}
+    ):
+        return Worker(
+            name=name, max_runs=max_runs, labels=labels, config=self.client.config
+        )

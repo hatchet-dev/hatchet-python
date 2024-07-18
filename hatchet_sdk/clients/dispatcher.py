@@ -60,7 +60,7 @@ class GetActionListenerRequest:
         services: List[str],
         actions: List[str],
         max_runs: int | None = None,
-        labels: dict[str: str | int] = {},
+        labels: dict[str : str | int] = {},
     ):
         self.worker_name = worker_name
         self.services = services
@@ -74,7 +74,8 @@ class GetActionListenerRequest:
             if isinstance(value, int):
                 self.labels[key] = WorkerLabels(intValue=value)
             else:
-                self.labels[key] = WorkerLabels(strValue= str(value))
+                self.labels[key] = WorkerLabels(strValue=str(value))
+
 
 class Action:
     def __init__(
