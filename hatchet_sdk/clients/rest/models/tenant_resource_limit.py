@@ -13,49 +13,37 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from hatchet_sdk.clients.rest.models.tenant_resource import TenantResource
+from typing import Optional, Set
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-
-
-class Tenant(BaseModel):
+class TenantResourceLimit(BaseModel):
     """
-    Tenant
-    """  # noqa: E501
-
+    TenantResourceLimit
+    """ # noqa: E501
     metadata: APIResourceMeta
-    name: StrictStr = Field(description="The name of the tenant.")
-    slug: StrictStr = Field(description="The slug of the tenant.")
-    analytics_opt_out: Optional[StrictBool] = Field(
-        default=None,
-        description="Whether the tenant has opted out of analytics.",
-        alias="analyticsOptOut",
-    )
-    alert_member_emails: Optional[StrictBool] = Field(
-        default=None,
-        description="Whether to alert tenant members.",
-        alias="alertMemberEmails",
-    )
-    __properties: ClassVar[List[str]] = [
-        "metadata",
-        "name",
-        "slug",
-        "analyticsOptOut",
-        "alertMemberEmails",
-    ]
+    resource: TenantResource = Field(description="The resource associated with this limit.")
+    limit_value: StrictInt = Field(description="The limit associated with this limit.", alias="limitValue")
+    alarm_value: Optional[StrictInt] = Field(default=None, description="The alarm value associated with this limit to warn of approaching limit value.", alias="alarmValue")
+    value: StrictInt = Field(description="The current value associated with this limit.")
+    window: Optional[StrictStr] = Field(default=None, description="The meter window for the limit. (i.e. 1 day, 1 week, 1 month)")
+    last_refill: Optional[datetime] = Field(default=None, description="The last time the limit was refilled.", alias="lastRefill")
+    __properties: ClassVar[List[str]] = ["metadata", "resource", "limitValue", "alarmValue", "value", "window", "lastRefill"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,7 +56,7 @@ class Tenant(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of Tenant from a JSON string"""
+        """Create an instance of TenantResourceLimit from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -81,7 +69,8 @@ class Tenant(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -90,29 +79,27 @@ class Tenant(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict["metadata"] = self.metadata.to_dict()
+            _dict['metadata'] = self.metadata.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of Tenant from a dict"""
+        """Create an instance of TenantResourceLimit from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "metadata": (
-                    APIResourceMeta.from_dict(obj["metadata"])
-                    if obj.get("metadata") is not None
-                    else None
-                ),
-                "name": obj.get("name"),
-                "slug": obj.get("slug"),
-                "analyticsOptOut": obj.get("analyticsOptOut"),
-                "alertMemberEmails": obj.get("alertMemberEmails"),
-            }
-        )
+        _obj = cls.model_validate({
+            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
+            "resource": obj.get("resource"),
+            "limitValue": obj.get("limitValue"),
+            "alarmValue": obj.get("alarmValue"),
+            "value": obj.get("value"),
+            "window": obj.get("window"),
+            "lastRefill": obj.get("lastRefill")
+        })
         return _obj
+
+

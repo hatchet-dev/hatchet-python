@@ -13,36 +13,31 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing_extensions import Annotated, Self
+from typing import Any, ClassVar, Dict, List
+from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from typing import Optional, Set
+from typing_extensions import Self
 
-
-class CreateAPITokenRequest(BaseModel):
+class WebhookWorker(BaseModel):
     """
-    CreateAPITokenRequest
-    """  # noqa: E501
-
-    name: Annotated[str, Field(strict=True, max_length=255)] = Field(
-        description="A name for the API token."
-    )
-    expires_in: Optional[StrictStr] = Field(
-        default=None,
-        description="The duration for which the token is valid.",
-        alias="expiresIn",
-    )
-    __properties: ClassVar[List[str]] = ["name", "expiresIn"]
+    WebhookWorker
+    """ # noqa: E501
+    metadata: APIResourceMeta
+    name: StrictStr = Field(description="The name of the webhook worker.")
+    url: StrictStr = Field(description="The webhook url.")
+    __properties: ClassVar[List[str]] = ["metadata", "name", "url"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -55,7 +50,7 @@ class CreateAPITokenRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a JSON string"""
+        """Create an instance of WebhookWorker from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -68,25 +63,33 @@ class CreateAPITokenRequest(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of metadata
+        if self.metadata:
+            _dict['metadata'] = self.metadata.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CreateAPITokenRequest from a dict"""
+        """Create an instance of WebhookWorker from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {"name": obj.get("name"), "expiresIn": obj.get("expiresIn")}
-        )
+        _obj = cls.model_validate({
+            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
+            "name": obj.get("name"),
+            "url": obj.get("url")
+        })
         return _obj
+
+

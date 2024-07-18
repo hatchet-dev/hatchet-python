@@ -36,6 +36,26 @@ class UpdateTenantRequest(BaseModel):
         description="Whether the tenant has opted out of analytics.",
         alias="analyticsOptOut",
     )
+    alert_member_emails: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to alert tenant members.",
+        alias="alertMemberEmails",
+    )
+    enable_workflow_run_failure_alerts: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to send alerts when workflow runs fail.",
+        alias="enableWorkflowRunFailureAlerts",
+    )
+    enable_expiring_token_alerts: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to enable alerts when tokens are approaching expiration.",
+        alias="enableExpiringTokenAlerts",
+    )
+    enable_tenant_resource_limit_alerts: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to enable alerts when tenant resources are approaching limits.",
+        alias="enableTenantResourceLimitAlerts",
+    )
     max_alerting_frequency: Optional[StrictStr] = Field(
         default=None,
         description="The max frequency at which to alert.",
@@ -44,6 +64,10 @@ class UpdateTenantRequest(BaseModel):
     __properties: ClassVar[List[str]] = [
         "name",
         "analyticsOptOut",
+        "alertMemberEmails",
+        "enableWorkflowRunFailureAlerts",
+        "enableExpiringTokenAlerts",
+        "enableTenantResourceLimitAlerts",
         "maxAlertingFrequency",
     ]
 
@@ -99,6 +123,14 @@ class UpdateTenantRequest(BaseModel):
             {
                 "name": obj.get("name"),
                 "analyticsOptOut": obj.get("analyticsOptOut"),
+                "alertMemberEmails": obj.get("alertMemberEmails"),
+                "enableWorkflowRunFailureAlerts": obj.get(
+                    "enableWorkflowRunFailureAlerts"
+                ),
+                "enableExpiringTokenAlerts": obj.get("enableExpiringTokenAlerts"),
+                "enableTenantResourceLimitAlerts": obj.get(
+                    "enableTenantResourceLimitAlerts"
+                ),
                 "maxAlertingFrequency": obj.get("maxAlertingFrequency"),
             }
         )

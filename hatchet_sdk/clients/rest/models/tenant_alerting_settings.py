@@ -20,7 +20,7 @@ import re  # noqa: F401
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
@@ -32,6 +32,26 @@ class TenantAlertingSettings(BaseModel):
     """  # noqa: E501
 
     metadata: APIResourceMeta
+    alert_member_emails: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to alert tenant members.",
+        alias="alertMemberEmails",
+    )
+    enable_workflow_run_failure_alerts: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to send alerts when workflow runs fail.",
+        alias="enableWorkflowRunFailureAlerts",
+    )
+    enable_expiring_token_alerts: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to enable alerts when tokens are approaching expiration.",
+        alias="enableExpiringTokenAlerts",
+    )
+    enable_tenant_resource_limit_alerts: Optional[StrictBool] = Field(
+        default=None,
+        description="Whether to enable alerts when tenant resources are approaching limits.",
+        alias="enableTenantResourceLimitAlerts",
+    )
     max_alerting_frequency: StrictStr = Field(
         description="The max frequency at which to alert.", alias="maxAlertingFrequency"
     )
@@ -42,6 +62,10 @@ class TenantAlertingSettings(BaseModel):
     )
     __properties: ClassVar[List[str]] = [
         "metadata",
+        "alertMemberEmails",
+        "enableWorkflowRunFailureAlerts",
+        "enableExpiringTokenAlerts",
+        "enableTenantResourceLimitAlerts",
         "maxAlertingFrequency",
         "lastAlertedAt",
     ]
@@ -103,6 +127,14 @@ class TenantAlertingSettings(BaseModel):
                     APIResourceMeta.from_dict(obj["metadata"])
                     if obj.get("metadata") is not None
                     else None
+                ),
+                "alertMemberEmails": obj.get("alertMemberEmails"),
+                "enableWorkflowRunFailureAlerts": obj.get(
+                    "enableWorkflowRunFailureAlerts"
+                ),
+                "enableExpiringTokenAlerts": obj.get("enableExpiringTokenAlerts"),
+                "enableTenantResourceLimitAlerts": obj.get(
+                    "enableTenantResourceLimitAlerts"
                 ),
                 "maxAlertingFrequency": obj.get("maxAlertingFrequency"),
                 "lastAlertedAt": obj.get("lastAlertedAt"),

@@ -24,9 +24,6 @@ from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.job import Job
-from hatchet_sdk.clients.rest.models.workflow_deployment_config import (
-    WorkflowDeploymentConfig,
-)
 from hatchet_sdk.clients.rest.models.workflow_tag import WorkflowTag
 
 
@@ -48,7 +45,6 @@ class Workflow(BaseModel):
     jobs: Optional[List[Job]] = Field(
         default=None, description="The jobs of the workflow."
     )
-    deployment: Optional[WorkflowDeploymentConfig] = None
     __properties: ClassVar[List[str]] = [
         "metadata",
         "name",
@@ -57,7 +53,6 @@ class Workflow(BaseModel):
         "tags",
         "lastRun",
         "jobs",
-        "deployment",
     ]
 
     model_config = ConfigDict(
@@ -124,9 +119,6 @@ class Workflow(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict["jobs"] = _items
-        # override the default output from pydantic by calling `to_dict()` of deployment
-        if self.deployment:
-            _dict["deployment"] = self.deployment.to_dict()
         return _dict
 
     @classmethod
@@ -165,11 +157,6 @@ class Workflow(BaseModel):
                 "jobs": (
                     [Job.from_dict(_item) for _item in obj["jobs"]]
                     if obj.get("jobs") is not None
-                    else None
-                ),
-                "deployment": (
-                    WorkflowDeploymentConfig.from_dict(obj["deployment"])
-                    if obj.get("deployment") is not None
                     else None
                 ),
             }

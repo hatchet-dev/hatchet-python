@@ -29,7 +29,7 @@ class APIResourceMeta(BaseModel):
     APIResourceMeta
     """  # noqa: E501
 
-    id: Annotated[str, Field(min_length=36, strict=True, max_length=36)] = Field(
+    id: Annotated[str, Field(min_length=0, strict=True, max_length=36)] = Field(
         description="the id of this resource, in UUID format"
     )
     created_at: datetime = Field(

@@ -19,7 +19,7 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_meta_auth import APIMetaAuth
@@ -38,7 +38,35 @@ class APIMeta(BaseModel):
         alias="pylonAppId",
     )
     posthog: Optional[APIMetaPosthog] = None
-    __properties: ClassVar[List[str]] = ["auth", "pylonAppId", "posthog"]
+    allow_signup: Optional[StrictBool] = Field(
+        default=None,
+        description="whether or not users can sign up for this instance",
+        alias="allowSignup",
+    )
+    allow_invites: Optional[StrictBool] = Field(
+        default=None,
+        description="whether or not users can invite other users to this instance",
+        alias="allowInvites",
+    )
+    allow_create_tenant: Optional[StrictBool] = Field(
+        default=None,
+        description="whether or not users can create new tenants",
+        alias="allowCreateTenant",
+    )
+    allow_change_password: Optional[StrictBool] = Field(
+        default=None,
+        description="whether or not users can change their password",
+        alias="allowChangePassword",
+    )
+    __properties: ClassVar[List[str]] = [
+        "auth",
+        "pylonAppId",
+        "posthog",
+        "allowSignup",
+        "allowInvites",
+        "allowCreateTenant",
+        "allowChangePassword",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -107,6 +135,10 @@ class APIMeta(BaseModel):
                     if obj.get("posthog") is not None
                     else None
                 ),
+                "allowSignup": obj.get("allowSignup"),
+                "allowInvites": obj.get("allowInvites"),
+                "allowCreateTenant": obj.get("allowCreateTenant"),
+                "allowChangePassword": obj.get("allowChangePassword"),
             }
         )
         return _obj

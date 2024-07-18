@@ -30,6 +30,7 @@ from hatchet_sdk.clients.rest.models.create_api_token_request import (
 from hatchet_sdk.clients.rest.models.create_api_token_response import (
     CreateAPITokenResponse,
 )
+from hatchet_sdk.clients.rest.models.create_event_request import CreateEventRequest
 from hatchet_sdk.clients.rest.models.create_pull_request_from_step_run import (
     CreatePullRequestFromStepRun,
 )
@@ -57,22 +58,11 @@ from hatchet_sdk.clients.rest.models.event_workflow_run_summary import (
 from hatchet_sdk.clients.rest.models.get_step_run_diff_response import (
     GetStepRunDiffResponse,
 )
-from hatchet_sdk.clients.rest.models.github_app_installation import (
-    GithubAppInstallation,
-)
-from hatchet_sdk.clients.rest.models.github_branch import GithubBranch
-from hatchet_sdk.clients.rest.models.github_repo import GithubRepo
 from hatchet_sdk.clients.rest.models.job import Job
 from hatchet_sdk.clients.rest.models.job_run import JobRun
 from hatchet_sdk.clients.rest.models.job_run_status import JobRunStatus
-from hatchet_sdk.clients.rest.models.link_github_repository_request import (
-    LinkGithubRepositoryRequest,
-)
 from hatchet_sdk.clients.rest.models.list_api_tokens_response import (
     ListAPITokensResponse,
-)
-from hatchet_sdk.clients.rest.models.list_github_app_installations_response import (
-    ListGithubAppInstallationsResponse,
 )
 from hatchet_sdk.clients.rest.models.list_pull_requests_response import (
     ListPullRequestsResponse,
@@ -89,6 +79,7 @@ from hatchet_sdk.clients.rest.models.log_line_order_by_field import LogLineOrder
 from hatchet_sdk.clients.rest.models.pagination_response import PaginationResponse
 from hatchet_sdk.clients.rest.models.pull_request import PullRequest
 from hatchet_sdk.clients.rest.models.pull_request_state import PullRequestState
+from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
 from hatchet_sdk.clients.rest.models.reject_invite_request import RejectInviteRequest
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
 from hatchet_sdk.clients.rest.models.rerun_step_run_request import RerunStepRunRequest
@@ -96,6 +87,8 @@ from hatchet_sdk.clients.rest.models.slack_webhook import SlackWebhook
 from hatchet_sdk.clients.rest.models.sns_integration import SNSIntegration
 from hatchet_sdk.clients.rest.models.step import Step
 from hatchet_sdk.clients.rest.models.step_run import StepRun
+from hatchet_sdk.clients.rest.models.step_run_archive import StepRunArchive
+from hatchet_sdk.clients.rest.models.step_run_archive_list import StepRunArchiveList
 from hatchet_sdk.clients.rest.models.step_run_diff import StepRunDiff
 from hatchet_sdk.clients.rest.models.step_run_event import StepRunEvent
 from hatchet_sdk.clients.rest.models.step_run_event_list import StepRunEventList
@@ -118,6 +111,10 @@ from hatchet_sdk.clients.rest.models.tenant_list import TenantList
 from hatchet_sdk.clients.rest.models.tenant_member import TenantMember
 from hatchet_sdk.clients.rest.models.tenant_member_list import TenantMemberList
 from hatchet_sdk.clients.rest.models.tenant_member_role import TenantMemberRole
+from hatchet_sdk.clients.rest.models.tenant_queue_metrics import TenantQueueMetrics
+from hatchet_sdk.clients.rest.models.tenant_resource import TenantResource
+from hatchet_sdk.clients.rest.models.tenant_resource_limit import TenantResourceLimit
+from hatchet_sdk.clients.rest.models.tenant_resource_policy import TenantResourcePolicy
 from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
     TriggerWorkflowRunRequest,
 )
@@ -128,6 +125,7 @@ from hatchet_sdk.clients.rest.models.update_tenant_invite_request import (
     UpdateTenantInviteRequest,
 )
 from hatchet_sdk.clients.rest.models.update_tenant_request import UpdateTenantRequest
+from hatchet_sdk.clients.rest.models.update_worker_request import UpdateWorkerRequest
 from hatchet_sdk.clients.rest.models.user import User
 from hatchet_sdk.clients.rest.models.user_change_password_request import (
     UserChangePasswordRequest,
@@ -138,13 +136,22 @@ from hatchet_sdk.clients.rest.models.user_tenant_memberships_list import (
     UserTenantMembershipsList,
 )
 from hatchet_sdk.clients.rest.models.user_tenant_public import UserTenantPublic
+from hatchet_sdk.clients.rest.models.webhook_worker import WebhookWorker
+from hatchet_sdk.clients.rest.models.webhook_worker_create_request import (
+    WebhookWorkerCreateRequest,
+)
+from hatchet_sdk.clients.rest.models.webhook_worker_create_response import (
+    WebhookWorkerCreateResponse,
+)
+from hatchet_sdk.clients.rest.models.webhook_worker_created import WebhookWorkerCreated
+from hatchet_sdk.clients.rest.models.webhook_worker_list_response import (
+    WebhookWorkerListResponse,
+)
 from hatchet_sdk.clients.rest.models.worker import Worker
+from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 from hatchet_sdk.clients.rest.models.worker_list import WorkerList
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_concurrency import WorkflowConcurrency
-from hatchet_sdk.clients.rest.models.workflow_deployment_config import (
-    WorkflowDeploymentConfig,
-)
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
 from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
@@ -152,6 +159,12 @@ from hatchet_sdk.clients.rest.models.workflow_run_cancel200_response import (
     WorkflowRunCancel200Response,
 )
 from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
+    WorkflowRunOrderByDirection,
+)
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_field import (
+    WorkflowRunOrderByField,
+)
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import (
     WorkflowRunTriggeredBy,
