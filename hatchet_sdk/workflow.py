@@ -71,6 +71,7 @@ class WorkflowMeta(type):
         cron_triggers = attrs["on_crons"]
         version = attrs["version"]
         schedule_timeout = attrs["schedule_timeout"]
+        sticky = attrs["sticky"]
 
         @functools.cache
         def get_create_opts(self, namespace: str):
@@ -126,6 +127,7 @@ class WorkflowMeta(type):
                 event_triggers=event_triggers,
                 cron_triggers=cron_triggers,
                 schedule_timeout=schedule_timeout,
+                sticky=sticky,
                 jobs=[
                     CreateWorkflowJobOpts(
                         name=name,

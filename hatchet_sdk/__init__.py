@@ -136,4 +136,5 @@ from .workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateWorkflowVersionOpts,
     RateLimitDuration,
+    StickyStrategy,
 )

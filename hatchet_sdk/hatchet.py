@@ -13,8 +13,10 @@ from .client import ClientImpl, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
-from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
+from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit, StickyStrategy
 
+
+from typing import Optional
 
 def workflow(
     name: str = "",
@@ -23,6 +25,7 @@ def workflow(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
+    sticky: StickyStrategy = None,
 ):
     on_events = on_events or []
     on_crons = on_crons or []
@@ -34,6 +37,7 @@ def workflow(
         cls.version = version
         cls.timeout = timeout
         cls.schedule_timeout = schedule_timeout
+        cls.sticky = sticky
 
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
