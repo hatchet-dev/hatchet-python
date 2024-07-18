@@ -110,9 +110,10 @@ class Context(BaseContext):
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
         worker_id: str,
+        registered_workflow_names: list[str] = [],
         namespace: str = "",
     ):
-        self.worker = WorkerContext(worker_id)
+        self.worker = WorkerContext(worker_id, registered_workflow_names)
 
         self.aio = ContextAioImpl(
             action,
@@ -215,6 +216,11 @@ class Context(BaseContext):
         options: ChildTriggerWorkflowOptions = None,
     ):
         worker_id = self.worker.id()
+
+
+        if 'sticky' in options and options['sticky'] == True and not self.worker.has_workflow(workflow_name):
+            raise Exception(f"cannot run with sticky: workflow {workflow_name} is not registered on the worker")
+
         trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
         return self.admin_client.run_workflow(workflow_name, input, trigger_options)

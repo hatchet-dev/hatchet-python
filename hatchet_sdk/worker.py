@@ -134,6 +134,7 @@ class WorkerStatus(Enum):
 
 class Worker:
     worker_id: str
+    registered_workflow_names: list[str] = []
 
     def __init__(
         self,
@@ -307,6 +308,7 @@ class Worker:
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.listener.worker_id,
+            self.registered_workflow_names,
             self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
@@ -353,6 +355,7 @@ class Worker:
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.listener.worker_id,
+            self.registered_workflow_names,
             self.client.config.namespace,
         )
         self.contexts[action.get_group_key_run_id] = context
@@ -511,9 +514,9 @@ class Worker:
 
     def register_workflow(self, workflow: WorkflowMeta):
         namespace = self.client.config.namespace
-        self.client.admin.put_workflow(
-            workflow.get_name(namespace), workflow.get_create_opts(namespace)
-        )
+        name = workflow.get_name(namespace)
+        self.client.admin.put_workflow(name, workflow.get_create_opts(namespace))
+        self.registered_workflow_names.append(name)
 
         def create_action_function(action_func):
             def action_function(context):
