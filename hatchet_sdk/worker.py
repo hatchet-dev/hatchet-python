@@ -133,6 +133,8 @@ class WorkerStatus(Enum):
 
 
 class Worker:
+    worker_id: str
+
     def __init__(
         self,
         name: str,
@@ -304,6 +306,7 @@ class Worker:
             self.client.event,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
+            self.listener.worker_id,
             self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
@@ -349,6 +352,7 @@ class Worker:
             self.client.event,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
+            self.listener.worker_id,
             self.client.config.namespace,
         )
         self.contexts[action.get_group_key_run_id] = context
@@ -644,6 +648,8 @@ class Worker:
                     )
                 )
             )
+
+            self.worker_id = self.listener.worker_id
 
             # It's important that this iterates async so it doesn't block the event loop. This is
             # what allows self.loop.create_task to work.

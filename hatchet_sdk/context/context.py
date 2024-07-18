@@ -8,17 +8,18 @@ from hatchet_sdk.clients.run_event_listener import (
     RunEventListenerClient,
 )
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
-from .clients.admin import (
+from ..clients.admin import (
     AdminClientImpl,
     ChildTriggerWorkflowOptions,
     ScheduleTriggerWorkflowOptions,
     TriggerWorkflowOptions,
 )
-from .clients.dispatcher import Action, DispatcherClientImpl
-from .dispatcher_pb2 import OverridesData
-from .logger import logger
+from ..clients.dispatcher import Action, DispatcherClientImpl
+from ..dispatcher_pb2 import OverridesData
+from ..logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
 
@@ -81,9 +82,10 @@ class ContextAioImpl(BaseContext):
             workflow_name, input, trigger_options
         )
 
-
 class Context(BaseContext):
     spawn_index = -1
+    
+    worker: WorkerContext
 
     def __init__(
         self,
@@ -93,6 +95,7 @@ class Context(BaseContext):
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
+        worker_id: str,
         namespace: str = "",
     ):
         self.aio = ContextAioImpl(
@@ -131,6 +134,7 @@ class Context(BaseContext):
         self.workflow_listener = workflow_listener
         self.workflow_run_event_listener = workflow_run_event_listener
         self.namespace = namespace
+        self.worker = WorkerContext(worker_id)
 
         # FIXME: this limits the number of concurrent log requests to 1, which means we can do about
         # 100 log lines per second but this depends on network.

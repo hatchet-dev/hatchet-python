@@ -17,15 +17,16 @@ hatchet = Hatchet(debug=True)
 class StickyWorkflow:
     @hatchet.step()
     def step1a(self, context: Context):
-        return {"worker": "sticky-worker"}
+        context.worker
+        return {"worker": context.worker.id()}
 
     @hatchet.step()
     def step1b(self, context: Context):
-        return {"worker": "sticky-worker"}
+        return {"worker": context.worker.id()}
     
     @hatchet.step(parents=["step1a", "step1b"])
     def step2(self, context: Context):
-        return {"worker": "sticky-worker"}
+        return {"worker": context.worker.id()}
 
 # @hatchet.workflow(on_events=["user:create"])
 # class StickyChildWorkflow:
