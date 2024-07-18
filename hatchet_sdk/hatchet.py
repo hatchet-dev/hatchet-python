@@ -142,5 +142,5 @@ class Hatchet:
 
     on_failure_step = staticmethod(on_failure_step)
 
-    def worker(self, name: str, max_runs: int | None = None):
-        return Worker(name=name, max_runs=max_runs, config=self.client.config)
+    def worker(self, name: str, max_runs: int | None = None, labels: dict[str: str | int] = {}):
+        return Worker(name=name, max_runs=max_runs, labels=labels, config=self.client.config)

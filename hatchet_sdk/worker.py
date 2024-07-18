@@ -136,6 +136,8 @@ class Worker:
     worker_id: str
     registered_workflow_names: list[str] = []
 
+    labels: dict[str: str | int] = {}
+
     def __init__(
         self,
         name: str,
@@ -143,12 +145,14 @@ class Worker:
         debug=False,
         handle_kill=True,
         config: ClientConfig = {},
+        labels: dict[str: str | int] = {}
     ):
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
         self.client = new_client_raw(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
+        self.labels = labels
         self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
         self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
@@ -162,6 +166,10 @@ class Worker:
         self.handle_kill = handle_kill
 
         self._status = WorkerStatus.INITIALIZED
+
+    def _upsert_labels(self, labels: dict[str: str | int]):
+        self.labels.update(labels)
+        return self.labels
 
     def step_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
@@ -309,6 +317,7 @@ class Worker:
             self.workflow_run_event_listener,
             self.listener.worker_id,
             self.registered_workflow_names,
+            self.labels,
             self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
@@ -356,6 +365,7 @@ class Worker:
             self.workflow_run_event_listener,
             self.listener.worker_id,
             self.registered_workflow_names,
+            self.labels,
             self.client.config.namespace,
         )
         self.contexts[action.get_group_key_run_id] = context
@@ -648,6 +658,7 @@ class Worker:
                         services=["default"],
                         actions=self.action_registry.keys(),
                         max_runs=self.max_runs,
+                        labels=self.labels,
                     )
                 )
             )

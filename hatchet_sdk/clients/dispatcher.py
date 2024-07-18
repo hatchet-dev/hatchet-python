@@ -4,7 +4,7 @@ import json
 import random
 import threading
 import time
-from typing import Any, AsyncGenerator, List
+from typing import Any, AsyncGenerator, List, Mapping
 
 import grpc
 from grpc._cython import cygrpc
@@ -22,6 +22,7 @@ from ..dispatcher_pb2 import (
     RefreshTimeoutRequest,
     ReleaseSlotRequest,
     StepActionEvent,
+    WorkerLabels,
     WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
@@ -59,12 +60,21 @@ class GetActionListenerRequest:
         services: List[str],
         actions: List[str],
         max_runs: int | None = None,
+        labels: dict[str: str | int] = {},
     ):
         self.worker_name = worker_name
         self.services = services
         self.actions = actions
         self.max_runs = max_runs
 
+        # TODO map this data?
+        self.labels: Mapping = {}
+
+        for key, value in labels.items():
+            if isinstance(value, int):
+                self.labels[key] = WorkerLabels(intValue=value)
+            else:
+                self.labels[key] = WorkerLabels(strValue= str(value))
 
 class Action:
     def __init__(
@@ -380,6 +390,7 @@ class DispatcherClientImpl(DispatcherClient):
                 actions=req.actions,
                 services=req.services,
                 maxRuns=req.max_runs,
+                labels=req.labels,
             ),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
