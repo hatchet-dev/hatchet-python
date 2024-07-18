@@ -32,7 +32,8 @@ def get_caller_file_path():
 
 class BaseContext:
     def _prepare_workflow_options(
-        self, key: str = None, 
+        self,
+        key: str = None,
         options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
         worker_id: str = None,
     ):
@@ -48,7 +49,9 @@ class BaseContext:
             "parent_step_run_id": step_run_id,
             "child_key": key,
             "child_index": self.spawn_index,
-            "additional_metadata": options["additional_metadata"] if "additional_meta" in options else None,
+            "additional_metadata": (
+                options["additional_metadata"] if "additional_meta" in options else None
+            ),
             "desired_worker_id": desired_worker_id,
         }
 
@@ -77,7 +80,6 @@ class ContextAioImpl(BaseContext):
         self.namespace = namespace
         self.spawn_index = -1
         self.worker = worker
-        
 
     async def spawn_workflow(
         self,
@@ -93,9 +95,10 @@ class ContextAioImpl(BaseContext):
             workflow_name, input, trigger_options
         )
 
+
 class Context(BaseContext):
     spawn_index = -1
-    
+
     worker: WorkerContext
 
     def __init__(

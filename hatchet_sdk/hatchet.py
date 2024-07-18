@@ -16,8 +16,6 @@ from .workflow import WorkflowMeta
 from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit, StickyStrategy
 
 
-from typing import Optional
-
 def workflow(
     name: str = "",
     on_events: list | None = None,

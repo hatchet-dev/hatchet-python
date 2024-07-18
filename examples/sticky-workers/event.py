@@ -8,5 +8,7 @@ client = new_client()
 
 # client.event.push("user:create", {"test": "test"})
 client.event.push(
-    "sticky:parent", {"test": "test"}, options={"additional_metadata": {"hello": "moon"}}
+    "sticky:parent",
+    {"test": "test"},
+    options={"additional_metadata": {"hello": "moon"}},
 )

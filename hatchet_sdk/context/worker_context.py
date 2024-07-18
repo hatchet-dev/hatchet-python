@@ -1,4 +1,4 @@
-class WorkerContext():
+class WorkerContext:
     _worker_id: str
 
     def __init__(self, worker_id: str):
