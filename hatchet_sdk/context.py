@@ -1,8 +1,8 @@
-from asyncio import Future
 import inspect
 import json
-from concurrent.futures import ThreadPoolExecutor
 import traceback
+from asyncio import Future
+from concurrent.futures import ThreadPoolExecutor
 
 from hatchet_sdk.clients.events import EventClientImpl
 from hatchet_sdk.clients.run_event_listener import (
@@ -200,7 +200,7 @@ class Context(BaseContext):
 
         return self.admin_client.run_workflow(workflow_name, input, trigger_options)
 
-    def _log(self, line: str) -> (bool, Exception): # type: ignore
+    def _log(self, line: str) -> (bool, Exception):  # type: ignore
         try:
             self.event_client.log(message=line, step_run_id=self.stepRunId)
             return True, None
@@ -223,9 +223,15 @@ class Context(BaseContext):
                 if raise_on_error:
                     raise exception
                 else:
-                    thread_trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+                    thread_trace = "".join(
+                        traceback.format_exception(
+                            type(exception), exception, exception.__traceback__
+                        )
+                    )
                     call_site_trace = "".join(traceback.format_stack())
-                    logger.error(f"Error in log thread: {exception}\n{thread_trace}\nCalled from:\n{call_site_trace}")
+                    logger.error(
+                        f"Error in log thread: {exception}\n{thread_trace}\nCalled from:\n{call_site_trace}"
+                    )
 
         future.add_done_callback(handle_result)
 
