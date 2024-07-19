@@ -1,8 +1,7 @@
 import inspect
 import json
 import traceback
-from asyncio import Future
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, Future
 
 from hatchet_sdk.clients.events import EventClientImpl
 from hatchet_sdk.clients.run_event_listener import (
