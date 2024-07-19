@@ -25,6 +25,7 @@ from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.events import EventClientImpl
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.loader import ClientConfig
 
 from .client import new_client, new_client_raw
@@ -133,10 +134,7 @@ class WorkerStatus(Enum):
 
 
 class Worker:
-    worker_id: str
-    registered_workflow_names: list[str] = []
-
-    labels: dict[str : str | int] = {}
+    worker_context: WorkerContext
 
     def __init__(
         self,
@@ -145,14 +143,16 @@ class Worker:
         debug=False,
         handle_kill=True,
         config: ClientConfig = {},
-        labels: dict[str : str | int] = {},
+        labels: dict[str, str | int] = {},
     ):
+        if debug:
+            logger.warn('debug on worker is deprecated and will be removed in a future release, please set debug on the Hatchet client instead')
+
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
         self.client = new_client_raw(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
-        self.labels = labels
         self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
         self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
@@ -167,9 +167,10 @@ class Worker:
 
         self._status = WorkerStatus.INITIALIZED
 
-    def _upsert_labels(self, labels: dict[str : str | int]):
-        self.labels.update(labels)
-        return self.labels
+        self.worker_context = WorkerContext(labels=labels, config=config)
+
+    def upsert_labels(self, labels: dict[str, str | int]):
+        return self.worker_context.upsert_labels(labels)
 
     def step_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
@@ -315,9 +316,7 @@ class Worker:
             self.client.event,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
-            self.listener.worker_id,
-            self.registered_workflow_names,
-            self.labels,
+            self.worker_context,
             self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
@@ -363,9 +362,7 @@ class Worker:
             self.client.event,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
-            self.listener.worker_id,
-            self.registered_workflow_names,
-            self.labels,
+            self.worker_context,
             self.client.config.namespace,
         )
         self.contexts[action.get_group_key_run_id] = context
@@ -526,7 +523,7 @@ class Worker:
         namespace = self.client.config.namespace
         name = workflow.get_name(namespace)
         self.client.admin.put_workflow(name, workflow.get_create_opts(namespace))
-        self.registered_workflow_names.append(name)
+        self.worker_context._registered_workflow_names.append(name)
 
         def create_action_function(action_func):
             def action_function(context):
@@ -651,6 +648,9 @@ class Worker:
             self.workflow_run_event_listener = new_listener(self.config)
             self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
+
+            print(self.worker_context._labels)
+            
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
                     GetActionListenerRequest(
@@ -658,12 +658,12 @@ class Worker:
                         services=["default"],
                         actions=self.action_registry.keys(),
                         max_runs=self.max_runs,
-                        labels=self.labels,
+                        labels=self.worker_context._labels,
                     )
                 )
             )
 
-            self.worker_id = self.listener.worker_id
+            self.worker_context._worker_id = self.listener.worker_id
 
             # It's important that this iterates async so it doesn't block the event loop. This is
             # what allows self.loop.create_task to work.

@@ -22,6 +22,7 @@ from ..dispatcher_pb2 import (
     RefreshTimeoutRequest,
     ReleaseSlotRequest,
     StepActionEvent,
+    UpsertWorkerLabelsRequest,
     WorkerLabels,
     WorkerListenRequest,
     WorkerRegisterRequest,
@@ -60,7 +61,7 @@ class GetActionListenerRequest:
         services: List[str],
         actions: List[str],
         max_runs: int | None = None,
-        labels: dict[str : str | int] = {},
+        labels: dict[str, str | int] = {},
     ):
         self.worker_name = worker_name
         self.services = services
@@ -432,6 +433,21 @@ class DispatcherClientImpl(DispatcherClient):
                 stepRunId=step_run_id,
                 incrementTimeoutBy=increment_by,
             ),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
+            metadata=get_metadata(self.token),
+        )
+
+    def upsert_worker_labels(self, worker_id: str, labels: dict[str, str | int]):
+        worker_labels = {}
+
+        for key, value in labels.items():
+            if isinstance(value, int):
+                worker_labels[key] = WorkerLabels(intValue=value)
+            else:
+                worker_labels[key] = WorkerLabels(strValue=str(value))
+
+        self.client.UpsertWorkerLabels(
+            UpsertWorkerLabelsRequest(workerId=worker_id, labels=worker_labels),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )

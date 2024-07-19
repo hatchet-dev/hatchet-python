@@ -109,12 +109,11 @@ class Context(BaseContext):
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
-        worker_id: str,
-        registered_workflow_names: list[str] = [],
+        worker: WorkerContext,
         namespace: str = "",
     ):
-        self.worker = WorkerContext(worker_id, registered_workflow_names)
-
+        self.worker = worker
+        
         self.aio = ContextAioImpl(
             action,
             dispatcher_client,
@@ -122,7 +121,7 @@ class Context(BaseContext):
             event_client,
             workflow_listener,
             workflow_run_event_listener,
-            self.worker,
+            worker,
             namespace,
         )
 
