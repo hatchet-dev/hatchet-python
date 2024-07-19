@@ -1,4 +1,5 @@
 from hatchet_sdk.loader import ClientConfig
+
 from ..client import new_client_raw
 
 
@@ -6,7 +7,6 @@ class WorkerContext:
     _worker_id: str
     _registered_workflow_names: list[str] = []
     _labels: dict[str, str | int] = {}
-
 
     def __init__(self, labels: dict[str, str | int], config: ClientConfig = {}):
         self._labels = labels

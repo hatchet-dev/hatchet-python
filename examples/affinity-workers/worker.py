@@ -14,15 +14,12 @@ hatchet = Hatchet(debug=True)
 class AffinityWorkflow:
     @hatchet.step(
         desired_worker_labels={
-            "model": {
-                "value": "fancy-ai-model-v2",
-                "weight": 10
-            },
+            "model": {"value": "fancy-ai-model-v2", "weight": 10},
             "memory": {
                 "value": 256,
                 "required": True,
                 "comparator": WorkerLabelComparator.GREATER_THAN,
-            }
+            },
         },
     )
     async def step(self, context: Context):

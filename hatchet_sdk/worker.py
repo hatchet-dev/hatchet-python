@@ -146,7 +146,9 @@ class Worker:
         labels: dict[str, str | int] = {},
     ):
         if debug:
-            logger.warn('debug on worker is deprecated and will be removed in a future release, please set debug on the Hatchet client instead')
+            logger.warn(
+                "debug on worker is deprecated and will be removed in a future release, please set debug on the Hatchet client instead"
+            )
 
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
@@ -648,9 +650,8 @@ class Worker:
             self.workflow_run_event_listener = new_listener(self.config)
             self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
-
             print(self.worker_context._labels)
-            
+
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
                     GetActionListenerRequest(
