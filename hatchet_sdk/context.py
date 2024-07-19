@@ -1,6 +1,8 @@
+from asyncio import Future
 import inspect
 import json
 from concurrent.futures import ThreadPoolExecutor
+import traceback
 
 from hatchet_sdk.clients.events import EventClientImpl
 from hatchet_sdk.clients.run_event_listener import (
@@ -198,17 +200,34 @@ class Context(BaseContext):
 
         return self.admin_client.run_workflow(workflow_name, input, trigger_options)
 
-    def _log(self, line: str):
+    def _log(self, line: str) -> (bool, Exception): # type: ignore
         try:
             self.event_client.log(message=line, step_run_id=self.stepRunId)
+            return True, None
         except Exception as e:
-            logger.error(f"Error logging: {e}")
+            # we don't want to raise an exception here, as it will kill the log thread
+            return False, e
 
-    def log(self, line: str):
+    def log(self, line, raise_on_error: bool = False):
         if self.stepRunId == "":
             return
 
-        self.logger_thread_pool.submit(self._log, line)
+        if not isinstance(line, str):
+            line = json.dumps(line)
+
+        future: Future = self.logger_thread_pool.submit(self._log, line)
+
+        def handle_result(future: Future):
+            success, exception = future.result()
+            if not success and exception:
+                if raise_on_error:
+                    raise exception
+                else:
+                    thread_trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+                    call_site_trace = "".join(traceback.format_stack())
+                    logger.error(f"Error in log thread: {exception}\n{thread_trace}\nCalled from:\n{call_site_trace}")
+
+        future.add_done_callback(handle_result)
 
     def release_slot(self):
         return self.dispatcher_client.release_slot(self.stepRunId)
