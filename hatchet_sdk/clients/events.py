@@ -44,7 +44,7 @@ class EventClientImpl:
         try:
             meta = None if options is None else options["additional_metadata"]
             meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
-        except e:
+        except Exception as e:
             raise ValueError(f"Error encoding meta: {e}")
 
         try:

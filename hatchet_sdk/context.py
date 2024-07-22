@@ -212,7 +212,10 @@ class Context(BaseContext):
             return
 
         if not isinstance(line, str):
-            line = json.dumps(line)
+            try:
+                line = json.dumps(line)
+            except Exception:
+                line = str(line)
 
         future: Future = self.logger_thread_pool.submit(self._log, line)
 
