@@ -8,4 +8,4 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 
-logger = logging.getLogger()
+logger = logging.getLogger("hatchet")
