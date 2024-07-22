@@ -9,6 +9,7 @@ from hatchet_sdk.loader import ClientConfig
 
 hatchet = Hatchet(debug=True)
 
+
 @hatchet.workflow(on_events=["parent:create"])
 class Parent:
     @hatchet.step(timeout="1m")
