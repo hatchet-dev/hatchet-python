@@ -1,11 +1,13 @@
 import logging
 import sys
 
-# logging config
-logging.basicConfig(
-    level=logging.ERROR,
-    format="[%(levelname)s] hatchet -- %(asctime)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-
+# Create a named logger
 logger = logging.getLogger("hatchet")
+logger.setLevel(logging.ERROR)
+
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("[%(levelname)s] hatchet -- %(asctime)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+logger.propagate = False
