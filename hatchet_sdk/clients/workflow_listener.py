@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from typing import AsyncGenerator
 
 import grpc
+from grpc._cython import cygrpc
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.connection import new_conn
@@ -60,6 +61,9 @@ class PooledWorkflowRunListener:
     requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
     listener: AsyncGenerator[WorkflowRunEvent, None] = None
+    listener_task: asyncio.Task = None
+
+    curr_requester: int = 0
 
     # events have keys of the format workflow_run_id + subscription_id
     events: dict[int, _Subscription] = {}
@@ -69,13 +73,8 @@ class PooledWorkflowRunListener:
     def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)
         self.client = DispatcherStub(conn)
-        self.stop_signal = False
         self.token = config.token
         self.config = config
-
-    def abort(self):
-        self.stop_signal = True
-        self.requests.put_nowait(False)
 
     async def _interrupter(self):
         """
@@ -123,6 +122,9 @@ class PooledWorkflowRunListener:
 
                             workflow_event: WorkflowRunEvent = t.result()
 
+                            if workflow_event is cygrpc.EOF:
+                                break
+
                             # get a list of subscriptions for this workflow
                             subscriptions = self.workflowsToSubscriptions.get(
                                 workflow_event.workflowRunId, []
@@ -148,6 +150,8 @@ class PooledWorkflowRunListener:
             raise e
 
     async def _request(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
+        self.curr_requester = self.curr_requester + 1
+
         # replay all existing subscriptions
         workflow_run_set = set(self.subscriptionsToWorkflows.values())
 
@@ -159,14 +163,18 @@ class PooledWorkflowRunListener:
         while True:
             request = await self.requests.get()
 
-            if request is False or self.stop_signal:
-                self.stop_signal = True
+            # if the request is an int which matches the current requester, then we should stop
+            if request == self.curr_requester:
                 break
+
+            # if we've gotten an int that doesn't match the current requester, then we should ignore it
+            if isinstance(request, int):
+                continue
 
             yield request
             self.requests.task_done()
 
-    def cleanup_subscription(self, subscription_id: int, init_producer: asyncio.Task):
+    def cleanup_subscription(self, subscription_id: int):
         workflow_run_id = self.subscriptionsToWorkflows[subscription_id]
 
         if workflow_run_id in self.workflowsToSubscriptions:
@@ -174,17 +182,6 @@ class PooledWorkflowRunListener:
 
         del self.subscriptionsToWorkflows[subscription_id]
         del self.events[subscription_id]
-
-        if len(self.events) == 0:
-            self.listener = None
-
-            if self.interrupter is not None and not self.interrupter.done():
-                self.interrupter.cancel()
-
-            self.interrupter = None
-
-            if not init_producer.done():
-                init_producer.cancel()
 
     async def subscribe(self, workflow_run_id: str):
         init_producer: asyncio.Task = None
@@ -206,13 +203,14 @@ class PooledWorkflowRunListener:
                 subscription_id, workflow_run_id
             )
 
-            init_producer = asyncio.create_task(self._init_producer())
-
             await self.requests.put(
                 SubscribeToWorkflowRunsRequest(
                     workflowRunId=workflow_run_id,
                 )
             )
+
+            if not self.listener_task or self.listener_task.done():
+                self.listener_task = asyncio.create_task(self._init_producer())
 
             event = await self.events[subscription_id].get()
 
@@ -220,7 +218,7 @@ class PooledWorkflowRunListener:
         except asyncio.CancelledError:
             raise
         finally:
-            self.cleanup_subscription(subscription_id, init_producer)
+            self.cleanup_subscription(subscription_id)
 
     async def result(self, workflow_run_id: str):
         event = await self.subscribe(workflow_run_id)
@@ -248,6 +246,10 @@ class PooledWorkflowRunListener:
             try:
                 if retries > 0:
                     await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
+
+                # signal previous async iterator to stop
+                if self.curr_requester != 0:
+                    self.requests.put_nowait(self.curr_requester)
 
                 listener = self.client.SubscribeToWorkflowRuns(
                     self._request(),
