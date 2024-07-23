@@ -10,7 +10,7 @@ def hatchet():
 
 @pytest.fixture(scope="session", autouse=True)
 def fixture_background_hatchet_worker():
-    proc = subprocess.Popen(["poetry", "run", "python3", "./examples/fanout/worker.py"])
+    proc = subprocess.Popen(["poetry", "run", "worker"])
 
     # sleep long enough to make sure we are up and running
     # it would be nice to NOT do this, but we need to ensure the worker is running before we trigger any events
