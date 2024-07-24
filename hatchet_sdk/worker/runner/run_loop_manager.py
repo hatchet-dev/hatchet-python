@@ -95,7 +95,7 @@ class WorkerActionRunLoopManager:
         while True:
             action = await self._get_action()
             logger.debug(f"rx: runtime payload: {action}")
-            # task = await self.runner.run(action)
+            task = await self.runner.run(action)
 
     async def _get_action(self):
         return await self.loop.run_in_executor(None, self.action_queue.get)
