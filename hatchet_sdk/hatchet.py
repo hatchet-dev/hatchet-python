@@ -1,7 +1,12 @@
 import logging
 from typing import List, Optional
+
 from typing_extensions import deprecated
 
+from hatchet_sdk.contracts.workflows_pb2 import (
+    ConcurrencyLimitStrategy,
+    CreateStepRateLimit,
+)
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
@@ -9,7 +14,6 @@ from .client import Client, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
-from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
 
 
 def workflow(

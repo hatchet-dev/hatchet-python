@@ -9,11 +9,6 @@ from google.protobuf import timestamp_pb2
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
-from hatchet_sdk.workflow_run import WorkflowRunRef
-
-from ..loader import ClientConfig
-from ..metadata import get_metadata
-from ..workflow import WorkflowMeta
 from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowVersionOpts,
     PutRateLimitRequest,
@@ -25,6 +20,11 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowVersion,
 )
 from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
+from hatchet_sdk.workflow_run import WorkflowRunRef
+
+from ..loader import ClientConfig
+from ..metadata import get_metadata
+from ..workflow import WorkflowMeta
 
 
 def new_admin(config: ClientConfig):

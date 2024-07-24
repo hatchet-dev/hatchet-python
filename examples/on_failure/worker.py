@@ -20,6 +20,7 @@ class OnFailureWorkflow:
         print("executed on_failure")
         print(context)
 
+
 def main():
     workflow = OnFailureWorkflow()
     worker = hatchet.worker("on-failure-worker", max_runs=4)

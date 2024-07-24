@@ -16,6 +16,7 @@ class RateLimitWorkflow:
         print("executed step1")
         pass
 
+
 def main():
     hatchet.admin.put_rate_limit("test-limit", 2, RateLimitDuration.SECOND)
 

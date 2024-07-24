@@ -1,6 +1,8 @@
 import subprocess
 import time
+
 import pytest
+
 
 def fixture_bg_worker(command, startup_time=5):
     @pytest.fixture(scope="session", autouse=True)

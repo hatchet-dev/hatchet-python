@@ -9,6 +9,7 @@ from hatchet_sdk.clients.run_event_listener import (
     RunEventListenerClient,
 )
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from .clients.admin import (
@@ -18,7 +19,6 @@ from .clients.admin import (
     TriggerWorkflowOptions,
 )
 from .clients.dispatcher import Action, DispatcherClientImpl
-from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
 from .logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds

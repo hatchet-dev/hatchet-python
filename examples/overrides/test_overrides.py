@@ -14,4 +14,3 @@
 #     run = hatchet.admin.run_workflow("DagWorkflow", {})
 #     result = await run.result()
 #     assert result["step1"]["test"] == "test"
-

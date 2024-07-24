@@ -5,6 +5,7 @@ from tests.utils import hatchet_client_fixture
 
 hatchet = hatchet_client_fixture()
 
+
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
 async def test_event_push(hatchet: Hatchet):

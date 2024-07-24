@@ -30,8 +30,10 @@ async def _main():
     worker.register_workflow(workflow)
     await worker.async_start()
 
+
 def main():
     asyncio.run(_main())
+
 
 if __name__ == "__main__":
     main()

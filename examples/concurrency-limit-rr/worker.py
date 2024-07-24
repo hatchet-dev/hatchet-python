@@ -12,8 +12,7 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["concurrency-test"], schedule_timeout="10m")
 class ConcurrencyDemoWorkflowRR:
     @hatchet.concurrency(
-        max_runs=1,
-        limit_strategy=ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN
+        max_runs=1, limit_strategy=ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN
     )
     def concurrency(self, context: Context) -> str:
         input = context.workflow_input()

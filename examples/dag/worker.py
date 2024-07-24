@@ -1,9 +1,9 @@
+import random
 import time
 
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
-import random
 
 load_dotenv()
 
@@ -15,22 +15,26 @@ class DagWorkflow:
 
     @hatchet.step(timeout="5s")
     def step1(self, context: Context):
-        rando = random.randint(1, 100)  # Generate a random number between 1 and 100return {
+        rando = random.randint(
+            1, 100
+        )  # Generate a random number between 1 and 100return {
         return {
             "rando": rando,
         }
 
     @hatchet.step(timeout="5s")
     def step2(self, context: Context):
-        rando = random.randint(1, 100)  # Generate a random number between 1 and 100return {
+        rando = random.randint(
+            1, 100
+        )  # Generate a random number between 1 and 100return {
         return {
             "rando": rando,
         }
 
     @hatchet.step(parents=["step1", "step2"])
     def step3(self, context: Context):
-        one = context.step_output("step1")['rando']
-        two = context.step_output("step2")['rando']
+        one = context.step_output("step1")["rando"]
+        two = context.step_output("step2")["rando"]
 
         return {
             "sum": one + two,
@@ -49,6 +53,7 @@ class DagWorkflow:
             "step4": "step4",
         }
 
+
 def main():
 
     workflow = DagWorkflow()
@@ -56,6 +61,7 @@ def main():
     worker.register_workflow(workflow)
 
     worker.start()
+
 
 if __name__ == "__main__":
     main()

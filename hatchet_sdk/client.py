@@ -23,7 +23,11 @@ class Client:
     logger: Logger
 
     @classmethod
-    def from_environment(cls, defaults: ClientConfig = ClientConfig(), *opts_functions: Callable[[ClientConfig], None]):
+    def from_environment(
+        cls,
+        defaults: ClientConfig = ClientConfig(),
+        *opts_functions: Callable[[ClientConfig], None]
+    ):
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
             opt_function(config)

@@ -6,6 +6,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+
 def main():
     list: WorkflowList = hatchet.rest.workflow_list()
 
@@ -14,6 +15,7 @@ def main():
         print(workflow.metadata.id)
         print(workflow.metadata.created_at)
         print(workflow.metadata.updated_at)
+
 
 if __name__ == "__main__":
     main()

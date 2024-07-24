@@ -24,12 +24,14 @@ class ConcurrencyDemoWorkflow:
         print("executed step1")
         return {"run": input["run"]}
 
+
 def main():
     workflow = ConcurrencyDemoWorkflow()
     worker = hatchet.worker("concurrency-demo-worker", max_runs=10)
     worker.register_workflow(workflow)
 
     worker.start()
+
 
 if __name__ == "__main__":
     main()
