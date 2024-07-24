@@ -4,7 +4,7 @@ from typing import List, Optional
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
-from .client import ClientImpl, new_client, new_client_raw
+from .client import Client, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
@@ -103,7 +103,7 @@ def concurrency(
 
 
 class Hatchet:
-    client: ClientImpl
+    client: Client
 
     @classmethod
     def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs):
@@ -116,7 +116,7 @@ class Hatchet:
     def __init__(
         self,
         debug: bool = False,
-        client: Optional[ClientImpl] = None,
+        client: Optional[Client] = None,
         config: ClientConfig = ClientConfig(),
     ):
         if client is not None:

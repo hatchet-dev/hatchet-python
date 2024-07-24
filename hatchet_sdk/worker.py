@@ -22,7 +22,7 @@ import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.events import EventClientImpl
+from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
@@ -76,7 +76,7 @@ class InjectingFilter(logging.Filter):
 
 # Custom log handler to process log lines
 class CustomLogHandler(StreamHandler):
-    def __init__(self, event_client: EventClientImpl, stream=None):
+    def __init__(self, event_client: EventClient, stream=None):
         super().__init__(stream)
         self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
         self.event_client = event_client
@@ -99,7 +99,7 @@ class CustomLogHandler(StreamHandler):
 
 def capture_logs(
     logger: logging.Logger,
-    event_client: EventClientImpl,
+    event_client: EventClient,
     func: Coroutine[Any, Any, Any],
 ):
     @functools.wraps(func)

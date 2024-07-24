@@ -28,7 +28,7 @@ from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
 
 
 def new_admin(config: ClientConfig):
-    return AdminClientImpl(config)
+    return AdminClient(config)
 
 
 class ScheduleTriggerWorkflowOptions(TypedDict):
@@ -210,7 +210,7 @@ class AdminClientAioImpl(AdminClientBase):
             raise ValueError(f"gRPC error: {e}")
 
 
-class AdminClientImpl(AdminClientBase):
+class AdminClient(AdminClientBase):
     def __init__(self, config: ClientConfig):
         conn = new_conn(config)
         self.config = config

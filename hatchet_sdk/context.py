@@ -3,7 +3,7 @@ import json
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 
-from hatchet_sdk.clients.events import EventClientImpl
+from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import (
     RunEventListener,
     RunEventListenerClient,
@@ -12,7 +12,7 @@ from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from .clients.admin import (
-    AdminClientImpl,
+    AdminClient,
     ChildTriggerWorkflowOptions,
     ScheduleTriggerWorkflowOptions,
     TriggerWorkflowOptions,
@@ -54,8 +54,8 @@ class ContextAioImpl(BaseContext):
         self,
         action: Action,
         dispatcher_client: DispatcherClientImpl,
-        admin_client: AdminClientImpl,
-        event_client: EventClientImpl,
+        admin_client: AdminClient,
+        event_client: EventClient,
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
         namespace: str = "",
@@ -90,8 +90,8 @@ class Context(BaseContext):
         self,
         action: Action,
         dispatcher_client: DispatcherClientImpl,
-        admin_client: AdminClientImpl,
-        event_client: EventClientImpl,
+        admin_client: AdminClient,
+        event_client: EventClient,
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
         namespace: str = "",

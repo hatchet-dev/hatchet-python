@@ -13,7 +13,7 @@ from ..metadata import get_metadata
 
 
 def new_event(conn, config: ClientConfig):
-    return EventClientImpl(
+    return EventClient(
         client=EventsServiceStub(conn),
         config=config,
     )
@@ -31,7 +31,7 @@ class PushEventOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
 
 
-class EventClientImpl:
+class EventClient:
     def __init__(self, client: EventsServiceStub, config: ClientConfig):
         self.client = client
         self.token = config.token
