@@ -34,6 +34,8 @@ class WorkerActionProcess:
             logger.setLevel(logging.DEBUG)
         self.killing = self.handle_kill
 
+        # TODO handle kill signal
+
     async def start(self):
         logger.debug(f'starting action listener: {self.name}')
 
