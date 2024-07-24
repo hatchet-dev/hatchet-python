@@ -339,7 +339,6 @@ class ActionListenerImpl(WorkerActionListener):
 
         self.last_connection_attempt = current_time
 
-        logger.info("Established listener.")
         return listener
 
     def unregister(self):

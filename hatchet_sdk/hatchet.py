@@ -148,7 +148,7 @@ class Hatchet:
         if client is not None:
             self.client = client
         else:
-            self._client = new_client(config)
+            self._client = new_client(config, debug)
 
         if debug:
             logger.setLevel(logging.DEBUG)
@@ -185,4 +185,9 @@ class Hatchet:
     on_failure_step = staticmethod(on_failure_step)
 
     def worker(self, name: str, max_runs: int | None = None):
-        return Worker(name=name, max_runs=max_runs, config=self.client.config)
+        return Worker(
+            name=name,
+            max_runs=max_runs,
+            config=self._client.config,
+            debug=self._client.debug,
+        )

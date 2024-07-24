@@ -21,21 +21,27 @@ class Client:
     rest: RestApi
     workflow_listener: PooledWorkflowRunListener
     logger: Logger
+    debug: bool = False
 
     @classmethod
     def from_environment(
         cls,
         defaults: ClientConfig = ClientConfig(),
+        debug: bool = False,
         *opts_functions: Callable[[ClientConfig], None]
     ):
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
             opt_function(config)
 
-        return cls.from_config(config)
+        return cls.from_config(config, debug)
 
     @classmethod
-    def from_config(cls, config: ClientConfig = ClientConfig()):
+    def from_config(
+        cls,
+        config: ClientConfig = ClientConfig(),
+        debug: bool = False,
+    ):
         if config.tls_config is None:
             raise ValueError("TLS config is required")
 
@@ -58,6 +64,7 @@ class Client:
             workflow_listener,
             rest_client,
             config,
+            debug,
         )
 
     def __init__(
@@ -68,6 +75,7 @@ class Client:
         workflow_listener: PooledWorkflowRunListener,
         rest_client: RestApi,
         config: ClientConfig,
+        debug: bool = False,
     ):
         self.admin = admin_client
         self.dispatcher = dispatcher_client
@@ -77,6 +85,7 @@ class Client:
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
         self.logger = config.logger
+        self.debug = debug
 
 
 def with_host_port(host: str, port: int):
