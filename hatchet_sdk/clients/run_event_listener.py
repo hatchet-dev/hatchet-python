@@ -6,14 +6,14 @@ import grpc
 
 from hatchet_sdk.connection import new_conn
 
-from ..dispatcher_pb2 import (
+from hatchet_sdk.contracts.dispatcher_pb2 import (
     RESOURCE_TYPE_STEP_RUN,
     RESOURCE_TYPE_WORKFLOW_RUN,
     ResourceEventType,
     SubscribeToWorkflowEventsRequest,
     WorkflowEvent,
 )
-from ..dispatcher_pb2_grpc import DispatcherStub
+from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 

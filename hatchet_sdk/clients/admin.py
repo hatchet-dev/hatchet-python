@@ -14,7 +14,7 @@ from hatchet_sdk.workflow_run import WorkflowRunRef
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 from ..workflow import WorkflowMeta
-from ..workflows_pb2 import (
+from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowVersionOpts,
     PutRateLimitRequest,
     PutWorkflowRequest,
@@ -24,7 +24,7 @@ from ..workflows_pb2 import (
     TriggerWorkflowResponse,
     WorkflowVersion,
 )
-from ..workflows_pb2_grpc import WorkflowServiceStub
+from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
 
 
 def new_admin(config: ClientConfig):

@@ -8,7 +8,7 @@ from .client import ClientImpl, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
 from .workflow import WorkflowMeta
-from .workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
+from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, CreateStepRateLimit
 
 
 def workflow(

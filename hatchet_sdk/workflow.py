@@ -1,7 +1,7 @@
 import functools
 from typing import Any, Callable, List, Tuple
 
-from .workflows_pb2 import (
+from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,

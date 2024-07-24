@@ -6,8 +6,8 @@ from typing import Dict, TypedDict
 import grpc
 from google.protobuf import timestamp_pb2
 
-from ..events_pb2 import Event, PushEventRequest, PutLogRequest, PutStreamEventRequest
-from ..events_pb2_grpc import EventsServiceStub
+from hatchet_sdk.contracts.events_pb2 import Event, PushEventRequest, PutLogRequest, PutStreamEventRequest
+from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 

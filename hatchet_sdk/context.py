@@ -18,7 +18,7 @@ from .clients.admin import (
     TriggerWorkflowOptions,
 )
 from .clients.dispatcher import Action, DispatcherClientImpl
-from .dispatcher_pb2 import OverridesData
+from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
 from .logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds

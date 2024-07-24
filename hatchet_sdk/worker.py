@@ -35,7 +35,7 @@ from .clients.dispatcher import (
     new_dispatcher,
 )
 from .context import Context
-from .dispatcher_pb2 import (
+from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_COMPLETED,
     GROUP_KEY_EVENT_TYPE_FAILED,
     GROUP_KEY_EVENT_TYPE_STARTED,

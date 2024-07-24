@@ -12,7 +12,7 @@ from grpc._cython import cygrpc
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.connection import new_conn
 
-from ..dispatcher_pb2 import (
+from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionEventResponse,
     ActionType,
     AssignedAction,
@@ -27,7 +27,7 @@ from ..dispatcher_pb2 import (
     WorkerRegisterResponse,
     WorkerUnsubscribeRequest,
 )
-from ..dispatcher_pb2_grpc import DispatcherStub
+from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from ..loader import ClientConfig
 from ..logger import logger
 from ..metadata import get_metadata
