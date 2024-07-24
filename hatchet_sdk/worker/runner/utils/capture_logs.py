@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import contextvars
+import functools
 from io import StringIO
 import logging
 from typing import Any, Coroutine

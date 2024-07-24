@@ -8,7 +8,7 @@ from typing import List
 from hatchet_sdk.logger import logger
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
-from ...client import new_client, new_client_raw
+from hatchet_sdk.client import Client, new_client_raw
 
 @dataclass
 class WorkerActionRunnerManager:
@@ -20,45 +20,40 @@ class WorkerActionRunnerManager:
     handle_kill: bool = True
     debug: bool = False
 
-    loop: asyncio.AbstractEventLoop = field(init=False, default=None)
-    
-    _start = None
+    loop: asyncio.AbstractEventLoop = field(init=False)
+
+    client: Client = None
+
 
     def __post_init__(self):
         if self.debug:
             logger.setLevel(logging.DEBUG)
         self.killing = self.handle_kill
+
+
         self.client = new_client_raw(self.config, self.debug)
-        self._start = self.start()
 
-    async def start(self):
-        logger.debug(f'starting action runner: {self.name}')
-        return await self._start_aio_loop()
+        self.start()
 
-    def _start_aio_loop(self, retry_count=1):
+    def start(self, retry_count=1):
         try:
-            if self.loop is not None:
-                loop = asyncio.get_running_loop()
-                self.loop = loop
-                created_loop = False
-            else:
-                self.loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self.loop)
-                created_loop = True
+            loop = asyncio.get_running_loop()
+            self.loop = loop
+            created_loop = False
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
             created_loop = True
 
-        self.loop.create_task(self._async_start(retry_count))
+        k = self.loop.create_task(self.async_start(retry_count))
 
-        # self.loop.add_signal_handler(
-        #     signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
-        # )
-        # self.loop.add_signal_handler(
-        #     signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
-        # )
-        # self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
+        self.loop.add_signal_handler(
+            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(
+            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
+        )
+        self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
 
         if created_loop:
             self.loop.run_forever()
@@ -66,29 +61,62 @@ class WorkerActionRunnerManager:
             if self.handle_kill:
                 sys.exit(0)
 
-    async def _async_start(self, retry_count=1):
+    async def async_start(self, retry_count=1):
         await capture_logs(
             self.client.logger,
             self.client.event,
-            self._start_action_loop,
+            self._async_start,
         )(retry_count=retry_count)
+
+    async def _async_start(self, retry_count=1):
+        logger.info("starting runner...")
+        self.loop = asyncio.get_running_loop()
+        k = self.loop.create_task(self._start_action_loop())
 
     async def _start_action_loop(self):
         while True:
             action = await self._get_action()
-            logger.info(f"Received action: {action}")
+            logger.debug(f"rx: runtime payload: {action}")
 
     async def _get_action(self):
         return await self.loop.run_in_executor(None, self.action_queue.get)
 
-    async def wait_for_tasks(self):
-        return
-        # wait for all futures to finish
-        for taskId in list(self.tasks.keys()):
-            try:
-                logger.info(f"Waiting for task {taskId} to finish...")
+    async def exit_gracefully(self):
+            if self.killing:
+                self.exit_forcefully()
+                return
 
-                if taskId in self.tasks:
-                    await self.tasks.get(taskId)
+            self.killing = True
+
+            logger.info(f"Exiting gracefully...")
+
+            # try:
+            #     # self.listener.unregister()
+            # except Exception as e:
+            #     logger.error(f"Could not unregister worker: {e}")
+
+            try:
+                logger.info("Waiting for tasks to finish...")
+
+                # await self.wait_for_tasks()
             except Exception as e:
-                pass
+                logger.error(f"Could not wait for tasks: {e}")
+
+            # Wait for 1 second to allow last calls to flush. These are calls which have been
+            # added to the event loop as callbacks to tasks, so we're not aware of them in the
+            # task list.
+            await asyncio.sleep(1)
+
+            self.loop.stop()
+
+    def exit_forcefully(self):
+            self.killing = True
+
+            logger.info("Forcefully exiting hatchet worker...")
+
+            # try:
+            #     self.listener.unregister()
+            # except Exception as e:
+            #     logger.error(f"Could not unregister worker: {e}")
+
+            self.loop.stop()
