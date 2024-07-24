@@ -69,17 +69,34 @@ RESOURCE_EVENT_TYPE_TIMED_OUT: ResourceEventType
 RESOURCE_EVENT_TYPE_STREAM: ResourceEventType
 WORKFLOW_RUN_EVENT_TYPE_FINISHED: WorkflowRunEventType
 
+class WorkerLabels(_message.Message):
+    __slots__ = ("strValue", "intValue")
+    STRVALUE_FIELD_NUMBER: _ClassVar[int]
+    INTVALUE_FIELD_NUMBER: _ClassVar[int]
+    strValue: str
+    intValue: int
+    def __init__(self, strValue: _Optional[str] = ..., intValue: _Optional[int] = ...) -> None: ...
+
 class WorkerRegisterRequest(_message.Message):
-    __slots__ = ("workerName", "actions", "services", "maxRuns")
+    __slots__ = ("workerName", "actions", "services", "maxRuns", "labels")
+    class LabelsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: WorkerLabels
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[WorkerLabels, _Mapping]] = ...) -> None: ...
     WORKERNAME_FIELD_NUMBER: _ClassVar[int]
     ACTIONS_FIELD_NUMBER: _ClassVar[int]
     SERVICES_FIELD_NUMBER: _ClassVar[int]
     MAXRUNS_FIELD_NUMBER: _ClassVar[int]
+    LABELS_FIELD_NUMBER: _ClassVar[int]
     workerName: str
     actions: _containers.RepeatedScalarFieldContainer[str]
     services: _containers.RepeatedScalarFieldContainer[str]
     maxRuns: int
-    def __init__(self, workerName: _Optional[str] = ..., actions: _Optional[_Iterable[str]] = ..., services: _Optional[_Iterable[str]] = ..., maxRuns: _Optional[int] = ...) -> None: ...
+    labels: _containers.MessageMap[str, WorkerLabels]
+    def __init__(self, workerName: _Optional[str] = ..., actions: _Optional[_Iterable[str]] = ..., services: _Optional[_Iterable[str]] = ..., maxRuns: _Optional[int] = ..., labels: _Optional[_Mapping[str, WorkerLabels]] = ...) -> None: ...
 
 class WorkerRegisterResponse(_message.Message):
     __slots__ = ("tenantId", "workerId", "workerName")
@@ -90,6 +107,29 @@ class WorkerRegisterResponse(_message.Message):
     workerId: str
     workerName: str
     def __init__(self, tenantId: _Optional[str] = ..., workerId: _Optional[str] = ..., workerName: _Optional[str] = ...) -> None: ...
+
+class UpsertWorkerLabelsRequest(_message.Message):
+    __slots__ = ("workerId", "labels")
+    class LabelsEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: WorkerLabels
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[WorkerLabels, _Mapping]] = ...) -> None: ...
+    WORKERID_FIELD_NUMBER: _ClassVar[int]
+    LABELS_FIELD_NUMBER: _ClassVar[int]
+    workerId: str
+    labels: _containers.MessageMap[str, WorkerLabels]
+    def __init__(self, workerId: _Optional[str] = ..., labels: _Optional[_Mapping[str, WorkerLabels]] = ...) -> None: ...
+
+class UpsertWorkerLabelsResponse(_message.Message):
+    __slots__ = ("tenantId", "workerId")
+    TENANTID_FIELD_NUMBER: _ClassVar[int]
+    WORKERID_FIELD_NUMBER: _ClassVar[int]
+    tenantId: str
+    workerId: str
+    def __init__(self, tenantId: _Optional[str] = ..., workerId: _Optional[str] = ...) -> None: ...
 
 class AssignedAction(_message.Message):
     __slots__ = ("tenantId", "workflowRunId", "getGroupKeyRunId", "jobId", "jobName", "jobRunId", "stepId", "stepRunId", "actionId", "actionType", "actionPayload", "stepName", "retryCount")

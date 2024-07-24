@@ -74,6 +74,11 @@ class DispatcherStub(object):
                 request_serializer=dispatcher__pb2.ReleaseSlotRequest.SerializeToString,
                 response_deserializer=dispatcher__pb2.ReleaseSlotResponse.FromString,
                 )
+        self.UpsertWorkerLabels = channel.unary_unary(
+                '/Dispatcher/UpsertWorkerLabels',
+                request_serializer=dispatcher__pb2.UpsertWorkerLabelsRequest.SerializeToString,
+                response_deserializer=dispatcher__pb2.UpsertWorkerLabelsResponse.FromString,
+                )
 
 
 class DispatcherServicer(object):
@@ -154,6 +159,12 @@ class DispatcherServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpsertWorkerLabels(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_DispatcherServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -216,6 +227,11 @@ def add_DispatcherServicer_to_server(servicer, server):
                     servicer.ReleaseSlot,
                     request_deserializer=dispatcher__pb2.ReleaseSlotRequest.FromString,
                     response_serializer=dispatcher__pb2.ReleaseSlotResponse.SerializeToString,
+            ),
+            'UpsertWorkerLabels': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpsertWorkerLabels,
+                    request_deserializer=dispatcher__pb2.UpsertWorkerLabelsRequest.FromString,
+                    response_serializer=dispatcher__pb2.UpsertWorkerLabelsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -428,5 +444,22 @@ class Dispatcher(object):
         return grpc.experimental.unary_unary(request, target, '/Dispatcher/ReleaseSlot',
             dispatcher__pb2.ReleaseSlotRequest.SerializeToString,
             dispatcher__pb2.ReleaseSlotResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpsertWorkerLabels(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/Dispatcher/UpsertWorkerLabels',
+            dispatcher__pb2.UpsertWorkerLabelsRequest.SerializeToString,
+            dispatcher__pb2.UpsertWorkerLabelsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
