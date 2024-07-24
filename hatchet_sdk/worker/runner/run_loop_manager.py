@@ -4,19 +4,25 @@ import logging
 from multiprocessing import Queue
 import signal
 import sys
-from typing import List
+from typing import Any, Callable, Dict, List
+from hatchet_sdk.clients.admin import new_admin
+from hatchet_sdk.clients.dispatcher import new_dispatcher
+from hatchet_sdk.clients.run_event_listener import new_listener
+from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.logger import logger
 from hatchet_sdk.loader import ClientConfig
-from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.worker.runner.runner import Runner
+from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
 @dataclass
-class WorkerActionRunnerManager:
+class WorkerActionRunLoopManager:
     name: str
-    actions: List[str]
+    action_registry: Dict[str, Callable[..., Any]]
     max_runs: int
     config: ClientConfig
     action_queue: Queue
+    event_queue: Queue
     handle_kill: bool = True
     debug: bool = False
 
@@ -24,15 +30,13 @@ class WorkerActionRunnerManager:
 
     client: Client = None
 
+    runner: Runner = None
 
     def __post_init__(self):
         if self.debug:
             logger.setLevel(logging.DEBUG)
         self.killing = self.handle_kill
-
-
         self.client = new_client_raw(self.config, self.debug)
-
         self.start()
 
     def start(self, retry_count=1):
@@ -40,8 +44,10 @@ class WorkerActionRunnerManager:
             loop = asyncio.get_running_loop()
             self.loop = loop
             created_loop = False
+            logger.debug("using existing event loop")
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
+            logger.debug("creating new event loop")
             asyncio.set_event_loop(self.loop)
             created_loop = True
 
@@ -74,9 +80,22 @@ class WorkerActionRunnerManager:
         k = self.loop.create_task(self._start_action_loop())
 
     async def _start_action_loop(self):
+
+        self.runner = Runner(
+            self.name,
+            self.event_queue,
+            self.max_runs,
+            self.handle_kill,
+            self.action_registry,
+            self.config,
+        )
+
+        print(self.action_registry)
+
         while True:
             action = await self._get_action()
             logger.debug(f"rx: runtime payload: {action}")
+            # task = await self.runner.run(action)
 
     async def _get_action(self):
         return await self.loop.run_in_executor(None, self.action_queue.get)

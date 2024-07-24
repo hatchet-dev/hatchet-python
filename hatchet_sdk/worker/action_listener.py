@@ -1,15 +1,22 @@
 import asyncio
-from dataclasses import dataclass, field
 import logging
-from multiprocessing import Queue
 import sys
+from dataclasses import dataclass, field
+from multiprocessing import Queue
 from typing import List
+
 import grpc
-from hatchet_sdk.contracts.dispatcher_pb2 import ActionType
-from hatchet_sdk.logger import logger
+
 from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.dispatcher import ActionListenerImpl, GetActionListenerRequest, new_dispatcher
+from hatchet_sdk.clients.dispatcher import (
+    ActionListenerImpl,
+    GetActionListenerRequest,
+    new_dispatcher,
+)
+from hatchet_sdk.contracts.dispatcher_pb2 import ActionType
 from hatchet_sdk.loader import ClientConfig
+from hatchet_sdk.logger import logger
+
 
 @dataclass
 class WorkerActionListenerProcess:
@@ -32,7 +39,7 @@ class WorkerActionListenerProcess:
         # TODO handle kill signal
 
     async def start(self):
-        logger.debug(f'starting action listener: {self.name}')
+        logger.debug(f"starting action listener: {self.name}")
 
         try:
             self.dispatcher_client = new_dispatcher(self.config)
@@ -54,18 +61,19 @@ class WorkerActionListenerProcess:
 
         return await self.start_loop()
 
-
     async def start_loop(self):
         async for action in self.listener:
             match action.action_type:
                 case ActionType.START_STEP_RUN:
-                    logger.debug(f"rx: start step run: {action.step_run_id}")
+                    logger.debug(f"rx: start step run: {action.step_run_id}/{action.action_id}")
                 case ActionType.CANCEL_STEP_RUN:
                     logger.debug(f"rx: cancel step run: {action.step_run_id}")
                 case ActionType.START_GET_GROUP_KEY:
                     logger.debug(f"rx: start group key: {action.get_group_key_run_id}")
                 case _:
-                    logger.error(f"rx: unknown action type ({action.action_type}): {action.action_type}")
+                    logger.error(
+                        f"rx: unknown action type ({action.action_type}): {action.action_type}"
+                    )
             self.action_queue.put(action)
 
 

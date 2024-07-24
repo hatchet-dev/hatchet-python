@@ -1,27 +1,29 @@
 import asyncio
-from dataclasses import dataclass, field
-from multiprocessing import Process, Queue
 import multiprocessing
 import os
 import signal
 import sys
+from dataclasses import dataclass, field
 from enum import Enum
+from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.action_listener import worker_action_listener_process
-from hatchet_sdk.worker.runner.action_runner import WorkerActionRunnerManager
+from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 
 from ..client import Client, new_client_raw
 from ..context import Context
 from ..workflow import WorkflowMeta
+
 
 class WorkerStatus(Enum):
     INITIALIZED = 1
     STARTING = 2
     HEALTHY = 3
     UNHEALTHY = 4
+
 
 @dataclass
 class Worker:
@@ -39,18 +41,15 @@ class Worker:
     _status: WorkerStatus = field(init=False, default=WorkerStatus.INITIALIZED)
 
     action_listener_process: Process = field(init=False, default=None)
-    action_runner: WorkerActionRunnerManager = field(init=False, default=None)
+    action_runner: WorkerActionRunLoopManager = field(init=False, default=None)
 
     action_queue: Queue = field(init=False, default_factory=Queue)
-    result_queue: Queue = field(init=False, default_factory=Queue)
-
+    event_queue: Queue = field(init=False, default_factory=Queue)
 
     def __post_init__(self):
         self.client = new_client_raw(self.config, self.debug)
         self.name = self.client.config.namespace + self.name
         self._setup_signal_handlers()
-
-
 
     def register_workflow(self, workflow: WorkflowMeta):
         namespace = self.client.config.namespace
@@ -72,7 +71,6 @@ class Worker:
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
 
-
     def status(self) -> WorkerStatus:
         # TODO: Implement health check
         if self.listener:
@@ -85,6 +83,9 @@ class Worker:
 
         return self._status
 
+    def async_start(self):
+        return self.start()
+
     ## Start methods
     def start(self):
         main_pid = os.getpid()
@@ -95,17 +96,17 @@ class Worker:
 
         self.action_listener_process.join()
 
-
     def _run_action_runner(self):
         # Retrieve the shared queue
-        runner = WorkerActionRunnerManager(
-                self.name,
-                self.action_registry,
-                self.max_runs,
-                self.config,
-                self.action_queue,
-                self.handle_kill,
-                self.client.debug,
+        runner = WorkerActionRunLoopManager(
+            self.name,
+            self.action_registry,
+            self.max_runs,
+            self.config,
+            self.action_queue,
+            self.event_queue,
+            self.handle_kill,
+            self.client.debug,
         )
 
         return runner
@@ -113,7 +114,7 @@ class Worker:
     def _start_listener(self):
         action_list = [str(key) for key in self.action_registry.keys()]
 
-        ctx = multiprocessing.get_context('spawn')
+        ctx = multiprocessing.get_context("spawn")
         process = ctx.Process(
             target=worker_action_listener_process,
             args=(
@@ -130,7 +131,6 @@ class Worker:
         logger.debug(f"action listener starting on PID:\t{process.pid}")
 
         return process
-
 
     ## Cleanup methods
     def _setup_signal_handlers(self):
@@ -149,12 +149,14 @@ class Worker:
 
     async def exit_gracefully(self):
         logger.debug(f"gracefully stopping worker: {self.name}")
-  
+
         if self.action_listener_process:
             self.action_listener_process.terminate()
 
         if self.action_listener_process:
-            self.action_listener_process.join(timeout=10)  # Wait up to 10 seconds for process to terminate
+            self.action_listener_process.join(
+                timeout=10
+            )  # Wait up to 10 seconds for process to terminate
 
         # if self.action_runner:
         #     self.action_runner.wait_for_tasks()  # TODO - should we wait for this process to terminate?
@@ -168,4 +170,6 @@ class Worker:
             self.action_listener_process.kill()  # Forcefully kill the process
 
         logger.info(f"👋")
-        sys.exit(1)  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
+        sys.exit(
+            1
+        )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup

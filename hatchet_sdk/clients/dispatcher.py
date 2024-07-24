@@ -1,9 +1,9 @@
 # relative imports
 import asyncio
-from dataclasses import dataclass, field
 import json
 import threading
 import time
+from dataclasses import dataclass, field
 from typing import Any, AsyncGenerator, List, Optional
 
 import grpc
@@ -58,6 +58,7 @@ class GetActionListenerRequest:
     services: List[str]
     actions: List[str]
     max_runs: Optional[int] = None
+
 
 @dataclass
 class Action:
