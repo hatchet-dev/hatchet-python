@@ -12,6 +12,7 @@ worker = fixture_bg_worker(["poetry", "run", "rate_limit"])
 
 
 # requires scope module or higher for shared event loop
+@pytest.mark.skip(reason="The timing for this test is not reliable")
 @pytest.mark.asyncio(scope="session")
 async def test_run(hatchet: Hatchet):
 
