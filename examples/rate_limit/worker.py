@@ -19,7 +19,7 @@ class RateLimitWorkflow:
         pass
 
 
-hatchet.client.admin.put_rate_limit("test-limit", 2, RateLimitDuration.MINUTE)
+hatchet.admin.put_rate_limit("test-limit", 2, RateLimitDuration.MINUTE)
 
 worker = hatchet.worker("test-worker", max_runs=4)
 worker.register_workflow(RateLimitWorkflow())

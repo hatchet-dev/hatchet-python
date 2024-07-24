@@ -18,7 +18,7 @@ class PrintSchedule:
         future_time = now + timedelta(seconds=15)
         print(f"scheduling for \t {future_time.strftime('%H:%M:%S')}")
 
-        hatchet.client.admin.schedule_workflow(
+        hatchet.admin.schedule_workflow(
             "PrintPrinter", [future_time], context.workflow_input()
         )
 

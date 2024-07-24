@@ -6,7 +6,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-list: WorkflowList = hatchet.client.rest().workflow_list()
+list: WorkflowList = hatchet.rest.workflow_list()
 
 for workflow in list.rows:
     print(workflow.name)

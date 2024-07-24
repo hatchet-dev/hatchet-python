@@ -1,5 +1,6 @@
 import logging
 from typing import List, Optional
+from typing_extensions import deprecated
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
@@ -103,7 +104,20 @@ def concurrency(
 
 
 class Hatchet:
-    client: Client
+    """
+    Main client for interacting with the Hatchet SDK.
+
+    This class provides access to various client interfaces and utility methods
+    for working with Hatchet workers, workflows, and steps.
+
+    Attributes:
+        admin (AdminClient): Interface for administrative operations.
+        dispatcher (DispatcherClient): Interface for dispatching operations.
+        event (EventClient): Interface for event-related operations.
+        rest (RestApi): Interface for REST API operations.
+    """
+
+    _client: Client
 
     @classmethod
     def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs):
@@ -119,13 +133,44 @@ class Hatchet:
         client: Optional[Client] = None,
         config: ClientConfig = ClientConfig(),
     ):
+        """
+        Initialize a new Hatchet instance.
+
+        Args:
+            debug (bool, optional): Enable debug logging. Defaults to False.
+            client (Optional[Client], optional): A pre-configured Client instance. Defaults to None.
+            config (ClientConfig, optional): Configuration for creating a new Client. Defaults to ClientConfig().
+        """
         if client is not None:
             self.client = client
         else:
-            self.client = new_client(config)
+            self._client = new_client(config)
 
         if debug:
             logger.setLevel(logging.DEBUG)
+
+    @property
+    @deprecated(
+        "Direct access to client is deprecated and will be removed in a future version. Use specific client properties (Hatchet.admin, Hatchet.dispatcher, Hatchet.event, Hatchet.rest) instead. [0.32.0]",
+    )
+    def client(self) -> Client:
+        return self._client
+
+    @property
+    def admin(self):
+        return self._client.admin
+
+    @property
+    def dispatcher(self):
+        return self._client.dispatcher
+
+    @property
+    def event(self):
+        return self._client.event
+
+    @property
+    def rest(self):
+        return self._client.rest
 
     concurrency = staticmethod(concurrency)
 
