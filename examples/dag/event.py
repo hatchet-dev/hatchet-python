@@ -6,4 +6,4 @@ load_dotenv()
 hatchet = Hatchet(debug=True)
 
 for i in range(10):
-    hatchet.event.push("user:create", {"test": "test"})
+    hatchet.event.push("dag:create", {"test": "test"})

@@ -3,6 +3,7 @@ import time
 from dotenv import load_dotenv
 
 from hatchet_sdk import Hatchet
+from hatchet_sdk.context import Context
 
 load_dotenv()
 
@@ -11,27 +12,24 @@ hatchet = Hatchet(debug=True)
 
 @hatchet.workflow(on_events=["concurrency-test"])
 class ConcurrencyDemoWorkflow:
-    def __init__(self):
-        self.my_value = "test"
 
     @hatchet.concurrency(max_runs=5)
     def concurrency(self, context) -> str:
         return "concurrency-key"
 
     @hatchet.step()
-    def step1(self, context):
+    def step1(self, context: Context):
+        input = context.workflow_input()
+        time.sleep(3)
         print("executed step1")
-        pass
+        return {"run": input["run"]}
 
-    @hatchet.step(parents=["step1"], timeout="4s")
-    def step2(self, context):
-        print("started step2")
-        time.sleep(1)
-        print("finished step2")
+def main():
+    workflow = ConcurrencyDemoWorkflow()
+    worker = hatchet.worker("concurrency-demo-worker", max_runs=10)
+    worker.register_workflow(workflow)
 
+    worker.start()
 
-workflow = ConcurrencyDemoWorkflow()
-worker = hatchet.worker("concurrency-demo-worker", max_runs=4)
-worker.register_workflow(workflow)
-
-worker.start()
+if __name__ == "__main__":
+    main()

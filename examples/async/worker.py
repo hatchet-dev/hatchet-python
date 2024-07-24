@@ -9,33 +9,29 @@ load_dotenv()
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["user:create"])
+@hatchet.workflow(on_events=["async:create"])
 class AsyncWorkflow:
     def __init__(self):
         self.my_value = "test"
 
     @hatchet.step(timeout="2s")
     async def step1(self, context: Context):
-        context.refresh_timeout("5s")
-
         print("started step1")
-        await asyncio.sleep(3)
-        print("finished step1")
-
         return {"test": "test"}
 
     @hatchet.step(parents=["step1"], timeout="4s")
     async def step2(self, context):
-        print("started async step2")
-        await asyncio.sleep(2)
         print("finished step2")
 
 
-async def main():
+async def _main():
     workflow = AsyncWorkflow()
-    worker = hatchet.worker("test-worker", max_runs=4)
+    worker = hatchet.worker("async-worker", max_runs=4)
     worker.register_workflow(workflow)
     await worker.async_start()
 
+def main():
+    asyncio.run(_main())
 
-asyncio.run(main())
+if __name__ == "__main__":
+    main()

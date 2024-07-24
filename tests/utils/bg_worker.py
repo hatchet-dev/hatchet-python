@@ -2,7 +2,7 @@ import subprocess
 import time
 import pytest
 
-def background_hatchet_worker(command, startup_time=5):
+def fixture_bg_worker(command, startup_time=5):
     @pytest.fixture(scope="session", autouse=True)
     def fixture_background_hatchet_worker():
         proc = subprocess.Popen(command)

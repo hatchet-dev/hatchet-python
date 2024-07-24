@@ -1,0 +1,21 @@
+from dotenv import load_dotenv
+import pytest
+
+from hatchet_sdk import new_client
+from hatchet_sdk.hatchet import Hatchet
+
+load_dotenv()
+
+@pytest.mark.asyncio(scope="session")
+async def test_direct_client_event():
+    client = new_client()
+    e = client.event.push("user:create", {"test": "test"})
+    
+    assert e.eventId is not None
+
+@pytest.mark.asyncio(scope="session")
+async def test_hatchet_client_event():
+    hatchet = Hatchet()
+    e = hatchet.client.event.push("user:create", {"test": "test"})
+    
+    assert e.eventId is not None

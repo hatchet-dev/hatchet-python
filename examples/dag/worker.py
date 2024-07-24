@@ -3,56 +3,37 @@ import time
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
+import random
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["user:create"], schedule_timeout="10m")
-class MyWorkflow:
-    def __init__(self):
-        self.my_value = "test"
+@hatchet.workflow(on_events=["dag:create"], schedule_timeout="10m")
+class DagWorkflow:
 
     @hatchet.step(timeout="5s")
     def step1(self, context: Context):
-        print(
-            "starting step1",
-            time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
-        )
-        overrideValue = context.playground("prompt", "You are an AI assistant...")
-        time.sleep(3)
-        # pretty-print time
-        print("executed step1", time.strftime("%H:%M:%S", time.localtime()))
+        rando = random.randint(1, 100)  # Generate a random number between 1 and 100return {
         return {
-            "step1": overrideValue,
+            "rando": rando,
         }
 
-    @hatchet.step()
+    @hatchet.step(timeout="5s")
     def step2(self, context: Context):
-        print(
-            "starting step2",
-            time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
-        )
-        time.sleep(5)
-        print("executed step2", time.strftime("%H:%M:%S", time.localtime()))
+        rando = random.randint(1, 100)  # Generate a random number between 1 and 100return {
         return {
-            "step2": "step2",
+            "rando": rando,
         }
 
     @hatchet.step(parents=["step1", "step2"])
     def step3(self, context: Context):
-        print(
-            "executed step3",
-            time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
-            context.step_output("step1"),
-            context.step_output("step2"),
-        )
+        one = context.step_output("step1")['rando']
+        two = context.step_output("step2")['rando']
+
         return {
-            "step3": "step3",
+            "sum": one + two,
         }
 
     @hatchet.step(parents=["step1", "step3"])
@@ -68,9 +49,13 @@ class MyWorkflow:
             "step4": "step4",
         }
 
+def main():
 
-workflow = MyWorkflow()
-worker = hatchet.worker("test-worker")
-worker.register_workflow(workflow)
+    workflow = DagWorkflow()
+    worker = hatchet.worker("dag-worker")
+    worker.register_workflow(workflow)
 
-worker.start()
+    worker.start()
+
+if __name__ == "__main__":
+    main()

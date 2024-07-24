@@ -32,7 +32,7 @@ class PrintPrinter:
         print(f"message \t {context.workflow_input()['message']}")
 
 
-worker = hatchet.worker("test-worker", max_runs=4)
+worker = hatchet.worker("delayed-worker", max_runs=4)
 worker.register_workflow(PrintSchedule())
 worker.register_workflow(PrintPrinter())
 
