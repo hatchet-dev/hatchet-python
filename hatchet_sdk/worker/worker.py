@@ -1,31 +1,19 @@
 import asyncio
 from dataclasses import dataclass, field
-from multiprocessing import Manager, Process, Queue
+from multiprocessing import Process, Queue
 import multiprocessing
-from multiprocessing.managers import SyncManager
 import os
 import signal
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
-import grpc
-from google.protobuf.timestamp_pb2 import Timestamp
-
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.worker.action_listener import WorkerActionListenerProcess, worker_action_listener_process
-from hatchet_sdk.worker.action_runner import WorkerActionRunner
+from hatchet_sdk.worker.action_listener import worker_action_listener_process
+from hatchet_sdk.worker.runner.action_runner import WorkerActionRunnerManager
 
-from ..client import Client, new_client, new_client_raw
-from ..clients.dispatcher import (
-    Action,
-    ActionListenerImpl,
-    GetActionListenerRequest,
-    new_dispatcher,
-)
+from ..client import Client, new_client_raw
 from ..context import Context
 from ..workflow import WorkflowMeta
 
@@ -34,7 +22,6 @@ class WorkerStatus(Enum):
     STARTING = 2
     HEALTHY = 3
     UNHEALTHY = 4
-
 
 @dataclass
 class Worker:
@@ -52,7 +39,7 @@ class Worker:
     _status: WorkerStatus = field(init=False, default=WorkerStatus.INITIALIZED)
 
     action_listener_process: Process = field(init=False, default=None)
-    action_runner: WorkerActionRunner = field(init=False, default=None)
+    action_runner: WorkerActionRunnerManager = field(init=False, default=None)
 
     action_queue: Queue = field(init=False, default_factory=Queue)
     result_queue: Queue = field(init=False, default_factory=Queue)
@@ -101,16 +88,17 @@ class Worker:
     ## Start methods
     def start(self):
         main_pid = os.getpid()
-        logger.debug(f"worker supervisor starting on PID:\t{main_pid}")
+        logger.debug(f"worker runtime starting on PID:\t{main_pid}")
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()
 
         self.action_listener_process.join()
 
+
     def _run_action_runner(self):
         # Retrieve the shared queue
-        runner = WorkerActionRunner(
+        runner = WorkerActionRunnerManager(
                 self.name,
                 self.action_registry,
                 self.max_runs,

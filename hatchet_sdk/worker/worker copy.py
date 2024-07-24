@@ -52,79 +52,6 @@ from ..clients.dispatcher import (
 from ..context import Context
 from ..workflow import WorkflowMeta
 
-wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
-    "workflow_run_id", default=None
-)
-sr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
-    "step_run_id", default=None
-)
-
-
-def copy_context_vars(ctx_vars, func, *args, **kwargs):
-    for var, value in ctx_vars:
-        var.set(value)
-    return func(*args, **kwargs)
-
-
-class InjectingFilter(logging.Filter):
-    # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
-    # otherwise we would use emit within the CustomLogHandler
-    def filter(self, record):
-        record.workflow_run_id = wr.get()
-        record.step_run_id = sr.get()
-        return True
-
-
-# Custom log handler to process log lines
-class CustomLogHandler(StreamHandler):
-    def __init__(self, event_client: EventClient, stream=None):
-        super().__init__(stream)
-        self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
-        self.event_client = event_client
-
-    def _log(self, line: str, step_run_id: str | None):
-        try:
-            if not step_run_id:
-                return
-
-            self.event_client.log(message=line, step_run_id=step_run_id)
-        except Exception as e:
-            logger.error(f"Error logging: {e}")
-
-    def emit(self, record):
-        super().emit(record)
-
-        log_entry = self.format(record)
-        self.logger_thread_pool.submit(self._log, log_entry, record.step_run_id)
-
-
-def capture_logs(
-    logger: logging.Logger,
-    event_client: EventClient,
-    func: Coroutine[Any, Any, Any],
-):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        if not logger:
-            raise Exception("No logger configured on client")
-
-        log_stream = StringIO()
-        custom_handler = CustomLogHandler(event_client, log_stream)
-        custom_handler.setLevel(logging.INFO)
-        custom_handler.addFilter(InjectingFilter())
-        logger.addHandler(custom_handler)
-
-        try:
-            result = await func(*args, **kwargs)
-        finally:
-            custom_handler.flush()
-            logger.removeHandler(custom_handler)
-            log_stream.close()
-
-        return result
-
-    return wrapper
-
 
 class WorkerStatus(Enum):
     INITIALIZED = 1
@@ -242,57 +169,6 @@ class Worker:
                 )
 
         return inner_callback
-
-    def thread_action_func(self, context, action_func, action: Action):
-        if action.step_run_id is not None and action.step_run_id != "":
-            self.threads[action.step_run_id] = current_thread()
-        elif (
-            action.get_group_key_run_id is not None
-            and action.get_group_key_run_id != ""
-        ):
-            self.threads[action.get_group_key_run_id] = current_thread()
-
-        return action_func(context)
-
-    # We wrap all actions in an async func
-    async def async_wrapped_action_func(
-        self, context: Context, action_func, action: Action, run_id: str
-    ):
-        wr.set(context.workflow_run_id())
-        sr.set(context.step_run_id)
-
-        try:
-            if action_func._is_coroutine:
-                return await action_func(context)
-            else:
-                pfunc = functools.partial(
-                    # we must copy the context vars to the new thread, as only asyncio natively supports
-                    # contextvars
-                    copy_context_vars,
-                    contextvars.copy_context().items(),
-                    self.thread_action_func,
-                    context,
-                    action_func,
-                    action,
-                )
-                res = await self.loop.run_in_executor(self.thread_pool, pfunc)
-
-                return res
-        except Exception as e:
-            logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
-            raise e
-        finally:
-            self.cleanup_run_id(run_id)
-
-    def cleanup_run_id(self, run_id: str):
-        if run_id in self.tasks:
-            del self.tasks[run_id]
-
-        if run_id in self.threads:
-            del self.threads[run_id]
-
-        if run_id in self.contexts:
-            del self.contexts[run_id]
 
     async def handle_start_step_run(self, action: Action):
         logger.debug(f"Starting step run {action.step_run_id}")
@@ -607,33 +483,7 @@ class Worker:
         process.join()
         time.sleep(5)
 
-    def start_loop(self, retry_count=1):
-        self._status = WorkerStatus.STARTING
 
-        try:
-            loop = asyncio.get_running_loop()
-            self.loop = loop
-            created_loop = False
-        except RuntimeError:
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-            created_loop = True
-
-        self.loop.create_task(self.async_start(retry_count))
-
-        self.loop.add_signal_handler(
-            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
-        )
-        self.loop.add_signal_handler(
-            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
-        )
-        self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
-
-        if created_loop:
-            self.loop.run_forever()
-
-            if self.handle_kill:
-                sys.exit(0)
 
     async def async_start(self, retry_count=1):
         await capture_logs(
@@ -685,7 +535,3 @@ class Worker:
         if not self.killing:
             logger.info("Could not start worker")
 
-
-def errorWithTraceback(message: str, e: Exception):
-    trace = "".join(traceback.format_exception(type(e), e, e.__traceback__))
-    return f"{message}\n{trace}"

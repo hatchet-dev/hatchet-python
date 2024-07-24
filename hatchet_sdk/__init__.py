@@ -1,5 +1,3 @@
-import nest_asyncio
-
 from hatchet_sdk.clients.rest.models.accept_invite_request import AcceptInviteRequest
 
 # import models into sdk package
