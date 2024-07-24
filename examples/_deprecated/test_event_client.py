@@ -14,7 +14,10 @@ async def test_direct_client_event():
 
     assert e.eventId is not None
 
-@pytest.mark.filterwarnings("ignore:Direct access to client is deprecated:DeprecationWarning")
+
+@pytest.mark.filterwarnings(
+    "ignore:Direct access to client is deprecated:DeprecationWarning"
+)
 @pytest.mark.asyncio(scope="session")
 async def test_hatchet_client_event():
     hatchet = Hatchet()
