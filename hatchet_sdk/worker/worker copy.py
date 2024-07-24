@@ -40,7 +40,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.worker.action_listener import WorkerActionProcess
+from hatchet_sdk.worker.action_listener import WorkerActionListenerProcess
 
 from ..client import new_client, new_client_raw
 from ..clients.dispatcher import (
@@ -597,7 +597,7 @@ class Worker:
         action_list = [str(key) for key in self.action_registry.keys()]
 
         process = multiprocessing.Process(
-            target=WorkerActionProcess,
+            target=WorkerActionListenerProcess,
             args=(self.name, action_list,
                   self.max_runs,
                    self.config, self.handle_kill, self.client.debug),

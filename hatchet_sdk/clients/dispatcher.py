@@ -1,10 +1,10 @@
 # relative imports
 import asyncio
+from dataclasses import dataclass, field
 import json
-import random
 import threading
 import time
-from typing import Any, AsyncGenerator, List
+from typing import Any, AsyncGenerator, List, Optional
 
 import grpc
 from grpc._cython import cygrpc
@@ -52,58 +52,28 @@ DEFAULT_ACTION_TIMEOUT = 600  # seconds
 DEFAULT_REGISTER_TIMEOUT = 30
 
 
+@dataclass
 class GetActionListenerRequest:
-    def __init__(
-        self,
-        worker_name: str,
-        services: List[str],
-        actions: List[str],
-        max_runs: int | None = None,
-    ):
-        self.worker_name = worker_name
-        self.services = services
-        self.actions = actions
-        self.max_runs = max_runs
+    worker_name: str
+    services: List[str]
+    actions: List[str]
+    max_runs: Optional[int] = None
 
-
+@dataclass
 class Action:
-    def __init__(
-        self,
-        worker_id: str,
-        tenant_id: str,
-        workflow_run_id: str,
-        get_group_key_run_id: str,
-        job_id: str,
-        job_name: str,
-        job_run_id: str,
-        step_id: str,
-        step_run_id: str,
-        action_id: str,
-        action_payload: str,
-        action_type: ActionType,
-        retry_count: int,
-    ):
-        self.worker_id = worker_id
-        self.workflow_run_id = workflow_run_id
-        self.get_group_key_run_id = get_group_key_run_id
-        self.tenant_id = tenant_id
-        self.job_id = job_id
-        self.job_name = job_name
-        self.job_run_id = job_run_id
-        self.step_id = step_id
-        self.step_run_id = step_run_id
-        self.action_id = action_id
-        self.action_payload = action_payload
-        self.action_type = action_type
-        self.retry_count = retry_count
-
-
-class WorkerActionListener:
-    def actions(self, ctx, err_ch):
-        raise NotImplementedError
-
-    def unregister(self):
-        raise NotImplementedError
+    worker_id: str
+    tenant_id: str
+    workflow_run_id: str
+    get_group_key_run_id: Optional[str]
+    job_id: str
+    job_name: str
+    job_run_id: str
+    step_id: str
+    step_run_id: str
+    action_id: str
+    action_payload: str
+    action_type: ActionType
+    retry_count: int
 
 
 START_STEP_RUN = 0
@@ -111,34 +81,27 @@ CANCEL_STEP_RUN = 1
 START_GET_GROUP_KEY = 2
 
 
-async def exp_backoff_sleep(attempt: int, max_sleep_time: float = 5):
-    base_time = 0.1  # starting sleep time in seconds (100 milliseconds)
-    jitter = random.uniform(0, base_time)  # add random jitter
-    sleep_time = min(base_time * (2**attempt) + jitter, max_sleep_time)
-    await asyncio.sleep(sleep_time)
-
-
-class ActionListenerImpl(WorkerActionListener):
+@dataclass
+class ActionListenerImpl:
     config: ClientConfig
+    worker_id: str
 
-    def __init__(
-        self,
-        config: ClientConfig,
-        worker_id,
-    ):
-        self.config = config
-        self.client = DispatcherStub(new_conn(config))
-        self.aio_client = DispatcherStub(new_conn(config, True))
-        self.token = config.token
-        self.worker_id = worker_id
-        self.retries = 0
-        self.last_connection_attempt = 0
-        self.last_heartbeat_succeeded = True  # start in a healthy state
-        self.heartbeat_thread: threading.Thread = None
-        self.run_heartbeat = True
-        self.listen_strategy = "v2"
-        self.stop_signal = False
-        self.logger = logger
+    client: DispatcherStub = field(init=False)
+    aio_client: DispatcherStub = field(init=False)
+    token: str = field(init=False)
+    retries: int = field(default=0, init=False)
+    last_connection_attempt: float = field(default=0, init=False)
+    last_heartbeat_succeeded: bool = field(default=True, init=False)
+    heartbeat_thread: Optional[threading.Thread] = field(default=None, init=False)
+    run_heartbeat: bool = field(default=True, init=False)
+    listen_strategy: str = field(default="v2", init=False)
+    stop_signal: bool = field(default=False, init=False)
+    logger = logger
+
+    def __post_init__(self):
+        self.client = DispatcherStub(new_conn(self.config))
+        self.aio_client = DispatcherStub(new_conn(self.config, True))
+        self.token = self.config.token
 
     def is_healthy(self):
         return self.last_heartbeat_succeeded

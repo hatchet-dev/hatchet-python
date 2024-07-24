@@ -1,47 +1,23 @@
 import asyncio
-import contextvars
-import ctypes
 from dataclasses import dataclass, field
-import functools
-import json
-import logging
+from multiprocessing import Manager, Process, Queue
 import multiprocessing
+from multiprocessing.managers import SyncManager
 import os
 import signal
 import sys
-import time
-import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from enum import Enum
-from io import StringIO
-from logging import StreamHandler
-from threading import Thread, current_thread
-from typing import Any, Callable, Coroutine, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.events import EventClient
-from hatchet_sdk.clients.run_event_listener import new_listener
-from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
-from hatchet_sdk.contracts.dispatcher_pb2 import (
-    GROUP_KEY_EVENT_TYPE_COMPLETED,
-    GROUP_KEY_EVENT_TYPE_FAILED,
-    GROUP_KEY_EVENT_TYPE_STARTED,
-    STEP_EVENT_TYPE_COMPLETED,
-    STEP_EVENT_TYPE_FAILED,
-    STEP_EVENT_TYPE_STARTED,
-    ActionType,
-    GroupKeyActionEvent,
-    GroupKeyActionEventType,
-    StepActionEvent,
-    StepActionEventType,
-)
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.worker.action_listener import WorkerActionProcess, worker_process
+from hatchet_sdk.worker.action_listener import WorkerActionListenerProcess, worker_action_listener_process
+from hatchet_sdk.worker.action_runner import WorkerActionRunner
 
 from ..client import Client, new_client, new_client_raw
 from ..clients.dispatcher import (
@@ -75,13 +51,17 @@ class Worker:
     killing: bool = field(init=False, default=False)
     _status: WorkerStatus = field(init=False, default=WorkerStatus.INITIALIZED)
 
-    listener_process: multiprocessing.Process = field(init=False, default=None)
+    action_listener_process: Process = field(init=False, default=None)
+    action_runner: WorkerActionRunner = field(init=False, default=None)
+
+    action_queue: Queue = field(init=False, default_factory=Queue)
+    result_queue: Queue = field(init=False, default_factory=Queue)
 
 
     def __post_init__(self):
         self.client = new_client_raw(self.config, self.debug)
         self.name = self.client.config.namespace + self.name
-        self.setup_signal_handlers()
+        self._setup_signal_handlers()
 
 
 
@@ -118,62 +98,86 @@ class Worker:
 
         return self._status
 
+    ## Start methods
     def start(self):
         main_pid = os.getpid()
-        logger.debug(f"worker supervisor starting on PID: {main_pid}")
+        logger.debug(f"worker supervisor starting on PID:\t{main_pid}")
 
-        self.listener_process = self.start_listener()
-        self.listener_process.join()
+        self.action_listener_process = self._start_listener()
+        self.action_runner = self._run_action_runner()
 
-    def start_listener(self):
+        self.action_listener_process.join()
+
+    def _run_action_runner(self):
+        # Retrieve the shared queue
+        runner = WorkerActionRunner(
+                self.name,
+                self.action_registry,
+                self.max_runs,
+                self.config,
+                self.action_queue,
+                self.handle_kill,
+                self.client.debug,
+        )
+
+        return runner
+
+    def _start_listener(self):
         action_list = [str(key) for key in self.action_registry.keys()]
 
-        process = multiprocessing.Process(
-            target=worker_process,
+        ctx = multiprocessing.get_context('spawn')
+        process = ctx.Process(
+            target=worker_action_listener_process,
             args=(
                 self.name,
                 action_list,
                 self.max_runs,
                 self.config,
+                self.action_queue,
                 self.handle_kill,
                 self.client.debug,
             ),
         )
         process.start()
-        logger.debug(f"listener starting on PID: {process.pid}")
+        logger.debug(f"action listener starting on PID:\t{process.pid}")
 
         return process
-    
-    def setup_signal_handlers(self):
-        signal.signal(signal.SIGTERM, self.handle_exit_signal)
-        signal.signal(signal.SIGINT, self.handle_exit_signal)
-        signal.signal(signal.SIGQUIT, self.handle_force_quit_signal)
 
-    def handle_exit_signal(self, signum, frame):
+
+    ## Cleanup methods
+    def _setup_signal_handlers(self):
+        signal.signal(signal.SIGTERM, self._handle_exit_signal)
+        signal.signal(signal.SIGINT, self._handle_exit_signal)
+        signal.signal(signal.SIGQUIT, self._handle_force_quit_signal)
+
+    def _handle_exit_signal(self, signum, frame):
         sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
         logger.info(f"received signal {sig_name}...")
         asyncio.run(self.exit_gracefully())
 
-    def handle_force_quit_signal(self, signum, frame):
+    def _handle_force_quit_signal(self, signum, frame):
         logger.info(f"received SIGQUIT...")
         self.exit_forcefully()
 
     async def exit_gracefully(self):
         logger.debug(f"gracefully stopping worker: {self.name}")
   
-        if self.listener_process:
-            self.listener_process.terminate()
-            self.listener_process.join(timeout=10)  # Wait up to 10 seconds for process to terminate
-        # Add any other cleanup logic
+        if self.action_listener_process:
+            self.action_listener_process.terminate()
+
+        if self.action_listener_process:
+            self.action_listener_process.join(timeout=10)  # Wait up to 10 seconds for process to terminate
+
+        # if self.action_runner:
+        #     self.action_runner.wait_for_tasks()  # TODO - should we wait for this process to terminate?
 
         logger.info(f"👋")
 
     def exit_forcefully(self):
         logger.debug(f"forcefully stopping worker: {self.name}")
 
-        if self.listener_process:
-            self.listener_process.kill()  # Forcefully kill the process
-        # Add any other immediate shutdown logic
+        if self.action_listener_process:
+            self.action_listener_process.kill()  # Forcefully kill the process
 
         logger.info(f"👋")
-        sys.exit(1)  # Exit immediately
+        sys.exit(1)  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup

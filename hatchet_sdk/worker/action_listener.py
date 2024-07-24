@@ -1,6 +1,7 @@
 import asyncio
 from dataclasses import dataclass, field
 import logging
+from multiprocessing import Queue
 import sys
 from typing import List
 import grpc
@@ -10,22 +11,16 @@ from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher import ActionListenerImpl, GetActionListenerRequest, new_dispatcher
 from hatchet_sdk.loader import ClientConfig
 
-# logger = logging.getLogger("hatchet.listener")
-# logger.setLevel(logging.ERROR)
-# handler = logging.StreamHandler(sys.stdout)
-# formatter = logging.Formatter("[%(levelname)s] 🪓 -- %(asctime)s (listener) - %(message)s")
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
-
 @dataclass
-class WorkerActionProcess:
+class WorkerActionListenerProcess:
     name: str
     actions: List[str]
     max_runs: int
     config: ClientConfig
+    action_queue: Queue
     handle_kill: bool = True
     debug: bool = False
-    
+
     killing: bool = field(init=False, default=False)
     listener: ActionListenerImpl = field(init=False, default=None)
 
@@ -40,12 +35,7 @@ class WorkerActionProcess:
         logger.debug(f'starting action listener: {self.name}')
 
         try:
-            # We need to initialize a new admin and dispatcher client *after* we've started the event loop,
-            # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
             self.dispatcher_client = new_dispatcher(self.config)
-            self.admin_client = new_admin(self.config)
-            # self.workflow_run_event_listener = new_listener(self.config)
-            # self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
             self.listener: ActionListenerImpl = (
                 await self.dispatcher_client.get_action_listener(
@@ -58,7 +48,7 @@ class WorkerActionProcess:
                 )
             )
 
-            logger.debug(f"acquired listener: {self.listener.worker_id}")
+            logger.debug(f"acquired action listener: {self.listener.worker_id}")
         except grpc.RpcError as rpc_error:
             logger.error(f"could not start action listener: {rpc_error}")
 
@@ -69,17 +59,15 @@ class WorkerActionProcess:
         async for action in self.listener:
             match action.action_type:
                 case ActionType.START_STEP_RUN:
-                    logger.debug(f"start step run: {action.step_run_id}")
-                    # await self.handle_start_step_run(action)
+                    logger.debug(f"rx: start step run: {action.step_run_id}")
                 case ActionType.CANCEL_STEP_RUN:
-                    logger.debug(f"cancel step run: {action.step_run_id}")
-                    # await self.handle_cancel_action(action.step_run_id)
+                    logger.debug(f"rx: cancel step run: {action.step_run_id}")
                 case ActionType.START_GET_GROUP_KEY:
-                    logger.debug(f"start group key: {action.group_key}")
-                    # await self.handle_start_group_key_run(action)
+                    logger.debug(f"rx: start group key: {action.get_group_key_run_id}")
                 case _:
-                    logger.error(f"unknown action type: {action.action_type}")
+                    logger.error(f"rx: unknown action type ({action.action_type}): {action.action_type}")
+            self.action_queue.put(action)
 
 
-def worker_process(*args, **kwargs):
-    asyncio.run(WorkerActionProcess(*args, **kwargs).start())
+def worker_action_listener_process(*args, **kwargs):
+    asyncio.run(WorkerActionListenerProcess(*args, **kwargs).start())
