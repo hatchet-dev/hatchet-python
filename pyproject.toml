@@ -40,3 +40,6 @@ known_third_party = [
   "pyyaml",
   "urllib3"
 ]
+
+[tool.poetry.scripts]
+worker = "examples.fanout.worker:main"

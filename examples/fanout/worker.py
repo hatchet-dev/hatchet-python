@@ -17,7 +17,9 @@ class Parent:
 
         results = []
 
-        for i in range(100):
+        n = context.workflow_input().get("n", 100)
+
+        for i in range(n):
             results.append(
                 (
                     await context.aio.spawn_workflow(
@@ -38,13 +40,13 @@ class Parent:
 @hatchet.workflow(on_events=["child:create"])
 class Child:
     @hatchet.step()
-    async def process(self, context: Context):
+    def process(self, context: Context):
         a = context.workflow_input()["a"]
         print(f"child process {a}")
         return {"status": "success " + a}
 
     @hatchet.step()
-    async def process2(self, context: Context):
+    def process2(self, context: Context):
         print("child process2")
         return {"status2": "success"}
 
