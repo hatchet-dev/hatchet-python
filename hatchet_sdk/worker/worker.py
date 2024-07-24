@@ -151,15 +151,15 @@ class Worker:
 
     def handle_exit_signal(self, signum, frame):
         sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
-        logger.info(f"received signal {sig_name}. attempting graceful shutdown...")
+        logger.info(f"received signal {sig_name}...")
         asyncio.run(self.exit_gracefully())
 
     def handle_force_quit_signal(self, signum, frame):
-        logger.info(f"received SIGQUIT. attempting forceful shutdown...")
+        logger.info(f"received SIGQUIT...")
         self.exit_forcefully()
 
     async def exit_gracefully(self):
-        logger.debug(f"stopping worker: {self.name}")
+        logger.debug(f"gracefully stopping worker: {self.name}")
   
         if self.listener_process:
             self.listener_process.terminate()
@@ -168,12 +168,12 @@ class Worker:
 
         logger.info(f"👋")
 
-
     def exit_forcefully(self):
         logger.debug(f"forcefully stopping worker: {self.name}")
 
         if self.listener_process:
             self.listener_process.kill()  # Forcefully kill the process
         # Add any other immediate shutdown logic
+
         logger.info(f"👋")
         sys.exit(1)  # Exit immediately
