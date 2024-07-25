@@ -92,7 +92,7 @@ class WorkerActionRunLoopManager:
             self.config,
         )
 
-        logger.debug(f"waiting for {list(self.action_registry.keys())}")
+        logger.debug(f"'{self.name}' waiting for {list(self.action_registry.keys())}")
 
         while True:
             action = await self._get_action()

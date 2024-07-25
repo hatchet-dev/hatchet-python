@@ -53,9 +53,15 @@ class Worker:
 
     def register_workflow(self, workflow: WorkflowMeta):
         namespace = self.client.config.namespace
-        self.client.admin.put_workflow(
-            workflow.get_name(namespace), workflow.get_create_opts(namespace)
-        )
+
+        try:
+            self.client.admin.put_workflow(
+                workflow.get_name(namespace), workflow.get_create_opts(namespace)
+            )
+        except Exception as e:
+            logger.error(f"failed to register workflow: {workflow.get_name(namespace)}")
+            logger.error(e)
+            sys.exit(1)
 
         def create_action_function(action_func):
             def action_function(context):
@@ -90,6 +96,10 @@ class Worker:
     def start(self):
         main_pid = os.getpid()
         logger.debug(f"worker runtime starting on PID: {main_pid}")
+
+        if len(self.action_registry.keys()) == 0:
+            logger.error("no actions registered, register workflows or actions before starting worker")
+            return
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()

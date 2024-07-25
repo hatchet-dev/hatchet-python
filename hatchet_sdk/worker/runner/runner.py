@@ -26,7 +26,7 @@ from hatchet_sdk.client import new_client, new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher import (
     Action,
-    ActionListenerImpl,
+    ActionListener,
     GetActionListenerRequest,
     new_dispatcher,
 )

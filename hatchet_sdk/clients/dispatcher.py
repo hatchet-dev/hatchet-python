@@ -30,6 +30,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     WorkerUnsubscribeRequest,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
+from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 from ..loader import ClientConfig
 from ..logger import logger
@@ -38,15 +39,7 @@ from .events import proto_timestamp_now
 
 
 def new_dispatcher(config: ClientConfig):
-    return DispatcherClientImpl(config=config)
-
-
-class DispatcherClient:
-    def get_action_listener(self, ctx, req):
-        raise NotImplementedError
-
-    async def send_step_action_event(self, ctx, in_):
-        raise NotImplementedError
+    return DispatcherClient(config=config)
 
 
 DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
@@ -86,7 +79,7 @@ START_GET_GROUP_KEY = 2
 
 
 @dataclass
-class ActionListenerImpl:
+class ActionListener:
     config: ClientConfig
     worker_id: str
 
@@ -101,6 +94,8 @@ class ActionListenerImpl:
     listen_strategy: str = field(default="v2", init=False)
     stop_signal: bool = field(default=False, init=False)
     logger = logger
+
+    missed_heartbeats: int = field(default=0, init=False)
 
     def __post_init__(self):
         self.client = DispatcherStub(new_conn(self.config))
@@ -127,19 +122,29 @@ class ActionListenerImpl:
                 )
 
                 self.last_heartbeat_succeeded = True
+                self.missed_heartbeats = 0
             except grpc.RpcError as e:
-                # we don't reraise the error here, as we don't want to stop the heartbeat thread
-                logger.error(f"Failed to send heartbeat: {e}")
+                self.missed_heartbeats = self.missed_heartbeats + 1
+
+
+                if e.code() == grpc.StatusCode.UNAVAILABLE or e.code() == grpc.StatusCode.FAILED_PRECONDITION:
+                    # todo case on "recvmsg:Connection reset by peer" for updates?
+                    if self.missed_heartbeats >= 3:
+                        # we don't reraise the error here, as we don't want to stop the heartbeat thread
+                        logger.error(f"⛔️ failed heartbeat ({self.missed_heartbeats}): {e.details()}")
+                    elif self.missed_heartbeats > 1:
+                        logger.warning(f"failed to send heartbeat ({self.missed_heartbeats}): {e.details()}")
+                else:
+                    logger.error(f"failed to send heartbeat: {e}")
 
                 self.last_heartbeat_succeeded = False
-
                 if self.interrupt is not None:
                     self.interrupt.set()
 
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
 
-            time.sleep(4)
+            time.sleep(4) # TODO this is blocking the tear down of the listener
 
     def start_heartbeater(self):
         if self.heartbeat_thread is not None:
@@ -239,6 +244,7 @@ class ActionListenerImpl:
                     self.run_heartbeat = False
                     logger.info("ListenV2 not available, falling back to Listen")
                 else:
+                    # TODO retry
                     # Unknown error, report and break
                     logger.error(f"Failed to receive message: {e}")
 
@@ -322,7 +328,7 @@ class ActionListenerImpl:
             raise Exception(f"Failed to unsubscribe: {e}")
 
 
-class DispatcherClientImpl(DispatcherClient):
+class DispatcherClient():
     config: ClientConfig
 
     def __init__(self, config: ClientConfig):
@@ -333,12 +339,10 @@ class DispatcherClientImpl(DispatcherClient):
         self.aio_client = DispatcherStub(aio_conn)
         self.token = config.token
         self.config = config
-        # self.logger = logger
-        # self.validator = validator
 
     async def get_action_listener(
         self, req: GetActionListenerRequest
-    ) -> ActionListenerImpl:
+    ) -> ActionListener:
         # Register the worker
         response: WorkerRegisterResponse = await self.aio_client.Register(
             WorkerRegisterRequest(
@@ -351,15 +355,9 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
-        return ActionListenerImpl(self.config, response.workerId)
+        return ActionListener(self.config, response.workerId)
 
-    async def send_step_action_event(self, in_: StepActionEvent):
-        await self.aio_client.SendStepActionEvent(
-            in_,
-            metadata=get_metadata(self.token),
-        )
-
-    async def send_step_action_event_simple(
+    async def send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
     ):
         eventTimestamp = Timestamp()
@@ -377,15 +375,12 @@ class DispatcherClientImpl(DispatcherClient):
             eventPayload=payload,
         )
 
-        return await self.send_step_action_event(event)
-
-    async def send_group_key_action_event(self, in_: GroupKeyActionEvent):
-        await self.aio_client.SendGroupKeyActionEvent(
-            in_,
+        return await self.aio_client.SendStepActionEvent(
+            event,
             metadata=get_metadata(self.token),
         )
 
-    async def send_group_key_action_event_simple(
+    async def send_group_key_action_event(
         self, action: Action, event_type: GroupKeyActionEventType, payload: str
     ):
         eventTimestamp = Timestamp()
@@ -403,7 +398,10 @@ class DispatcherClientImpl(DispatcherClient):
             eventPayload=payload,
         )
 
-        return await self.send_group_key_action_event(event)
+        return await self.aio_client.SendGroupKeyActionEvent(
+            event,
+            metadata=get_metadata(self.token),
+        )
 
     def put_overrides_data(self, data: OverridesData):
         response: ActionEventResponse = self.client.PutOverridesData(

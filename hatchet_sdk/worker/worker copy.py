@@ -45,7 +45,7 @@ from hatchet_sdk.worker.action_listener import WorkerActionListenerProcess
 from ..client import new_client, new_client_raw
 from ..clients.dispatcher import (
     Action,
-    ActionListenerImpl,
+    ActionListener,
     GetActionListenerRequest,
     new_dispatcher,
 )
@@ -77,7 +77,7 @@ class Worker:
         self.tasks: Dict[str, asyncio.Task] = {}  # Store run ids and futures
         self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = {}
-        self.listener: ActionListenerImpl = None
+        self.listener: ActionListener = None
 
         # The thread pool is used for synchronous functions which need to run concurrently
         self.thread_pool = ThreadPoolExecutor(max_workers=max_runs)
@@ -507,7 +507,7 @@ class Worker:
             self.workflow_run_event_listener = new_listener(self.config)
             self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
-            self.listener: ActionListenerImpl = (
+            self.listener: ActionListener = (
                 await self.dispatcher_client.get_action_listener(
                     GetActionListenerRequest(
                         worker_name=self.name,

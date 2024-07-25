@@ -11,7 +11,7 @@ import grpc
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher import (
     Action,
-    ActionListenerImpl,
+    ActionListener,
     GetActionListenerRequest,
     new_dispatcher,
 )
@@ -24,7 +24,9 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
+ACTION_EVENT_RETRY_COUNT = 5
 
 @dataclass
 class ActionEvent:
@@ -44,7 +46,7 @@ class WorkerActionListenerProcess:
     handle_kill: bool = True
     debug: bool = False
 
-    listener: ActionListenerImpl = field(init=False, default=None)
+    listener: ActionListener = field(init=False, default=None)
 
     killing: bool = field(init=False, default=False)
 
@@ -64,13 +66,17 @@ class WorkerActionListenerProcess:
         )
         loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
 
-    async def start(self):
+    async def start(self, retry_attempt=0):
+        if retry_attempt > 5:
+            logger.error("could not start action listener")
+            return
+
         logger.debug(f"starting action listener: {self.name}")
 
         try:
             self.dispatcher_client = new_dispatcher(self.config)
 
-            self.listener: ActionListenerImpl = (
+            self.listener: ActionListener = (
                 await self.dispatcher_client.get_action_listener(
                     GetActionListenerRequest(
                         worker_name=self.name,
@@ -85,33 +91,14 @@ class WorkerActionListenerProcess:
             logger.info(f"connection established, awaiting actions")
         except grpc.RpcError as rpc_error:
             logger.error(f"could not start action listener: {rpc_error}")
-            return  # Exit if we couldn't start the listener
+            return 
+        
 
         # Start both loops as background tasks
         self.action_loop_task = asyncio.create_task(self.start_action_loop())
         self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
 
-    async def exit_gracefully(self):
-        if self.killing:
-            return self.exit_forcefully()
-        self.killing = True
-        logger.debug("exiting listener gracefully")
-
-        if self.listener:
-            self.listener.unregister()
-
-        if self.action_loop_task:
-            self.action_loop_task.cancel()
-
-        if self.event_send_loop_task:
-            self.event_send_loop_task.cancel()
-
-        loop = asyncio.get_event_loop()
-        loop.stop()
-
-    def exit_forcefully(self):
-        logger.debug("exiting listener forcefully")
-        sys.exit(0)
+        # TODO retry connection on failure?
 
     async def start_event_send_loop(self):
         while True:
@@ -120,12 +107,12 @@ class WorkerActionListenerProcess:
             asyncio.create_task(self.send_event(event))
             # await self.listener.send_event(event)
 
-    async def send_event(self, event: ActionEvent, retry_count: int = 3):
+    async def send_event(self, event: ActionEvent, retry_attempt: int = 1):
         try:
             match event.action.action_type:
                 case ActionType.START_STEP_RUN:
                     asyncio.create_task(
-                        self.dispatcher_client.send_step_action_event_simple(
+                        self.dispatcher_client.send_step_action_event(
                             event.action, event.type, event.payload
                         )
                     )
@@ -133,17 +120,17 @@ class WorkerActionListenerProcess:
                     logger.debug(f"unimplemented event send")
                 case ActionType.START_GET_GROUP_KEY:
                     asyncio.create_task(
-                        self.dispatcher_client.send_group_key_action_event_simple(
+                        self.dispatcher_client.send_group_key_action_event(
                             event.action, event.type, event.payload
                         )
                     )
                 case _:
                     logger.error(f"unknown action type for event send")
         except Exception as e:
-            logger.error(f"could not send action event: {e}")
-            if retry_count > 0:
-                await asyncio.sleep(1)
-                await self.send_event(event, retry_count - 1)
+            logger.error(f"could not send action event ({retry_attempt}/{ACTION_EVENT_RETRY_COUNT}): {e}")
+            if retry_attempt <= ACTION_EVENT_RETRY_COUNT:
+                await exp_backoff_sleep(retry_attempt, 1)
+                await self.send_event(event, retry_attempt + 1)
 
     async def _get_event(self):
         loop = asyncio.get_running_loop()
@@ -178,13 +165,27 @@ class WorkerActionListenerProcess:
                     )
             self.action_queue.put(action)
 
-    async def stop(self):
+    async def exit_gracefully(self):
+        if self.killing:
+            return self.exit_forcefully()
+        self.killing = True
+        logger.debug("exiting listener gracefully")
+
+        if self.listener:
+            self.listener.unregister()
+
         if self.action_loop_task:
             self.action_loop_task.cancel()
-            await self.action_loop_task
+
         if self.event_send_loop_task:
             self.event_send_loop_task.cancel()
-            await self.event_send_loop_task
+
+        loop = asyncio.get_event_loop()
+        loop.stop()
+
+    def exit_forcefully(self):
+        logger.debug("exiting listener forcefully")
+        sys.exit(0)
 
 
 def worker_action_listener_process(*args, **kwargs):

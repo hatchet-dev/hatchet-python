@@ -18,7 +18,7 @@ from .clients.admin import (
     ScheduleTriggerWorkflowOptions,
     TriggerWorkflowOptions,
 )
-from .clients.dispatcher import Action, DispatcherClientImpl
+from .clients.dispatcher import Action, DispatcherClient
 from .logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
@@ -53,7 +53,7 @@ class ContextAioImpl(BaseContext):
     def __init__(
         self,
         action: Action,
-        dispatcher_client: DispatcherClientImpl,
+        dispatcher_client: DispatcherClient,
         admin_client: AdminClient,
         event_client: EventClient,
         workflow_listener: PooledWorkflowRunListener,
@@ -89,7 +89,7 @@ class Context(BaseContext):
     def __init__(
         self,
         action: Action,
-        dispatcher_client: DispatcherClientImpl,
+        dispatcher_client: DispatcherClient,
         admin_client: AdminClient,
         event_client: EventClient,
         workflow_listener: PooledWorkflowRunListener,
