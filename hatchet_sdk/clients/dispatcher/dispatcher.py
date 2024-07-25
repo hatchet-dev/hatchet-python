@@ -1,6 +1,10 @@
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from hatchet_sdk.clients.dispatcher.action_listener import Action, ActionListener, GetActionListenerRequest
+from hatchet_sdk.clients.dispatcher.action_listener import (
+    Action,
+    ActionListener,
+    GetActionListenerRequest,
+)
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionEventResponse,
@@ -21,10 +25,12 @@ from ...metadata import get_metadata
 
 DEFAULT_REGISTER_TIMEOUT = 30
 
+
 def new_dispatcher(config: ClientConfig):
     return DispatcherClient(config=config)
 
-class DispatcherClient():
+
+class DispatcherClient:
     config: ClientConfig
 
     def __init__(self, config: ClientConfig):

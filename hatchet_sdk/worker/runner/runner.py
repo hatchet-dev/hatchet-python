@@ -16,9 +16,7 @@ from typing import Any, Callable, Coroutine, Dict
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
-from hatchet_sdk.clients.dispatcher.dispatcher import (
-    new_dispatcher,
-)
+from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
 from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
@@ -152,23 +150,25 @@ class Runner:
         self.workflow_run_event_listener = new_listener(self.config)
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
-    async def run(self, action: Action):
-        logger.debug(f"Running action: {action.action_id}")
-
+    def run(self, action: Action):
         match action.action_type:
             case ActionType.START_STEP_RUN:
-                logger.debug(f"Got start step run action: {action.step_run_id}")
+                logger.debug(
+                    f"run start step run: {action.action_id}/{action.step_run_id}"
+                )
                 asyncio.create_task(self.handle_start_step_run(action))
             case ActionType.CANCEL_STEP_RUN:
-                logger.debug(f"Got cancel step run action: {action.step_run_id}")
+                logger.debug(
+                    f"cancel step run:  {action.action_id}/{action.step_run_id}"
+                )
                 asyncio.create_task(self.handle_cancel_action(action.step_run_id))
             case ActionType.START_GET_GROUP_KEY:
+                logger.debug(
+                    f"run get group key:  {action.action_id}/{action.get_group_key_run_id}"
+                )
                 asyncio.create_task(self.handle_start_group_key_run(action))
             case _:
-                logger.error(f"Unknown action type: {action.action_type}")
-
-        logger.debug(f"Finished running action {action.action_id}")
-        return
+                logger.error(f"unknown action type: {action.action_type}")
 
     def step_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
@@ -193,6 +193,10 @@ class Runner:
                     )
                 )
 
+                logger.debug(
+                    f"failed step run: {action.action_id}/{action.step_run_id}"
+                )
+
             if not errored and not cancelled:
                 self.event_queue.put(
                     ActionEvent(
@@ -200,6 +204,10 @@ class Runner:
                         type=STEP_EVENT_TYPE_COMPLETED,
                         payload=self.serialize_output(output),
                     )
+                )
+
+                logger.debug(
+                    f"finished step run: {action.action_id}/{action.step_run_id}"
                 )
 
         return inner_callback
@@ -225,6 +233,10 @@ class Runner:
                     )
                 )
 
+                logger.debug(
+                    f"failed step run: {action.action_id}/{action.step_run_id}"
+                )
+
             if not errored and not cancelled:
                 self.event_queue.put(
                     ActionEvent(
@@ -232,6 +244,10 @@ class Runner:
                         type=GROUP_KEY_EVENT_TYPE_COMPLETED,
                         payload=self.serialize_output(output),
                     )
+                )
+
+                logger.debug(
+                    f"finished step run: {action.action_id}/{action.step_run_id}"
                 )
 
         return inner_callback
@@ -335,8 +351,6 @@ class Runner:
             except Exception as e:
                 # do nothing, this should be caught in the callback
                 pass
-
-        logger.debug(f"Finished step run {action.step_run_id}")
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
@@ -442,16 +456,11 @@ class Runner:
         return output_bytes
 
     async def wait_for_tasks(self):
-        # TODO - this is not working as expected, we need to find a way to wait for all tasks to finish
-        # wait for all futures to finish
-        for taskId in list(self.tasks.keys()):
-            try:
-                logger.info(f"Waiting for task {taskId} to finish...")
-
-                if taskId in self.tasks:
-                    await self.tasks.get(taskId)
-            except Exception as e:
-                pass
+        running = len(self.tasks.keys())
+        while running > 0:
+            logger.info(f"waiting for {running} tasks to finish...")
+            await asyncio.sleep(1)
+            running = len(self.tasks.keys())
 
 
 def errorWithTraceback(message: str, e: Exception):

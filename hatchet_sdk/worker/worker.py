@@ -44,7 +44,6 @@ class Worker:
     action_listener_health_check: asyncio.Task = field(init=False, default=None)
     action_runner: WorkerActionRunLoopManager = field(init=False, default=None)
 
-
     action_queue: Queue = field(init=False, default_factory=Queue)
     event_queue: Queue = field(init=False, default_factory=Queue)
 
@@ -117,15 +116,19 @@ class Worker:
         logger.debug(f"worker runtime starting on PID: {main_pid}")
 
         if len(self.action_registry.keys()) == 0:
-            logger.error("no actions registered, register workflows or actions before starting worker")
+            logger.error(
+                "no actions registered, register workflows or actions before starting worker"
+            )
             return
 
         # non blocking setup
         created_loop = self.setup_loop()
 
         self.action_listener_process = self._start_listener()
-        # self.action_runner = self._run_action_runner()
-        self.action_listener_health_check = self.loop.create_task(self._check_listener_health())
+        self.action_runner = self._run_action_runner()
+        self.action_listener_health_check = self.loop.create_task(
+            self._check_listener_health()
+        )
 
         # # start the loop and wait until its closed
         if created_loop:
@@ -133,10 +136,6 @@ class Worker:
 
             if self.handle_kill:
                 sys.exit(0)
-
-        # # wait for the action listener process to finish
-        # self.action_listener_process.join()
-
 
     def _run_action_runner(self):
         # Retrieve the shared queue
@@ -175,14 +174,18 @@ class Worker:
         logger.debug(f"action listener starting on PID: {process.pid}")
 
         return process
-    
+
     async def _check_listener_health(self):
         logger.debug("starting action listener health check...")
         try:
             while not self.killing:
-                if self.action_listener_process is None or not self.action_listener_process.is_alive():
+                if (
+                    self.action_listener_process is None
+                    or not self.action_listener_process.is_alive()
+                ):
                     logger.debug("child action listener process killed...")
-                    self.exit_gracefully()
+                    if not self.killing:
+                        self.exit_gracefully()
                     break
                 await asyncio.sleep(1)
         except Exception as e:
@@ -204,14 +207,16 @@ class Worker:
         self.exit_forcefully()
 
     async def cleanup(self):
+        logger.error("cleaning up")
         self.killing = True
         self.action_queue.close()
         self.event_queue.close()
 
+        if self.action_runner is not None:
+            self.action_runner.cleanup()
+
         await self.action_listener_health_check
         await self.action_listener_process
-        
-
 
     def exit_gracefully(self):
         logger.debug(f"gracefully stopping worker: {self.name}")
@@ -219,27 +224,12 @@ class Worker:
         if self.killing:
             return self.exit_forcefully()
 
-
         self.killing = True
 
+        if self.action_listener_process:
+            self.action_listener_process.kill()  # Forcefully kill the process
+
         self.loop.create_task(self.cleanup())
-
-        #TODO VERY IMPORTANT
-        # wait for active work to finish
-
-        # if self.action_listener_process:
-        #     self.action_listener_process.terminate()
-
-        # if self.action_listener_process:
-        #     self.action_listener_process.join(
-        #         timeout=10
-        #     )  # Wait up to 10 seconds for process to terminate
-
-        if self.action_listener_health_check:
-            self.action_listener_health_check.cancel()
-
-        # if self.action_runner:
-        #     self.action_runner.wait_for_tasks()  # TODO - should we wait for this process to terminate?
 
         if self.loop:
             self.loop.stop()
@@ -250,12 +240,13 @@ class Worker:
         self.killing = True
 
         logger.debug(f"forcefully stopping worker: {self.name}")
-        
+
         self.cleanup()
-        
 
         if self.action_listener_process:
-            self.action_listener_process.terminate()  # Forcefully kill the process
+            self.action_listener_process.kill()  # Forcefully kill the process
 
         logger.info(f"👋")
-        sys.exit(1)  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
+        sys.exit(
+            1
+        )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup

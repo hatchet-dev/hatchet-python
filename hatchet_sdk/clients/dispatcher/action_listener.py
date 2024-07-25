@@ -9,7 +9,9 @@ import grpc
 from grpc._cython import cygrpc
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
-from hatchet_sdk.clients.run_event_listener import DEFAULT_ACTION_LISTENER_RETRY_INTERVAL
+from hatchet_sdk.clients.run_event_listener import (
+    DEFAULT_ACTION_LISTENER_RETRY_INTERVAL,
+)
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
@@ -26,12 +28,12 @@ from ...logger import logger
 from ...metadata import get_metadata
 from ..events import proto_timestamp_now
 
-
 DEFAULT_ACTION_TIMEOUT = 600  # seconds
 
 
 DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
 DEFAULT_ACTION_LISTENER_RETRY_COUNT = 5
+
 
 @dataclass
 class GetActionListenerRequest:
@@ -116,7 +118,9 @@ class ActionListener:
                 now = time.time()
                 diff = now - self.time_last_hb_succeeded
                 if diff > delay + 0.1:
-                    logger.warn(f"time since last successful heartbeat: {diff:.2f}s, expects {delay}s")
+                    logger.warn(
+                        f"time since last successful heartbeat: {diff:.2f}s, expects {delay}s"
+                    )
 
                 self.last_heartbeat_succeeded = True
                 self.time_last_hb_succeeded = now
@@ -125,13 +129,20 @@ class ActionListener:
                 self.missed_heartbeats = self.missed_heartbeats + 1
                 self.last_heartbeat_succeeded = False
 
-                if e.code() == grpc.StatusCode.UNAVAILABLE or e.code() == grpc.StatusCode.FAILED_PRECONDITION:
+                if (
+                    e.code() == grpc.StatusCode.UNAVAILABLE
+                    or e.code() == grpc.StatusCode.FAILED_PRECONDITION
+                ):
                     # todo case on "recvmsg:Connection reset by peer" for updates?
                     if self.missed_heartbeats >= 3:
                         # we don't reraise the error here, as we don't want to stop the heartbeat thread
-                        logger.error(f"⛔️ failed heartbeat ({self.missed_heartbeats}): {e.details()}")
+                        logger.error(
+                            f"⛔️ failed heartbeat ({self.missed_heartbeats}): {e.details()}"
+                        )
                     elif self.missed_heartbeats > 1:
-                        logger.warning(f"failed to send heartbeat ({self.missed_heartbeats}): {e.details()}")
+                        logger.warning(
+                            f"failed to send heartbeat ({self.missed_heartbeats}): {e.details()}"
+                        )
                 else:
                     logger.error(f"failed to send heartbeat: {e}")
 
@@ -141,7 +152,7 @@ class ActionListener:
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
 
-            time.sleep(delay) # TODO this is blocking the tear down of the listener
+            time.sleep(delay)  # TODO this is blocking the tear down of the listener
 
     def start_heartbeater(self):
         if self.heartbeat_thread is not None:
@@ -283,10 +294,11 @@ class ActionListener:
             self.retries = 0
             self.run_heartbeat = True
 
-
         if self.retries > DEFAULT_ACTION_LISTENER_RETRY_COUNT:
-            # TODO this is the problem case... 
-            logger.error(f"could not establish action listener connection after {DEFAULT_ACTION_LISTENER_RETRY_COUNT} retries")
+            # TODO this is the problem case...
+            logger.error(
+                f"could not establish action listener connection after {DEFAULT_ACTION_LISTENER_RETRY_COUNT} retries"
+            )
             self.run_heartbeat = False
             raise Exception("retry_exhausted")
         elif self.retries >= 1:
@@ -303,7 +315,7 @@ class ActionListener:
         self.aio_client = DispatcherStub(new_conn(self.config, True))
 
         if self.listen_strategy == "v2":
-            # we should await for the listener to be established before 
+            # we should await for the listener to be established before
             # starting the heartbeater
             listener = self.aio_client.ListenV2(
                 WorkerListenRequest(workerId=self.worker_id),
@@ -324,6 +336,8 @@ class ActionListener:
         return listener
 
     def cleanup(self):
+        self.run_heartbeat = False
+
         try:
             self.unregister()
         except Exception as e:
@@ -331,8 +345,6 @@ class ActionListener:
 
         if self.interrupt:
             self.interrupt.set()
-
-        
 
     def unregister(self):
         self.run_heartbeat = False
@@ -348,4 +360,3 @@ class ActionListener:
             return req
         except grpc.RpcError as e:
             raise Exception(f"Failed to unsubscribe: {e}")
-

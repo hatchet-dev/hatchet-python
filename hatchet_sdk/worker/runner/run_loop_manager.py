@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import multiprocessing
 import signal
 import sys
 from dataclasses import dataclass, field
@@ -7,10 +8,13 @@ from multiprocessing import Queue
 from typing import Any, Callable, Dict
 
 from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
+
+STOP_LOOP = "STOP_LOOP"
 
 
 @dataclass
@@ -25,14 +29,14 @@ class WorkerActionRunLoopManager:
     handle_kill: bool = True
     debug: bool = False
 
-    client: Client = None
+    client: Client = field(init=False, default=None)
 
-    runner: Runner = None
+    killing: bool = field(init=False, default=False)
+    runner: Runner = field(init=False, default=None)
 
     def __post_init__(self):
         if self.debug:
             logger.setLevel(logging.DEBUG)
-        self.killing = self.handle_kill
         self.client = new_client_raw(self.config, self.debug)
         self.start()
 
@@ -59,8 +63,16 @@ class WorkerActionRunLoopManager:
         self.loop = asyncio.get_running_loop()
         k = self.loop.create_task(self._start_action_loop())
 
-    async def _start_action_loop(self):
+    def cleanup(self):
+        self.killing = True
 
+        self.action_queue.put(STOP_LOOP)
+
+    async def wait_for_tasks(self):
+        if self.runner:
+            await self.runner.wait_for_tasks()
+
+    async def _start_action_loop(self):
         self.runner = Runner(
             self.name,
             self.event_queue,
@@ -71,40 +83,33 @@ class WorkerActionRunLoopManager:
         )
 
         logger.debug(f"'{self.name}' waiting for {list(self.action_registry.keys())}")
+        while not self.killing:
+            action: Action = await self._get_action()
+            if action == STOP_LOOP:
+                logger.debug("stopping action runner loop...")
+                break
 
-        while True:
-            action = await self._get_action()
-            logger.debug(f"rx: runtime payload: {action}")
-            task = await self.runner.run(action)
+            self.runner.run(action)
+        logger.debug("action runner loop stopped")
 
     async def _get_action(self):
         return await self.loop.run_in_executor(None, self.action_queue.get)
 
     async def exit_gracefully(self):
         if self.killing:
-            self.exit_forcefully()
             return
 
-        self.killing = True
+        logger.info(f"gracefully exiting runner...")
 
-        logger.info(f"attempting to exiting gracefully...")
+        self.cleanup()
 
-        try:
-            logger.info("waiting for tasks to finish...")
-
-            # await self.wait_for_tasks()
-        except Exception as e:
-            logger.error(f"could not wait for tasks: {e}")
+        await self.wait_for_tasks()
 
         # Wait for 1 second to allow last calls to flush. These are calls which have been
         # added to the event loop as callbacks to tasks, so we're not aware of them in the
         # task list.
         await asyncio.sleep(1)
 
-        self.loop.stop()
-
     def exit_forcefully(self):
-        self.killing = True
         logger.info("forcefully exiting runner...")
-        self.loop.stop()
-        sys.exit(1)
+        self.cleanup()

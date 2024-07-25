@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import multiprocessing
 import os
 import signal
 import sys
@@ -21,18 +22,21 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     STEP_EVENT_TYPE_STARTED,
     ActionType,
 )
-
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 ACTION_EVENT_RETRY_COUNT = 5
 
+
 @dataclass
 class ActionEvent:
     action: Action
     type: Any  # TODO type
     payload: Optional[str] = None
+
+
+STOP_LOOP = "STOP_LOOP"  # Sentinel object to stop the loop
 
 
 @dataclass
@@ -90,19 +94,27 @@ class WorkerActionListenerProcess:
             logger.debug(f"acquired action listener: {self.listener.worker_id}")
         except grpc.RpcError as rpc_error:
             logger.error(f"could not start action listener: {rpc_error}")
-            return 
-        
+            return
+
         # Start both loops as background tasks
         self.action_loop_task = asyncio.create_task(self.start_action_loop())
-        # self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
+        self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
 
+    # TODO move event methods to separate class
+    async def _get_event(self):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_event_send_loop(self):
-        while not self.killing:
+        while True:
             event: ActionEvent = await self._get_event()
+
+            if event == STOP_LOOP:
+                logger.debug("stopping event send loop...")
+                break
+
             logger.debug(f"tx: event: {event.action.action_id}/{event.type}")
             asyncio.create_task(self.send_event(event))
-            # await self.listener.send_event(event)
 
     async def send_event(self, event: ActionEvent, retry_attempt: int = 1):
         try:
@@ -124,21 +136,19 @@ class WorkerActionListenerProcess:
                 case _:
                     logger.error(f"unknown action type for event send")
         except Exception as e:
-            logger.error(f"could not send action event ({retry_attempt}/{ACTION_EVENT_RETRY_COUNT}): {e}")
+            logger.error(
+                f"could not send action event ({retry_attempt}/{ACTION_EVENT_RETRY_COUNT}): {e}"
+            )
             if retry_attempt <= ACTION_EVENT_RETRY_COUNT:
                 await exp_backoff_sleep(retry_attempt, 1)
                 await self.send_event(event, retry_attempt + 1)
-
-    async def _get_event(self):
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_action_loop(self):
         try:
             async for action in self.listener:
                 if action is None:
                     break
-                
+
                 # Process the action here
                 match action.action_type:
                     case ActionType.START_STEP_RUN:
@@ -160,33 +170,49 @@ class WorkerActionListenerProcess:
                                 type=GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
                             )
                         )
-                        logger.debug(f"rx: start group key: {action.get_group_key_run_id}")
+                        logger.debug(
+                            f"rx: start group key: {action.get_group_key_run_id}"
+                        )
                     case _:
                         logger.error(
                             f"rx: unknown action type ({action.action_type}): {action.action_type}"
                         )
-                self.action_queue.put(action)
-        
-        except Exception as e:
-            logger.error(f'error in action loop: {e}')
-        finally:
-            logger.info('action loop closed')
-            await self.exit_gracefully(skip_unregister=True)
+                try:
+                    self.action_queue.put(action)
+                except Exception as e:
+                    logger.error("error putting action: {e}")
 
-    async def exit_gracefully(self, skip_unregister=False):
-        logger.debug("closing action listener...")
-        
+        except Exception as e:
+            logger.error(f"error in action loop: {e}")
+        finally:
+            logger.info("action loop closed")
+            if not self.killing:
+                await self.exit_gracefully(skip_unregister=True)
+
+    async def cleanup(self):
         self.killing = True
 
         if self.listener is not None:
             self.listener.cleanup()
 
+        self.event_queue.put(STOP_LOOP)
+
+    async def exit_gracefully(self, skip_unregister=False):
+        if self.killing:
+            return
+
+        logger.debug("closing action listener...")
+
+        await self.cleanup()
+
+        while not self.event_queue.empty():
+            pass
+
         logger.info("action listener closed")
-        
 
     def exit_forcefully(self):
+        asyncio.run(self.cleanup())
         logger.debug("forcefully closing listener...")
-
 
 
 def worker_action_listener_process(*args, **kwargs):
