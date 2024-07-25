@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import signal
 import sys
 from dataclasses import dataclass, field
@@ -93,11 +94,11 @@ class WorkerActionListenerProcess:
         
         # Start both loops as background tasks
         self.action_loop_task = asyncio.create_task(self.start_action_loop())
-        self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
+        # self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
 
 
     async def start_event_send_loop(self):
-        while True:
+        while not self.killing:
             event: ActionEvent = await self._get_event()
             logger.debug(f"tx: event: {event.action.action_id}/{event.type}")
             asyncio.create_task(self.send_event(event))
@@ -172,33 +173,19 @@ class WorkerActionListenerProcess:
             logger.info('action loop closed')
             await self.exit_gracefully(skip_unregister=True)
 
-    def exit_gracefully(self, skip_unregister=False):
-        if self.killing:
-            return self.exit_forcefully()
-
+    async def exit_gracefully(self, skip_unregister=False):
+        logger.debug("closing action listener...")
+        
         self.killing = True
 
-        logger.debug("closing listener...")
+        if self.listener is not None:
+            self.listener.cleanup()
 
-        if not skip_unregister and self.listener is not None:
-            self.listener.unregister()
-
-        if self.action_loop_task is not None:
-            self.action_loop_task.cancel()
-
-        if self.event_send_loop_task is not None:
-            self.event_send_loop_task.cancel()
-
-        loop = asyncio.get_event_loop()
-        loop.stop()
-
-        logger.debug("listener closed")
-        sys.exit(9)
+        logger.info("action listener closed")
         
 
     def exit_forcefully(self):
         logger.debug("forcefully closing listener...")
-        sys.exit(9)
 
 
 

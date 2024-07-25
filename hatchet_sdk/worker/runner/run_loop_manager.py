@@ -105,6 +105,6 @@ class WorkerActionRunLoopManager:
 
     def exit_forcefully(self):
         self.killing = True
-        logger.info("forcefully exiting hatchet worker...")
+        logger.info("forcefully exiting runner...")
         self.loop.stop()
-        sys.exit(0)
+        sys.exit(1)

@@ -124,18 +124,18 @@ class Worker:
         created_loop = self.setup_loop()
 
         self.action_listener_process = self._start_listener()
-        self.action_runner = self._run_action_runner()
+        # self.action_runner = self._run_action_runner()
         self.action_listener_health_check = self.loop.create_task(self._check_listener_health())
 
-        # start the loop and wait until its closed
+        # # start the loop and wait until its closed
         if created_loop:
             self.loop.run_forever()
 
             if self.handle_kill:
                 sys.exit(0)
 
-        # wait for the action listener process to finish
-        self.action_listener_process.join()
+        # # wait for the action listener process to finish
+        # self.action_listener_process.join()
 
 
     def _run_action_runner(self):
@@ -178,13 +178,15 @@ class Worker:
     
     async def _check_listener_health(self):
         logger.debug("starting action listener health check...")
-        while not self.killing:
-            if not self.action_listener_process.is_alive():
-                logger.debug("action listener process killed...")
-                self.loop.create_task(self.exit_gracefully())
-                break
-            await asyncio.sleep(1)
-
+        try:
+            while not self.killing:
+                if self.action_listener_process is None or not self.action_listener_process.is_alive():
+                    logger.debug("child action listener process killed...")
+                    self.exit_gracefully()
+                    break
+                await asyncio.sleep(1)
+        except Exception as e:
+            logger.error(f"error checking listener health: {e}")
 
     ## Cleanup methods
     def _setup_signal_handlers(self):
@@ -195,18 +197,23 @@ class Worker:
     def _handle_exit_signal(self, signum, frame):
         sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
         logger.info(f"received signal {sig_name}...")
-        asyncio.run(self.exit_gracefully())
+        self.exit_gracefully()
 
     def _handle_force_quit_signal(self, signum, frame):
         logger.info(f"received SIGQUIT...")
         self.exit_forcefully()
 
-    def cleanup(self):
+    async def cleanup(self):
+        self.killing = True
         self.action_queue.close()
         self.event_queue.close()
 
+        await self.action_listener_health_check
+        await self.action_listener_process
+        
 
-    async def exit_gracefully(self):
+
+    def exit_gracefully(self):
         logger.debug(f"gracefully stopping worker: {self.name}")
 
         if self.killing:
@@ -215,23 +222,29 @@ class Worker:
 
         self.killing = True
 
-        self.cleanup()
+        self.loop.create_task(self.cleanup())
 
-        if self.action_listener_process:
-            self.action_listener_process.terminate()
+        #TODO VERY IMPORTANT
+        # wait for active work to finish
 
-        if self.action_listener_process:
-            self.action_listener_process.join(
-                timeout=10
-            )  # Wait up to 10 seconds for process to terminate
+        # if self.action_listener_process:
+        #     self.action_listener_process.terminate()
+
+        # if self.action_listener_process:
+        #     self.action_listener_process.join(
+        #         timeout=10
+        #     )  # Wait up to 10 seconds for process to terminate
 
         if self.action_listener_health_check:
             self.action_listener_health_check.cancel()
+
         # if self.action_runner:
         #     self.action_runner.wait_for_tasks()  # TODO - should we wait for this process to terminate?
 
+        if self.loop:
+            self.loop.stop()
+
         logger.info(f"👋")
-        sys.exit(1)
 
     def exit_forcefully(self):
         self.killing = True
@@ -239,9 +252,10 @@ class Worker:
         logger.debug(f"forcefully stopping worker: {self.name}")
         
         self.cleanup()
+        
 
         if self.action_listener_process:
-            self.action_listener_process.kill()  # Forcefully kill the process
+            self.action_listener_process.terminate()  # Forcefully kill the process
 
         logger.info(f"👋")
         sys.exit(1)  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup

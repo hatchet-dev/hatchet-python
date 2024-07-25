@@ -31,7 +31,7 @@ DEFAULT_ACTION_TIMEOUT = 600  # seconds
 
 
 DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
-DEFAULT_ACTION_LISTENER_RETRY_COUNT = 2
+DEFAULT_ACTION_LISTENER_RETRY_COUNT = 5
 
 @dataclass
 class GetActionListenerRequest:
@@ -74,6 +74,7 @@ class ActionListener:
     retries: int = field(default=0, init=False)
     last_connection_attempt: float = field(default=0, init=False)
     last_heartbeat_succeeded: bool = field(default=True, init=False)
+    time_last_hb_succeeded: float = field(default=9999999999999, init=False)
     heartbeat_thread: Optional[threading.Thread] = field(default=None, init=False)
     run_heartbeat: bool = field(default=True, init=False)
     listen_strategy: str = field(default="v2", init=False)
@@ -92,6 +93,8 @@ class ActionListener:
 
     def heartbeat(self):
         # send a heartbeat every 4 seconds
+        delay = 4
+
         while True:
             if not self.run_heartbeat:
                 break
@@ -110,7 +113,13 @@ class ActionListener:
                 if self.last_heartbeat_succeeded is False:
                     logger.info("listener established")
 
+                now = time.time()
+                diff = now - self.time_last_hb_succeeded
+                if diff > delay + 0.1:
+                    logger.warn(f"time since last successful heartbeat: {diff:.2f}s, expects {delay}s")
+
                 self.last_heartbeat_succeeded = True
+                self.time_last_hb_succeeded = now
                 self.missed_heartbeats = 0
             except grpc.RpcError as e:
                 self.missed_heartbeats = self.missed_heartbeats + 1
@@ -132,7 +141,7 @@ class ActionListener:
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
 
-            time.sleep(4) # TODO this is blocking the tear down of the listener
+            time.sleep(delay) # TODO this is blocking the tear down of the listener
 
     def start_heartbeater(self):
         if self.heartbeat_thread is not None:
@@ -241,7 +250,7 @@ class ActionListener:
                         logger.error(f"action listener error: {e.details()}")
                     else:
                         # Unknown error, report and break
-                        logger.error("action listener error: {e}")
+                        logger.error(f"action listener error: {e}")
 
                     self.retries = self.retries + 1
 
@@ -314,18 +323,29 @@ class ActionListener:
 
         return listener
 
+    def cleanup(self):
+        try:
+            self.unregister()
+        except Exception as e:
+            logger.error(f"failed to unregister: {e}")
+
+        if self.interrupt:
+            self.interrupt.set()
+
+        
 
     def unregister(self):
         self.run_heartbeat = False
 
         try:
-            self.client.Unsubscribe(
+            req = self.aio_client.Unsubscribe(
                 WorkerUnsubscribeRequest(workerId=self.worker_id),
                 timeout=5,
                 metadata=get_metadata(self.token),
             )
             if self.interrupt is not None:
                 self.interrupt.set()
+            return req
         except grpc.RpcError as e:
             raise Exception(f"Failed to unsubscribe: {e}")
 
