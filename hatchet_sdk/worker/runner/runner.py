@@ -153,9 +153,7 @@ class Runner:
     def run(self, action: Action):
         match action.action_type:
             case ActionType.START_STEP_RUN:
-                logger.info(
-                    f"run: start step: {action.action_id}/{action.step_run_id}"
-                )
+                logger.info(f"run: start step: {action.action_id}/{action.step_run_id}")
                 asyncio.create_task(self.handle_start_step_run(action))
             case ActionType.CANCEL_STEP_RUN:
                 logger.info(
