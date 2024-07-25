@@ -9,8 +9,8 @@ from typing import Any, List, Optional, Union
 import grpc
 
 from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.dispatcher import (
-    Action,
+from hatchet_sdk.clients.dispatcher.action_listener import Action
+from hatchet_sdk.clients.dispatcher.dispatcher import (
     ActionListener,
     GetActionListenerRequest,
     new_dispatcher,
@@ -19,9 +19,8 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_STARTED,
     STEP_EVENT_TYPE_STARTED,
     ActionType,
-    GroupKeyActionEventType,
-    StepActionEventType,
 )
+
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
@@ -88,17 +87,14 @@ class WorkerActionListenerProcess:
             )
 
             logger.debug(f"acquired action listener: {self.listener.worker_id}")
-            logger.info(f"connection established, awaiting actions")
         except grpc.RpcError as rpc_error:
             logger.error(f"could not start action listener: {rpc_error}")
             return 
         
-
         # Start both loops as background tasks
         self.action_loop_task = asyncio.create_task(self.start_action_loop())
         self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
 
-        # TODO retry connection on failure?
 
     async def start_event_send_loop(self):
         while True:
@@ -137,55 +133,73 @@ class WorkerActionListenerProcess:
         return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_action_loop(self):
-        async for action in self.listener:
-            match action.action_type:
-                case ActionType.START_STEP_RUN:
-                    self.event_queue.put(
-                        ActionEvent(
-                            action=action,
-                            type=STEP_EVENT_TYPE_STARTED,  # TODO ack type
+        try:
+            async for action in self.listener:
+                if action is None:
+                    break
+                
+                # Process the action here
+                match action.action_type:
+                    case ActionType.START_STEP_RUN:
+                        self.event_queue.put(
+                            ActionEvent(
+                                action=action,
+                                type=STEP_EVENT_TYPE_STARTED,  # TODO ack type
+                            )
                         )
-                    )
-                    logger.debug(
-                        f"rx: start step run: {action.step_run_id}/{action.action_id}"
-                    )
-                case ActionType.CANCEL_STEP_RUN:
-                    logger.debug(f"rx: cancel step run: {action.step_run_id}")
-                case ActionType.START_GET_GROUP_KEY:
-                    self.event_queue.put(
-                        ActionEvent(
-                            action=action,
-                            type=GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
+                        logger.debug(
+                            f"rx: start step run: {action.step_run_id}/{action.action_id}"
                         )
-                    )
-                    logger.debug(f"rx: start group key: {action.get_group_key_run_id}")
-                case _:
-                    logger.error(
-                        f"rx: unknown action type ({action.action_type}): {action.action_type}"
-                    )
-            self.action_queue.put(action)
+                    case ActionType.CANCEL_STEP_RUN:
+                        logger.debug(f"rx: cancel step run: {action.step_run_id}")
+                    case ActionType.START_GET_GROUP_KEY:
+                        self.event_queue.put(
+                            ActionEvent(
+                                action=action,
+                                type=GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
+                            )
+                        )
+                        logger.debug(f"rx: start group key: {action.get_group_key_run_id}")
+                    case _:
+                        logger.error(
+                            f"rx: unknown action type ({action.action_type}): {action.action_type}"
+                        )
+                self.action_queue.put(action)
+        
+        except Exception as e:
+            logger.error(f'error in action loop: {e}')
+        finally:
+            logger.info('action loop closed')
+            await self.exit_gracefully(skip_unregister=True)
 
-    async def exit_gracefully(self):
+    def exit_gracefully(self, skip_unregister=False):
         if self.killing:
             return self.exit_forcefully()
-        self.killing = True
-        logger.debug("exiting listener gracefully")
 
-        if self.listener:
+        self.killing = True
+
+        logger.debug("closing listener...")
+
+        if not skip_unregister and self.listener is not None:
             self.listener.unregister()
 
-        if self.action_loop_task:
+        if self.action_loop_task is not None:
             self.action_loop_task.cancel()
 
-        if self.event_send_loop_task:
+        if self.event_send_loop_task is not None:
             self.event_send_loop_task.cancel()
 
         loop = asyncio.get_event_loop()
         loop.stop()
 
+        logger.debug("listener closed")
+        sys.exit(9)
+        
+
     def exit_forcefully(self):
-        logger.debug("exiting listener forcefully")
-        sys.exit(0)
+        logger.debug("forcefully closing listener...")
+        sys.exit(9)
+
 
 
 def worker_action_listener_process(*args, **kwargs):

@@ -1,52 +1,37 @@
-# relative imports
 import asyncio
 import json
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, List, Optional, overload
+from typing import Any, AsyncGenerator, List, Optional
 
 import grpc
-from google.protobuf.timestamp_pb2 import Timestamp
 from grpc._cython import cygrpc
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
+from hatchet_sdk.clients.run_event_listener import DEFAULT_ACTION_LISTENER_RETRY_INTERVAL
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
-    ActionEventResponse,
     ActionType,
     AssignedAction,
-    GroupKeyActionEvent,
-    GroupKeyActionEventType,
     HeartbeatRequest,
-    OverridesData,
-    RefreshTimeoutRequest,
-    ReleaseSlotRequest,
-    StepActionEvent,
-    StepActionEventType,
     WorkerListenRequest,
-    WorkerRegisterRequest,
-    WorkerRegisterResponse,
     WorkerUnsubscribeRequest,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
-from ..loader import ClientConfig
-from ..logger import logger
-from ..metadata import get_metadata
-from .events import proto_timestamp_now
+from ...loader import ClientConfig
+from ...logger import logger
+from ...metadata import get_metadata
+from ..events import proto_timestamp_now
 
 
-def new_dispatcher(config: ClientConfig):
-    return DispatcherClient(config=config)
+DEFAULT_ACTION_TIMEOUT = 600  # seconds
 
 
 DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
-DEFAULT_ACTION_LISTENER_RETRY_COUNT = 15
-DEFAULT_ACTION_TIMEOUT = 600  # seconds
-DEFAULT_REGISTER_TIMEOUT = 30
-
+DEFAULT_ACTION_LISTENER_RETRY_COUNT = 2
 
 @dataclass
 class GetActionListenerRequest:
@@ -112,6 +97,7 @@ class ActionListener:
                 break
 
             try:
+                logger.debug("sending heartbeat")
                 self.client.Heartbeat(
                     HeartbeatRequest(
                         workerId=self.worker_id,
@@ -121,11 +107,14 @@ class ActionListener:
                     metadata=get_metadata(self.token),
                 )
 
+                if self.last_heartbeat_succeeded is False:
+                    logger.info("listener established")
+
                 self.last_heartbeat_succeeded = True
                 self.missed_heartbeats = 0
             except grpc.RpcError as e:
                 self.missed_heartbeats = self.missed_heartbeats + 1
-
+                self.last_heartbeat_succeeded = False
 
                 if e.code() == grpc.StatusCode.UNAVAILABLE or e.code() == grpc.StatusCode.FAILED_PRECONDITION:
                     # todo case on "recvmsg:Connection reset by peer" for updates?
@@ -137,7 +126,6 @@ class ActionListener:
                 else:
                     logger.error(f"failed to send heartbeat: {e}")
 
-                self.last_heartbeat_succeeded = False
                 if self.interrupt is not None:
                     self.interrupt.set()
 
@@ -160,19 +148,21 @@ class ActionListener:
         return self._generator()
 
     async def _generator(self) -> AsyncGenerator[Action, None]:
-        listener: Any = None
+        listener = None
 
-        while True:
-            if self.stop_signal:
-                break
+        while not self.stop_signal:
 
             if listener is not None:
                 listener.cancel()
 
-            listener = await self.get_listen_client()
+            try:
+                listener = await self.get_listen_client()
+            except Exception as e:
+                logger.info("closing action listener loop")
+                yield None
 
             try:
-                while True:
+                while not self.stop_signal:
                     self.interrupt = Event_ts()
                     t = asyncio.create_task(
                         read_with_interrupt(listener, self.interrupt)
@@ -229,6 +219,8 @@ class ActionListener:
 
                     yield action
             except grpc.RpcError as e:
+                self.last_heartbeat_succeeded = False
+
                 # Handle different types of errors
                 if e.code() == grpc.StatusCode.CANCELLED:
                     # Context cancelled, unsubscribe and close
@@ -245,8 +237,11 @@ class ActionListener:
                     logger.info("ListenV2 not available, falling back to Listen")
                 else:
                     # TODO retry
-                    # Unknown error, report and break
-                    logger.error(f"Failed to receive message: {e}")
+                    if e.code() == grpc.StatusCode.UNAVAILABLE:
+                        logger.error(f"action listener error: {e.details()}")
+                    else:
+                        # Unknown error, report and break
+                        logger.error("action listener error: {e}")
 
                     self.retries = self.retries + 1
 
@@ -275,12 +270,16 @@ class ActionListener:
             current_time - self.last_connection_attempt
             > DEFAULT_ACTION_LISTENER_RETRY_INTERVAL
         ):
+            # reset retries if last connection was long lived
             self.retries = 0
+            self.run_heartbeat = True
+
 
         if self.retries > DEFAULT_ACTION_LISTENER_RETRY_COUNT:
-            raise Exception(
-                f"Could not subscribe to the worker after {DEFAULT_ACTION_LISTENER_RETRY_COUNT} retries"
-            )
+            # TODO this is the problem case... 
+            logger.error(f"could not establish action listener connection after {DEFAULT_ACTION_LISTENER_RETRY_COUNT} retries")
+            self.run_heartbeat = False
+            raise Exception("retry_exhausted")
         elif self.retries >= 1:
             # logger.info
             # if we are retrying, we wait for a bit. this should eventually be replaced with exp backoff + jitter
@@ -289,18 +288,19 @@ class ActionListener:
             )
 
             logger.info(
-                f"Could not connect to Hatchet, retrying... {self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT}"
+                f"action listener connection interrupted, retrying... ({self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT})"
             )
 
         self.aio_client = DispatcherStub(new_conn(self.config, True))
 
         if self.listen_strategy == "v2":
+            # we should await for the listener to be established before 
+            # starting the heartbeater
             listener = self.aio_client.ListenV2(
                 WorkerListenRequest(workerId=self.worker_id),
                 timeout=self.config.listener_v2_timeout,
                 metadata=get_metadata(self.token),
             )
-
             self.start_heartbeater()
         else:
             # if ListenV2 is not available, fallback to Listen
@@ -314,9 +314,9 @@ class ActionListener:
 
         return listener
 
+
     def unregister(self):
         self.run_heartbeat = False
-        self.stop_signal = True
 
         try:
             self.client.Unsubscribe(
@@ -324,106 +324,8 @@ class ActionListener:
                 timeout=5,
                 metadata=get_metadata(self.token),
             )
+            if self.interrupt is not None:
+                self.interrupt.set()
         except grpc.RpcError as e:
             raise Exception(f"Failed to unsubscribe: {e}")
 
-
-class DispatcherClient():
-    config: ClientConfig
-
-    def __init__(self, config: ClientConfig):
-        conn = new_conn(config)
-        self.client = DispatcherStub(conn)
-
-        aio_conn = new_conn(config, True)
-        self.aio_client = DispatcherStub(aio_conn)
-        self.token = config.token
-        self.config = config
-
-    async def get_action_listener(
-        self, req: GetActionListenerRequest
-    ) -> ActionListener:
-        # Register the worker
-        response: WorkerRegisterResponse = await self.aio_client.Register(
-            WorkerRegisterRequest(
-                workerName=req.worker_name,
-                actions=req.actions,
-                services=req.services,
-                maxRuns=req.max_runs,
-            ),
-            timeout=DEFAULT_REGISTER_TIMEOUT,
-            metadata=get_metadata(self.token),
-        )
-
-        return ActionListener(self.config, response.workerId)
-
-    async def send_step_action_event(
-        self, action: Action, event_type: StepActionEventType, payload: str
-    ):
-        eventTimestamp = Timestamp()
-        eventTimestamp.GetCurrentTime()
-
-        event = StepActionEvent(
-            workerId=action.worker_id,
-            jobId=action.job_id,
-            jobRunId=action.job_run_id,
-            stepId=action.step_id,
-            stepRunId=action.step_run_id,
-            actionId=action.action_id,
-            eventTimestamp=eventTimestamp,
-            eventType=event_type,
-            eventPayload=payload,
-        )
-
-        return await self.aio_client.SendStepActionEvent(
-            event,
-            metadata=get_metadata(self.token),
-        )
-
-    async def send_group_key_action_event(
-        self, action: Action, event_type: GroupKeyActionEventType, payload: str
-    ):
-        eventTimestamp = Timestamp()
-        eventTimestamp.GetCurrentTime()
-
-        event = GroupKeyActionEvent(
-            workerId=action.worker_id,
-            jobId=action.job_id,
-            jobRunId=action.job_run_id,
-            stepId=action.step_id,
-            stepRunId=action.step_run_id,
-            actionId=action.action_id,
-            eventTimestamp=eventTimestamp,
-            eventType=event_type,
-            eventPayload=payload,
-        )
-
-        return await self.aio_client.SendGroupKeyActionEvent(
-            event,
-            metadata=get_metadata(self.token),
-        )
-
-    def put_overrides_data(self, data: OverridesData):
-        response: ActionEventResponse = self.client.PutOverridesData(
-            data,
-            metadata=get_metadata(self.token),
-        )
-
-        return response
-
-    def release_slot(self, step_run_id: str):
-        self.client.ReleaseSlot(
-            ReleaseSlotRequest(stepRunId=step_run_id),
-            timeout=DEFAULT_REGISTER_TIMEOUT,
-            metadata=get_metadata(self.token),
-        )
-
-    def refresh_timeout(self, step_run_id: str, increment_by: str):
-        self.client.RefreshTimeout(
-            RefreshTimeoutRequest(
-                stepRunId=step_run_id,
-                incrementTimeoutBy=increment_by,
-            ),
-            timeout=DEFAULT_REGISTER_TIMEOUT,
-            metadata=get_metadata(self.token),
-        )

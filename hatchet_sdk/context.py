@@ -18,7 +18,7 @@ from .clients.admin import (
     ScheduleTriggerWorkflowOptions,
     TriggerWorkflowOptions,
 )
-from .clients.dispatcher import Action, DispatcherClient
+from .clients.dispatcher.dispatcher import Action, DispatcherClient
 from .logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds

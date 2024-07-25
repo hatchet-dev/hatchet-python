@@ -4,13 +4,9 @@ import signal
 import sys
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict
 
 from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.dispatcher import new_dispatcher
-from hatchet_sdk.clients.run_event_listener import new_listener
-from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.runner.runner import Runner
@@ -25,10 +21,9 @@ class WorkerActionRunLoopManager:
     config: ClientConfig
     action_queue: Queue
     event_queue: Queue
+    loop: asyncio.AbstractEventLoop
     handle_kill: bool = True
     debug: bool = False
-
-    loop: asyncio.AbstractEventLoop = field(init=False)
 
     client: Client = None
 
@@ -42,17 +37,6 @@ class WorkerActionRunLoopManager:
         self.start()
 
     def start(self, retry_count=1):
-        try:
-            loop = asyncio.get_running_loop()
-            self.loop = loop
-            created_loop = False
-            logger.debug("using existing event loop")
-        except RuntimeError:
-            self.loop = asyncio.new_event_loop()
-            logger.debug("creating new event loop")
-            asyncio.set_event_loop(self.loop)
-            created_loop = True
-
         k = self.loop.create_task(self.async_start(retry_count))
 
         self.loop.add_signal_handler(
@@ -62,12 +46,6 @@ class WorkerActionRunLoopManager:
             signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
         )
         self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
-
-        if created_loop:
-            self.loop.run_forever()
-
-            if self.handle_kill:
-                sys.exit(0)
 
     async def async_start(self, retry_count=1):
         await capture_logs(
