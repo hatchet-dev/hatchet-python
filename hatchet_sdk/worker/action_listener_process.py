@@ -158,11 +158,11 @@ class WorkerActionListenerProcess:
                                 type=STEP_EVENT_TYPE_STARTED,  # TODO ack type
                             )
                         )
-                        logger.debug(
+                        logger.info(
                             f"rx: start step run: {action.step_run_id}/{action.action_id}"
                         )
                     case ActionType.CANCEL_STEP_RUN:
-                        logger.debug(f"rx: cancel step run: {action.step_run_id}")
+                        logger.info(f"rx: cancel step run: {action.step_run_id}")
                     case ActionType.START_GET_GROUP_KEY:
                         self.event_queue.put(
                             ActionEvent(
@@ -170,7 +170,7 @@ class WorkerActionListenerProcess:
                                 type=GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
                             )
                         )
-                        logger.debug(
+                        logger.info(
                             f"rx: start group key: {action.get_group_key_run_id}"
                         )
                     case _:

@@ -24,7 +24,7 @@ from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 from ...loader import ClientConfig
-from ...logger import logger
+from hatchet_sdk.logger import logger
 from ...metadata import get_metadata
 from ..events import proto_timestamp_now
 
@@ -81,7 +81,6 @@ class ActionListener:
     run_heartbeat: bool = field(default=True, init=False)
     listen_strategy: str = field(default="v2", init=False)
     stop_signal: bool = field(default=False, init=False)
-    logger = logger
 
     missed_heartbeats: int = field(default=0, init=False)
 
@@ -244,7 +243,7 @@ class ActionListener:
                 # Handle different types of errors
                 if e.code() == grpc.StatusCode.CANCELLED:
                     # Context cancelled, unsubscribe and close
-                    self.logger.debug("Context cancelled, closing listener")
+                    logger.debug("Context cancelled, closing listener")
                 elif e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
                     logger.info("Deadline exceeded, retrying subscription")
                 elif (
@@ -280,7 +279,7 @@ class ActionListener:
         elif action_type == ActionType.START_GET_GROUP_KEY:
             return START_GET_GROUP_KEY
         else:
-            # self.logger.error(f"Unknown action type: {action_type}")
+            # logger.error(f"Unknown action type: {action_type}")
             return None
 
     async def get_listen_client(self):

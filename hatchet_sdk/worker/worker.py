@@ -92,7 +92,7 @@ class Worker:
 
         return self._status
 
-    def async_start(self):
+    async def async_start(self):
         return self.start()
 
     def setup_loop(self):
@@ -112,7 +112,8 @@ class Worker:
     ## Start methods
     def start(self):
         main_pid = os.getpid()
-        logger.debug(f"------------------------------------------")
+        logger.info(f"------------------------------------------")
+        logger.info(f"STARTING HATCHET...")
         logger.debug(f"worker runtime starting on PID: {main_pid}")
 
         if len(self.action_registry.keys()) == 0:

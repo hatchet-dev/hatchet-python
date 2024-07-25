@@ -163,7 +163,7 @@ class Context(BaseContext):
         return self.action.workflow_run_id
 
     def cancel(self):
-        logger.info("Cancelling step...")
+        logger.debug("cancelling step...")
         self.exit_flag = True
 
     # done returns true if the context has been cancelled

@@ -153,18 +153,18 @@ class Runner:
     def run(self, action: Action):
         match action.action_type:
             case ActionType.START_STEP_RUN:
-                logger.debug(
-                    f"run start step run: {action.action_id}/{action.step_run_id}"
+                logger.info(
+                    f"run: start step: {action.action_id}/{action.step_run_id}"
                 )
                 asyncio.create_task(self.handle_start_step_run(action))
             case ActionType.CANCEL_STEP_RUN:
-                logger.debug(
-                    f"cancel step run:  {action.action_id}/{action.step_run_id}"
+                logger.info(
+                    f"cancel: step run:  {action.action_id}/{action.step_run_id}"
                 )
                 asyncio.create_task(self.handle_cancel_action(action.step_run_id))
             case ActionType.START_GET_GROUP_KEY:
-                logger.debug(
-                    f"run get group key:  {action.action_id}/{action.get_group_key_run_id}"
+                logger.info(
+                    f"run: get group key:  {action.action_id}/{action.get_group_key_run_id}"
                 )
                 asyncio.create_task(self.handle_start_group_key_run(action))
             case _:
@@ -193,7 +193,7 @@ class Runner:
                     )
                 )
 
-                logger.debug(
+                logger.error(
                     f"failed step run: {action.action_id}/{action.step_run_id}"
                 )
 
@@ -206,7 +206,7 @@ class Runner:
                     )
                 )
 
-                logger.debug(
+                logger.info(
                     f"finished step run: {action.action_id}/{action.step_run_id}"
                 )
 
@@ -233,7 +233,7 @@ class Runner:
                     )
                 )
 
-                logger.debug(
+                logger.error(
                     f"failed step run: {action.action_id}/{action.step_run_id}"
                 )
 
@@ -246,7 +246,7 @@ class Runner:
                     )
                 )
 
-                logger.debug(
+                logger.info(
                     f"finished step run: {action.action_id}/{action.step_run_id}"
                 )
 
@@ -311,8 +311,6 @@ class Runner:
             del self.contexts[run_id]
 
     async def handle_start_step_run(self, action: Action):
-        logger.debug(f"Starting step run {action.step_run_id}")
-
         action_name = action.action_id
         context = Context(
             action,
