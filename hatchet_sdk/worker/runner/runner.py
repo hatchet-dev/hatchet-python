@@ -4,7 +4,6 @@ import ctypes
 import functools
 import json
 import logging
-from multiprocessing import Queue
 import random
 import signal
 import sys
@@ -16,16 +15,25 @@ from datetime import datetime
 from enum import Enum
 from io import StringIO
 from logging import StreamHandler
+from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Coroutine, Dict
 
 import grpc
 from google.protobuf.timestamp_pb2 import Timestamp
 
+from hatchet_sdk.client import new_client, new_client_raw
 from hatchet_sdk.clients.admin import new_admin
+from hatchet_sdk.clients.dispatcher import (
+    Action,
+    ActionListenerImpl,
+    GetActionListenerRequest,
+    new_dispatcher,
+)
 from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_COMPLETED,
     GROUP_KEY_EVENT_TYPE_FAILED,
@@ -40,16 +48,8 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     StepActionEventType,
 )
 from hatchet_sdk.loader import ClientConfig
-
-from hatchet_sdk.client import new_client, new_client_raw
-from hatchet_sdk.clients.dispatcher import (
-    Action,
-    ActionListenerImpl,
-    GetActionListenerRequest,
-    new_dispatcher,
-)
-from hatchet_sdk.context import Context
 from hatchet_sdk.logger import logger
+from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.workflow import WorkflowMeta
 
 wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
@@ -161,9 +161,7 @@ class Runner:
         self.killing = False
         self.handle_kill = handle_kill
 
-        self._status = WorkerStatus.INITIALIZED
-
-                # We need to initialize a new admin and dispatcher client *after* we've started the event loop,
+        # We need to initialize a new admin and dispatcher client *after* we've started the event loop,
         # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
         self.dispatcher_client = new_dispatcher(self.config)
         self.admin_client = new_admin(self.config)
@@ -172,7 +170,7 @@ class Runner:
 
     async def run(self, action: Action):
         logger.debug(f"Running action: {action.action_id}")
-        
+
         match action.action_type:
             case ActionType.START_STEP_RUN:
                 logger.debug(f"Got start step run action: {action.step_run_id}")
@@ -184,7 +182,6 @@ class Runner:
                 asyncio.create_task(self.handle_start_group_key_run(action))
             case _:
                 logger.error(f"Unknown action type: {action.action_type}")
-                None
 
         logger.debug(f"Finished running action {action.action_id}")
         return
@@ -204,27 +201,21 @@ class Runner:
                 errored = True
 
                 # This except is coming from the application itself, so we want to send that to the Hatchet instance
-                event = self.get_step_action_event(action, STEP_EVENT_TYPE_FAILED)
-                event.eventPayload = str(errorWithTraceback(f"{e}", e))
-
-                try:
-                    asyncio.create_task(
-                        self.dispatcher_client.send_step_action_event(event)
+                self.event_queue.put(
+                    ActionEvent(
+                        action=action,
+                        type=STEP_EVENT_TYPE_FAILED,
+                        payload=str(errorWithTraceback(f"{e}", e)),
                     )
-                except Exception as e:
-                    logger.error(f"Could not send action event: {e}")
+                )
 
             if not errored and not cancelled:
-                # Create an action event
-                try:
-                    event = self.get_step_action_finished_event(action, output)
-                except Exception as e:
-                    logger.error(f"Could not get action finished event: {e}")
-                    raise e
-
-                # Send the action event to the dispatcher
-                asyncio.create_task(
-                    self.dispatcher_client.send_step_action_event(event)
+                self.event_queue.put(
+                    ActionEvent(
+                        action=action,
+                        type=STEP_EVENT_TYPE_COMPLETED,
+                        payload=self.serialize_output(output),
+                    )
                 )
 
         return inner_callback
@@ -242,31 +233,21 @@ class Runner:
                     output = task.result()
             except Exception as e:
                 errored = True
-
-                # This except is coming from the application itself, so we want to send that to the Hatchet instance
-                event = self.get_group_key_action_event(
-                    action, GROUP_KEY_EVENT_TYPE_FAILED
-                )
-                event.eventPayload = str(errorWithTraceback(f"{e}", e))
-
-                try:
-                    asyncio.create_task(
-                        self.dispatcher_client.send_group_key_action_event(event)
+                self.event_queue.put(
+                    ActionEvent(
+                        action=action,
+                        type=GROUP_KEY_EVENT_TYPE_FAILED,
+                        payload=str(errorWithTraceback(f"{e}", e)),
                     )
-                except Exception as e:
-                    logger.error(f"Could not send action event: {e}")
+                )
 
             if not errored and not cancelled:
-                # Create an action event
-                try:
-                    event = self.get_group_key_action_finished_event(action, output)
-                except Exception as e:
-                    logger.error(f"Could not get action finished event: {e}")
-                    raise e
-
-                # Send the action event to the dispatcher
-                asyncio.create_task(
-                    self.dispatcher_client.send_group_key_action_event(event)
+                self.event_queue.put(
+                    ActionEvent(
+                        action=action,
+                        type=GROUP_KEY_EVENT_TYPE_COMPLETED,
+                        payload=self.serialize_output(output),
+                    )
                 )
 
         return inner_callback
@@ -291,7 +272,6 @@ class Runner:
 
         try:
             if action_func._is_coroutine:
-                logger.error(f"Running action {action.action_id} as coroutine")
                 return await action_func(context)
             else:
                 pfunc = functools.partial(
@@ -310,7 +290,12 @@ class Runner:
 
                 return res
         except Exception as e:
-            logger.error(errorWithTraceback(f"Could not execute action: {e}", e))
+            logger.error(
+                errorWithTraceback(
+                    f"exception raised in action ({action.action_id}, retry={action.retry_count}):\n{e}",
+                    e,
+                )
+            )
             raise e
         finally:
             self.cleanup_run_id(run_id)
@@ -344,16 +329,12 @@ class Runner:
         action_func = self.action_registry.get(action_name)
 
         if action_func:
-            # send an event that the step run has started
-            try:
-                event = self.get_step_action_event(action, STEP_EVENT_TYPE_STARTED)
-
-                # Send the action event to the dispatcher
-                asyncio.create_task(
-                    self.dispatcher_client.send_step_action_event(event)
+            self.event_queue.put(
+                ActionEvent(
+                    action=action,
+                    type=STEP_EVENT_TYPE_STARTED,
                 )
-            except Exception as e:
-                logger.error(f"Could not send action event: {e}")
+            )
 
             loop = asyncio.get_event_loop()
             task = loop.create_task(
@@ -391,17 +372,12 @@ class Runner:
 
         if action_func:
             # send an event that the group key run has started
-            try:
-                event = self.get_group_key_action_event(
-                    action, GROUP_KEY_EVENT_TYPE_STARTED
+            self.event_queue.put(
+                ActionEvent(
+                    action=action,
+                    type=GROUP_KEY_EVENT_TYPE_STARTED,
                 )
-
-                # Send the action event to the dispatcher
-                asyncio.create_task(
-                    self.dispatcher_client.send_group_key_action_event(event)
-                )
-            except Exception as e:
-                logger.error(f"Could not send action event: {e}")
+            )
 
             loop = asyncio.get_event_loop()
             task = loop.create_task(
@@ -471,107 +447,18 @@ class Runner:
         finally:
             self.cleanup_run_id(run_id)
 
-    def get_step_action_event(
-        self, action: Action, event_type: StepActionEventType
-    ) -> StepActionEvent:
-        eventTimestamp = Timestamp()
-        eventTimestamp.GetCurrentTime()
-
-        return StepActionEvent(
-            workerId=action.worker_id,
-            jobId=action.job_id,
-            jobRunId=action.job_run_id,
-            stepId=action.step_id,
-            stepRunId=action.step_run_id,
-            actionId=action.action_id,
-            eventTimestamp=eventTimestamp,
-            eventType=event_type,
-        )
-
-    def get_step_action_finished_event(
-        self, action: Action, output: Any
-    ) -> StepActionEvent:
-        try:
-            event = self.get_step_action_event(action, STEP_EVENT_TYPE_COMPLETED)
-        except Exception as e:
-            logger.error(f"Could not create action finished event: {e}")
-            raise e
-
+    def serialize_output(self, output: Any) -> str:
         output_bytes = ""
-
         if output is not None:
-            output_bytes = json.dumps(output)
-
-        event.eventPayload = output_bytes
-
-        return event
-
-    def get_group_key_action_event(
-        self, action: Action, event_type: GroupKeyActionEventType
-    ) -> GroupKeyActionEvent:
-        eventTimestamp = Timestamp()
-        eventTimestamp.GetCurrentTime()
-
-        return GroupKeyActionEvent(
-            workerId=action.worker_id,
-            workflowRunId=action.workflow_run_id,
-            getGroupKeyRunId=action.get_group_key_run_id,
-            actionId=action.action_id,
-            eventTimestamp=eventTimestamp,
-            eventType=event_type,
-        )
-
-    def get_group_key_action_finished_event(
-        self, action: Action, output: str
-    ) -> StepActionEvent:
-        try:
-            event = self.get_group_key_action_event(
-                action, GROUP_KEY_EVENT_TYPE_COMPLETED
-            )
-        except Exception as e:
-            logger.error(f"Could not create action finished event: {e}")
-            raise e
-
-        try:
-            event.eventPayload = output
-        except Exception as e:
-            event.eventPayload = ""
-
-        return event
-
-    async def exit_gracefully(self):
-        if self.killing:
-            self.exit_forcefully()
-            return
-
-        self.killing = True
-
-        logger.info(f"Exiting gracefully...")
-
-        try:
-            logger.info("Waiting for tasks to finish...")
-
-            await self.wait_for_tasks()
-        except Exception as e:
-            logger.error(f"Could not wait for tasks: {e}")
-
-        # Wait for 1 second to allow last calls to flush. These are calls which have been
-        # added to the event loop as callbacks to tasks, so we're not aware of them in the
-        # task list.
-        await asyncio.sleep(1)
-
-        loop = asyncio.get_event_loop()
-        loop.stop()
-
-    def exit_forcefully(self):
-        self.killing = True
-
-        logger.info("Forcefully exiting hatchet worker...")
-
-        loop = asyncio.get_event_loop()
-        loop.stop()
+            try:
+                output_bytes = json.dumps(output)
+            except Exception as e:
+                logger.error(f"Could not serialize output: {e}")
+                output_bytes = str(output)
+        return output_bytes
 
     async def wait_for_tasks(self):
+        # TODO - this is not working as expected, we need to find a way to wait for all tasks to finish
         # wait for all futures to finish
         for taskId in list(self.tasks.keys()):
             try:
@@ -581,8 +468,6 @@ class Runner:
                     await self.tasks.get(taskId)
             except Exception as e:
                 pass
-
-
 
 
 def errorWithTraceback(message: str, e: Exception):

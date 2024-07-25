@@ -6,7 +6,7 @@ logger = logging.getLogger("hatchet")
 logger.setLevel(logging.ERROR)
 
 handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter("[%(levelname)s] 🪓 -- %(asctime)s - %(message)s")
+formatter = logging.Formatter("[%(levelname)s]\t🪓 -- %(asctime)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 

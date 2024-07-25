@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.worker.action_listener import worker_action_listener_process
+from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 
 from ..client import Client, new_client_raw
@@ -89,7 +89,7 @@ class Worker:
     ## Start methods
     def start(self):
         main_pid = os.getpid()
-        logger.debug(f"worker runtime starting on PID:\t{main_pid}")
+        logger.debug(f"worker runtime starting on PID: {main_pid}")
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()
@@ -123,12 +123,13 @@ class Worker:
                 self.max_runs,
                 self.config,
                 self.action_queue,
+                self.event_queue,
                 self.handle_kill,
                 self.client.debug,
             ),
         )
         process.start()
-        logger.debug(f"action listener starting on PID:\t{process.pid}")
+        logger.debug(f"action listener starting on PID: {process.pid}")
 
         return process
 

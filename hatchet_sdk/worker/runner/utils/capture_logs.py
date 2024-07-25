@@ -1,14 +1,12 @@
-from concurrent.futures import ThreadPoolExecutor
 import contextvars
 import functools
-from io import StringIO
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from io import StringIO
 from typing import Any, Coroutine
 
 from hatchet_sdk import logger
 from hatchet_sdk.clients.events import EventClient
-
-
 
 wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "workflow_run_id", default=None
@@ -23,6 +21,7 @@ def copy_context_vars(ctx_vars, func, *args, **kwargs):
         var.set(value)
     return func(*args, **kwargs)
 
+
 class InjectingFilter(logging.Filter):
     # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
     # otherwise we would use emit within the CustomLogHandler
@@ -30,6 +29,7 @@ class InjectingFilter(logging.Filter):
         record.workflow_run_id = wr.get()
         record.step_run_id = sr.get()
         return True
+
 
 class CustomLogHandler(logging.StreamHandler):
     def __init__(self, event_client: EventClient, stream=None):
@@ -51,7 +51,6 @@ class CustomLogHandler(logging.StreamHandler):
 
         log_entry = self.format(record)
         self.logger_thread_pool.submit(self._log, log_entry, record.step_run_id)
-
 
 
 def capture_logs(

@@ -4,9 +4,10 @@ import json
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator, List, Optional, overload
 
 import grpc
+from google.protobuf.timestamp_pb2 import Timestamp
 from grpc._cython import cygrpc
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
@@ -16,11 +17,13 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
     GroupKeyActionEvent,
+    GroupKeyActionEventType,
     HeartbeatRequest,
     OverridesData,
     RefreshTimeoutRequest,
     ReleaseSlotRequest,
     StepActionEvent,
+    StepActionEventType,
     WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
@@ -356,11 +359,51 @@ class DispatcherClientImpl(DispatcherClient):
             metadata=get_metadata(self.token),
         )
 
+    async def send_step_action_event_simple(
+        self, action: Action, event_type: StepActionEventType, payload: str
+    ):
+        eventTimestamp = Timestamp()
+        eventTimestamp.GetCurrentTime()
+
+        event = StepActionEvent(
+            workerId=action.worker_id,
+            jobId=action.job_id,
+            jobRunId=action.job_run_id,
+            stepId=action.step_id,
+            stepRunId=action.step_run_id,
+            actionId=action.action_id,
+            eventTimestamp=eventTimestamp,
+            eventType=event_type,
+            eventPayload=payload,
+        )
+
+        return await self.send_step_action_event(event)
+
     async def send_group_key_action_event(self, in_: GroupKeyActionEvent):
         await self.aio_client.SendGroupKeyActionEvent(
             in_,
             metadata=get_metadata(self.token),
         )
+
+    async def send_group_key_action_event_simple(
+        self, action: Action, event_type: GroupKeyActionEventType, payload: str
+    ):
+        eventTimestamp = Timestamp()
+        eventTimestamp.GetCurrentTime()
+
+        event = GroupKeyActionEvent(
+            workerId=action.worker_id,
+            jobId=action.job_id,
+            jobRunId=action.job_run_id,
+            stepId=action.step_id,
+            stepRunId=action.step_run_id,
+            actionId=action.action_id,
+            eventTimestamp=eventTimestamp,
+            eventType=event_type,
+            eventPayload=payload,
+        )
+
+        return await self.send_group_key_action_event(event)
 
     def put_overrides_data(self, data: OverridesData):
         response: ActionEventResponse = self.client.PutOverridesData(

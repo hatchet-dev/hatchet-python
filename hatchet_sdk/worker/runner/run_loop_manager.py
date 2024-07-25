@@ -1,19 +1,21 @@
 import asyncio
-from dataclasses import dataclass, field
 import logging
-from multiprocessing import Queue
 import signal
 import sys
+from dataclasses import dataclass, field
+from multiprocessing import Queue
 from typing import Any, Callable, Dict, List
+
+from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher import new_dispatcher
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
-from hatchet_sdk.logger import logger
 from hatchet_sdk.loader import ClientConfig
-from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
+
 
 @dataclass
 class WorkerActionRunLoopManager:
@@ -90,7 +92,7 @@ class WorkerActionRunLoopManager:
             self.config,
         )
 
-        print(self.action_registry)
+        logger.debug(f"waiting for {list(self.action_registry.keys())}")
 
         while True:
             action = await self._get_action()
@@ -101,41 +103,30 @@ class WorkerActionRunLoopManager:
         return await self.loop.run_in_executor(None, self.action_queue.get)
 
     async def exit_gracefully(self):
-            if self.killing:
-                self.exit_forcefully()
-                return
+        if self.killing:
+            self.exit_forcefully()
+            return
 
-            self.killing = True
+        self.killing = True
 
-            logger.info(f"Exiting gracefully...")
+        logger.info(f"attempting to exiting gracefully...")
 
-            # try:
-            #     # self.listener.unregister()
-            # except Exception as e:
-            #     logger.error(f"Could not unregister worker: {e}")
+        try:
+            logger.info("waiting for tasks to finish...")
 
-            try:
-                logger.info("Waiting for tasks to finish...")
+            # await self.wait_for_tasks()
+        except Exception as e:
+            logger.error(f"could not wait for tasks: {e}")
 
-                # await self.wait_for_tasks()
-            except Exception as e:
-                logger.error(f"Could not wait for tasks: {e}")
+        # Wait for 1 second to allow last calls to flush. These are calls which have been
+        # added to the event loop as callbacks to tasks, so we're not aware of them in the
+        # task list.
+        await asyncio.sleep(1)
 
-            # Wait for 1 second to allow last calls to flush. These are calls which have been
-            # added to the event loop as callbacks to tasks, so we're not aware of them in the
-            # task list.
-            await asyncio.sleep(1)
-
-            self.loop.stop()
+        self.loop.stop()
 
     def exit_forcefully(self):
-            self.killing = True
-
-            logger.info("Forcefully exiting hatchet worker...")
-
-            # try:
-            #     self.listener.unregister()
-            # except Exception as e:
-            #     logger.error(f"Could not unregister worker: {e}")
-
-            self.loop.stop()
+        self.killing = True
+        logger.info("forcefully exiting hatchet worker...")
+        self.loop.stop()
+        sys.exit(0)

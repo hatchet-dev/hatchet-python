@@ -6,6 +6,7 @@ import grpc
 from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
+from hatchet_sdk.logger import logger
 
 from .clients.admin import AdminClient, new_admin
 from .clients.dispatcher import DispatcherClient, new_dispatcher
@@ -28,7 +29,7 @@ class Client:
         cls,
         defaults: ClientConfig = ClientConfig(),
         debug: bool = False,
-        *opts_functions: Callable[[ClientConfig], None]
+        *opts_functions: Callable[[ClientConfig], None],
     ):
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:

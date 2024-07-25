@@ -474,16 +474,19 @@ class Worker:
 
         process = multiprocessing.Process(
             target=WorkerActionListenerProcess,
-            args=(self.name, action_list,
-                  self.max_runs,
-                   self.config, self.handle_kill, self.client.debug),
+            args=(
+                self.name,
+                action_list,
+                self.max_runs,
+                self.config,
+                self.handle_kill,
+                self.client.debug,
+            ),
         )
         process.start()
         logger.debug(f"listener started on PID: {process.pid}")
         process.join()
         time.sleep(5)
-
-
 
     async def async_start(self, retry_count=1):
         await capture_logs(
@@ -534,4 +537,3 @@ class Worker:
 
         if not self.killing:
             logger.info("Could not start worker")
-
