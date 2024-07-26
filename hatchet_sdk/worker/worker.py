@@ -6,7 +6,7 @@ import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from multiprocessing import Process, Queue
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, TypedDict
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
@@ -24,6 +24,9 @@ class WorkerStatus(Enum):
     HEALTHY = 3
     UNHEALTHY = 4
 
+@dataclass
+class WorkerStartOptions:
+    loop: asyncio.AbstractEventLoop = field(default=None)
 
 @dataclass
 class Worker:
@@ -92,12 +95,9 @@ class Worker:
 
         return self._status
 
-    async def async_start(self):
-        return self.start()
-
-    def setup_loop(self):
+    def setup_loop(self, loop: asyncio.AbstractEventLoop = None):
         try:
-            loop = asyncio.get_running_loop()
+            loop = loop or asyncio.get_running_loop()
             self.loop = loop
             created_loop = False
             logger.debug("using existing event loop")
@@ -109,8 +109,19 @@ class Worker:
             created_loop = True
             return created_loop
 
+    def start(self, options: WorkerStartOptions = WorkerStartOptions()):
+        created_loop = self.setup_loop(options.loop)
+        f = asyncio.run_coroutine_threadsafe(self.async_start(options, _from_start=True), self.loop)
+        # start the loop and wait until its closed
+        if created_loop:
+            self.loop.run_forever()
+
+            if self.handle_kill:
+                sys.exit(0)
+        return f
+
     ## Start methods
-    def start(self):
+    async def async_start(self, options: WorkerStartOptions = WorkerStartOptions(), _from_start: bool = False):
         main_pid = os.getpid()
         logger.info(f"------------------------------------------")
         logger.info(f"STARTING HATCHET...")
@@ -123,7 +134,8 @@ class Worker:
             return
 
         # non blocking setup
-        created_loop = self.setup_loop()
+        if not _from_start:
+            self.setup_loop(options.loop)
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()
@@ -131,12 +143,8 @@ class Worker:
             self._check_listener_health()
         )
 
-        # # start the loop and wait until its closed
-        if created_loop:
-            self.loop.run_forever()
+        return await self.action_listener_health_check
 
-            if self.handle_kill:
-                sys.exit(0)
 
     def _run_action_runner(self):
         # Retrieve the shared queue
@@ -207,8 +215,8 @@ class Worker:
         logger.info(f"received SIGQUIT...")
         self.exit_forcefully()
 
-    async def cleanup(self):
-        logger.error("cleaning up")
+    async def close(self):
+        logger.info(f"closing worker '{self.name}'...")
         self.killing = True
         self.action_queue.close()
         self.event_queue.close()
@@ -230,7 +238,7 @@ class Worker:
         if self.action_listener_process:
             self.action_listener_process.kill()  # Forcefully kill the process
 
-        self.loop.create_task(self.cleanup())
+        self.loop.create_task(self.close())
 
         if self.loop:
             self.loop.stop()
@@ -242,7 +250,7 @@ class Worker:
 
         logger.debug(f"forcefully stopping worker: {self.name}")
 
-        self.cleanup()
+        self.close()
 
         if self.action_listener_process:
             self.action_listener_process.kill()  # Forcefully kill the process
