@@ -9,17 +9,18 @@ from hatchet_sdk.clients.run_event_listener import (
     RunEventListenerClient,
 )
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
-from .clients.admin import (
+from ..clients.admin import (
     AdminClientImpl,
     ChildTriggerWorkflowOptions,
     ScheduleTriggerWorkflowOptions,
     TriggerWorkflowOptions,
 )
-from .clients.dispatcher import Action, DispatcherClientImpl
-from .dispatcher_pb2 import OverridesData
-from .logger import logger
+from ..clients.dispatcher import Action, DispatcherClientImpl
+from ..dispatcher_pb2 import OverridesData
+from ..logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
 
@@ -32,17 +33,27 @@ def get_caller_file_path():
 
 class BaseContext:
     def _prepare_workflow_options(
-        self, key: str = None, options: ChildTriggerWorkflowOptions = None
+        self,
+        key: str = None,
+        options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
+        worker_id: str = None,
     ):
         workflow_run_id = self.action.workflow_run_id
         step_run_id = self.action.step_run_id
+
+        desired_worker_id = None
+        if options["sticky"] == True:
+            desired_worker_id = worker_id
 
         trigger_options: TriggerWorkflowOptions = {
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,
             "child_index": self.spawn_index,
-            "additional_metadata": options["additional_metadata"] if options else None,
+            "additional_metadata": (
+                options["additional_metadata"] if "additional_meta" in options else None
+            ),
+            "desired_worker_id": desired_worker_id,
         }
 
         self.spawn_index += 1
@@ -58,6 +69,7 @@ class ContextAioImpl(BaseContext):
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
+        worker: WorkerContext,
         namespace: str = "",
     ):
         self.action = action
@@ -68,6 +80,7 @@ class ContextAioImpl(BaseContext):
         self.workflow_run_event_listener = workflow_run_event_listener
         self.namespace = namespace
         self.spawn_index = -1
+        self.worker = worker
 
     async def spawn_workflow(
         self,
@@ -76,7 +89,8 @@ class ContextAioImpl(BaseContext):
         key: str = None,
         options: ChildTriggerWorkflowOptions = None,
     ) -> WorkflowRunRef:
-        trigger_options = self._prepare_workflow_options(key, options)
+        worker_id = self.worker.id()
+        trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
         return await self.admin_client.aio.run_workflow(
             workflow_name, input, trigger_options
@@ -86,6 +100,8 @@ class ContextAioImpl(BaseContext):
 class Context(BaseContext):
     spawn_index = -1
 
+    worker: WorkerContext
+
     def __init__(
         self,
         action: Action,
@@ -94,8 +110,11 @@ class Context(BaseContext):
         event_client: EventClientImpl,
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
+        worker: WorkerContext,
         namespace: str = "",
     ):
+        self.worker = worker
+
         self.aio = ContextAioImpl(
             action,
             dispatcher_client,
@@ -103,6 +122,7 @@ class Context(BaseContext):
             event_client,
             workflow_listener,
             workflow_run_event_listener,
+            worker,
             namespace,
         )
 
@@ -195,7 +215,18 @@ class Context(BaseContext):
         key: str = None,
         options: ChildTriggerWorkflowOptions = None,
     ):
-        trigger_options = self._prepare_workflow_options(key, options)
+        worker_id = self.worker.id()
+
+        if (
+            "sticky" in options
+            and options["sticky"] == True
+            and not self.worker.has_workflow(workflow_name)
+        ):
+            raise Exception(
+                f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
+            )
+
+        trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
         return self.admin_client.run_workflow(workflow_name, input, trigger_options)
 

@@ -4,7 +4,7 @@ import json
 import random
 import threading
 import time
-from typing import Any, AsyncGenerator, List
+from typing import Any, AsyncGenerator, List, Mapping
 
 import grpc
 from grpc._cython import cygrpc
@@ -22,6 +22,8 @@ from ..dispatcher_pb2 import (
     RefreshTimeoutRequest,
     ReleaseSlotRequest,
     StepActionEvent,
+    UpsertWorkerLabelsRequest,
+    WorkerLabels,
     WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
@@ -59,11 +61,21 @@ class GetActionListenerRequest:
         services: List[str],
         actions: List[str],
         max_runs: int | None = None,
+        labels: dict[str, str | int] = {},
     ):
         self.worker_name = worker_name
         self.services = services
         self.actions = actions
         self.max_runs = max_runs
+
+        # TODO map this data?
+        self.labels: Mapping = {}
+
+        for key, value in labels.items():
+            if isinstance(value, int):
+                self.labels[key] = WorkerLabels(intValue=value)
+            else:
+                self.labels[key] = WorkerLabels(strValue=str(value))
 
 
 class Action:
@@ -402,6 +414,7 @@ class DispatcherClientImpl(DispatcherClient):
                 actions=req.actions,
                 services=req.services,
                 maxRuns=req.max_runs,
+                labels=req.labels,
             ),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
@@ -442,6 +455,21 @@ class DispatcherClientImpl(DispatcherClient):
                 stepRunId=step_run_id,
                 incrementTimeoutBy=increment_by,
             ),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
+            metadata=get_metadata(self.token),
+        )
+
+    def upsert_worker_labels(self, worker_id: str, labels: dict[str, str | int]):
+        worker_labels = {}
+
+        for key, value in labels.items():
+            if isinstance(value, int):
+                worker_labels[key] = WorkerLabels(intValue=value)
+            else:
+                worker_labels[key] = WorkerLabels(strValue=str(value))
+
+        self.client.UpsertWorkerLabels(
+            UpsertWorkerLabelsRequest(workerId=worker_id, labels=worker_labels),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )

@@ -25,6 +25,7 @@ from typing_extensions import Annotated, Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.step_run import StepRun
+from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 
 
 class Worker(BaseModel):
@@ -72,6 +73,9 @@ class Worker(BaseModel):
         description="the id of the assigned dispatcher, in UUID format",
         alias="dispatcherId",
     )
+    labels: Optional[List[WorkerLabel]] = Field(
+        default=None, description="The current label state of the worker."
+    )
     __properties: ClassVar[List[str]] = [
         "metadata",
         "name",
@@ -83,6 +87,7 @@ class Worker(BaseModel):
         "maxRuns",
         "availableRuns",
         "dispatcherId",
+        "labels",
     ]
 
     @field_validator("status")
@@ -144,6 +149,13 @@ class Worker(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict["recentStepRuns"] = _items
+        # override the default output from pydantic by calling `to_dict()` of each item in labels (list)
+        _items = []
+        if self.labels:
+            for _item in self.labels:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict["labels"] = _items
         return _dict
 
     @classmethod
@@ -175,6 +187,11 @@ class Worker(BaseModel):
                 "maxRuns": obj.get("maxRuns"),
                 "availableRuns": obj.get("availableRuns"),
                 "dispatcherId": obj.get("dispatcherId"),
+                "labels": (
+                    [WorkerLabel.from_dict(_item) for _item in obj["labels"]]
+                    if obj.get("labels") is not None
+                    else None
+                ),
             }
         )
         return _obj

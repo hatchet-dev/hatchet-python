@@ -17,28 +17,21 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
-from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing_extensions import Annotated, Self
+from typing_extensions import Self
+
+from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 
 
-class APIResourceMeta(BaseModel):
+class ReplayWorkflowRunsResponse(BaseModel):
     """
-    APIResourceMeta
+    ReplayWorkflowRunsResponse
     """  # noqa: E501
 
-    id: Annotated[str, Field(min_length=0, strict=True, max_length=36)] = Field(
-        description="the id of this resource, in UUID format"
-    )
-    created_at: datetime = Field(
-        description="the time that this resource was created", alias="createdAt"
-    )
-    updated_at: datetime = Field(
-        description="the time that this resource was last updated", alias="updatedAt"
-    )
-    __properties: ClassVar[List[str]] = ["id", "createdAt", "updatedAt"]
+    workflow_runs: List[WorkflowRun] = Field(alias="workflowRuns")
+    __properties: ClassVar[List[str]] = ["workflowRuns"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -57,7 +50,7 @@ class APIResourceMeta(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of APIResourceMeta from a JSON string"""
+        """Create an instance of ReplayWorkflowRunsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,11 +70,18 @@ class APIResourceMeta(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in workflow_runs (list)
+        _items = []
+        if self.workflow_runs:
+            for _item in self.workflow_runs:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict["workflowRuns"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of APIResourceMeta from a dict"""
+        """Create an instance of ReplayWorkflowRunsResponse from a dict"""
         if obj is None:
             return None
 
@@ -90,9 +90,11 @@ class APIResourceMeta(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "id": obj.get("id"),
-                "createdAt": obj.get("createdAt"),
-                "updatedAt": obj.get("updatedAt"),
+                "workflowRuns": (
+                    [WorkflowRun.from_dict(_item) for _item in obj["workflowRuns"]]
+                    if obj.get("workflowRuns") is not None
+                    else None
+                )
             }
         )
         return _obj

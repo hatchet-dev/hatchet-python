@@ -40,10 +40,12 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
 
 class ChildTriggerWorkflowOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
+    sticky: bool | None = None
 
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
+    desired_worker_id: str | None = None
 
 
 class AdminClientBase:

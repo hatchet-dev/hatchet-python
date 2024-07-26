@@ -17,28 +17,21 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
-from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Annotated, Self
 
 
-class APIResourceMeta(BaseModel):
+class ReplayWorkflowRunsRequest(BaseModel):
     """
-    APIResourceMeta
+    ReplayWorkflowRunsRequest
     """  # noqa: E501
 
-    id: Annotated[str, Field(min_length=0, strict=True, max_length=36)] = Field(
-        description="the id of this resource, in UUID format"
-    )
-    created_at: datetime = Field(
-        description="the time that this resource was created", alias="createdAt"
-    )
-    updated_at: datetime = Field(
-        description="the time that this resource was last updated", alias="updatedAt"
-    )
-    __properties: ClassVar[List[str]] = ["id", "createdAt", "updatedAt"]
+    workflow_run_ids: List[
+        Annotated[str, Field(min_length=36, strict=True, max_length=36)]
+    ] = Field(alias="workflowRunIds")
+    __properties: ClassVar[List[str]] = ["workflowRunIds"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -57,7 +50,7 @@ class APIResourceMeta(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of APIResourceMeta from a JSON string"""
+        """Create an instance of ReplayWorkflowRunsRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -81,18 +74,12 @@ class APIResourceMeta(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of APIResourceMeta from a dict"""
+        """Create an instance of ReplayWorkflowRunsRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "id": obj.get("id"),
-                "createdAt": obj.get("createdAt"),
-                "updatedAt": obj.get("updatedAt"),
-            }
-        )
+        _obj = cls.model_validate({"workflowRunIds": obj.get("workflowRunIds")})
         return _obj
