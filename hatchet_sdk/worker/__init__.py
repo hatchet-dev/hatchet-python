@@ -1,1 +1,1 @@
-from .worker import Worker, WorkerStatus
+from .worker import Worker, WorkerStatus, WorkerStartOptions

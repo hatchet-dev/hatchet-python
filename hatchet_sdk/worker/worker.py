@@ -13,9 +13,9 @@ from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 
-from ..client import Client, new_client_raw
-from ..context import Context
-from ..workflow import WorkflowMeta
+from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.context import Context
+from hatchet_sdk.workflow import WorkflowMeta
 
 
 class WorkerStatus(Enum):
