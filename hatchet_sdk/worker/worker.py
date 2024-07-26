@@ -84,15 +84,6 @@ class Worker:
             self.action_registry[action_name] = create_action_function(action_func)
 
     def status(self) -> WorkerStatus:
-        # TODO: Implement health check
-        if self.listener:
-            if self.listener.is_healthy():
-                self._status = WorkerStatus.HEALTHY
-                return WorkerStatus.HEALTHY
-            else:
-                self._status = WorkerStatus.UNHEALTHY
-                return WorkerStatus.UNHEALTHY
-
         return self._status
 
     def setup_loop(self, loop: asyncio.AbstractEventLoop = None):
@@ -126,6 +117,8 @@ class Worker:
         logger.info(f"------------------------------------------")
         logger.info(f"STARTING HATCHET...")
         logger.debug(f"worker runtime starting on PID: {main_pid}")
+
+        self._status = WorkerStatus.STARTING
 
         if len(self.action_registry.keys()) == 0:
             logger.error(
@@ -193,9 +186,12 @@ class Worker:
                     or not self.action_listener_process.is_alive()
                 ):
                     logger.debug("child action listener process killed...")
+                    self._status = WorkerStatus.UNHEALTHY
                     if not self.killing:
                         self.exit_gracefully()
                     break
+                else:
+                    self._status = WorkerStatus.HEALTHY
                 await asyncio.sleep(1)
         except Exception as e:
             logger.error(f"error checking listener health: {e}")
