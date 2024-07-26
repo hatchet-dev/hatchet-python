@@ -11,8 +11,6 @@ hatchet = Hatchet(debug=True)
 
 @hatchet.workflow(on_events=["async:create"])
 class AsyncWorkflow:
-    def __init__(self):
-        self.my_value = "test"
 
     @hatchet.step(timeout="2s")
     async def step1(self, context: Context):
