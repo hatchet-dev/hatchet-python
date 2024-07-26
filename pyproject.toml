@@ -27,6 +27,9 @@ pytest-asyncio = "^0.23.8"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+log_cli = true
+
 [tool.isort]
 profile = "black"
 known_third_party = [
