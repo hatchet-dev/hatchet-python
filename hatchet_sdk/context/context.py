@@ -42,7 +42,7 @@ class BaseContext:
         step_run_id = self.action.step_run_id
 
         desired_worker_id = None
-        if options["sticky"] == True:
+        if "sticky" in options and options["sticky"] == True:
             desired_worker_id = worker_id
 
         trigger_options: TriggerWorkflowOptions = {
