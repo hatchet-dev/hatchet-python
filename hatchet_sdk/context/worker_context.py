@@ -12,6 +12,9 @@ class WorkerContext:
         self._labels = labels
         self.client = new_client_raw(config)
 
+    def labels(self):
+        return self._labels
+
     def upsert_labels(self, labels: dict[str, str | int]):
         return self.client.dispatcher.upsert_worker_labels(self._worker_id, labels)
 
