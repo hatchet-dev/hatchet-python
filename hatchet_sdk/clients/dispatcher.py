@@ -79,6 +79,8 @@ class GetActionListenerRequest:
 
 
 class Action:
+    additional_metadata: dict[str, str] | None = None
+
     def __init__(
         self,
         worker_id: str,
@@ -94,6 +96,10 @@ class Action:
         action_payload: str,
         action_type: ActionType,
         retry_count: int,
+        additional_metadata: str | None = None,
+        child_workflow_index: int | None = None,
+        child_workflow_key: str | None = None,
+        parent_workflow_run_id: str | None = None,
     ):
         self.worker_id = worker_id
         self.workflow_run_id = workflow_run_id
@@ -108,6 +114,18 @@ class Action:
         self.action_payload = action_payload
         self.action_type = action_type
         self.retry_count = retry_count
+
+        if additional_metadata is not None and additional_metadata != "":
+            try:
+                self.additional_metadata: dict[str, str] = json.loads(
+                    additional_metadata
+                )
+            except json.JSONDecodeError as e:
+                pass
+
+        self.child_workflow_index = child_workflow_index
+        self.child_workflow_key = child_workflow_key
+        self.parent_workflow_run_id = parent_workflow_run_id
 
 
 class WorkerActionListener:
@@ -265,6 +283,10 @@ class ActionListenerImpl(WorkerActionListener):
                         action_payload=action_payload,
                         action_type=action_type,
                         retry_count=assigned_action.retryCount,
+                        additional_metadata=assigned_action.additional_metadata,
+                        child_workflow_index=assigned_action.child_workflow_index,
+                        child_workflow_key=assigned_action.child_workflow_key,
+                        parent_workflow_run_id=assigned_action.parent_workflow_run_id,
                     )
 
                     yield action
