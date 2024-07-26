@@ -598,7 +598,7 @@ class Worker:
             asyncio.set_event_loop(self.loop)
             created_loop = True
 
-        self.loop.create_task(self.async_start(retry_count))
+        asyncio.run_coroutine_threadsafe(self.async_start(retry_count), self.loop)
 
         self.loop.add_signal_handler(
             signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
