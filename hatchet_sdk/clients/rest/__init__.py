@@ -32,6 +32,7 @@ from hatchet_sdk.clients.rest.api.user_api import UserApi
 from hatchet_sdk.clients.rest.api.worker_api import WorkerApi
 from hatchet_sdk.clients.rest.api.workflow_api import WorkflowApi
 from hatchet_sdk.clients.rest.api.workflow_run_api import WorkflowRunApi
+from hatchet_sdk.clients.rest.api.workflow_runs_api import WorkflowRunsApi
 from hatchet_sdk.clients.rest.api_client import ApiClient
 
 # import ApiClient
@@ -114,6 +115,12 @@ from hatchet_sdk.clients.rest.models.pull_request_state import PullRequestState
 from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
 from hatchet_sdk.clients.rest.models.reject_invite_request import RejectInviteRequest
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
+from hatchet_sdk.clients.rest.models.replay_workflow_runs_request import (
+    ReplayWorkflowRunsRequest,
+)
+from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
+    ReplayWorkflowRunsResponse,
+)
 from hatchet_sdk.clients.rest.models.rerun_step_run_request import RerunStepRunRequest
 from hatchet_sdk.clients.rest.models.slack_webhook import SlackWebhook
 from hatchet_sdk.clients.rest.models.sns_integration import SNSIntegration
