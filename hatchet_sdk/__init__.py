@@ -124,6 +124,7 @@ from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersio
 from .client import ClientImpl, new_client
 from .clients.admin import (
     ChildTriggerWorkflowOptions,
+    DedupeViolationErr,
     ScheduleTriggerWorkflowOptions,
     TriggerWorkflowOptions,
 )
