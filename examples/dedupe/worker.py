@@ -7,11 +7,13 @@ from hatchet_sdk import Context, Hatchet
 from hatchet_sdk.clients.admin import DedupeViolationErr
 from hatchet_sdk.loader import ClientConfig
 
+load_dotenv()
+
 hatchet = Hatchet(debug=True)
 
 
 @hatchet.workflow(on_events=["parent:create"])
-class Parent:
+class DedupeParent:
     @hatchet.step(timeout="1m")
     async def spawn(self, context: Context):
         print("spawning child")
@@ -41,7 +43,7 @@ class Parent:
 
 
 @hatchet.workflow(on_events=["child:create"])
-class Child:
+class DedupeChild:
     @hatchet.step()
     async def process(self, context: Context):
         await asyncio.sleep(3)
@@ -57,8 +59,8 @@ class Child:
 
 def main():
     worker = hatchet.worker("fanout-worker", max_runs=100)
-    worker.register_workflow(Parent())
-    worker.register_workflow(Child())
+    worker.register_workflow(DedupeParent())
+    worker.register_workflow(DedupeChild())
     worker.start()
 
 
