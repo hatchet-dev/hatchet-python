@@ -587,12 +587,11 @@ class Worker:
 
         return self._status
 
-    def start(self, retry_count=1):
+    def start(self, retry_count=1, loop=None):
         self._status = WorkerStatus.STARTING
 
         try:
-            loop = asyncio.get_running_loop()
-            self.loop = loop
+            self.loop = loop or asyncio.get_running_loop()
             created_loop = False
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
