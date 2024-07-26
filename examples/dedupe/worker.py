@@ -25,7 +25,7 @@ class DedupeParent:
                 results.append(
                     (
                         await context.aio.spawn_workflow(
-                            "Child",
+                            "DedupeChild",
                             {"a": str(i)},
                             key=f"child{i}",
                             options={"additional_metadata": {"dedupe": "test"}},
