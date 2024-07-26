@@ -45,14 +45,16 @@ class BaseContext:
         if "sticky" in options and options["sticky"] == True:
             desired_worker_id = worker_id
 
+        meta = None
+        if "additional_metadata" in options:
+            meta = options["additional_metadata"]
+
         trigger_options: TriggerWorkflowOptions = {
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,
             "child_index": self.spawn_index,
-            "additional_metadata": (
-                options["additional_metadata"] if "additional_meta" in options else None
-            ),
+            "additional_metadata": meta,
             "desired_worker_id": desired_worker_id,
         }
 
@@ -90,6 +92,15 @@ class ContextAioImpl(BaseContext):
         options: ChildTriggerWorkflowOptions = None,
     ) -> WorkflowRunRef:
         worker_id = self.worker.id()
+        if (
+            "sticky" in options
+            and options["sticky"] == True
+            and not self.worker.has_workflow(workflow_name)
+        ):
+            raise Exception(
+                f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
+            )
+
         trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
         return await self.admin_client.aio.run_workflow(
