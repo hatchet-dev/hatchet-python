@@ -134,4 +134,4 @@ from .clients.events import PushEventOptions
 from .clients.run_event_listener import StepRunEventType, WorkflowRunEventType
 from .context import Context
 from .hatchet import ClientConfig, Hatchet, concurrency, on_failure_step, step, workflow
-from .worker import Worker, WorkerStatus
+from .worker import Worker, WorkerStatus, WorkerStartOptions
