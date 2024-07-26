@@ -6,7 +6,7 @@ import sys
 from dataclasses import dataclass, field
 from enum import Enum
 from multiprocessing import Process, Queue
-from typing import Any, Callable, Dict, Optional, TypedDict
+from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
@@ -24,9 +24,11 @@ class WorkerStatus(Enum):
     HEALTHY = 3
     UNHEALTHY = 4
 
+
 @dataclass
 class WorkerStartOptions:
     loop: asyncio.AbstractEventLoop = field(default=None)
+
 
 @dataclass
 class Worker:
@@ -102,7 +104,9 @@ class Worker:
 
     def start(self, options: WorkerStartOptions = WorkerStartOptions()):
         created_loop = self.setup_loop(options.loop)
-        f = asyncio.run_coroutine_threadsafe(self.async_start(options, _from_start=True), self.loop)
+        f = asyncio.run_coroutine_threadsafe(
+            self.async_start(options, _from_start=True), self.loop
+        )
         # start the loop and wait until its closed
         if created_loop:
             self.loop.run_forever()
@@ -112,7 +116,11 @@ class Worker:
         return f
 
     ## Start methods
-    async def async_start(self, options: WorkerStartOptions = WorkerStartOptions(), _from_start: bool = False):
+    async def async_start(
+        self,
+        options: WorkerStartOptions = WorkerStartOptions(),
+        _from_start: bool = False,
+    ):
         main_pid = os.getpid()
         logger.info(f"------------------------------------------")
         logger.info(f"STARTING HATCHET...")
@@ -137,7 +145,6 @@ class Worker:
         )
 
         return await self.action_listener_health_check
-
 
     def _run_action_runner(self):
         # Retrieve the shared queue
