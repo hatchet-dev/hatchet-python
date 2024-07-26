@@ -262,3 +262,15 @@ class Context(BaseContext):
 
     def retry_count(self):
         return self.action.retry_count
+
+    def additional_metadata(self):
+        return self.action.additional_metadata
+
+    def child_index(self):
+        return self.action.child_workflow_index
+
+    def child_key(self):
+        return self.action.child_workflow_key
+
+    def parent_workflow_run_id(self):
+        return self.action.parent_workflow_run_id
