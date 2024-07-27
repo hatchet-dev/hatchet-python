@@ -4,7 +4,7 @@ from ..client import new_client_raw
 
 
 class WorkerContext:
-    _worker_id: str
+    _worker_id: str = None
     _registered_workflow_names: list[str] = []
     _labels: dict[str, str | int] = {}
 

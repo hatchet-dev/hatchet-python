@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict
 
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
+from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.runner.runner import Runner
@@ -28,6 +29,7 @@ class WorkerActionRunLoopManager:
     loop: asyncio.AbstractEventLoop
     handle_kill: bool = True
     debug: bool = False
+    labels: dict[str, str | int] = field(default_factory=dict)
 
     client: Client = field(init=False, default=None)
 
@@ -80,6 +82,7 @@ class WorkerActionRunLoopManager:
             self.handle_kill,
             self.action_registry,
             self.config,
+            self.labels,
         )
 
         logger.debug(f"'{self.name}' waiting for {list(self.action_registry.keys())}")

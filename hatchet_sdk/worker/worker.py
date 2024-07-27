@@ -158,6 +158,7 @@ class Worker:
             self.loop,
             self.handle_kill,
             self.client.debug,
+            self.labels,
         )
 
         return runner

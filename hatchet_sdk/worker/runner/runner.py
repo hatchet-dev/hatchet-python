@@ -21,6 +21,7 @@ from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context import Context
+from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_COMPLETED,
     GROUP_KEY_EVENT_TYPE_FAILED,
@@ -124,6 +125,7 @@ class Runner:
         handle_kill: bool = True,
         action_registry: dict[str, Callable[..., Any]] = {},
         config: ClientConfig = {},
+        labels: dict[str, str | int] = {},
     ):
         # We store the config so we can dynamically create clients for the dispatcher client.
         self.config = config
@@ -150,7 +152,12 @@ class Runner:
         self.workflow_run_event_listener = new_listener(self.config)
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
+        self.worker_context = WorkerContext(labels=labels, config=self.config)
+
     def run(self, action: Action):
+        if self.worker_context.id() is None:
+            self.worker_context._worker_id = action.worker_id
+
         match action.action_type:
             case ActionType.START_STEP_RUN:
                 logger.info(f"run: start step: {action.action_id}/{action.step_run_id}")
@@ -317,6 +324,7 @@ class Runner:
             self.client.event,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
+            self.worker_context,
             self.client.config.namespace,
         )
         self.contexts[action.step_run_id] = context
@@ -357,6 +365,7 @@ class Runner:
             self.client.event,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
+            self.worker_context,
             self.client.config.namespace,
         )
         self.contexts[action.get_group_key_run_id] = context
