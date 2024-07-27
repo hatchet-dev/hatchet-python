@@ -52,6 +52,7 @@ class DispatcherClient:
                 actions=req.actions,
                 services=req.services,
                 maxRuns=req.max_runs,
+                labels=req.labels,
             ),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
@@ -82,26 +83,9 @@ class DispatcherClient:
             metadata=get_metadata(self.token),
         )
 
-    async def send_group_key_action_event(
-        self, action: Action, event_type: GroupKeyActionEventType, payload: str
-    ):
-        eventTimestamp = Timestamp()
-        eventTimestamp.GetCurrentTime()
-
-        event = GroupKeyActionEvent(
-            workerId=action.worker_id,
-            jobId=action.job_id,
-            jobRunId=action.job_run_id,
-            stepId=action.step_id,
-            stepRunId=action.step_run_id,
-            actionId=action.action_id,
-            eventTimestamp=eventTimestamp,
-            eventType=event_type,
-            eventPayload=payload,
-        )
-
-        return await self.aio_client.SendGroupKeyActionEvent(
-            event,
+    async def send_group_key_action_event(self, in_: GroupKeyActionEvent):
+        await self.aio_client.SendGroupKeyActionEvent(
+            in_,
             metadata=get_metadata(self.token),
         )
 
@@ -126,6 +110,21 @@ class DispatcherClient:
                 stepRunId=step_run_id,
                 incrementTimeoutBy=increment_by,
             ),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
+            metadata=get_metadata(self.token),
+        )
+
+    def upsert_worker_labels(self, worker_id: str, labels: dict[str, str | int]):
+        worker_labels = {}
+
+        for key, value in labels.items():
+            if isinstance(value, int):
+                worker_labels[key] = WorkerLabels(intValue=value)
+            else:
+                worker_labels[key] = WorkerLabels(strValue=str(value))
+
+        self.client.UpsertWorkerLabels(
+            UpsertWorkerLabelsRequest(workerId=worker_id, labels=worker_labels),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )

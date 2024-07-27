@@ -17,6 +17,12 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
     HeartbeatRequest,
+    OverridesData,
+    RefreshTimeoutRequest,
+    ReleaseSlotRequest,
+    StepActionEvent,
+    UpsertWorkerLabelsRequest,
+    WorkerLabels,
     WorkerListenRequest,
     WorkerUnsubscribeRequest,
 )
@@ -41,6 +47,19 @@ class GetActionListenerRequest:
     services: List[str]
     actions: List[str]
     max_runs: Optional[int] = None
+    _labels: dict[str, str | int] = field(default_factory=dict)
+
+    labels: dict[str, WorkerLabels] = field(init=False)
+
+    # FIXME
+    def __post_init__(self):
+        self.labels = {}
+
+        for key, value in self._labels.items():
+            if isinstance(value, int):
+                self.labels[key] = WorkerLabels(intValue=value)
+            else:
+                self.labels[key] = WorkerLabels(strValue=str(value))
 
 
 @dataclass
@@ -58,6 +77,23 @@ class Action:
     action_payload: str
     action_type: ActionType
     retry_count: int
+    additional_metadata: dict[str, str] | None = None
+
+    child_workflow_index: int | None = None
+    child_workflow_key: str | None = None
+    parent_workflow_run_id: str | None = None
+
+    def __post_init__(self):
+        if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
+            try:
+                self.additional_metadata = json.loads(self.additional_metadata)
+            except json.JSONDecodeError:
+                # If JSON decoding fails, keep the original string
+                pass
+
+        # Ensure additional_metadata is always a dictionary
+        if not isinstance(self.additional_metadata, dict):
+            self.additional_metadata = {}
 
 
 START_STEP_RUN = 0
@@ -234,6 +270,10 @@ class ActionListener:
                         action_payload=action_payload,
                         action_type=action_type,
                         retry_count=assigned_action.retryCount,
+                        additional_metadata=assigned_action.additional_metadata,
+                        child_workflow_index=assigned_action.child_workflow_index,
+                        child_workflow_key=assigned_action.child_workflow_key,
+                        parent_workflow_run_id=assigned_action.parent_workflow_run_id,
                     )
 
                     yield action

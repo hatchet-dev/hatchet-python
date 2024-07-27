@@ -12,12 +12,12 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["async:create"])
 class AsyncWorkflow:
 
-    @hatchet.step(timeout="2s")
+    @hatchet.step(timeout="10s")
     async def step1(self, context: Context):
         print("started step1")
         return {"test": "test"}
 
-    @hatchet.step(parents=["step1"], timeout="4s")
+    @hatchet.step(parents=["step1"], timeout="10s")
     async def step2(self, context):
         print("finished step2")
 

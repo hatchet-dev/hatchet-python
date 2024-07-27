@@ -40,10 +40,18 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
 
 class ChildTriggerWorkflowOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
+    sticky: bool | None = None
 
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
+    desired_worker_id: str | None = None
+
+
+class DedupeViolationErr(Exception):
+    """Raised by the Hatchet library to indicate that a workflow has already been run with this deduplication value."""
+
+    pass
 
 
 class AdminClientBase:
@@ -56,7 +64,11 @@ class AdminClientBase:
             payload_data = json.dumps(input)
 
             try:
-                meta = None if options is None else options.get("additional_metadata")
+                meta = (
+                    None
+                    if options is None or "additional_metadata" not in options
+                    else options["additional_metadata"]
+                )
                 if meta is not None:
                     options["additional_metadata"] = json.dumps(meta).encode("utf-8")
             except json.JSONDecodeError as e:
@@ -154,6 +166,9 @@ class AdminClientAioImpl(AdminClientBase):
                 workflow_run_event_listener=self.listener_client,
             )
         except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+                raise DedupeViolationErr(e.details())
+
             raise ValueError(f"gRPC error: {e}")
 
     async def put_workflow(
@@ -207,6 +222,9 @@ class AdminClientAioImpl(AdminClientBase):
                 metadata=get_metadata(self.token),
             )
         except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+                raise DedupeViolationErr(e.details())
+
             raise ValueError(f"gRPC error: {e}")
 
 
@@ -273,6 +291,9 @@ class AdminClient(AdminClientBase):
                 metadata=get_metadata(self.token),
             )
         except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+                raise DedupeViolationErr(e.details())
+
             raise ValueError(f"gRPC error: {e}")
 
     def run_workflow(
@@ -296,6 +317,9 @@ class AdminClient(AdminClientBase):
                 workflow_run_event_listener=self.listener_client,
             )
         except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+                raise DedupeViolationErr(e.details())
+
             raise ValueError(f"gRPC error: {e}")
 
     def get_workflow_run(self, workflow_run_id: str) -> WorkflowRunRef:

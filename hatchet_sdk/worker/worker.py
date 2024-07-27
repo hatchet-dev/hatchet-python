@@ -8,13 +8,12 @@ from enum import Enum
 from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, Optional
 
+from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.context import Context
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
-
-from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.context import Context
 from hatchet_sdk.workflow import WorkflowMeta
 
 
@@ -36,6 +35,7 @@ class Worker:
     config: ClientConfig = field(default_factory=dict)
     max_runs: Optional[int] = None
     debug: bool = False
+    labels: dict[str, str | int] = field(default_factory=dict)
     handle_kill: bool = True
 
     client: Client = field(init=False)
