@@ -18,12 +18,12 @@ class AffinityWorkflow:
             "memory": {
                 "value": 256,
                 "required": True,
-                "comparator": WorkerLabelComparator.GREATER_THAN,
+                "comparator": WorkerLabelComparator.LESS_THAN,
             },
         },
     )
     async def step(self, context: Context):
-        if context.worker.get_labels().get("model") != "fancy-ai-model-v2":
+        if context.worker.labels().get("model") != "fancy-ai-model-v2":
             context.worker.upsert_labels({"model": "unset"})
             # DO WORK TO EVICT OLD MODEL / LOAD NEW MODEL
             context.worker.upsert_labels({"model": "fancy-ai-model-v2"})

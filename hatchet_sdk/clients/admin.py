@@ -64,7 +64,11 @@ class AdminClientBase:
             payload_data = json.dumps(input)
 
             try:
-                meta = None if options is None else options.get("additional_metadata")
+                meta = (
+                    None
+                    if options is None or "additional_metadata" not in options
+                    else options["additional_metadata"]
+                )
                 if meta is not None:
                     options["additional_metadata"] = json.dumps(meta).encode("utf-8")
             except json.JSONDecodeError as e:
