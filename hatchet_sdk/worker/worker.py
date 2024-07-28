@@ -178,7 +178,9 @@ class Worker:
 
     def _start_listener(self):
         action_list = [str(key) for key in self.action_registry.keys()]
-        process = multiprocessing.Process(
+
+        ctx = multiprocessing.get_context("spawn")
+        process = ctx.Process(
             target=worker_action_listener_process,
             args=(
                 self.name,
