@@ -1,22 +1,19 @@
-from hatchet_sdk.loader import ClientConfig
-
-from ..client import new_client_raw
-
+from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
 
 class WorkerContext:
     _worker_id: str = None
     _registered_workflow_names: list[str] = []
     _labels: dict[str, str | int] = {}
 
-    def __init__(self, labels: dict[str, str | int], config: ClientConfig = {}):
+    def __init__(self, labels: dict[str, str | int], client: DispatcherClient):
         self._labels = labels
-        self.client = new_client_raw(config)
+        self.client = client
 
     def labels(self):
         return self._labels
 
     def upsert_labels(self, labels: dict[str, str | int]):
-        return self.client.dispatcher.upsert_worker_labels(self._worker_id, labels)
+        return self.client.upsert_worker_labels(self._worker_id, labels)
 
     def id(self):
         return self._worker_id

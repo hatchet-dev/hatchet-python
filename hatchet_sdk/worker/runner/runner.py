@@ -33,6 +33,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 
 wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
@@ -152,7 +153,7 @@ class Runner:
         self.workflow_run_event_listener = new_listener(self.config)
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
-        self.worker_context = WorkerContext(labels=labels, config=self.config)
+        self.worker_context = WorkerContext(labels=labels, client=new_client_raw(config))
 
     def run(self, action: Action):
         if self.worker_context.id() is None:
@@ -276,7 +277,7 @@ class Runner:
         sr.set(context.step_run_id)
 
         try:
-            if action_func._is_coroutine:
+            if (hasattr(action_func, "is_coroutine") and action_func.is_coroutine) or asyncio.iscoroutinefunction(action_func):
                 return await action_func(context)
             else:
                 pfunc = functools.partial(
@@ -317,20 +318,36 @@ class Runner:
 
     async def handle_start_step_run(self, action: Action):
         action_name = action.action_id
-        context = Context(
-            action,
-            self.dispatcher_client,
-            self.admin_client,
-            self.client.event,
-            self.client.workflow_listener,
-            self.workflow_run_event_listener,
-            self.worker_context,
-            self.client.config.namespace,
-        )
-        self.contexts[action.step_run_id] = context
 
         # Find the corresponding action function from the registry
         action_func = self.action_registry.get(action_name)
+
+        context: Context | DurableContext
+
+        if hasattr(action_func, "durable") and action_func.durable:
+            context = DurableContext(
+                action,
+                self.dispatcher_client,
+                self.admin_client,
+                self.client.event,
+                self.client.workflow_listener,
+                self.workflow_run_event_listener,
+                self.worker_context,
+                self.client.config.namespace,
+            )
+        else:
+            context = Context(
+                action,
+                self.dispatcher_client,
+                self.admin_client,
+                self.client.event,
+                self.client.workflow_listener,
+                self.workflow_run_event_listener,
+                self.worker_context,
+                self.client.config.namespace,
+            )
+
+        self.contexts[action.step_run_id] = context
 
         if action_func:
             self.event_queue.put(

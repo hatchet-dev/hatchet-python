@@ -15,6 +15,8 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     ReleaseSlotRequest,
     StepActionEvent,
     StepActionEventType,
+    UpsertWorkerLabelsRequest,
+    WorkerLabels,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
 )
@@ -83,9 +85,24 @@ class DispatcherClient:
             metadata=get_metadata(self.token),
         )
 
-    async def send_group_key_action_event(self, in_: GroupKeyActionEvent):
-        await self.aio_client.SendGroupKeyActionEvent(
-            in_,
+    async def send_group_key_action_event(
+        self, action: Action, event_type: GroupKeyActionEventType, payload: str
+    ):
+        eventTimestamp = Timestamp()
+        eventTimestamp.GetCurrentTime()
+
+        event = GroupKeyActionEvent(
+            workerId=action.worker_id,
+            workflowRunId=action.workflow_run_id,
+            getGroupKeyRunId=action.get_group_key_run_id,
+            actionId=action.action_id,
+            eventTimestamp=eventTimestamp,
+            eventType=event_type,
+            eventPayload=payload,
+        )
+
+        return await self.aio_client.SendGroupKeyActionEvent(
+            event,
             metadata=get_metadata(self.token),
         )
 

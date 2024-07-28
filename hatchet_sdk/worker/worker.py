@@ -10,8 +10,10 @@ from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.context import Context
+from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 from hatchet_sdk.workflow import WorkflowMeta
@@ -59,6 +61,17 @@ class Worker:
         self.name = self.client.config.namespace + self.name
         self._setup_signal_handlers()
 
+    def register_function(self, action: str, func: HatchetCallable):
+        self.action_registry[action] = func
+
+    def register_workflow_from_opts(self, name: str, opts: CreateWorkflowVersionOpts):
+        try:
+            self.client.admin.put_workflow(opts.name, opts)
+        except Exception as e:
+            logger.error(f"failed to register workflow: {opts.name}")
+            logger.error(e)
+            sys.exit(1)
+
     def register_workflow(self, workflow: WorkflowMeta):
         namespace = self.client.config.namespace
 
@@ -74,11 +87,11 @@ class Worker:
         def create_action_function(action_func):
             def action_function(context):
                 return action_func(workflow, context)
-
+            
             if asyncio.iscoroutinefunction(action_func):
-                action_function._is_coroutine = True
+                action_function.is_coroutine = True
             else:
-                action_function._is_coroutine = False
+                action_function.is_coroutine = False
 
             return action_function
 
@@ -240,7 +253,7 @@ class Worker:
         self.killing = True
 
         if self.action_listener_process:
-            self.action_listener_process.kill()  # Forcefully kill the process
+            self.action_listener_process.terminate() # send SIGTERM to the process
 
         self.loop.create_task(self.close())
 
@@ -263,3 +276,16 @@ class Worker:
         sys.exit(
             1
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
+
+def register_on_worker(callable : HatchetCallable, worker: Worker):
+    worker.register_function(callable.get_action_name(), callable)
+
+    if callable.function_on_failure is not None:
+        worker.register_function(callable.function_on_failure.get_action_name(), callable.function_on_failure)
+
+    if callable.function_concurrency is not None:
+        worker.register_function(callable.function_concurrency.get_action_name(), callable.function_concurrency)
+
+    opts = callable.to_workflow_opts()
+
+    worker.register_workflow_from_opts(opts.name, opts)

@@ -31,18 +31,18 @@ class BaseContext:
     def _prepare_workflow_options(
         self,
         key: str = None,
-        options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
+        options: ChildTriggerWorkflowOptions | None = None,
         worker_id: str = None,
     ):
         workflow_run_id = self.action.workflow_run_id
         step_run_id = self.action.step_run_id
 
         desired_worker_id = None
-        if "sticky" in options and options["sticky"] == True:
+        if options is not None and "sticky" in options and options["sticky"] == True:
             desired_worker_id = worker_id
 
         meta = None
-        if "additional_metadata" in options:
+        if options is not None and "additional_metadata" in options:
             meta = options["additional_metadata"]
 
         trigger_options: TriggerWorkflowOptions = {
@@ -214,28 +214,6 @@ class Context(BaseContext):
         )
 
         return default
-
-    def spawn_workflow(
-        self,
-        workflow_name: str,
-        input: dict = {},
-        key: str = None,
-        options: ChildTriggerWorkflowOptions = None,
-    ):
-        worker_id = self.worker.id()
-
-        if (
-            "sticky" in options
-            and options["sticky"] == True
-            and not self.worker.has_workflow(workflow_name)
-        ):
-            raise Exception(
-                f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
-            )
-
-        trigger_options = self._prepare_workflow_options(key, options, worker_id)
-
-        return self.admin_client.run_workflow(workflow_name, input, trigger_options)
 
     def _log(self, line: str) -> (bool, Exception):  # type: ignore
         try:

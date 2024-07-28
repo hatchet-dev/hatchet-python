@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, TypedDict, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, TypedDict, Union
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -20,7 +20,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowVersion,
 )
 from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
-from hatchet_sdk.workflow_run import WorkflowRunRef
+from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -42,6 +42,10 @@ class ChildTriggerWorkflowOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
     sticky: bool | None = None
 
+
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
+    additional_metadata: Dict[str, str] | None = None
+    desired_worker_id: str | None = None
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
@@ -134,6 +138,7 @@ class AdminClientBase:
             **(options or {}),
         )
 
+T = TypeVar('T')
 
 class AdminClientAioImpl(AdminClientBase):
     def __init__(self, config: ClientConfig):
@@ -143,6 +148,21 @@ class AdminClientAioImpl(AdminClientBase):
         self.token = config.token
         self.listener_client = new_listener(config)
         self.namespace = config.namespace
+
+    async def run(
+        self, 
+        function: Union[str, Callable[[Any], T]],
+        input: any, 
+        options: TriggerWorkflowOptions = None
+    ) -> 'RunRef[T]':
+        workflow_name = function
+        
+        if not isinstance(function, str):
+            workflow_name = function.function_name
+
+        wrr = await self.run_workflow(workflow_name, input, options)
+
+        return RunRef[T](wrr.workflow_run_id, wrr.workflow_listener, wrr.workflow_run_event_listener)
 
     async def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
@@ -321,6 +341,21 @@ class AdminClient(AdminClientBase):
                 raise DedupeViolationErr(e.details())
 
             raise ValueError(f"gRPC error: {e}")
+        
+    def run(
+        self, 
+        function: Union[str, Callable[[Any], T]],
+        input: any, 
+        options: TriggerWorkflowOptions = None
+    ) -> 'RunRef[T]':
+        workflow_name = function
+        
+        if not isinstance(function, str):
+            workflow_name = function.function_name
+
+        wrr = self.run_workflow(workflow_name, input, options)
+
+        return RunRef[T](wrr.workflow_run_id, wrr.workflow_listener, wrr.workflow_run_event_listener)
 
     def get_workflow_run(self, workflow_run_id: str) -> WorkflowRunRef:
         try:

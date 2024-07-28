@@ -1,3 +1,4 @@
+from typing import Any, Coroutine, Generic, TypeVar
 from hatchet_sdk.clients.run_event_listener import (
     RunEventListener,
     RunEventListenerClient,
@@ -26,3 +27,15 @@ class WorkflowRunRef:
 
     def result(self):
         return self.workflow_listener.result(self.workflow_run_id)
+
+T = TypeVar('T')
+
+class RunRef(WorkflowRunRef, Generic[T]):
+    async def result(self) -> T:
+        res = await self.workflow_listener.result(self.workflow_run_id)
+
+        # if the dict only has 1 key, return the value of that key
+        if len(res) == 1:
+            return list(res.values())[0]
+        
+        return res
