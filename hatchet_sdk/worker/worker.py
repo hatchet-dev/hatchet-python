@@ -209,7 +209,7 @@ class Worker:
                     logger.debug("child action listener process killed...")
                     self._status = WorkerStatus.UNHEALTHY
                     if not self.killing:
-                        self.exit_gracefully()
+                        self.loop.create_task(self.exit_gracefully())
                     break
                 else:
                     self._status = WorkerStatus.HEALTHY
@@ -226,7 +226,7 @@ class Worker:
     def _handle_exit_signal(self, signum, frame):
         sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
         logger.info(f"received signal {sig_name}...")
-        self.exit_gracefully()
+        self.loop.create_task(self.exit_gracefully())
 
     def _handle_force_quit_signal(self, signum, frame):
         logger.info(f"received SIGQUIT...")
@@ -235,16 +235,15 @@ class Worker:
     async def close(self):
         logger.info(f"closing worker '{self.name}'...")
         self.killing = True
-        self.action_queue.close()
-        self.event_queue.close()
+        # self.action_queue.close()
+        # self.event_queue.close()
 
         if self.action_runner is not None:
             self.action_runner.cleanup()
 
         await self.action_listener_health_check
-        await self.action_listener_process
 
-    def exit_gracefully(self):
+    async def exit_gracefully(self):
         logger.debug(f"gracefully stopping worker: {self.name}")
 
         if self.killing:
@@ -252,10 +251,10 @@ class Worker:
 
         self.killing = True
 
-        if self.action_listener_process:
-            self.action_listener_process.terminate()  # send SIGTERM to the process
+        if self.action_listener_process and self.action_listener_process.is_alive():
+            self.action_listener_process.kill()  # send SIGTERM to the process
 
-        self.loop.create_task(self.close())
+        await self.close()
 
         if self.loop:
             self.loop.stop()
