@@ -1,20 +1,36 @@
-
-
 import asyncio
-from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar, TypedDict, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import CreateStepRateLimit, CreateWorkflowJobOpts, CreateWorkflowStepOpts, CreateWorkflowVersionOpts, DesiredWorkerLabels, WorkflowConcurrencyOpts
-from hatchet_sdk.hatchet import DesiredWorkerLabel
+from hatchet_sdk.contracts.workflows_pb2 import (
+    CreateStepRateLimit,
+    CreateWorkflowJobOpts,
+    CreateWorkflowStepOpts,
+    CreateWorkflowVersionOpts,
+    DesiredWorkerLabels,
+    WorkflowConcurrencyOpts,
+)
+from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.workflow_run import RunRef
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class HatchetCallable(Generic[T]):
     def __init__(
-        self, 
+        self,
         func: Callable[[Context], T],
         durable: bool = False,
         name: str = "",
@@ -27,7 +43,7 @@ class HatchetCallable(Generic[T]):
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
         concurrency: ConcurrencyFunction | None = None,
-        on_failure: Optional['HatchetCallable'] = None,
+        on_failure: Optional["HatchetCallable"] = None,
         desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
     ):
         self.func = func
@@ -119,7 +135,7 @@ class HatchetCallable(Generic[T]):
                 )
             ],
         )
-        
+
     def to_step(self) -> CreateWorkflowStepOpts:
         return CreateWorkflowStepOpts(
             readable_id=self.function_name,
@@ -135,7 +151,9 @@ class HatchetCallable(Generic[T]):
     def get_action_name(self) -> str:
         return self.function_namespace + ":" + self.function_name
 
-T = TypeVar('T')
+
+T = TypeVar("T")
+
 
 class TriggerOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
@@ -149,7 +167,7 @@ class DurableContext(Context):
         input: dict = {},
         key: str = None,
         options: TriggerOptions = None,
-    ) -> 'RunRef[T]':
+    ) -> "RunRef[T]":
         worker_id = self.worker.id()
 
         workflow_name = function

@@ -153,7 +153,9 @@ class Runner:
         self.workflow_run_event_listener = new_listener(self.config)
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
-        self.worker_context = WorkerContext(labels=labels, client=new_client_raw(config))
+        self.worker_context = WorkerContext(
+            labels=labels, client=new_client_raw(config)
+        )
 
     def run(self, action: Action):
         if self.worker_context.id() is None:
@@ -277,7 +279,9 @@ class Runner:
         sr.set(context.step_run_id)
 
         try:
-            if (hasattr(action_func, "is_coroutine") and action_func.is_coroutine) or asyncio.iscoroutinefunction(action_func):
+            if (
+                hasattr(action_func, "is_coroutine") and action_func.is_coroutine
+            ) or asyncio.iscoroutinefunction(action_func):
                 return await action_func(context)
             else:
                 pfunc = functools.partial(

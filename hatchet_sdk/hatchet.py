@@ -9,6 +9,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     DesiredWorkerLabels,
     StickyStrategy,
 )
+from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
@@ -44,15 +45,6 @@ def workflow(
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
     return inner
-
-
-class DesiredWorkerLabel(TypedDict):
-    value: str | int
-    required: bool | None = None
-    weight: int | None = None
-    comparator: int | None = (
-        None  # _ClassVar[WorkerLabelComparator] TODO figure out type
-    )
 
 
 def step(

@@ -1,5 +1,6 @@
 from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
 
+
 class WorkerContext:
     _worker_id: str = None
     _registered_workflow_names: list[str] = []

@@ -87,7 +87,7 @@ class Worker:
         def create_action_function(action_func):
             def action_function(context):
                 return action_func(workflow, context)
-            
+
             if asyncio.iscoroutinefunction(action_func):
                 action_function.is_coroutine = True
             else:
@@ -253,7 +253,7 @@ class Worker:
         self.killing = True
 
         if self.action_listener_process:
-            self.action_listener_process.terminate() # send SIGTERM to the process
+            self.action_listener_process.terminate()  # send SIGTERM to the process
 
         self.loop.create_task(self.close())
 
@@ -277,14 +277,20 @@ class Worker:
             1
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
 
-def register_on_worker(callable : HatchetCallable, worker: Worker):
+
+def register_on_worker(callable: HatchetCallable, worker: Worker):
     worker.register_function(callable.get_action_name(), callable)
 
     if callable.function_on_failure is not None:
-        worker.register_function(callable.function_on_failure.get_action_name(), callable.function_on_failure)
+        worker.register_function(
+            callable.function_on_failure.get_action_name(), callable.function_on_failure
+        )
 
     if callable.function_concurrency is not None:
-        worker.register_function(callable.function_concurrency.get_action_name(), callable.function_concurrency)
+        worker.register_function(
+            callable.function_concurrency.get_action_name(),
+            callable.function_concurrency,
+        )
 
     opts = callable.to_workflow_opts()
 
