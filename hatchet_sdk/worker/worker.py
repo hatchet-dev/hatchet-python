@@ -50,9 +50,10 @@ class Worker:
     action_listener_process: Process = field(init=False, default=None)
     action_listener_health_check: asyncio.Task = field(init=False, default=None)
     action_runner: WorkerActionRunLoopManager = field(init=False, default=None)
+    ctx = multiprocessing.get_context("spawn")
 
-    action_queue: Queue = field(init=False, default_factory=Queue)
-    event_queue: Queue = field(init=False, default_factory=Queue)
+    action_queue: Queue = field(init=False, default_factory=ctx.Queue)
+    event_queue: Queue = field(init=False, default_factory=ctx.Queue)
 
     loop: asyncio.AbstractEventLoop = field(init=False, default=None)
 
@@ -178,25 +179,27 @@ class Worker:
 
     def _start_listener(self):
         action_list = [str(key) for key in self.action_registry.keys()]
+        try:
+            process = self.ctx.Process(
+                target=worker_action_listener_process,
+                args=(
+                    self.name,
+                    action_list,
+                    self.max_runs,
+                    self.config,
+                    self.action_queue,
+                    self.event_queue,
+                    self.handle_kill,
+                    self.client.debug,
+                ),
+            )
+            process.start()
+            logger.debug(f"action listener starting on PID: {process.pid}")
 
-        ctx = multiprocessing.get_context("spawn")
-        process = ctx.Process(
-            target=worker_action_listener_process,
-            args=(
-                self.name,
-                action_list,
-                self.max_runs,
-                self.config,
-                self.action_queue,
-                self.event_queue,
-                self.handle_kill,
-                self.client.debug,
-            ),
-        )
-        process.start()
-        logger.debug(f"action listener starting on PID: {process.pid}")
-
-        return process
+            return process
+        except Exception as e:
+            logger.error(f"failed to start action listener: {e}")
+            sys.exit(1)
 
     async def _check_listener_health(self):
         logger.debug("starting action listener health check...")
