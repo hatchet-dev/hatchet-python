@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+
 class DesiredWorkerLabel(TypedDict):
     value: str | int
     required: bool | None = None
