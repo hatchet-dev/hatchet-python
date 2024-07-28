@@ -84,7 +84,9 @@ class RunEventListener:
         return listener
 
     @classmethod
-    def for_additional_meta(cls, key: str, value: str, client: DispatcherStub, token: str):
+    def for_additional_meta(
+        cls, key: str, value: str, client: DispatcherStub, token: str
+    ):
         listener = RunEventListener(client, token)
         listener.additional_meta_kv = (key, value)
         return listener
@@ -167,7 +169,6 @@ class RunEventListener:
                     # logger.error(f"Failed to receive message: {e}")
                     break
 
-
     async def retry_subscribe(self):
         retries = 0
 
@@ -184,10 +185,10 @@ class RunEventListener:
                         metadata=get_metadata(self.token),
                     )
                 elif self.additional_meta_kv is not None:
-                         return self.client.SubscribeToWorkflowEventsByAdditionalMeta(
+                    return self.client.SubscribeToWorkflowEventsByAdditionalMeta(
                         SubscribeToWorkflowEventsByAdditionalMetaRequest(
                             key=self.additional_meta_kv[0],
-                            value=self.additional_meta_kv[1]
+                            value=self.additional_meta_kv[1],
                         ),
                         metadata=get_metadata(self.token),
                     )
@@ -209,7 +210,7 @@ class RunEventListenerClient:
 
     def stream_by_run_id(self, workflow_run_id: str):
         return self.stream(workflow_run_id)
-    
+
     def stream(self, workflow_run_id: str):
         if not isinstance(workflow_run_id, str) and hasattr(workflow_run_id, "__str__"):
             workflow_run_id = str(workflow_run_id)
@@ -220,15 +221,12 @@ class RunEventListenerClient:
 
         return RunEventListener.for_run_id(workflow_run_id, self.client, self.token)
 
-
     def stream_by_additional_metadata(self, key: str, value: str):
         if not self.client:
             aio_conn = new_conn(self.config, True)
             self.client = DispatcherStub(aio_conn)
 
         return RunEventListener.for_additional_meta(key, value, self.client, self.token)
-
-
 
     async def on(self, workflow_run_id: str, handler: callable = None):
         async for event in self.stream(workflow_run_id):

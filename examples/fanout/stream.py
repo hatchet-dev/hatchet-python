@@ -18,11 +18,8 @@ async def main():
     # Generate a random stream key to use to track all
     # stream events for this workflow run.
 
-
-
     streamKey = "streamKey"
-    streamVal = f'sk-{random.randint(1, 100)}'
-
+    streamVal = f"sk-{random.randint(1, 100)}"
 
     # Specify the stream key as additional metadata
     # when running the workflow.
