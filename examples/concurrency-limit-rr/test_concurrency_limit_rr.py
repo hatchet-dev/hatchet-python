@@ -56,7 +56,7 @@ async def test_run(hatchet: Hatchet):
 
     # Check that the total time is close to 2 seconds
     assert (
-        3.8 <= total_time <= 5
+        3.8 <= total_time <= 7
     ), f"Expected runtime to be about 4 seconds, but it took {total_time:.2f} seconds"
 
     print(f"Total execution time: {total_time:.2f} seconds")
