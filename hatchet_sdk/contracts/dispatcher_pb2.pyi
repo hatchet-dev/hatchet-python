@@ -238,14 +238,14 @@ class ActionEventResponse(_message.Message):
     def __init__(self, tenantId: _Optional[str] = ..., workerId: _Optional[str] = ...) -> None: ...
 
 class SubscribeToWorkflowEventsRequest(_message.Message):
-    __slots__ = ("workflowRunId", "additional_meta_key", "additional_meta_value")
+    __slots__ = ("workflowRunId", "additionalMetaKey", "additionalMetaValue")
     WORKFLOWRUNID_FIELD_NUMBER: _ClassVar[int]
-    ADDITIONAL_META_KEY_FIELD_NUMBER: _ClassVar[int]
-    ADDITIONAL_META_VALUE_FIELD_NUMBER: _ClassVar[int]
+    ADDITIONALMETAKEY_FIELD_NUMBER: _ClassVar[int]
+    ADDITIONALMETAVALUE_FIELD_NUMBER: _ClassVar[int]
     workflowRunId: str
-    additional_meta_key: str
-    additional_meta_value: str
-    def __init__(self, workflowRunId: _Optional[str] = ..., additional_meta_key: _Optional[str] = ..., additional_meta_value: _Optional[str] = ...) -> None: ...
+    additionalMetaKey: str
+    additionalMetaValue: str
+    def __init__(self, workflowRunId: _Optional[str] = ..., additionalMetaKey: _Optional[str] = ..., additionalMetaValue: _Optional[str] = ...) -> None: ...
 
 class SubscribeToWorkflowRunsRequest(_message.Message):
     __slots__ = ("workflowRunId",)
