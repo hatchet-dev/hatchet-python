@@ -6,6 +6,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
     WorkflowConcurrencyOpts,
+    WorkflowKind,
 )
 
 stepsType = List[Tuple[str, Callable[..., Any]]]
@@ -124,6 +125,7 @@ class WorkflowMeta(type):
 
             return CreateWorkflowVersionOpts(
                 name=name,
+                kind=WorkflowKind.DAG,
                 version=version,
                 event_triggers=event_triggers,
                 cron_triggers=cron_triggers,

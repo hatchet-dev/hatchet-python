@@ -19,6 +19,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
     WorkflowConcurrencyOpts,
+    WorkflowKind,
 )
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
@@ -98,6 +99,11 @@ class HatchetCallable(Generic[T]):
             self.function_name = namespace + self.function_name
 
     def to_workflow_opts(self) -> CreateWorkflowVersionOpts:
+        kind: WorkflowKind = WorkflowKind.FUNCTION
+
+        if self.durable:
+            kind = WorkflowKind.DURABLE
+
         on_failure_job: CreateWorkflowJobOpts | None = None
 
         if self.function_on_failure is not None:
@@ -120,6 +126,7 @@ class HatchetCallable(Generic[T]):
 
         return CreateWorkflowVersionOpts(
             name=self.function_name,
+            kind=kind,
             version=self.function_version,
             event_triggers=self.function_on_events,
             cron_triggers=self.function_on_crons,
