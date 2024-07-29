@@ -22,6 +22,7 @@ nest-asyncio = "^1.6.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-asyncio = "^0.23.8"
+psutil = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -61,3 +62,4 @@ programatic_replay = "examples.programatic_replay.worker:main"
 rate_limit = "examples.rate_limit.worker:main"
 simple = "examples.simple.worker:main"
 timeout = "examples.timeout.worker:main"
+blocked = "examples.blocked_async.worker:main"
