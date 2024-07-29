@@ -186,8 +186,8 @@ class RunEventListener:
                 elif self.additional_meta_kv is not None:
                     return self.client.SubscribeToWorkflowEvents(
                         SubscribeToWorkflowEventsRequest(
-                            additional_meta_key=self.additional_meta_kv[0],
-                            additional_meta_value=self.additional_meta_kv[1],
+                            additionalMetaKey=self.additional_meta_kv[0],
+                            additionalMetaValue=self.additional_meta_kv[1],
                         ),
                         metadata=get_metadata(self.token),
                     )
