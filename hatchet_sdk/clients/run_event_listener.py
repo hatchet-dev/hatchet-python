@@ -9,7 +9,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     RESOURCE_TYPE_STEP_RUN,
     RESOURCE_TYPE_WORKFLOW_RUN,
     ResourceEventType,
-    SubscribeToWorkflowEventsByAdditionalMetaRequest,
     SubscribeToWorkflowEventsRequest,
     WorkflowEvent,
 )
@@ -185,10 +184,10 @@ class RunEventListener:
                         metadata=get_metadata(self.token),
                     )
                 elif self.additional_meta_kv is not None:
-                    return self.client.SubscribeToWorkflowEventsByAdditionalMeta(
-                        SubscribeToWorkflowEventsByAdditionalMetaRequest(
-                            key=self.additional_meta_kv[0],
-                            value=self.additional_meta_kv[1],
+                    return self.client.SubscribeToWorkflowEvents(
+                        SubscribeToWorkflowEventsRequest(
+                            additional_meta_key=self.additional_meta_kv[0],
+                            additional_meta_value=self.additional_meta_kv[1],
                         ),
                         metadata=get_metadata(self.token),
                     )
