@@ -1,9 +1,10 @@
 import asyncio
 import logging
 import signal
+import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, List, Optional
+from typing import Any, List, Mapping, Optional
 
 import grpc
 
@@ -35,6 +36,11 @@ class ActionEvent:
 
 STOP_LOOP = "STOP_LOOP"  # Sentinel object to stop the loop
 
+# TODO link to a block post
+BLOCKED_THREAD_WARNING = (
+    "THE TIME TO START THE STEP RUN IS TOO LONG, THE MAIN THREAD MAY BE BLOCKED"
+)
+
 
 @dataclass
 class WorkerActionListenerProcess:
@@ -53,6 +59,8 @@ class WorkerActionListenerProcess:
 
     action_loop_task: asyncio.Task = field(init=False, default=None)
     event_send_loop_task: asyncio.Task = field(init=False, default=None)
+
+    running_step_runs: Mapping[str, float] = field(init=False, default_factory=dict)
 
     def __post_init__(self):
         if self.debug:
@@ -96,6 +104,7 @@ class WorkerActionListenerProcess:
         # Start both loops as background tasks
         self.action_loop_task = asyncio.create_task(self.start_action_loop())
         self.event_send_loop_task = asyncio.create_task(self.start_event_send_loop())
+        self.blocked_main_loop = asyncio.create_task(self.start_blocked_main_loop())
 
     # TODO move event methods to separate class
     async def _get_event(self):
@@ -113,10 +122,44 @@ class WorkerActionListenerProcess:
             logger.debug(f"tx: event: {event.action.action_id}/{event.type}")
             asyncio.create_task(self.send_event(event))
 
+    async def start_blocked_main_loop(self):
+        threshold = 1
+        while not self.killing:
+            count = 0
+            for step_run_id, start_time in self.running_step_runs.items():
+                diff = self.now() - start_time
+                if diff > threshold:
+                    count += 1
+
+            if count > 0:
+                logger.warning(f"{BLOCKED_THREAD_WARNING}: Waiting Steps {count}")
+            await asyncio.sleep(1)
+
     async def send_event(self, event: ActionEvent, retry_attempt: int = 1):
         try:
             match event.action.action_type:
                 case ActionType.START_STEP_RUN:
+                    # TODO right now we're sending two start_step_run events
+                    # one on the action loop and one on the event loop
+                    # ideally we change the first to an ack to set the time
+                    if event.type == STEP_EVENT_TYPE_STARTED:
+                        if event.action.step_run_id in self.running_step_runs:
+                            diff = (
+                                self.now()
+                                - self.running_step_runs[event.action.step_run_id]
+                            )
+                            if diff > 0.1:
+                                logger.warning(
+                                    f"{BLOCKED_THREAD_WARNING}: time to start: {diff}s"
+                                )
+                            else:
+                                logger.debug(f"start time: {diff}")
+                            del self.running_step_runs[event.action.step_run_id]
+                        else:
+                            self.running_step_runs[event.action.step_run_id] = (
+                                self.now()
+                            )
+
                     asyncio.create_task(
                         self.dispatcher_client.send_step_action_event(
                             event.action, event.type, event.payload
@@ -140,6 +183,9 @@ class WorkerActionListenerProcess:
                 await exp_backoff_sleep(retry_attempt, 1)
                 await self.send_event(event, retry_attempt + 1)
 
+    def now(self):
+        return time.time()
+
     async def start_action_loop(self):
         try:
             async for action in self.listener:
@@ -158,6 +204,13 @@ class WorkerActionListenerProcess:
                         logger.info(
                             f"rx: start step run: {action.step_run_id}/{action.action_id}"
                         )
+
+                        # TODO handle this case better...
+                        if action.step_run_id in self.running_step_runs:
+                            logger.warning(
+                                f"step run already running: {action.step_run_id}"
+                            )
+
                     case ActionType.CANCEL_STEP_RUN:
                         logger.info(f"rx: cancel step run: {action.step_run_id}")
                     case ActionType.START_GET_GROUP_KEY:
