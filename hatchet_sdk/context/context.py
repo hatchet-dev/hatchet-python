@@ -89,7 +89,8 @@ class ContextAioImpl(BaseContext):
     ) -> WorkflowRunRef:
         worker_id = self.worker.id()
         if (
-            "sticky" in options
+            options is not None 
+            and "sticky" in options
             and options["sticky"] == True
             and not self.worker.has_workflow(workflow_name)
         ):
