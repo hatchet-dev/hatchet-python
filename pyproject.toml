@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.34.0a1"
+version = "0.34.0a2"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -50,8 +50,6 @@ api = "examples.api.api:main"
 async = "examples.async.worker:main"
 fanout = "examples.fanout.worker:main"
 cancellation = "examples.cancellation.worker:main"
-concurrency_limit = "examples.concurrency-limit.worker:main"
-concurrency_limit_rr = "examples.concurrency-limit-rr.worker:main"
 dag = "examples.dag.worker:main"
 delayed = "examples.delayed.worker:main"
 events = "examples.events.worker:main"
