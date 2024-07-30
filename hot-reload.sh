@@ -1,3 +1,9 @@
 #!/bin/sh
 
-watchmedo auto-restart --recursive --patterns="*.py" -- poetry run python3 ./examples/simple/worker.py
+if [ -z "$1" ]; then
+  script="simple"
+else
+  script="$1"
+fi
+
+watchmedo auto-restart --recursive --patterns="*.py" -- poetry run $script

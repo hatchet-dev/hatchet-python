@@ -3,10 +3,10 @@ import sys
 
 # Create a named logger
 logger = logging.getLogger("hatchet")
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
 handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter("[%(levelname)s] hatchet -- %(asctime)s - %(message)s")
+formatter = logging.Formatter("[%(levelname)s]\t🪓 -- %(asctime)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 

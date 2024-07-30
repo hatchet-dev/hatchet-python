@@ -7,11 +7,12 @@ from hatchet_sdk.context import Context
 logger = logging.getLogger(__name__)
 
 
-@hatchet.workflow(on_crons=["* * * * *"])
+@hatchet.workflow()
 class LoggingWorkflow:
     @hatchet.step()
     def step1(self, context: Context):
         for i in range(12):
             logger.info("executed step1 - {}".format(i))
-            time.sleep(1)
+            logger.info({"step1": "step1"})
+            time.sleep(0.1)
         return {"status": "success"}

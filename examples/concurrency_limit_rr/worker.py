@@ -16,15 +16,13 @@ class ConcurrencyDemoWorkflowRR:
     )
     def concurrency(self, context: Context) -> str:
         input = context.workflow_input()
-
         print(input)
-
-        return input.get("group")
+        return f'group-{input["group"]}'
 
     @hatchet.step()
     def step1(self, context):
         print("starting step1")
-        time.sleep(0.2)
+        time.sleep(2)
         print("finished step1")
         pass
 

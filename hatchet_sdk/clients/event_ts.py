@@ -13,7 +13,8 @@ class Event_ts(asyncio.Event):
             self._loop = asyncio.get_event_loop()
 
     def set(self):
-        self._loop.call_soon_threadsafe(super().set)
+        if not self._loop.is_closed():
+            self._loop.call_soon_threadsafe(super().set)
 
     def clear(self):
         self._loop.call_soon_threadsafe(super().clear)

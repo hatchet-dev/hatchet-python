@@ -1,5 +1,3 @@
-import nest_asyncio
-
 from hatchet_sdk.clients.rest.models.accept_invite_request import AcceptInviteRequest
 
 # import models into sdk package
@@ -120,8 +118,14 @@ from hatchet_sdk.clients.rest.models.workflow_version_definition import (
     WorkflowVersionDefinition,
 )
 from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
+from hatchet_sdk.contracts.workflows_pb2 import (
+    ConcurrencyLimitStrategy,
+    CreateWorkflowVersionOpts,
+    RateLimitDuration,
+    StickyStrategy,
+)
 
-from .client import ClientImpl, new_client
+from .client import new_client
 from .clients.admin import (
     ChildTriggerWorkflowOptions,
     DedupeViolationErr,
@@ -133,11 +137,4 @@ from .clients.run_event_listener import StepRunEventType, WorkflowRunEventType
 from .context.context import Context
 from .context.worker_context import WorkerContext
 from .hatchet import ClientConfig, Hatchet, concurrency, on_failure_step, step, workflow
-from .worker import Worker, WorkerStatus
-from .workflows_pb2 import (
-    ConcurrencyLimitStrategy,
-    CreateWorkflowVersionOpts,
-    RateLimitDuration,
-    StickyStrategy,
-    WorkerLabelComparator,
-)
+from .worker import Worker, WorkerStartOptions, WorkerStatus

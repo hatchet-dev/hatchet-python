@@ -2,31 +2,41 @@ import time
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Hatchet
+from hatchet_sdk import Context, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["user:create"])
+@hatchet.workflow(on_events=["timeout:create"])
 class TimeoutWorkflow:
-    def __init__(self):
-        self.my_value = "test"
 
     @hatchet.step(timeout="4s")
-    def timeout(self, context):
-        try:
-            print("started step2")
-            time.sleep(5)
-            print("finished step2")
-        except Exception as e:
-            print("caught an exception: " + str(e))
-            raise e
+    def step1(self, context: Context):
+        time.sleep(5)
+        return {"status": "success"}
 
 
-workflow = TimeoutWorkflow()
-worker = hatchet.worker("timeout-worker", max_runs=4)
-worker.register_workflow(workflow)
+@hatchet.workflow(on_events=["refresh:create"])
+class RefreshTimeoutWorkflow:
 
-worker.start()
+    @hatchet.step(timeout="4s")
+    def step1(self, context: Context):
+
+        context.refresh_timeout("10s")
+        time.sleep(5)
+
+        return {"status": "success"}
+
+
+def main():
+    worker = hatchet.worker("timeout-worker", max_runs=4)
+    worker.register_workflow(TimeoutWorkflow())
+    worker.register_workflow(RefreshTimeoutWorkflow())
+
+    worker.start()
+
+
+if __name__ == "__main__":
+    main()

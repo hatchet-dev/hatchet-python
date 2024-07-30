@@ -1,7 +1,5 @@
-# relative imports
-import os
 from logging import Logger
-from typing import Any
+from typing import Callable
 
 import grpc
 
@@ -9,38 +7,41 @@ from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
 
-from .clients.admin import AdminClientImpl, new_admin
-from .clients.dispatcher import DispatcherClientImpl, new_dispatcher
-from .clients.events import EventClientImpl, new_event
-from .clients.rest.api.workflow_api import WorkflowApi
-from .clients.rest.api.workflow_run_api import WorkflowRunApi
-from .clients.rest.api_client import ApiClient
-from .clients.rest.configuration import Configuration
+from .clients.admin import AdminClient, new_admin
+from .clients.dispatcher.dispatcher import DispatcherClient, new_dispatcher
+from .clients.events import EventClient, new_event
 from .clients.rest_client import RestApi
 from .loader import ClientConfig, ConfigLoader
 
 
 class Client:
-    admin: AdminClientImpl
-    dispatcher: DispatcherClientImpl
-    event: EventClientImpl
+    admin: AdminClient
+    dispatcher: DispatcherClient
+    event: EventClient
     rest: RestApi
     workflow_listener: PooledWorkflowRunListener
     logger: Logger
-
-
-class ClientImpl(Client):
+    debug: bool = False
 
     @classmethod
-    def from_environment(cls, defaults: ClientConfig = ClientConfig(), *opts_functions):
+    def from_environment(
+        cls,
+        defaults: ClientConfig = ClientConfig(),
+        debug: bool = False,
+        *opts_functions: Callable[[ClientConfig], None],
+    ):
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
             opt_function(config)
 
-        return cls.from_config(config)
+        return cls.from_config(config, debug)
 
     @classmethod
-    def from_config(cls, config: ClientConfig = ClientConfig()):
+    def from_config(
+        cls,
+        config: ClientConfig = ClientConfig(),
+        debug: bool = False,
+    ):
         if config.tls_config is None:
             raise ValueError("TLS config is required")
 
@@ -49,30 +50,32 @@ class ClientImpl(Client):
 
         conn: grpc.Channel = new_conn(config)
 
-        # Instantiate client implementations
+        # Instantiate clients
         event_client = new_event(conn, config)
         admin_client = new_admin(config)
         dispatcher_client = new_dispatcher(config)
         rest_client = RestApi(config.server_url, config.token, config.tenant_id)
-        workflow_listener_client = None
+        workflow_listener = None  # Initialize this if needed
 
         return cls(
             event_client,
             admin_client,
             dispatcher_client,
-            workflow_listener_client,
+            workflow_listener,
             rest_client,
             config,
+            debug,
         )
 
     def __init__(
         self,
-        event_client: EventClientImpl,
-        admin_client: AdminClientImpl,
-        dispatcher_client: DispatcherClientImpl,
+        event_client: EventClient,
+        admin_client: AdminClient,
+        dispatcher_client: DispatcherClient,
         workflow_listener: PooledWorkflowRunListener,
         rest_client: RestApi,
         config: ClientConfig,
+        debug: bool = False,
     ):
         self.admin = admin_client
         self.dispatcher = dispatcher_client
@@ -82,6 +85,7 @@ class ClientImpl(Client):
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
         self.logger = config.logger
+        self.debug = debug
 
 
 def with_host_port(host: str, port: int):
@@ -92,5 +96,5 @@ def with_host_port(host: str, port: int):
     return with_host_port_impl
 
 
-new_client = ClientImpl.from_environment
-new_client_raw = ClientImpl.from_config
+new_client = Client.from_environment
+new_client_raw = Client.from_config

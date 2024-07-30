@@ -12,6 +12,12 @@ class StickyStrategy(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     SOFT: _ClassVar[StickyStrategy]
     HARD: _ClassVar[StickyStrategy]
 
+class WorkflowKind(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    FUNCTION: _ClassVar[WorkflowKind]
+    DURABLE: _ClassVar[WorkflowKind]
+    DAG: _ClassVar[WorkflowKind]
+
 class ConcurrencyLimitStrategy(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     CANCEL_IN_PROGRESS: _ClassVar[ConcurrencyLimitStrategy]
@@ -39,6 +45,9 @@ class RateLimitDuration(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     YEAR: _ClassVar[RateLimitDuration]
 SOFT: StickyStrategy
 HARD: StickyStrategy
+FUNCTION: WorkflowKind
+DURABLE: WorkflowKind
+DAG: WorkflowKind
 CANCEL_IN_PROGRESS: ConcurrencyLimitStrategy
 DROP_NEWEST: ConcurrencyLimitStrategy
 QUEUE_NEWEST: ConcurrencyLimitStrategy
@@ -64,7 +73,7 @@ class PutWorkflowRequest(_message.Message):
     def __init__(self, opts: _Optional[_Union[CreateWorkflowVersionOpts, _Mapping]] = ...) -> None: ...
 
 class CreateWorkflowVersionOpts(_message.Message):
-    __slots__ = ("name", "description", "version", "event_triggers", "cron_triggers", "scheduled_triggers", "jobs", "concurrency", "schedule_timeout", "cron_input", "on_failure_job", "sticky")
+    __slots__ = ("name", "description", "version", "event_triggers", "cron_triggers", "scheduled_triggers", "jobs", "concurrency", "schedule_timeout", "cron_input", "on_failure_job", "sticky", "kind")
     NAME_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
     VERSION_FIELD_NUMBER: _ClassVar[int]
@@ -77,6 +86,7 @@ class CreateWorkflowVersionOpts(_message.Message):
     CRON_INPUT_FIELD_NUMBER: _ClassVar[int]
     ON_FAILURE_JOB_FIELD_NUMBER: _ClassVar[int]
     STICKY_FIELD_NUMBER: _ClassVar[int]
+    KIND_FIELD_NUMBER: _ClassVar[int]
     name: str
     description: str
     version: str
@@ -89,7 +99,8 @@ class CreateWorkflowVersionOpts(_message.Message):
     cron_input: str
     on_failure_job: CreateWorkflowJobOpts
     sticky: StickyStrategy
-    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., version: _Optional[str] = ..., event_triggers: _Optional[_Iterable[str]] = ..., cron_triggers: _Optional[_Iterable[str]] = ..., scheduled_triggers: _Optional[_Iterable[_Union[_timestamp_pb2.Timestamp, _Mapping]]] = ..., jobs: _Optional[_Iterable[_Union[CreateWorkflowJobOpts, _Mapping]]] = ..., concurrency: _Optional[_Union[WorkflowConcurrencyOpts, _Mapping]] = ..., schedule_timeout: _Optional[str] = ..., cron_input: _Optional[str] = ..., on_failure_job: _Optional[_Union[CreateWorkflowJobOpts, _Mapping]] = ..., sticky: _Optional[_Union[StickyStrategy, str]] = ...) -> None: ...
+    kind: WorkflowKind
+    def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., version: _Optional[str] = ..., event_triggers: _Optional[_Iterable[str]] = ..., cron_triggers: _Optional[_Iterable[str]] = ..., scheduled_triggers: _Optional[_Iterable[_Union[_timestamp_pb2.Timestamp, _Mapping]]] = ..., jobs: _Optional[_Iterable[_Union[CreateWorkflowJobOpts, _Mapping]]] = ..., concurrency: _Optional[_Union[WorkflowConcurrencyOpts, _Mapping]] = ..., schedule_timeout: _Optional[str] = ..., cron_input: _Optional[str] = ..., on_failure_job: _Optional[_Union[CreateWorkflowJobOpts, _Mapping]] = ..., sticky: _Optional[_Union[StickyStrategy, str]] = ..., kind: _Optional[_Union[WorkflowKind, str]] = ...) -> None: ...
 
 class WorkflowConcurrencyOpts(_message.Message):
     __slots__ = ("action", "max_runs", "limit_strategy")
