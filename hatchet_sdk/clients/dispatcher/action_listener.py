@@ -152,7 +152,7 @@ class ActionListener:
 
                 now = time.time()
                 diff = now - self.time_last_hb_succeeded
-                if diff > delay + 0.1:
+                if diff > delay + 1:
                     logger.warn(
                         f"time since last successful heartbeat: {diff:.2f}s, expects {delay}s"
                     )
