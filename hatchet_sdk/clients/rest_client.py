@@ -1,3 +1,4 @@
+import functools
 from typing import Any, Dict, List
 
 from pydantic import StrictInt, StrictStr
@@ -8,6 +9,7 @@ from hatchet_sdk.clients.rest.models.event_order_by_direction import (
 )
 from hatchet_sdk.clients.rest.models.event_order_by_field import EventOrderByField
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
+from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
@@ -56,22 +58,10 @@ class RestApi:
             version=version,
         )
 
-    def workflow_run_list(
-        self,
-        workflow_id: str | None = None,
-        offset: int | None = None,
-        limit: int | None = None,
-        event_id: str | None = None,
-        additional_metadata: List[StrictStr] | None = None,
-    ):
-        return self.workflow_api.workflow_run_list(
-            tenant=self.tenant_id,
-            offset=offset,
-            limit=limit,
-            workflow_id=workflow_id,
-            event_id=event_id,
-            additional_metadata=additional_metadata,
-        )
+    @functools.wraps(WorkflowApi.workflow_run_list, assigned=["__doc__", "__annotations__"])
+    def workflow_run_list(self, **kwargs) -> WorkflowRunList:
+        kwargs.setdefault("tenant", self.tenant_id)
+        return self.workflow_api.workflow_run_list(**kwargs)
 
     def workflow_run_get(self, workflow_run_id: str):
         return self.workflow_api.workflow_run_get(
