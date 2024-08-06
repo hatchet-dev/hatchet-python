@@ -13,6 +13,8 @@ from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Coroutine, Dict
 
+from pydantic import BaseModel
+
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
@@ -190,6 +192,9 @@ class Runner:
                 if not cancelled:
                     output = task.result()
             except Exception as e:
+                logger.error(
+                    f"failed step run: {action.action_id}/{action.step_run_id}"
+                )
                 errored = True
 
                 # This except is coming from the application itself, so we want to send that to the Hatchet instance
@@ -198,11 +203,7 @@ class Runner:
                         action=action,
                         type=STEP_EVENT_TYPE_FAILED,
                         payload=str(errorWithTraceback(f"{e}", e)),
-                    )
-                )
-
-                logger.error(
-                    f"failed step run: {action.action_id}/{action.step_run_id}"
+                    ).model_dump()
                 )
 
             if not errored and not cancelled:
@@ -211,7 +212,7 @@ class Runner:
                         action=action,
                         type=STEP_EVENT_TYPE_COMPLETED,
                         payload=self.serialize_output(output),
-                    )
+                    ).model_dump()
                 )
 
                 logger.info(
@@ -238,7 +239,7 @@ class Runner:
                         action=action,
                         type=GROUP_KEY_EVENT_TYPE_FAILED,
                         payload=str(errorWithTraceback(f"{e}", e)),
-                    )
+                    ).model_dump()
                 )
 
                 logger.error(
@@ -251,7 +252,7 @@ class Runner:
                         action=action,
                         type=GROUP_KEY_EVENT_TYPE_COMPLETED,
                         payload=self.serialize_output(output),
-                    )
+                    ).model_dump()
                 )
 
                 logger.info(
@@ -358,7 +359,7 @@ class Runner:
                 ActionEvent(
                     action=action,
                     type=STEP_EVENT_TYPE_STARTED,
-                )
+                ).model_dump()
             )
 
             loop = asyncio.get_event_loop()
@@ -373,7 +374,7 @@ class Runner:
 
             try:
                 await task
-            except Exception as e:
+            except Exception:
                 # do nothing, this should be caught in the callback
                 pass
 
@@ -400,7 +401,7 @@ class Runner:
                 ActionEvent(
                     action=action,
                     type=GROUP_KEY_EVENT_TYPE_STARTED,
-                )
+                ).model_dump()
             )
 
             loop = asyncio.get_event_loop()
@@ -415,7 +416,7 @@ class Runner:
 
             try:
                 await task
-            except Exception as e:
+            except Exception:
                 # do nothing, this should be caught in the callback
                 pass
 
@@ -454,6 +455,7 @@ class Runner:
             if run_id in self.contexts:
                 context = self.contexts.get(run_id)
                 context.cancel()
+                await asyncio.sleep(0)
 
             await asyncio.sleep(1)
 
@@ -462,6 +464,7 @@ class Runner:
 
                 if future:
                     future.cancel()
+                    await asyncio.sleep(0)
 
             # check if thread is still running, if so, print a warning
             if run_id in self.threads:
@@ -471,13 +474,23 @@ class Runner:
         finally:
             self.cleanup_run_id(run_id)
 
-    def serialize_output(self, output: Any) -> str:
+    def serialize_output(self, output: str | dict | BaseModel) -> str:
         output_bytes = ""
         if output is not None:
-            try:
-                output_bytes = json.dumps(output)
-            except Exception as e:
-                logger.error(f"Could not serialize output: {e}")
+            if isinstance(output, BaseModel):
+
+                try:
+                    output_bytes = output.model_dump_json()
+                except Exception as e:
+                    logger.error(f"Could not serialize Pydantic Model as output: {e}")
+                    raise e
+            elif isinstance(output, dict):
+                try:
+                    output_bytes = json.dumps(output)
+                except Exception as e:
+                    logger.error(f"Could not serialize output: {e}")
+                    raise e
+            else:
                 output_bytes = str(output)
         return output_bytes
 

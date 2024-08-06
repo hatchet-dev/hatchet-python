@@ -4,21 +4,21 @@ import signal
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, List, Mapping, Optional
+from typing import List, Mapping, Optional
 
 import grpc
+from pydantic import BaseModel, field_validator
 
-from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import (
     ActionListener,
     GetActionListenerRequest,
     new_dispatcher,
 )
-from hatchet_sdk.contracts.dispatcher_pb2 import (
-    GROUP_KEY_EVENT_TYPE_STARTED,
-    STEP_EVENT_TYPE_STARTED,
+from hatchet_sdk.contracts.dispatcher_p2p import (
     ActionType,
+    GroupKeyActionEventType,
+    StepActionEventType,
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
@@ -27,11 +27,18 @@ from hatchet_sdk.utils.backoff import exp_backoff_sleep
 ACTION_EVENT_RETRY_COUNT = 5
 
 
-@dataclass
-class ActionEvent:
+class ActionEvent(BaseModel):
     action: Action
-    type: Any  # TODO type
+    type: int
     payload: Optional[str] = None
+
+    @field_validator("type", mode="before")
+    def convert_enum_to_int(cls, value):
+        if isinstance(value, StepActionEventType):
+            return value.value
+        if isinstance(value, int) and value in StepActionEventType._value2member_map_:
+            return value
+        raise ValueError(f"Invalid value for type: {value}")
 
 
 STOP_LOOP = "STOP_LOOP"  # Sentinel object to stop the loop
@@ -107,18 +114,22 @@ class WorkerActionListenerProcess:
         self.blocked_main_loop = asyncio.create_task(self.start_blocked_main_loop())
 
     # TODO move event methods to separate class
-    async def _get_event(self):
+    async def _get_event(self) -> str | dict:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_event_send_loop(self):
         while True:
-            event: ActionEvent = await self._get_event()
-
+            event = await self._get_event()
             if event == STOP_LOOP:
                 logger.debug("stopping event send loop...")
                 break
+            if isinstance(event, str):
+                raise ValueError(
+                    "Unexpected event payload -- got string, expected dict"
+                )
 
+            event = ActionEvent(**event)
             logger.debug(f"tx: event: {event.action.action_id}/{event.type}")
             asyncio.create_task(self.send_event(event))
 
@@ -142,7 +153,7 @@ class WorkerActionListenerProcess:
                     # TODO right now we're sending two start_step_run events
                     # one on the action loop and one on the event loop
                     # ideally we change the first to an ack to set the time
-                    if event.type == STEP_EVENT_TYPE_STARTED:
+                    if event.type == StepActionEventType.STEP_EVENT_TYPE_STARTED:
                         if event.action.step_run_id in self.running_step_runs:
                             diff = (
                                 self.now()
@@ -166,7 +177,7 @@ class WorkerActionListenerProcess:
                         )
                     )
                 case ActionType.CANCEL_STEP_RUN:
-                    logger.debug(f"unimplemented event send")
+                    logger.debug("unimplemented event send")
                 case ActionType.START_GET_GROUP_KEY:
                     asyncio.create_task(
                         self.dispatcher_client.send_group_key_action_event(
@@ -174,7 +185,7 @@ class WorkerActionListenerProcess:
                         )
                     )
                 case _:
-                    logger.error(f"unknown action type for event send")
+                    logger.error("unknown action type for event send")
         except Exception as e:
             logger.error(
                 f"could not send action event ({retry_attempt}/{ACTION_EVENT_RETRY_COUNT}): {e}"
@@ -187,57 +198,51 @@ class WorkerActionListenerProcess:
         return time.time()
 
     async def start_action_loop(self):
-        try:
-            async for action in self.listener:
-                if action is None:
-                    break
+        async for action in self.listener:
+            if action is None:
+                break
 
-                # Process the action here
-                match action.action_type:
-                    case ActionType.START_STEP_RUN:
-                        self.event_queue.put(
-                            ActionEvent(
-                                action=action,
-                                type=STEP_EVENT_TYPE_STARTED,  # TODO ack type
-                            )
-                        )
-                        logger.info(
-                            f"rx: start step run: {action.step_run_id}/{action.action_id}"
+            # Process the action here
+            match action.action_type:
+                case ActionType.START_STEP_RUN:
+                    self.event_queue.put(
+                        ActionEvent(
+                            action=action,
+                            type=StepActionEventType.STEP_EVENT_TYPE_STARTED,  # TODO ack type
+                        ).model_dump()
+                    )
+                    logger.info(
+                        f"rx: start step run: {action.step_run_id}/{action.action_id}"
+                    )
+
+                    # TODO handle this case better...
+                    if action.step_run_id in self.running_step_runs:
+                        logger.warning(
+                            f"step run already running: {action.step_run_id}"
                         )
 
-                        # TODO handle this case better...
-                        if action.step_run_id in self.running_step_runs:
-                            logger.warning(
-                                f"step run already running: {action.step_run_id}"
-                            )
+                case ActionType.CANCEL_STEP_RUN:
+                    logger.info(f"rx: cancel step run: {action.step_run_id}")
+                case ActionType.START_GET_GROUP_KEY:
+                    self.event_queue.put(
+                        ActionEvent(
+                            action=action,
+                            type=GroupKeyActionEventType.GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
+                        ).model_dump()
+                    )
+                    logger.info(f"rx: start group key: {action.get_group_key_run_id}")
+                case _:
+                    logger.error(
+                        f"rx: unknown action type ({action.action_type}): {action.action_type}"
+                    )
+            try:
+                self.action_queue.put(action)
+            except Exception:
+                logger.error("error putting action: {e}")
 
-                    case ActionType.CANCEL_STEP_RUN:
-                        logger.info(f"rx: cancel step run: {action.step_run_id}")
-                    case ActionType.START_GET_GROUP_KEY:
-                        self.event_queue.put(
-                            ActionEvent(
-                                action=action,
-                                type=GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
-                            )
-                        )
-                        logger.info(
-                            f"rx: start group key: {action.get_group_key_run_id}"
-                        )
-                    case _:
-                        logger.error(
-                            f"rx: unknown action type ({action.action_type}): {action.action_type}"
-                        )
-                try:
-                    self.action_queue.put(action)
-                except Exception as e:
-                    logger.error("error putting action: {e}")
-
-        except Exception as e:
-            logger.error(f"error in action loop: {e}")
-        finally:
-            logger.info("action loop closed")
-            if not self.killing:
-                await self.exit_gracefully(skip_unregister=True)
+        logger.info("action loop closed")
+        if not self.killing:
+            await self.exit_gracefully(skip_unregister=True)
 
     async def cleanup(self):
         self.killing = True

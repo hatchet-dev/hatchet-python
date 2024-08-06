@@ -3,8 +3,10 @@ from typing import Any
 
 import grpc
 
+from hatchet_sdk.loader import ClientConfig
 
-def new_conn(config, aio=False):
+
+def new_conn(config: ClientConfig, aio=False):
 
     credentials: grpc.ChannelCredentials | None = None
 
