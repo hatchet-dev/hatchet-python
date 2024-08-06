@@ -2,68 +2,67 @@ import asyncio
 import json
 import threading
 import time
-from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, List, Optional
+from traceback import print_exc
+from typing import AsyncGenerator, Dict, List, Optional, Union
 
 import grpc
 from grpc._cython import cygrpc
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.clients.run_event_listener import (
     DEFAULT_ACTION_LISTENER_RETRY_INTERVAL,
 )
 from hatchet_sdk.connection import new_conn
-from hatchet_sdk.contracts.dispatcher_pb2 import (
+from hatchet_sdk.contracts.dispatcher_p2p import (
     ActionType,
     AssignedAction,
-    HeartbeatRequest,
-    OverridesData,
-    RefreshTimeoutRequest,
-    ReleaseSlotRequest,
-    StepActionEvent,
-    UpsertWorkerLabelsRequest,
     WorkerLabels,
-    WorkerListenRequest,
     WorkerUnsubscribeRequest,
 )
+from hatchet_sdk.contracts.dispatcher_pb2 import HeartbeatRequest, WorkerListenRequest
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
+from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
-from ...loader import ClientConfig
 from ...metadata import get_metadata
 from ..events import proto_timestamp_now
 
 DEFAULT_ACTION_TIMEOUT = 600  # seconds
-
-
-DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
 DEFAULT_ACTION_LISTENER_RETRY_COUNT = 15
 
+START_STEP_RUN = 0
+CANCEL_STEP_RUN = 1
+START_GET_GROUP_KEY = 2
 
-@dataclass
-class GetActionListenerRequest:
+
+class GetActionListenerRequest(BaseModel):
     worker_name: str
     services: List[str]
     actions: List[str]
     max_runs: Optional[int] = None
-    _labels: dict[str, str | int] = field(default_factory=dict)
+    _labels: Dict[str, Union[str, int]] = PrivateAttr(default_factory=dict)
+    labels: Dict[str, WorkerLabels] = Field(init=False)
 
-    labels: dict[str, WorkerLabels] = field(init=False)
-
-    # FIXME
-    def __post_init__(self):
-        self.labels = {}
-
-        for key, value in self._labels.items():
+    @model_validator(mode="before")
+    def set_labels(cls, values):
+        labels = {}
+        for key, value in values.get("_labels", {}).items():
             if isinstance(value, int):
-                self.labels[key] = WorkerLabels(intValue=value)
+                labels[key] = WorkerLabels(intValue=value)
             else:
-                self.labels[key] = WorkerLabels(strValue=str(value))
+                labels[key] = WorkerLabels(strValue=str(value))
+        values["labels"] = labels
+        return values
+
+    def __init__(self, **data):
+        _labels = data.pop("_labels", {})
+        super().__init__(**data)
+        self._labels = _labels
 
 
-@dataclass
-class Action:
+class Action(BaseModel):
     worker_id: str
     tenant_id: str
     workflow_run_id: str
@@ -74,56 +73,56 @@ class Action:
     step_id: str
     step_run_id: str
     action_id: str
-    action_payload: str
     action_type: ActionType
     retry_count: int
-    additional_metadata: dict[str, str] | None = None
+    action_payload: Optional[dict] = None
+    additional_metadata: Optional[Union[Dict[str, str], str]] = None
+    child_workflow_index: Optional[int] = None
+    child_workflow_key: Optional[str] = None
+    parent_workflow_run_id: Optional[str] = None
 
-    child_workflow_index: int | None = None
-    child_workflow_key: str | None = None
-    parent_workflow_run_id: str | None = None
-
-    def __post_init__(self):
-        if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
+    @model_validator(mode="before")
+    def validate_additional_metadata(cls, values):
+        additional_metadata = values.get("additional_metadata")
+        if isinstance(additional_metadata, str) and additional_metadata != "":
             try:
-                self.additional_metadata = json.loads(self.additional_metadata)
+                values["additional_metadata"] = json.loads(additional_metadata)
             except json.JSONDecodeError:
                 # If JSON decoding fails, keep the original string
-                pass
-
+                values["additional_metadata"] = additional_metadata
         # Ensure additional_metadata is always a dictionary
-        if not isinstance(self.additional_metadata, dict):
-            self.additional_metadata = {}
+        elif not isinstance(additional_metadata, dict):
+            values["additional_metadata"] = {}
+        return values
 
 
-START_STEP_RUN = 0
-CANCEL_STEP_RUN = 1
-START_GET_GROUP_KEY = 2
+class ActionListener(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-
-@dataclass
-class ActionListener:
     config: ClientConfig
     worker_id: str
 
-    client: DispatcherStub = field(init=False)
-    aio_client: DispatcherStub = field(init=False)
-    token: str = field(init=False)
-    retries: int = field(default=0, init=False)
-    last_connection_attempt: float = field(default=0, init=False)
-    last_heartbeat_succeeded: bool = field(default=True, init=False)
-    time_last_hb_succeeded: float = field(default=9999999999999, init=False)
-    heartbeat_thread: Optional[threading.Thread] = field(default=None, init=False)
-    run_heartbeat: bool = field(default=True, init=False)
-    listen_strategy: str = field(default="v2", init=False)
-    stop_signal: bool = field(default=False, init=False)
+    client: Optional[DispatcherStub] = Field(init=False)  # Arbitrary type
+    aio_client: Optional[DispatcherStub] = Field(init=False)  # Arbitrary type
+    token: Optional[str] = Field(init=False)
+    interrupt: Event_ts = Field(init=False, default_factory=Event_ts)
+    retries: int = 0
+    last_connection_attempt: float = 0
+    last_heartbeat_succeeded: bool = True
+    time_last_hb_succeeded: float = 9999999999999
+    heartbeat_thread: Optional[threading.Thread] = None  # Arbitrary type
+    run_heartbeat: bool = True
+    listen_strategy: str = "v2"
+    stop_signal: bool = False
+    missed_heartbeats: int = 0
 
-    missed_heartbeats: int = field(default=0, init=False)
-
-    def __post_init__(self):
-        self.client = DispatcherStub(new_conn(self.config))
-        self.aio_client = DispatcherStub(new_conn(self.config, True))
-        self.token = self.config.token
+    @model_validator(mode="before")
+    def initialize_fields(cls, values):
+        config = values.get("config")
+        values["client"] = DispatcherStub(new_conn(config))
+        values["aio_client"] = DispatcherStub(new_conn(config, aio=True))
+        values["token"] = config.token
+        return values
 
     def is_healthy(self):
         return self.last_heartbeat_succeeded
@@ -204,21 +203,15 @@ class ActionListener:
 
     async def _generator(self) -> AsyncGenerator[Action, None]:
         listener = None
-
         while not self.stop_signal:
 
             if listener is not None:
                 listener.cancel()
 
-            try:
-                listener = await self.get_listen_client()
-            except Exception as e:
-                logger.info("closing action listener loop")
-                yield None
+            listener = await self.get_listen_client()
 
             try:
                 while not self.stop_signal:
-                    self.interrupt = Event_ts()
                     t = asyncio.create_task(
                         read_with_interrupt(listener, self.interrupt)
                     )
@@ -232,7 +225,10 @@ class ActionListener:
 
                         t.cancel()
                         listener.cancel()
-                        break
+                        # As `.cancel()` won't *actually* cancel the task until the event loop swaps
+                        # CPU controlled tasks, `asyncio.sleep(0)` is called as it always suspends
+                        # the current task, even if marked with a 0.
+                        await asyncio.sleep(0)
 
                     assigned_action = t.result()
 
@@ -255,7 +251,8 @@ class ActionListener:
                         action_payload = self.parse_action_payload(
                             assigned_action.actionPayload
                         )
-
+                    print(action_payload)
+                    print(type(action_payload))
                     action = Action(
                         tenant_id=assigned_action.tenantId,
                         worker_id=self.worker_id,
@@ -278,6 +275,7 @@ class ActionListener:
 
                     yield action
             except grpc.RpcError as e:
+                print_exc()
                 self.last_heartbeat_succeeded = False
 
                 # Handle different types of errors
@@ -303,6 +301,7 @@ class ActionListener:
                         logger.error(f"action listener error: {e}")
 
                     self.retries = self.retries + 1
+            asyncio.sleep(1)
 
     def parse_action_payload(self, payload: str):
         try:
