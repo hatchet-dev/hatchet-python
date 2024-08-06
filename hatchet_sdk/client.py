@@ -1,4 +1,3 @@
-from logging import Logger
 from typing import Callable
 
 import grpc
@@ -15,13 +14,26 @@ from .loader import ClientConfig, ConfigLoader
 
 
 class Client:
-    admin: AdminClient
-    dispatcher: DispatcherClient
-    event: EventClient
-    rest: RestApi
-    workflow_listener: PooledWorkflowRunListener
-    logger: Logger
-    debug: bool = False
+
+    def __init__(
+        self,
+        event_client: EventClient,
+        admin_client: AdminClient,
+        dispatcher_client: DispatcherClient,
+        workflow_listener: PooledWorkflowRunListener,
+        rest_client: RestApi,
+        config: ClientConfig,
+        debug: bool = False,
+    ):
+        self.admin = admin_client
+        self.dispatcher = dispatcher_client
+        self.event = event_client
+        self.rest = rest_client
+        self.config = config
+        self.listener = RunEventListenerClient(config)
+        self.workflow_listener = workflow_listener
+        self.logger = config.logger
+        self.debug = debug
 
     @classmethod
     def from_environment(
@@ -45,9 +57,6 @@ class Client:
         if config.tls_config is None:
             raise ValueError("TLS config is required")
 
-        if config.host_port is None:
-            raise ValueError("Host and port are required")
-
         conn: grpc.Channel = new_conn(config)
 
         # Instantiate clients
@@ -66,26 +75,6 @@ class Client:
             config,
             debug,
         )
-
-    def __init__(
-        self,
-        event_client: EventClient,
-        admin_client: AdminClient,
-        dispatcher_client: DispatcherClient,
-        workflow_listener: PooledWorkflowRunListener,
-        rest_client: RestApi,
-        config: ClientConfig,
-        debug: bool = False,
-    ):
-        self.admin = admin_client
-        self.dispatcher = dispatcher_client
-        self.event = event_client
-        self.rest = rest_client
-        self.config = config
-        self.listener = RunEventListenerClient(config)
-        self.workflow_listener = workflow_listener
-        self.logger = config.logger
-        self.debug = debug
 
 
 def with_host_port(host: str, port: int):
