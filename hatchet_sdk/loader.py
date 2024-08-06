@@ -1,62 +1,42 @@
 import os
 from logging import Logger, getLogger
-from typing import Any, Dict, Optional
+from typing import Dict, Optional, Self
 
 import yaml
+from pydantic import BaseModel, Field, model_validator
 
 from .token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
 
-class ClientTLSConfig:
-    def __init__(
-        self,
-        tls_strategy: str,
-        cert_file: str,
-        key_file: str,
-        ca_file: str,
-        server_name: str,
-    ):
-        self.tls_strategy = tls_strategy
-        self.cert_file = cert_file
-        self.key_file = key_file
-        self.ca_file = ca_file
-        self.server_name = server_name
+class ClientTLSConfig(BaseModel):
+    tls_strategy: Optional[str] = None
+    cert_file: Optional[str] = None
+    key_file: Optional[str] = None
+    ca_file: Optional[str] = None
+    server_name: Optional[str] = None
 
 
-class ClientConfig:
-    logger: Logger
+class ClientConfig(BaseModel):
+    logger: Logger = Field(default_factory=getLogger)  # Arbitrary type
 
-    def __init__(
-        self,
-        tenant_id: str = None,
-        tls_config: ClientTLSConfig = None,
-        token: str = None,
-        host_port: str = "localhost:7070",
-        server_url: str = "https://app.dev.hatchet-tools.com",
-        namespace: str = None,
-        listener_v2_timeout: int = None,
-        logger: Logger = None,
-    ):
-        self.tenant_id = tenant_id
-        self.tls_config = tls_config
-        self.host_port = host_port
-        self.token = token
-        self.server_url = server_url
-        self.namespace = ""
-        self.logger = logger
+    tenant_id: Optional[str] = None
+    tls_config: Optional[ClientTLSConfig] = None
+    token: Optional[str] = None
+    host_port: str = "localhost:7070"
+    server_url: str = "https://app.dev.hatchet-tools.com"
+    namespace: str = ""
+    listener_v2_timeout: Optional[int] = None
 
-        if not self.logger:
-            self.logger = getLogger()
-
-        # case on whether the namespace already has a trailing underscore
-        if namespace and not namespace.endswith("_"):
-            self.namespace = f"{namespace}_"
-        elif namespace:
-            self.namespace = namespace
-
+    @model_validator(mode="after")
+    def valiate_namespace(self) -> Self:
         self.namespace = self.namespace.lower()
+        # case on whether the namespace already has a trailing underscore
+        if self.namespace and not self.namespace.endswith("_"):
+            self.namespace = f"{self.namespace}_"
+        return self
 
-        self.listener_v2_timeout = listener_v2_timeout
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class ConfigLoader:
@@ -65,7 +45,7 @@ class ConfigLoader:
 
     def load_client_config(self, defaults: ClientConfig) -> ClientConfig:
         config_file_path = os.path.join(self.directory, "client.yaml")
-        config_data: object = {"tls": {}}
+        config_data = {"tls": {}}
 
         # determine if client.yaml exists
         if os.path.exists(config_file_path):
@@ -107,16 +87,15 @@ class ConfigLoader:
             tenant_id = get_tenant_id_from_jwt(token)
 
         tls_config = self._load_tls_config(config_data["tls"], host_port)
-
         return ClientConfig(
-            tenant_id,
-            tls_config,
-            token,
-            host_port,
-            server_url,
-            namespace,
-            listener_v2_timeout,
-            defaults.logger,
+            tenant_id=tenant_id,
+            tls_config=tls_config,
+            token=token,
+            host_port=host_port,
+            server_url=server_url,
+            namespace=namespace,
+            listener_v2_timeout=listener_v2_timeout,
+            logger=defaults.logger,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
@@ -154,8 +133,13 @@ class ConfigLoader:
         # if server_name is not set, use the host from the host_port
         if not server_name:
             server_name = host_port.split(":")[0]
-
-        return ClientTLSConfig(tls_strategy, cert_file, key_file, ca_file, server_name)
+        return ClientTLSConfig(
+            tls_strategy=tls_strategy,
+            cert_file=cert_file,
+            key_file=key_file,
+            ca_file=ca_file,
+            server_name=server_name,
+        )
 
     @staticmethod
     def _get_env_var(env_var: str, default: Optional[str] = None) -> str:
