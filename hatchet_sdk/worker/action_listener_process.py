@@ -7,7 +7,7 @@ from multiprocessing import Queue
 from typing import List, Mapping, Optional
 
 import grpc
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import (
@@ -29,8 +29,16 @@ ACTION_EVENT_RETRY_COUNT = 5
 
 class ActionEvent(BaseModel):
     action: Action
-    type: StepActionEventType
+    type: int
     payload: Optional[str] = None
+
+    @field_validator("type", mode="before")
+    def convert_enum_to_int(cls, value):
+        if isinstance(value, StepActionEventType):
+            return value.value
+        if isinstance(value, int) and value in StepActionEventType._value2member_map_:
+            return value
+        raise ValueError(f"Invalid value for type: {value}")
 
 
 STOP_LOOP = "STOP_LOOP"  # Sentinel object to stop the loop
@@ -201,7 +209,7 @@ class WorkerActionListenerProcess:
                         ActionEvent(
                             action=action,
                             type=StepActionEventType.STEP_EVENT_TYPE_STARTED,  # TODO ack type
-                        )
+                        ).model_dump()
                     )
                     logger.info(
                         f"rx: start step run: {action.step_run_id}/{action.action_id}"
@@ -220,7 +228,7 @@ class WorkerActionListenerProcess:
                         ActionEvent(
                             action=action,
                             type=GroupKeyActionEventType.GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
-                        )
+                        ).model_dump()
                     )
                     logger.info(f"rx: start group key: {action.get_group_key_run_id}")
                 case _:
