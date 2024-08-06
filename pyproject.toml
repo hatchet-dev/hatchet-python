@@ -19,6 +19,7 @@ urllib3 = "^2.2.1"
 aiostream = "^0.5.2"
 nest-asyncio = "^1.6.0"
 
+protobuf-to-pydantic = {version = "^0.2.7", extras = ["mypy-protobuf"]}
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-asyncio = "^0.23.8"
