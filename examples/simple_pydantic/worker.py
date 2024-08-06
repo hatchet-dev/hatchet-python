@@ -1,12 +1,19 @@
 import time
 
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from hatchet_sdk import Context, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
+
+
+class WorkflowPayload(BaseModel):
+    """Example Pydantic model."""
+
+    step1: str = "step1"
 
 
 @hatchet.workflow(on_events=["user:create"])
@@ -16,9 +23,7 @@ class MyWorkflow:
         print("executed step1")
         time.sleep(10)
         # raise Exception("test")
-        return {
-            "step1": "step1",
-        }
+        return WorkflowPayload(step1="step1")
 
 
 def main():
