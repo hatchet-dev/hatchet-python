@@ -59,8 +59,7 @@ class DispatcherClient:
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )
-
-        return ActionListener(self.config, response.workerId)
+        return ActionListener(config=self.config, worker_id=response.workerId)
 
     async def send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
