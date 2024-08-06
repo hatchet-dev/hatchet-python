@@ -24,7 +24,7 @@ def new_event(conn, config: ClientConfig):
     )
 
 
-def proto_timestamp_now():
+def proto_timestamp_now() -> timestamp_pb2.Timestamp:
     t = datetime.datetime.now().timestamp()
     seconds = int(t)
     nanos = int(t % 1 * 1e9)
