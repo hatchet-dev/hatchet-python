@@ -1,6 +1,5 @@
 import asyncio
 import json
-import time
 from collections.abc import AsyncIterator
 from typing import AsyncGenerator
 
@@ -95,11 +94,12 @@ class PooledWorkflowRunListener:
                     try:
                         self.listener = await self._retry_subscribe()
 
-                        logger.debug(f"Workflow run listener connected.")
+                        logger.debug("Workflow run listener connected.")
 
                         # spawn an interrupter task
                         if self.interrupter is not None and not self.interrupter.done():
                             self.interrupter.cancel()
+                            await asyncio.sleep(0)
 
                         self.interrupter = asyncio.create_task(self._interrupter())
 

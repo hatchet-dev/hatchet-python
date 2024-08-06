@@ -18,11 +18,10 @@ class WorkflowPayload(BaseModel):
 
 @hatchet.workflow(on_events=["user:create"])
 class MyWorkflow:
-    @hatchet.step(timeout="11s", retries=3)
+    @hatchet.step(timeout="15s", retries=3)
     def step1(self, context: Context):
         print("executed step1")
-        time.sleep(10)
-        # raise Exception("test")
+        time.sleep(5)
         return WorkflowPayload(step1="step1")
 
 

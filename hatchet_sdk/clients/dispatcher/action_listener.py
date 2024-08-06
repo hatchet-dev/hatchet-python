@@ -2,12 +2,18 @@ import asyncio
 import json
 import threading
 import time
-from traceback import print_exc
 from typing import AsyncGenerator, Dict, List, Optional, Union
 
 import grpc
 from grpc._cython import cygrpc
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.clients.run_event_listener import (
@@ -73,7 +79,7 @@ class Action(BaseModel):
     step_id: str
     step_run_id: str
     action_id: str
-    action_type: ActionType
+    action_type: int
     retry_count: int
     action_payload: Optional[dict] = None
     additional_metadata: Optional[Union[Dict[str, str], str]] = None
@@ -95,6 +101,14 @@ class Action(BaseModel):
             values["additional_metadata"] = {}
         return values
 
+    @field_validator("action_type", mode="before")
+    def convert_enum_to_int(cls, value):
+        if isinstance(value, ActionType):
+            return value.value
+        if isinstance(value, int) and value in ActionType._value2member_map_:
+            return value
+        raise ValueError(f"Invalid value for type: {value}")
+
 
 class ActionListener(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -108,7 +122,7 @@ class ActionListener(BaseModel):
     interrupt: Event_ts = Field(init=False, default_factory=Event_ts)
     retries: int = 0
     last_connection_attempt: float = 0
-    last_heartbeat_succeeded: bool = True
+    last_heartbeat_succeeded: bool = False
     time_last_hb_succeeded: float = 9999999999999
     heartbeat_thread: Optional[threading.Thread] = None  # Arbitrary type
     run_heartbeat: bool = True
@@ -251,8 +265,6 @@ class ActionListener(BaseModel):
                         action_payload = self.parse_action_payload(
                             assigned_action.actionPayload
                         )
-                    print(action_payload)
-                    print(type(action_payload))
                     action = Action(
                         tenant_id=assigned_action.tenantId,
                         worker_id=self.worker_id,
@@ -275,7 +287,6 @@ class ActionListener(BaseModel):
 
                     yield action
             except grpc.RpcError as e:
-                print_exc()
                 self.last_heartbeat_succeeded = False
 
                 # Handle different types of errors
@@ -301,7 +312,6 @@ class ActionListener(BaseModel):
                         logger.error(f"action listener error: {e}")
 
                     self.retries = self.retries + 1
-            asyncio.sleep(1)
 
     def parse_action_payload(self, payload: str):
         try:
