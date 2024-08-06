@@ -603,19 +603,18 @@ class Worker:
 
         return self._status
 
-    def start(self, retry_count=1):
+    def start(self, retry_count=1, loop=None):
         self._status = WorkerStatus.STARTING
 
         try:
-            loop = asyncio.get_running_loop()
-            self.loop = loop
+            self.loop = loop or asyncio.get_running_loop()
             created_loop = False
         except RuntimeError:
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
             created_loop = True
 
-        self.loop.create_task(self.async_start(retry_count))
+        asyncio.run_coroutine_threadsafe(self.async_start(retry_count), self.loop)
 
         self.loop.add_signal_handler(
             signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
