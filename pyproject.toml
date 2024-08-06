@@ -13,7 +13,7 @@ protobuf = "^4.25.2"
 pyyaml = "^6.0.1"
 grpcio-tools = "^1.60.0"
 loguru = "^0.7.2"
-pydantic = "^2.6.3"
+pydantic = "^2.8.2"
 python-dateutil = "^2.9.0.post0"
 urllib3 = "^2.2.1"
 aiostream = "^0.5.2"
@@ -42,7 +42,7 @@ known_third_party = [
   "python_dotenv",
   "python_dateutil",
   "pyyaml",
-  "urllib3"
+  "urllib3",
 ]
 
 [tool.poetry.scripts]
@@ -61,5 +61,6 @@ on_failure = "examples.on_failure.worker:main"
 programatic_replay = "examples.programatic_replay.worker:main"
 rate_limit = "examples.rate_limit.worker:main"
 simple = "examples.simple.worker:main"
+simple_pydantic = "examples.simple_pydantic.worker:main"
 timeout = "examples.timeout.worker:main"
 blocked = "examples.blocked_async.worker:main"
