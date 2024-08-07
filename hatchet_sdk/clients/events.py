@@ -1,5 +1,6 @@
 import datetime
 import json
+from typing import Optional
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -46,10 +47,12 @@ class EventClient:
         self,
         event_key,
         payload: dict | BaseModel,
-        options: PushEventOptions = PushEventOptions(),
+        options: Optional[dict | PushEventOptions] = {},
     ) -> Event:
 
         namespaced_event_key = self.namespace + event_key
+        if isinstance(options, dict):
+            options = PushEventOptions(**options)
 
         try:
             meta = options.additional_metadata
