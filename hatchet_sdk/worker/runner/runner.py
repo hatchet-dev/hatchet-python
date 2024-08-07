@@ -13,6 +13,8 @@ from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Coroutine, Dict
 
+from pydantic import BaseModel
+
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
@@ -373,7 +375,7 @@ class Runner:
 
             try:
                 await task
-            except Exception as e:
+            except Exception:
                 # do nothing, this should be caught in the callback
                 pass
 
@@ -415,7 +417,7 @@ class Runner:
 
             try:
                 await task
-            except Exception as e:
+            except Exception:
                 # do nothing, this should be caught in the callback
                 pass
 
@@ -471,13 +473,23 @@ class Runner:
         finally:
             self.cleanup_run_id(run_id)
 
-    def serialize_output(self, output: Any) -> str:
+    def serialize_output(self, output: str | dict | BaseModel) -> str:
         output_bytes = ""
         if output is not None:
-            try:
-                output_bytes = json.dumps(output)
-            except Exception as e:
-                logger.error(f"Could not serialize output: {e}")
+            if isinstance(output, BaseModel):
+
+                try:
+                    output_bytes = output.model_dump_json()
+                except Exception as e:
+                    logger.error(f"Could not serialize Pydantic Model as output: {e}")
+                    raise e
+            elif isinstance(output, dict):
+                try:
+                    output_bytes = json.dumps(output)
+                except Exception as e:
+                    logger.error(f"Could not serialize output: {e}")
+                    raise e
+            else:
                 output_bytes = str(output)
         return output_bytes
 
