@@ -96,6 +96,12 @@ def concurrency(
     return inner
 
 
+class ComputeConfig:
+    def __init__(
+        gpu: str = "",
+    ):
+        pass
+
 class Hatchet(HatchetV1):
     dag = staticmethod(workflow)
     concurrency = staticmethod(concurrency)
@@ -183,6 +189,19 @@ class Hatchet(HatchetV1):
         return wrapper
 
     def worker(self, name: str, max_runs: int | None = None):
+        worker = Worker(
+            name=name,
+            max_runs=max_runs,
+            config=self._client.config,
+            debug=self._client.debug,
+        )
+
+        for func in self.functions:
+            register_on_worker(func, worker)
+
+        return worker
+
+    def compute(self, name: str, config: ComputeConfig, max_runs: int | None = None):
         worker = Worker(
             name=name,
             max_runs=max_runs,
