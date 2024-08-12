@@ -8,7 +8,6 @@ from typing import Any, List, Mapping, Optional
 
 import grpc
 
-from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import (
     ActionListener,
@@ -42,6 +41,10 @@ BLOCKED_THREAD_WARNING = (
 )
 
 
+def noop_handler():
+    pass
+
+
 @dataclass
 class WorkerActionListenerProcess:
     name: str
@@ -67,13 +70,11 @@ class WorkerActionListenerProcess:
             logger.setLevel(logging.DEBUG)
 
         loop = asyncio.get_event_loop()
+        loop.add_signal_handler(signal.SIGINT, noop_handler)
+        loop.add_signal_handler(signal.SIGTERM, noop_handler)
         loop.add_signal_handler(
-            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
+            signal.SIGQUIT, lambda: asyncio.create_task(self.exit_gracefully())
         )
-        loop.add_signal_handler(
-            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
-        )
-        loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
 
     async def start(self, retry_attempt=0):
         if retry_attempt > 5:
@@ -114,7 +115,6 @@ class WorkerActionListenerProcess:
     async def start_event_send_loop(self):
         while True:
             event: ActionEvent = await self._get_event()
-
             if event == STOP_LOOP:
                 logger.debug("stopping event send loop...")
                 break
@@ -166,7 +166,7 @@ class WorkerActionListenerProcess:
                         )
                     )
                 case ActionType.CANCEL_STEP_RUN:
-                    logger.debug(f"unimplemented event send")
+                    logger.debug("unimplemented event send")
                 case ActionType.START_GET_GROUP_KEY:
                     asyncio.create_task(
                         self.dispatcher_client.send_group_key_action_event(
@@ -174,7 +174,7 @@ class WorkerActionListenerProcess:
                         )
                     )
                 case _:
-                    logger.error(f"unknown action type for event send")
+                    logger.error("unknown action type for event send")
         except Exception as e:
             logger.error(
                 f"could not send action event ({retry_attempt}/{ACTION_EVENT_RETRY_COUNT}): {e}"
@@ -230,7 +230,7 @@ class WorkerActionListenerProcess:
                 try:
                     self.action_queue.put(action)
                 except Exception as e:
-                    logger.error("error putting action: {e}")
+                    logger.error(f"error putting action: {e}")
 
         except Exception as e:
             logger.error(f"error in action loop: {e}")
