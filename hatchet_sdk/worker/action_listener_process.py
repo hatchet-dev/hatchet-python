@@ -72,7 +72,9 @@ class WorkerActionListenerProcess:
         loop = asyncio.get_event_loop()
         loop.add_signal_handler(signal.SIGINT, noop_handler)
         loop.add_signal_handler(signal.SIGTERM, noop_handler)
-        loop.add_signal_handler(signal.SIGQUIT, noop_handler)
+        loop.add_signal_handler(
+            signal.SIGQUIT, lambda: asyncio.create_task(self.exit_gracefully())
+        )
 
     async def start(self, retry_attempt=0):
         if retry_attempt > 5:
