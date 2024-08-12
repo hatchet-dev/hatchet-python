@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, List, Optional
+from typing import AsyncGenerator, List, Optional
 
 import grpc
 from grpc._cython import cygrpc
@@ -16,11 +16,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
     HeartbeatRequest,
-    OverridesData,
-    RefreshTimeoutRequest,
-    ReleaseSlotRequest,
-    StepActionEvent,
-    UpsertWorkerLabelsRequest,
     WorkerLabels,
     WorkerListenRequest,
     WorkerUnsubscribeRequest,
@@ -198,7 +193,7 @@ class ActionListener:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
             else:
-                raise e 
+                raise e
         self.heartbeat_task = loop.create_task(self.heartbeat())
 
     def __aiter__(self):
