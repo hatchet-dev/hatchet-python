@@ -45,7 +45,6 @@ class GetActionListenerRequest:
 
     labels: dict[str, WorkerLabels] = field(init=False)
 
-    # FIXME
     def __post_init__(self):
         self.labels = {}
 
