@@ -1,13 +1,11 @@
 import asyncio
 import logging
-import signal
 from dataclasses import dataclass, field
 from multiprocessing import Queue
 from typing import Any, Callable, Dict
 
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
-from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.worker.runner.runner import Runner
@@ -42,14 +40,6 @@ class WorkerActionRunLoopManager:
 
     def start(self, retry_count=1):
         k = self.loop.create_task(self.async_start(retry_count))
-
-        self.loop.add_signal_handler(
-            signal.SIGINT, lambda: asyncio.create_task(self.exit_gracefully())
-        )
-        self.loop.add_signal_handler(
-            signal.SIGTERM, lambda: asyncio.create_task(self.exit_gracefully())
-        )
-        self.loop.add_signal_handler(signal.SIGQUIT, lambda: self.exit_forcefully())
 
     async def async_start(self, retry_count=1):
         await capture_logs(
@@ -100,11 +90,9 @@ class WorkerActionRunLoopManager:
         if self.killing:
             return
 
-        logger.info(f"gracefully exiting runner...")
+        logger.info("gracefully exiting runner...")
 
         self.cleanup()
-
-        await self.wait_for_tasks()
 
         # Wait for 1 second to allow last calls to flush. These are calls which have been
         # added to the event loop as callbacks to tasks, so we're not aware of them in the
