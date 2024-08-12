@@ -108,6 +108,24 @@ class Hatchet(HatchetV1):
 
     functions: List[HatchetCallable] = []
 
+    def managed_worker(
+        self,
+        name: str,
+        max_runs: int | None = None,
+        config: ComputeConfig = None,
+    ):
+        worker = Worker(
+            name=name,
+            max_runs=max_runs,
+            config=self._client.config,
+            debug=self._client.debug,
+        )
+
+        for func in self.functions:
+            register_on_worker(func, worker)
+
+        return worker
+
     def function(
         self,
         name: str = "",
@@ -201,7 +219,7 @@ class Hatchet(HatchetV1):
 
         return worker
 
-    def compute(self, name: str, config: ComputeConfig, max_runs: int | None = None):
+    def managed_worker(self, name: str, config: ComputeConfig, max_runs: int | None = None):
         worker = Worker(
             name=name,
             max_runs=max_runs,
