@@ -5,4 +5,4 @@ from hatchet_sdk import Context
 
 load_dotenv()
 
-hc = Hatchet(debug=True)
+hatchet = Hatchet(debug=True)
