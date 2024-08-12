@@ -130,11 +130,19 @@ class ActionListener:
 
     def heartbeat(self):
         # send a heartbeat every 4 seconds
-        delay = 4
+        heartbeat_delay = 4
+        sleep_interval = 0.5
+        total_slept = 0
 
         while True:
             if not self.run_heartbeat:
                 break
+
+            if total_slept < heartbeat_delay:
+                time.sleep(sleep_interval)  # TODO: Blocks exiting the thread.
+                total_slept += sleep_interval
+                continue
+            total_slept = 0
 
             try:
                 logger.debug("sending heartbeat")
@@ -152,9 +160,9 @@ class ActionListener:
 
                 now = time.time()
                 diff = now - self.time_last_hb_succeeded
-                if diff > delay + 1:
+                if diff > heartbeat_delay + 1:
                     logger.warn(
-                        f"time since last successful heartbeat: {diff:.2f}s, expects {delay}s"
+                        f"time since last successful heartbeat: {diff:.2f}s, expects {heartbeat_delay}s"
                     )
 
                 self.last_heartbeat_succeeded = True
@@ -186,8 +194,6 @@ class ActionListener:
 
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
-
-            time.sleep(delay)  # TODO this is blocking the tear down of the listener
 
     def start_heartbeater(self):
         if self.heartbeat_thread is not None:
@@ -331,7 +337,6 @@ class ActionListener:
         ):
             # reset retries if last connection was long lived
             self.retries = 0
-            self.run_heartbeat = True
 
         if self.retries > DEFAULT_ACTION_LISTENER_RETRY_COUNT:
             # TODO this is the problem case...
