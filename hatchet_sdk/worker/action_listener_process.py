@@ -229,8 +229,8 @@ class WorkerActionListenerProcess:
                         )
                 try:
                     self.action_queue.put(action)
-                except Exception:
-                    logger.error("error putting action: {e}")
+                except Exception as e:
+                    logger.error(f"error putting action: {e}")
 
         except Exception as e:
             logger.error(f"error in action loop: {e}")
