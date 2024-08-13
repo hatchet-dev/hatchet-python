@@ -1,6 +1,6 @@
 import asyncio
 from threading import Thread
-from typing import Generic, TypeVar
+from typing import Coroutine, Generic, TypeVar
 
 from hatchet_sdk.clients.run_event_listener import (
     RunEventListener,
@@ -77,7 +77,10 @@ class WorkflowRunRef:
     def stream(self) -> RunEventListener:
         return self.workflow_run_event_listener.stream(self.workflow_run_id)
 
-    def result(self):
+    def result(self) -> Coroutine:
+        return self.workflow_listener.result(self.workflow_run_id)
+
+    def sync_result(self) -> dict:
         loop = get_or_create_event_loop()
         if loop is None:
             with EventLoopThread() as loop:
