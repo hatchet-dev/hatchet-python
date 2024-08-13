@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.34.0a5"
+version = "0.34.0a6"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -42,7 +42,7 @@ known_third_party = [
   "python_dotenv",
   "python_dateutil",
   "pyyaml",
-  "urllib3"
+  "urllib3",
 ]
 
 [tool.poetry.scripts]
