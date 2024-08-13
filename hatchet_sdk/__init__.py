@@ -123,7 +123,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     RateLimitDuration,
     StickyStrategy,
 )
-from hatchet_sdk.utils.aio_utils import wrap
+from hatchet_sdk.utils.aio_utils import sync_to_async
 
 from .client import new_client
 from .clients.admin import (
@@ -186,6 +186,7 @@ __all__ = [
     "StepRun",
     "StepRunDiff",
     "StepRunStatus",
+    "sync_to_async",
     "Tenant",
     "TenantInvite",
     "TenantInviteList",
@@ -239,5 +240,4 @@ __all__ = [
     "Worker",
     "WorkerStartOptions",
     "WorkerStatus",
-    "wrap",
 ]

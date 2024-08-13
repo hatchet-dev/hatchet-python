@@ -4,7 +4,7 @@ import time
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, wrap
+from hatchet_sdk import Context, sync_to_async
 from hatchet_sdk.v2.hatchet import Hatchet
 
 os.environ["PYTHONASYNCIODEBUG"] = "1"
@@ -22,6 +22,7 @@ async def fanout_sync_async(context: Context) -> dict:
 
     n = context.workflow_input().get("n", 10)
 
+    start_time = time.time()
     for i in range(n):
         results.append(
             (
@@ -36,19 +37,46 @@ async def fanout_sync_async(context: Context) -> dict:
 
     result = await asyncio.gather(*results)
 
+    execution_time = time.time() - start_time
+    print(f"Completed in {execution_time:.2f} seconds")
+
     return {"results": result}
 
 
 @hatchet.workflow(on_events=["child:create"])
 class Child:
+    ###### Example Functions ######
     def sync_blocking_function(self):
         time.sleep(5)
         return {"type": "sync_blocking"}
 
+    @sync_to_async  # this makes the function async safe!
+    def decorated_sync_blocking_function(self):
+        time.sleep(5)
+        return {"type": "decorated_sync_blocking"}
+
+    @sync_to_async  # this makes the async function loop safe!
+    async def async_blocking_function(self):
+        time.sleep(5)
+        return {"type": "async_blocking"}
+
+    ###### Hatchet Steps ######
     @hatchet.step()
     async def handle_blocking_sync_in_async(self, context: Context):
-        wrapped_blocking_function = wrap(self.sync_blocking_function)
-        data = await wrapped_blocking_function()  # this should now be async safe!
+        wrapped_blocking_function = sync_to_async(self.sync_blocking_function)
+
+        # This will now be async safe!
+        data = await wrapped_blocking_function()
+        return {"blocking_status": "success", "data": data}
+
+    @hatchet.step()
+    async def handle_decorated_blocking_sync_in_async(self, context: Context):
+        data = await self.decorated_sync_blocking_function()
+        return {"blocking_status": "success", "data": data}
+
+    @hatchet.step()
+    async def handle_blocking_async_in_async(self, context: Context):
+        data = await self.async_blocking_function()
         return {"blocking_status": "success", "data": data}
 
     @hatchet.step()
@@ -58,7 +86,7 @@ class Child:
 
 
 def main():
-    worker = hatchet.worker("fanout-worker", max_runs=30)
+    worker = hatchet.worker("fanout-worker", max_runs=50)
     worker.register_workflow(Child())
     worker.start()
 
