@@ -334,6 +334,7 @@ class Runner:
                 self.dispatcher_client,
                 self.admin_client,
                 self.client.event,
+                self.client.rest,
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
@@ -345,6 +346,7 @@ class Runner:
                 self.dispatcher_client,
                 self.admin_client,
                 self.client.event,
+                self.client.rest,
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
@@ -373,7 +375,7 @@ class Runner:
 
             try:
                 await task
-            except Exception as e:
+            except Exception:
                 # do nothing, this should be caught in the callback
                 pass
 
@@ -384,6 +386,7 @@ class Runner:
             self.dispatcher_client,
             self.admin_client,
             self.client.event,
+            self.client.rest,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.worker_context,
@@ -415,7 +418,7 @@ class Runner:
 
             try:
                 await task
-            except Exception as e:
+            except Exception:
                 # do nothing, this should be caught in the callback
                 pass
 
