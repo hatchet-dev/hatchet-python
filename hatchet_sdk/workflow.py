@@ -1,11 +1,12 @@
 import functools
 from typing import Any, Callable, List, Tuple
 
-from .workflows_pb2 import (
+from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
     WorkflowConcurrencyOpts,
+    WorkflowKind,
 )
 
 stepsType = List[Tuple[str, Callable[..., Any]]]
@@ -124,6 +125,7 @@ class WorkflowMeta(type):
 
             return CreateWorkflowVersionOpts(
                 name=name,
+                kind=WorkflowKind.DAG,
                 version=version,
                 event_triggers=event_triggers,
                 cron_triggers=cron_triggers,

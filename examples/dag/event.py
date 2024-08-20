@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 
-from hatchet_sdk import new_client
+from hatchet_sdk import Context, Hatchet
 
 load_dotenv()
 
-client = new_client()
+hatchet = Hatchet(debug=True)
 
 for i in range(10):
-    client.event.push("user:create", {"test": "test"})
+    hatchet.event.push("dag:create", {"test": "test"})

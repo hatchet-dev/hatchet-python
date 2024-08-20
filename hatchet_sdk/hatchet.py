@@ -1,19 +1,22 @@
 import logging
 from typing import List, Optional, TypedDict
 
-from hatchet_sdk.loader import ClientConfig
-from hatchet_sdk.rate_limit import RateLimit
+from typing_extensions import deprecated
 
-from .client import ClientImpl, new_client, new_client_raw
-from .logger import logger
-from .worker import Worker
-from .workflow import WorkflowMeta
-from .workflows_pb2 import (
+from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
     DesiredWorkerLabels,
     StickyStrategy,
 )
+from hatchet_sdk.labels import DesiredWorkerLabel
+from hatchet_sdk.loader import ClientConfig
+from hatchet_sdk.rate_limit import RateLimit
+
+from .client import Client, new_client, new_client_raw
+from .logger import logger
+from .worker import Worker
+from .workflow import WorkflowMeta
 
 
 def workflow(
@@ -42,15 +45,6 @@ def workflow(
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
     return inner
-
-
-class DesiredWorkerLabel(TypedDict):
-    value: str | int
-    required: bool | None = None
-    weight: int | None = None
-    comparator: int | None = (
-        None  # _ClassVar[WorkerLabelComparator] TODO figure out type
-    )
 
 
 def step(
@@ -133,7 +127,20 @@ def concurrency(
 
 
 class Hatchet:
-    client: ClientImpl
+    """
+    Main client for interacting with the Hatchet SDK.
+
+    This class provides access to various client interfaces and utility methods
+    for working with Hatchet workers, workflows, and steps.
+
+    Attributes:
+        admin (AdminClient): Interface for administrative operations.
+        dispatcher (DispatcherClient): Interface for dispatching operations.
+        event (EventClient): Interface for event-related operations.
+        rest (RestApi): Interface for REST API operations.
+    """
+
+    _client: Client
 
     @classmethod
     def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs):
@@ -146,16 +153,47 @@ class Hatchet:
     def __init__(
         self,
         debug: bool = False,
-        client: Optional[ClientImpl] = None,
+        client: Optional[Client] = None,
         config: ClientConfig = ClientConfig(),
     ):
+        """
+        Initialize a new Hatchet instance.
+
+        Args:
+            debug (bool, optional): Enable debug logging. Defaults to False.
+            client (Optional[Client], optional): A pre-configured Client instance. Defaults to None.
+            config (ClientConfig, optional): Configuration for creating a new Client. Defaults to ClientConfig().
+        """
         if client is not None:
             self.client = client
         else:
-            self.client = new_client(config)
+            self._client = new_client(config, debug)
 
         if debug:
             logger.setLevel(logging.DEBUG)
+
+    @property
+    @deprecated(
+        "Direct access to client is deprecated and will be removed in a future version. Use specific client properties (Hatchet.admin, Hatchet.dispatcher, Hatchet.event, Hatchet.rest) instead. [0.32.0]",
+    )
+    def client(self) -> Client:
+        return self._client
+
+    @property
+    def admin(self):
+        return self._client.admin
+
+    @property
+    def dispatcher(self):
+        return self._client.dispatcher
+
+    @property
+    def event(self):
+        return self._client.event
+
+    @property
+    def rest(self):
+        return self._client.rest
 
     concurrency = staticmethod(concurrency)
 
@@ -169,5 +207,9 @@ class Hatchet:
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
     ):
         return Worker(
-            name=name, max_runs=max_runs, labels=labels, config=self.client.config
+            name=name,
+            max_runs=max_runs,
+            labels=labels,
+            config=self._client.config,
+            debug=self._client.debug,
         )

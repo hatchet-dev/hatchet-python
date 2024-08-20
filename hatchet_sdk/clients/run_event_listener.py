@@ -5,15 +5,15 @@ from typing import AsyncGenerator
 import grpc
 
 from hatchet_sdk.connection import new_conn
-
-from ..dispatcher_pb2 import (
+from hatchet_sdk.contracts.dispatcher_pb2 import (
     RESOURCE_TYPE_STEP_RUN,
     RESOURCE_TYPE_WORKFLOW_RUN,
     ResourceEventType,
     SubscribeToWorkflowEventsRequest,
     WorkflowEvent,
 )
-from ..dispatcher_pb2_grpc import DispatcherStub
+from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
+
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 
@@ -67,11 +67,28 @@ def new_listener(config: ClientConfig):
 
 
 class RunEventListener:
-    def __init__(self, workflow_run_id: str, client: DispatcherStub, token: str):
+
+    workflow_run_id: str = None
+    additional_meta_kv: tuple[str, str] = None
+
+    def __init__(self, client: DispatcherStub, token: str):
         self.client = client
         self.stop_signal = False
-        self.workflow_run_id = workflow_run_id
         self.token = token
+
+    @classmethod
+    def for_run_id(cls, workflow_run_id: str, client: DispatcherStub, token: str):
+        listener = RunEventListener(client, token)
+        listener.workflow_run_id = workflow_run_id
+        return listener
+
+    @classmethod
+    def for_additional_meta(
+        cls, key: str, value: str, client: DispatcherStub, token: str
+    ):
+        listener = RunEventListener(client, token)
+        listener.additional_meta_kv = (key, value)
+        return listener
 
     def abort(self):
         self.stop_signal = True
@@ -159,13 +176,24 @@ class RunEventListener:
                 if retries > 0:
                     await asyncio.sleep(DEFAULT_ACTION_LISTENER_RETRY_INTERVAL)
 
-                listener = self.client.SubscribeToWorkflowEvents(
-                    SubscribeToWorkflowEventsRequest(
-                        workflowRunId=self.workflow_run_id,
-                    ),
-                    metadata=get_metadata(self.token),
-                )
-                return listener
+                if self.workflow_run_id is not None:
+                    return self.client.SubscribeToWorkflowEvents(
+                        SubscribeToWorkflowEventsRequest(
+                            workflowRunId=self.workflow_run_id,
+                        ),
+                        metadata=get_metadata(self.token),
+                    )
+                elif self.additional_meta_kv is not None:
+                    return self.client.SubscribeToWorkflowEvents(
+                        SubscribeToWorkflowEventsRequest(
+                            additionalMetaKey=self.additional_meta_kv[0],
+                            additionalMetaValue=self.additional_meta_kv[1],
+                        ),
+                        metadata=get_metadata(self.token),
+                    )
+                else:
+                    raise Exception("no listener method provided")
+
             except grpc.RpcError as e:
                 if e.code() == grpc.StatusCode.UNAVAILABLE:
                     retries = retries + 1
@@ -179,6 +207,9 @@ class RunEventListenerClient:
         self.config = config
         self.client: DispatcherStub = None
 
+    def stream_by_run_id(self, workflow_run_id: str):
+        return self.stream(workflow_run_id)
+
     def stream(self, workflow_run_id: str):
         if not isinstance(workflow_run_id, str) and hasattr(workflow_run_id, "__str__"):
             workflow_run_id = str(workflow_run_id)
@@ -187,7 +218,14 @@ class RunEventListenerClient:
             aio_conn = new_conn(self.config, True)
             self.client = DispatcherStub(aio_conn)
 
-        return RunEventListener(workflow_run_id, self.client, self.token)
+        return RunEventListener.for_run_id(workflow_run_id, self.client, self.token)
+
+    def stream_by_additional_metadata(self, key: str, value: str):
+        if not self.client:
+            aio_conn = new_conn(self.config, True)
+            self.client = DispatcherStub(aio_conn)
+
+        return RunEventListener.for_additional_meta(key, value, self.client, self.token)
 
     async def on(self, workflow_run_id: str, handler: callable = None):
         async for event in self.stream(workflow_run_id):

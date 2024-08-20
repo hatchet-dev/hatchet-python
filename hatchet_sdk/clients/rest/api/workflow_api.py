@@ -21,6 +21,7 @@ from hatchet_sdk.clients.rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.rest.api_response import ApiResponse
 from hatchet_sdk.clients.rest.models.tenant_queue_metrics import TenantQueueMetrics
 from hatchet_sdk.clients.rest.models.workflow import Workflow
+from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
 from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
@@ -348,9 +349,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -611,9 +613,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -871,9 +874,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1183,9 +1187,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1443,9 +1448,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1742,9 +1748,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2134,9 +2141,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2191,6 +2199,10 @@ class WorkflowApi:
             Optional[List[WorkflowRunStatus]],
             Field(description="A list of workflow run statuses to filter by"),
         ] = None,
+        kinds: Annotated[
+            Optional[List[WorkflowKind]],
+            Field(description="A list of workflow kinds to filter by"),
+        ] = None,
         additional_metadata: Annotated[
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
@@ -2234,6 +2246,8 @@ class WorkflowApi:
         :type parent_step_run_id: str
         :param statuses: A list of workflow run statuses to filter by
         :type statuses: List[WorkflowRunStatus]
+        :param kinds: A list of workflow kinds to filter by
+        :type kinds: List[WorkflowKind]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
         :param order_by_field: The order by field
@@ -2271,6 +2285,7 @@ class WorkflowApi:
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
             statuses=statuses,
+            kinds=kinds,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
@@ -2329,6 +2344,10 @@ class WorkflowApi:
             Optional[List[WorkflowRunStatus]],
             Field(description="A list of workflow run statuses to filter by"),
         ] = None,
+        kinds: Annotated[
+            Optional[List[WorkflowKind]],
+            Field(description="A list of workflow kinds to filter by"),
+        ] = None,
         additional_metadata: Annotated[
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
@@ -2372,6 +2391,8 @@ class WorkflowApi:
         :type parent_step_run_id: str
         :param statuses: A list of workflow run statuses to filter by
         :type statuses: List[WorkflowRunStatus]
+        :param kinds: A list of workflow kinds to filter by
+        :type kinds: List[WorkflowKind]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
         :param order_by_field: The order by field
@@ -2409,6 +2430,7 @@ class WorkflowApi:
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
             statuses=statuses,
+            kinds=kinds,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
@@ -2467,6 +2489,10 @@ class WorkflowApi:
             Optional[List[WorkflowRunStatus]],
             Field(description="A list of workflow run statuses to filter by"),
         ] = None,
+        kinds: Annotated[
+            Optional[List[WorkflowKind]],
+            Field(description="A list of workflow kinds to filter by"),
+        ] = None,
         additional_metadata: Annotated[
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
@@ -2510,6 +2536,8 @@ class WorkflowApi:
         :type parent_step_run_id: str
         :param statuses: A list of workflow run statuses to filter by
         :type statuses: List[WorkflowRunStatus]
+        :param kinds: A list of workflow kinds to filter by
+        :type kinds: List[WorkflowKind]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
         :param order_by_field: The order by field
@@ -2547,6 +2575,7 @@ class WorkflowApi:
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
             statuses=statuses,
+            kinds=kinds,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
@@ -2576,6 +2605,7 @@ class WorkflowApi:
         parent_workflow_run_id,
         parent_step_run_id,
         statuses,
+        kinds,
         additional_metadata,
         order_by_field,
         order_by_direction,
@@ -2589,6 +2619,7 @@ class WorkflowApi:
 
         _collection_formats: Dict[str, str] = {
             "statuses": "multi",
+            "kinds": "multi",
             "additionalMetadata": "multi",
         }
 
@@ -2631,6 +2662,10 @@ class WorkflowApi:
 
             _query_params.append(("statuses", statuses))
 
+        if kinds is not None:
+
+            _query_params.append(("kinds", kinds))
+
         if additional_metadata is not None:
 
             _query_params.append(("additionalMetadata", additional_metadata))
@@ -2648,9 +2683,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2943,9 +2979,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -3238,9 +3275,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]

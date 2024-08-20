@@ -18,7 +18,7 @@ class PrintSchedule:
         future_time = now + timedelta(seconds=15)
         print(f"scheduling for \t {future_time.strftime('%H:%M:%S')}")
 
-        hatchet.client.admin.schedule_workflow(
+        hatchet.admin.schedule_workflow(
             "PrintPrinter", [future_time], context.workflow_input()
         )
 
@@ -32,7 +32,7 @@ class PrintPrinter:
         print(f"message \t {context.workflow_input()['message']}")
 
 
-worker = hatchet.worker("test-worker", max_runs=4)
+worker = hatchet.worker("delayed-worker", max_runs=4)
 worker.register_workflow(PrintSchedule())
 worker.register_workflow(PrintPrinter())
 

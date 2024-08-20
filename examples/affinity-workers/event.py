@@ -1,12 +1,12 @@
 from dotenv import load_dotenv
 
-from hatchet_sdk import PushEventOptions, new_client
+from hatchet_sdk.hatchet import Hatchet
 
 load_dotenv()
 
-client = new_client()
+hatchet = Hatchet(debug=True)
 
-client.event.push(
+hatchet.event.push(
     "affinity:run",
     {"test": "test"},
     options={"additional_metadata": {"hello": "moon"}},
