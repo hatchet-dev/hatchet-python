@@ -28,6 +28,7 @@ from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatu
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import (
     WorkflowRunTriggeredBy,
 )
+from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
 
 
 class WorkflowRun(BaseModel):
@@ -182,7 +183,6 @@ class WorkflowRun(BaseModel):
 
 
 from hatchet_sdk.clients.rest.models.job_run import JobRun
-from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
 
 # TODO: Rewrite to not use raise_errors
 WorkflowRun.model_rebuild(raise_errors=False)

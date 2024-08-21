@@ -41,7 +41,6 @@ class Workflow(BaseModel):
     tags: Optional[List[WorkflowTag]] = Field(
         default=None, description="The tags of the workflow."
     )
-    last_run: Optional[WorkflowRun] = Field(default=None, alias="lastRun")
     jobs: Optional[List[Job]] = Field(
         default=None, description="The jobs of the workflow."
     )
@@ -51,7 +50,6 @@ class Workflow(BaseModel):
         "description",
         "versions",
         "tags",
-        "lastRun",
         "jobs",
     ]
 
@@ -109,9 +107,6 @@ class Workflow(BaseModel):
                 if _item:
                     _items.append(_item.to_dict())
             _dict["tags"] = _items
-        # override the default output from pydantic by calling `to_dict()` of last_run
-        if self.last_run:
-            _dict["lastRun"] = self.last_run.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
         _items = []
         if self.jobs:
@@ -149,11 +144,6 @@ class Workflow(BaseModel):
                     if obj.get("tags") is not None
                     else None
                 ),
-                "lastRun": (
-                    WorkflowRun.from_dict(obj["lastRun"])
-                    if obj.get("lastRun") is not None
-                    else None
-                ),
                 "jobs": (
                     [Job.from_dict(_item) for _item in obj["jobs"]]
                     if obj.get("jobs") is not None
@@ -164,7 +154,6 @@ class Workflow(BaseModel):
         return _obj
 
 
-from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
 
 # TODO: Rewrite to not use raise_errors

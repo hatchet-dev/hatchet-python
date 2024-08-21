@@ -35,6 +35,7 @@ class StepRunStatus(str, Enum):
     SUCCEEDED = "SUCCEEDED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+    CANCELLING = "CANCELLING"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

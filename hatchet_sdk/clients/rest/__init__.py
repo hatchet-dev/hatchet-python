@@ -113,6 +113,7 @@ from hatchet_sdk.clients.rest.models.pagination_response import PaginationRespon
 from hatchet_sdk.clients.rest.models.pull_request import PullRequest
 from hatchet_sdk.clients.rest.models.pull_request_state import PullRequestState
 from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
+from hatchet_sdk.clients.rest.models.recent_step_runs import RecentStepRuns
 from hatchet_sdk.clients.rest.models.reject_invite_request import RejectInviteRequest
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
 from hatchet_sdk.clients.rest.models.replay_workflow_runs_request import (
@@ -122,6 +123,7 @@ from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
     ReplayWorkflowRunsResponse,
 )
 from hatchet_sdk.clients.rest.models.rerun_step_run_request import RerunStepRunRequest
+from hatchet_sdk.clients.rest.models.semaphore_slots import SemaphoreSlots
 from hatchet_sdk.clients.rest.models.slack_webhook import SlackWebhook
 from hatchet_sdk.clients.rest.models.sns_integration import SNSIntegration
 from hatchet_sdk.clients.rest.models.step import Step
