@@ -41,7 +41,7 @@ class LogApi:
         self.api_client = api_client
 
     @validate_call
-    def log_line_list(
+    async def log_line_list(
         self,
         step_run: Annotated[
             str,
@@ -139,17 +139,17 @@ class LogApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def log_line_list_with_http_info(
+    async def log_line_list_with_http_info(
         self,
         step_run: Annotated[
             str,
@@ -247,17 +247,17 @@ class LogApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def log_line_list_without_preload_content(
+    async def log_line_list_without_preload_content(
         self,
         step_run: Annotated[
             str,
@@ -355,7 +355,7 @@ class LogApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response

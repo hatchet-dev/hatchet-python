@@ -38,7 +38,7 @@ class MetadataApi:
         self.api_client = api_client
 
     @validate_call
-    def cloud_metadata_get(
+    async def cloud_metadata_get(
         self,
         _request_timeout: Union[
             None,
@@ -89,17 +89,17 @@ class MetadataApi:
             "200": "APIErrors",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def cloud_metadata_get_with_http_info(
+    async def cloud_metadata_get_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -150,17 +150,17 @@ class MetadataApi:
             "200": "APIErrors",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def cloud_metadata_get_without_preload_content(
+    async def cloud_metadata_get_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -211,7 +211,7 @@ class MetadataApi:
             "200": "APIErrors",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -266,7 +266,7 @@ class MetadataApi:
         )
 
     @validate_call
-    def metadata_get(
+    async def metadata_get(
         self,
         _request_timeout: Union[
             None,
@@ -317,17 +317,17 @@ class MetadataApi:
             "200": "APIMeta",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def metadata_get_with_http_info(
+    async def metadata_get_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -378,17 +378,17 @@ class MetadataApi:
             "200": "APIMeta",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def metadata_get_without_preload_content(
+    async def metadata_get_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -439,7 +439,7 @@ class MetadataApi:
             "200": "APIMeta",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -494,7 +494,7 @@ class MetadataApi:
         )
 
     @validate_call
-    def metadata_list_integrations(
+    async def metadata_list_integrations(
         self,
         _request_timeout: Union[
             None,
@@ -545,17 +545,17 @@ class MetadataApi:
             "200": "List[APIMetaIntegration]",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def metadata_list_integrations_with_http_info(
+    async def metadata_list_integrations_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -606,17 +606,17 @@ class MetadataApi:
             "200": "List[APIMetaIntegration]",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def metadata_list_integrations_without_preload_content(
+    async def metadata_list_integrations_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -667,7 +667,7 @@ class MetadataApi:
             "200": "List[APIMetaIntegration]",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
