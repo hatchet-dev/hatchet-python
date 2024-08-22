@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, TypedDict
+from typing import List, Optional
 
 from typing_extensions import deprecated
 
@@ -194,6 +194,13 @@ class Hatchet:
     @property
     def rest(self):
         return self._client.rest
+
+    async def get_async_rest_client(self):
+        print(self._client.async_rest)
+        if self._client.async_rest is None:
+            await self._client._create_async_rest_client()
+        print(self._client.async_rest)
+        return self._client.async_rest
 
     concurrency = staticmethod(concurrency)
 
