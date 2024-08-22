@@ -165,7 +165,7 @@ class Hatchet:
             config (ClientConfig, optional): Configuration for creating a new Client. Defaults to ClientConfig().
         """
         if client is not None:
-            self.client = client
+            self._client = client
         else:
             self._client = new_client(config, debug)
 
