@@ -3,8 +3,6 @@ import atexit
 import threading
 from typing import Any
 
-import asyncio_atexit
-
 from hatchet_sdk.clients.rest.api.event_api import EventApi
 from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
@@ -50,25 +48,58 @@ class AsyncRestApi:
     def __init__(self, host: str, api_key: str, tenant_id: str):
         self.tenant_id = tenant_id
 
-        config = Configuration(
+        self.config = Configuration(
             host=host,
             access_token=api_key,
         )
 
-        # Create an instance of the API client
-        self.api_client = ApiClient(configuration=config)
-        self.workflow_api = WorkflowApi(self.api_client)
-        self.workflow_run_api = WorkflowRunApi(self.api_client)
-        self.step_run_api = StepRunApi(self.api_client)
-        self.event_api = EventApi(self.api_client)
-        self.log_api = LogApi(self.api_client)
+        self._api_client = None
+        self._workflow_api = None
+        self._workflow_run_api = None
+        self._step_run_api = None
+        self._event_api = None
+        self._log_api = None
 
-        # Register the cleanup method to be called on exit
-        asyncio_atexit.register(self.close)
+    @property
+    def api_client(self):
+        if self._api_client is None:
+            self._api_client = ApiClient(configuration=self.config)
+        return self._api_client
+
+    @property
+    def workflow_api(self):
+        if self._workflow_api is None:
+            self._workflow_api = WorkflowApi(self.api_client)
+        return self._workflow_api
+
+    @property
+    def workflow_run_api(self):
+        if self._workflow_run_api is None:
+            self._workflow_run_api = WorkflowRunApi(self.api_client)
+        return self._workflow_run_api
+
+    @property
+    def step_run_api(self):
+        if self._step_run_api is None:
+            self._step_run_api = StepRunApi(self.api_client)
+        return self._step_run_api
+
+    @property
+    def event_api(self):
+        if self._event_api is None:
+            self._event_api = EventApi(self.api_client)
+        return self._event_api
+
+    @property
+    def log_api(self):
+        if self._log_api is None:
+            self._log_api = LogApi(self.api_client)
+        return self._log_api
 
     async def close(self):
         # Ensure the aiohttp client session is closed
-        await self.api_client.close()
+        if self._api_client is not None:
+            await self._api_client.close()
 
     async def workflow_list(self) -> WorkflowList:
         return await self.workflow_api.workflow_list(
@@ -102,7 +133,7 @@ class AsyncRestApi:
         order_by_field: WorkflowRunOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
     ) -> WorkflowRunList:
-        return await self.workflow_api.workflow_run_list(
+        return await self.workflow_run_api.workflow_run_list(
             tenant=self.tenant_id,
             offset=offset,
             limit=limit,
@@ -118,7 +149,7 @@ class AsyncRestApi:
         )
 
     async def workflow_run_get(self, workflow_run_id: str) -> WorkflowRun:
-        return await self.workflow_api.workflow_run_get(
+        return await self.workflow_run_api.workflow_run_get(
             tenant=self.tenant_id,
             workflow_run=workflow_run_id,
         )
@@ -220,9 +251,7 @@ class RestApi:
         self._thread.start()
 
         # Initialize AsyncRestApi inside the event loop to ensure an active loop
-        self._api: AsyncRestApi = self._run_coroutine(
-            self._initialize_async_api(host, api_key, tenant_id)
-        )
+        self.aio = AsyncRestApi(host, api_key, tenant_id)
 
         # Register the cleanup method to be called on exit
         atexit.register(self._cleanup)
@@ -231,17 +260,9 @@ class RestApi:
         """
         Stop the running thread and clean up the event loop.
         """
-        self._run_coroutine(self._api.close())
+        self._run_coroutine(self.aio.close())
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join()
-
-    async def _initialize_async_api(
-        self, host: str, api_key: str, tenant_id: str
-    ) -> AsyncRestApi:
-        """
-        Initialize the AsyncRestApi within the event loop.
-        """
-        return AsyncRestApi(host, api_key, tenant_id)
 
     def _run_event_loop(self):
         """
@@ -258,15 +279,15 @@ class RestApi:
         return future.result()
 
     def workflow_list(self) -> WorkflowList:
-        return self._run_coroutine(self._api.workflow_list())
+        return self._run_coroutine(self.aio.workflow_list())
 
     def workflow_get(self, workflow_id: str) -> Workflow:
-        return self._run_coroutine(self._api.workflow_get(workflow_id))
+        return self._run_coroutine(self.aio.workflow_get(workflow_id))
 
     def workflow_version_get(
         self, workflow_id: str, version: str | None = None
     ) -> WorkflowVersion:
-        return self._run_coroutine(self._api.workflow_version_get(workflow_id, version))
+        return self._run_coroutine(self.aio.workflow_version_get(workflow_id, version))
 
     def workflow_run_list(
         self,
@@ -283,7 +304,7 @@ class RestApi:
         order_by_direction: WorkflowRunOrderByDirection | None = None,
     ) -> WorkflowRunList:
         return self._run_coroutine(
-            self._api.workflow_run_list(
+            self.aio.workflow_run_list(
                 workflow_id=workflow_id,
                 offset=offset,
                 limit=limit,
@@ -299,15 +320,15 @@ class RestApi:
         )
 
     def workflow_run_get(self, workflow_run_id: str) -> WorkflowRun:
-        return self._run_coroutine(self._api.workflow_run_get(workflow_run_id))
+        return self._run_coroutine(self.aio.workflow_run_get(workflow_run_id))
 
     def workflow_run_cancel(self, workflow_run_id: str) -> WorkflowRunCancel200Response:
-        return self._run_coroutine(self._api.workflow_run_cancel(workflow_run_id))
+        return self._run_coroutine(self.aio.workflow_run_cancel(workflow_run_id))
 
     def workflow_run_bulk_cancel(
         self, workflow_run_ids: list[str]
     ) -> WorkflowRunCancel200Response:
-        return self._run_coroutine(self._api.workflow_run_bulk_cancel(workflow_run_ids))
+        return self._run_coroutine(self.aio.workflow_run_bulk_cancel(workflow_run_ids))
 
     def workflow_run_create(
         self,
@@ -317,7 +338,7 @@ class RestApi:
         additional_metadata: list[str] | None = None,
     ) -> WorkflowRun:
         return self._run_coroutine(
-            self._api.workflow_run_create(
+            self.aio.workflow_run_create(
                 workflow_id, input, version, additional_metadata
             )
         )
@@ -333,7 +354,7 @@ class RestApi:
         order_by_direction: LogLineOrderByDirection | None = None,
     ) -> LogLineList:
         return self._run_coroutine(
-            self._api.list_logs(
+            self.aio.list_logs(
                 step_run_id=step_run_id,
                 offset=offset,
                 limit=limit,
@@ -357,7 +378,7 @@ class RestApi:
         additional_metadata: list[str] | None = None,
     ) -> EventList:
         return self._run_coroutine(
-            self._api.events_list(
+            self.aio.events_list(
                 offset=offset,
                 limit=limit,
                 keys=keys,
@@ -371,4 +392,4 @@ class RestApi:
         )
 
     def events_replay(self, event_ids: list[str] | EventList) -> EventList:
-        return self._run_coroutine(self._api.events_replay(event_ids))
+        return self._run_coroutine(self.aio.events_replay(event_ids))

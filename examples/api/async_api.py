@@ -10,8 +10,7 @@ hatchet = Hatchet(debug=True)
 
 
 async def main():
-    hatchet_async_rest_client = await hatchet.get_async_rest_client()
-    list: WorkflowList = await hatchet_async_rest_client.workflow_list()
+    list: WorkflowList = await hatchet.rest.aio.workflow_list()
 
     for workflow in list.rows:
         print(workflow.name)

@@ -195,13 +195,6 @@ class Hatchet:
     def rest(self):
         return self._client.rest
 
-    async def get_async_rest_client(self):
-        print(self._client.async_rest)
-        if self._client.async_rest is None:
-            await self._client._create_async_rest_client()
-        print(self._client.async_rest)
-        return self._client.async_rest
-
     concurrency = staticmethod(concurrency)
 
     workflow = staticmethod(workflow)

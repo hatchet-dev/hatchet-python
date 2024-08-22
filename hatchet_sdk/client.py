@@ -10,7 +10,7 @@ from hatchet_sdk.connection import new_conn
 from .clients.admin import AdminClient, new_admin
 from .clients.dispatcher.dispatcher import DispatcherClient, new_dispatcher
 from .clients.events import EventClient, new_event
-from .clients.rest_client import AsyncRestApi, RestApi
+from .clients.rest_client import RestApi
 from .loader import ClientConfig, ConfigLoader
 
 
@@ -19,7 +19,6 @@ class Client:
     dispatcher: DispatcherClient
     event: EventClient
     rest: RestApi
-    async_rest: AsyncRestApi
     workflow_listener: PooledWorkflowRunListener
     logger: Logger
     debug: bool = False
@@ -68,11 +67,6 @@ class Client:
             debug,
         )
 
-    async def _create_async_rest_client(self):
-        self.async_rest = AsyncRestApi(
-            self.config.server_url, self.config.token, self.config.tenant_id
-        )
-
     def __init__(
         self,
         event_client: EventClient,
@@ -87,7 +81,6 @@ class Client:
         self.dispatcher = dispatcher_client
         self.event = event_client
         self.rest = rest_client
-        self.async_rest = None
         self.config = config
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
