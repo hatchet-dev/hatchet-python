@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, TypedDict
+from typing import List, Optional
 
 from typing_extensions import deprecated
 
