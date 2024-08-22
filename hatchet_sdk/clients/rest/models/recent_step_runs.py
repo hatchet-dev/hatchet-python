@@ -17,40 +17,36 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.job import Job
-from hatchet_sdk.clients.rest.models.workflow_tag import WorkflowTag
+from hatchet_sdk.clients.rest.models.step_run_status import StepRunStatus
 
 
-class Workflow(BaseModel):
+class RecentStepRuns(BaseModel):
     """
-    Workflow
+    RecentStepRuns
     """  # noqa: E501
 
     metadata: APIResourceMeta
-    name: StrictStr = Field(description="The name of the workflow.")
-    description: Optional[StrictStr] = Field(
-        default=None, description="The description of the workflow."
-    )
-    versions: Optional[List[WorkflowVersionMeta]] = None
-    tags: Optional[List[WorkflowTag]] = Field(
-        default=None, description="The tags of the workflow."
-    )
-    jobs: Optional[List[Job]] = Field(
-        default=None, description="The jobs of the workflow."
-    )
+    action_id: StrictStr = Field(description="The action id.", alias="actionId")
+    status: StepRunStatus
+    started_at: Optional[datetime] = Field(default=None, alias="startedAt")
+    finished_at: Optional[datetime] = Field(default=None, alias="finishedAt")
+    cancelled_at: Optional[datetime] = Field(default=None, alias="cancelledAt")
+    workflow_run_id: StrictStr = Field(alias="workflowRunId")
     __properties: ClassVar[List[str]] = [
         "metadata",
-        "name",
-        "description",
-        "versions",
-        "tags",
-        "jobs",
+        "actionId",
+        "status",
+        "startedAt",
+        "finishedAt",
+        "cancelledAt",
+        "workflowRunId",
     ]
 
     model_config = ConfigDict(
@@ -70,7 +66,7 @@ class Workflow(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of Workflow from a JSON string"""
+        """Create an instance of RecentStepRuns from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -93,32 +89,11 @@ class Workflow(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
             _dict["metadata"] = self.metadata.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each item in versions (list)
-        _items = []
-        if self.versions:
-            for _item in self.versions:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict["versions"] = _items
-        # override the default output from pydantic by calling `to_dict()` of each item in tags (list)
-        _items = []
-        if self.tags:
-            for _item in self.tags:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict["tags"] = _items
-        # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
-        _items = []
-        if self.jobs:
-            for _item in self.jobs:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict["jobs"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of Workflow from a dict"""
+        """Create an instance of RecentStepRuns from a dict"""
         if obj is None:
             return None
 
@@ -132,29 +107,12 @@ class Workflow(BaseModel):
                     if obj.get("metadata") is not None
                     else None
                 ),
-                "name": obj.get("name"),
-                "description": obj.get("description"),
-                "versions": (
-                    [WorkflowVersionMeta.from_dict(_item) for _item in obj["versions"]]
-                    if obj.get("versions") is not None
-                    else None
-                ),
-                "tags": (
-                    [WorkflowTag.from_dict(_item) for _item in obj["tags"]]
-                    if obj.get("tags") is not None
-                    else None
-                ),
-                "jobs": (
-                    [Job.from_dict(_item) for _item in obj["jobs"]]
-                    if obj.get("jobs") is not None
-                    else None
-                ),
+                "actionId": obj.get("actionId"),
+                "status": obj.get("status"),
+                "startedAt": obj.get("startedAt"),
+                "finishedAt": obj.get("finishedAt"),
+                "cancelledAt": obj.get("cancelledAt"),
+                "workflowRunId": obj.get("workflowRunId"),
             }
         )
         return _obj
-
-
-from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
-
-# TODO: Rewrite to not use raise_errors
-Workflow.model_rebuild(raise_errors=False)

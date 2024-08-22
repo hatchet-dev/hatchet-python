@@ -44,7 +44,7 @@ class UserApi:
         self.api_client = api_client
 
     @validate_call
-    def tenant_memberships_list(
+    async def tenant_memberships_list(
         self,
         _request_timeout: Union[
             None,
@@ -96,17 +96,17 @@ class UserApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def tenant_memberships_list_with_http_info(
+    async def tenant_memberships_list_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -158,17 +158,17 @@ class UserApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def tenant_memberships_list_without_preload_content(
+    async def tenant_memberships_list_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -220,7 +220,7 @@ class UserApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -275,7 +275,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_create(
+    async def user_create(
         self,
         user_register_request: Optional[UserRegisterRequest] = None,
         _request_timeout: Union[
@@ -332,17 +332,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_create_with_http_info(
+    async def user_create_with_http_info(
         self,
         user_register_request: Optional[UserRegisterRequest] = None,
         _request_timeout: Union[
@@ -399,17 +399,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_create_without_preload_content(
+    async def user_create_without_preload_content(
         self,
         user_register_request: Optional[UserRegisterRequest] = None,
         _request_timeout: Union[
@@ -466,7 +466,7 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -534,7 +534,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_get_current(
+    async def user_get_current(
         self,
         _request_timeout: Union[
             None,
@@ -587,17 +587,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_get_current_with_http_info(
+    async def user_get_current_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -650,17 +650,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_get_current_without_preload_content(
+    async def user_get_current_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -713,7 +713,7 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -768,7 +768,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_github_oauth_callback(
+    async def user_update_github_oauth_callback(
         self,
         _request_timeout: Union[
             None,
@@ -818,17 +818,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_github_oauth_callback_with_http_info(
+    async def user_update_github_oauth_callback_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -878,17 +878,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_github_oauth_callback_without_preload_content(
+    async def user_update_github_oauth_callback_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -938,7 +938,7 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -987,7 +987,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_github_oauth_start(
+    async def user_update_github_oauth_start(
         self,
         _request_timeout: Union[
             None,
@@ -1037,17 +1037,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_github_oauth_start_with_http_info(
+    async def user_update_github_oauth_start_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -1097,17 +1097,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_github_oauth_start_without_preload_content(
+    async def user_update_github_oauth_start_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -1157,7 +1157,7 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1206,7 +1206,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_google_oauth_callback(
+    async def user_update_google_oauth_callback(
         self,
         _request_timeout: Union[
             None,
@@ -1256,17 +1256,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_google_oauth_callback_with_http_info(
+    async def user_update_google_oauth_callback_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -1316,17 +1316,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_google_oauth_callback_without_preload_content(
+    async def user_update_google_oauth_callback_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -1376,7 +1376,7 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1425,7 +1425,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_google_oauth_start(
+    async def user_update_google_oauth_start(
         self,
         _request_timeout: Union[
             None,
@@ -1475,17 +1475,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_google_oauth_start_with_http_info(
+    async def user_update_google_oauth_start_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -1535,17 +1535,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_google_oauth_start_without_preload_content(
+    async def user_update_google_oauth_start_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -1595,7 +1595,7 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1644,7 +1644,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_login(
+    async def user_update_login(
         self,
         user_login_request: Optional[UserLoginRequest] = None,
         _request_timeout: Union[
@@ -1701,17 +1701,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_login_with_http_info(
+    async def user_update_login_with_http_info(
         self,
         user_login_request: Optional[UserLoginRequest] = None,
         _request_timeout: Union[
@@ -1768,17 +1768,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_login_without_preload_content(
+    async def user_update_login_without_preload_content(
         self,
         user_login_request: Optional[UserLoginRequest] = None,
         _request_timeout: Union[
@@ -1835,7 +1835,7 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1903,7 +1903,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_logout(
+    async def user_update_logout(
         self,
         _request_timeout: Union[
             None,
@@ -1956,17 +1956,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_logout_with_http_info(
+    async def user_update_logout_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -2019,17 +2019,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_logout_without_preload_content(
+    async def user_update_logout_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -2082,7 +2082,7 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -2137,7 +2137,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_password(
+    async def user_update_password(
         self,
         user_change_password_request: Optional[UserChangePasswordRequest] = None,
         _request_timeout: Union[
@@ -2194,17 +2194,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_password_with_http_info(
+    async def user_update_password_with_http_info(
         self,
         user_change_password_request: Optional[UserChangePasswordRequest] = None,
         _request_timeout: Union[
@@ -2261,17 +2261,17 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_password_without_preload_content(
+    async def user_update_password_without_preload_content(
         self,
         user_change_password_request: Optional[UserChangePasswordRequest] = None,
         _request_timeout: Union[
@@ -2328,7 +2328,7 @@ class UserApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -2396,7 +2396,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_slack_oauth_callback(
+    async def user_update_slack_oauth_callback(
         self,
         _request_timeout: Union[
             None,
@@ -2446,17 +2446,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_slack_oauth_callback_with_http_info(
+    async def user_update_slack_oauth_callback_with_http_info(
         self,
         _request_timeout: Union[
             None,
@@ -2506,17 +2506,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_slack_oauth_callback_without_preload_content(
+    async def user_update_slack_oauth_callback_without_preload_content(
         self,
         _request_timeout: Union[
             None,
@@ -2566,7 +2566,7 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -2615,7 +2615,7 @@ class UserApi:
         )
 
     @validate_call
-    def user_update_slack_oauth_start(
+    async def user_update_slack_oauth_start(
         self,
         tenant: Annotated[
             str,
@@ -2674,17 +2674,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def user_update_slack_oauth_start_with_http_info(
+    async def user_update_slack_oauth_start_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -2743,17 +2743,17 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def user_update_slack_oauth_start_without_preload_content(
+    async def user_update_slack_oauth_start_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -2812,7 +2812,7 @@ class UserApi:
         _response_types_map: Dict[str, Optional[str]] = {
             "302": None,
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
