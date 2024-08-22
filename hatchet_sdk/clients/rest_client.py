@@ -149,7 +149,7 @@ class AsyncRestApi:
         )
 
     async def workflow_run_get(self, workflow_run_id: str) -> WorkflowRun:
-        return await self.workflow_run_api.workflow_run_get(
+        return await self.workflow_api.workflow_run_get(
             tenant=self.tenant_id,
             workflow_run=workflow_run_id,
         )
