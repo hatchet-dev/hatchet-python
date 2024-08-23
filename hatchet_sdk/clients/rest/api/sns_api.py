@@ -40,7 +40,7 @@ class SNSApi:
         self.api_client = api_client
 
     @validate_call
-    def sns_create(
+    async def sns_create(
         self,
         tenant: Annotated[
             str,
@@ -106,17 +106,17 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def sns_create_with_http_info(
+    async def sns_create_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -182,17 +182,17 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def sns_create_without_preload_content(
+    async def sns_create_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -258,7 +258,7 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -295,9 +295,10 @@ class SNSApi:
             _body_params = create_sns_integration_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -328,7 +329,7 @@ class SNSApi:
         )
 
     @validate_call
-    def sns_delete(
+    async def sns_delete(
         self,
         sns: Annotated[
             str,
@@ -393,17 +394,17 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def sns_delete_with_http_info(
+    async def sns_delete_with_http_info(
         self,
         sns: Annotated[
             str,
@@ -468,17 +469,17 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def sns_delete_without_preload_content(
+    async def sns_delete_without_preload_content(
         self,
         sns: Annotated[
             str,
@@ -543,7 +544,7 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -577,9 +578,10 @@ class SNSApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -600,7 +602,7 @@ class SNSApi:
         )
 
     @validate_call
-    def sns_list(
+    async def sns_list(
         self,
         tenant: Annotated[
             str,
@@ -662,17 +664,17 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def sns_list_with_http_info(
+    async def sns_list_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -734,17 +736,17 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def sns_list_without_preload_content(
+    async def sns_list_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -806,7 +808,7 @@ class SNSApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -840,9 +842,10 @@ class SNSApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]

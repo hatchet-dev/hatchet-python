@@ -39,7 +39,7 @@ class StepRunApi:
         self.api_client = api_client
 
     @validate_call
-    def step_run_get(
+    async def step_run_get(
         self,
         tenant: Annotated[
             str,
@@ -110,17 +110,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def step_run_get_with_http_info(
+    async def step_run_get_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -191,17 +191,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def step_run_get_without_preload_content(
+    async def step_run_get_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -272,7 +272,7 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -309,9 +309,10 @@ class StepRunApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -332,7 +333,7 @@ class StepRunApi:
         )
 
     @validate_call
-    def step_run_get_schema(
+    async def step_run_get_schema(
         self,
         tenant: Annotated[
             str,
@@ -403,17 +404,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def step_run_get_schema_with_http_info(
+    async def step_run_get_schema_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -484,17 +485,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def step_run_get_schema_without_preload_content(
+    async def step_run_get_schema_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -565,7 +566,7 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -602,9 +603,10 @@ class StepRunApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -625,7 +627,7 @@ class StepRunApi:
         )
 
     @validate_call
-    def step_run_list_archives(
+    async def step_run_list_archives(
         self,
         step_run: Annotated[
             str,
@@ -699,17 +701,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def step_run_list_archives_with_http_info(
+    async def step_run_list_archives_with_http_info(
         self,
         step_run: Annotated[
             str,
@@ -783,17 +785,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def step_run_list_archives_without_preload_content(
+    async def step_run_list_archives_without_preload_content(
         self,
         step_run: Annotated[
             str,
@@ -867,7 +869,7 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -911,9 +913,10 @@ class StepRunApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -934,7 +937,7 @@ class StepRunApi:
         )
 
     @validate_call
-    def step_run_list_events(
+    async def step_run_list_events(
         self,
         step_run: Annotated[
             str,
@@ -1008,17 +1011,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def step_run_list_events_with_http_info(
+    async def step_run_list_events_with_http_info(
         self,
         step_run: Annotated[
             str,
@@ -1092,17 +1095,17 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def step_run_list_events_without_preload_content(
+    async def step_run_list_events_without_preload_content(
         self,
         step_run: Annotated[
             str,
@@ -1176,7 +1179,7 @@ class StepRunApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1220,9 +1223,10 @@ class StepRunApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1243,7 +1247,7 @@ class StepRunApi:
         )
 
     @validate_call
-    def step_run_update_cancel(
+    async def step_run_update_cancel(
         self,
         tenant: Annotated[
             str,
@@ -1313,17 +1317,17 @@ class StepRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def step_run_update_cancel_with_http_info(
+    async def step_run_update_cancel_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -1393,17 +1397,17 @@ class StepRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def step_run_update_cancel_without_preload_content(
+    async def step_run_update_cancel_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -1473,7 +1477,7 @@ class StepRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1510,9 +1514,10 @@ class StepRunApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1533,7 +1538,7 @@ class StepRunApi:
         )
 
     @validate_call
-    def step_run_update_rerun(
+    async def step_run_update_rerun(
         self,
         tenant: Annotated[
             str,
@@ -1609,17 +1614,17 @@ class StepRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def step_run_update_rerun_with_http_info(
+    async def step_run_update_rerun_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -1695,17 +1700,17 @@ class StepRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def step_run_update_rerun_without_preload_content(
+    async def step_run_update_rerun_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -1781,7 +1786,7 @@ class StepRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1821,9 +1826,10 @@ class StepRunApi:
             _body_params = rerun_step_run_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:

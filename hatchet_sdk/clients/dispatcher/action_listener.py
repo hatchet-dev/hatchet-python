@@ -1,9 +1,8 @@
 import asyncio
 import json
-import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, List, Optional
+from typing import AsyncGenerator, List, Optional
 
 import grpc
 from grpc._cython import cygrpc
@@ -17,11 +16,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
     HeartbeatRequest,
-    OverridesData,
-    RefreshTimeoutRequest,
-    ReleaseSlotRequest,
-    StepActionEvent,
-    UpsertWorkerLabelsRequest,
     WorkerLabels,
     WorkerListenRequest,
     WorkerUnsubscribeRequest,
@@ -51,7 +45,6 @@ class GetActionListenerRequest:
 
     labels: dict[str, WorkerLabels] = field(init=False)
 
-    # FIXME
     def __post_init__(self):
         self.labels = {}
 
@@ -113,7 +106,7 @@ class ActionListener:
     last_connection_attempt: float = field(default=0, init=False)
     last_heartbeat_succeeded: bool = field(default=True, init=False)
     time_last_hb_succeeded: float = field(default=9999999999999, init=False)
-    heartbeat_thread: Optional[threading.Thread] = field(default=None, init=False)
+    heartbeat_task: Optional[asyncio.Task] = field(default=None, init=False)
     run_heartbeat: bool = field(default=True, init=False)
     listen_strategy: str = field(default="v2", init=False)
     stop_signal: bool = field(default=False, init=False)
@@ -128,9 +121,9 @@ class ActionListener:
     def is_healthy(self):
         return self.last_heartbeat_succeeded
 
-    def heartbeat(self):
+    async def heartbeat(self):
         # send a heartbeat every 4 seconds
-        delay = 4
+        heartbeat_delay = 4
 
         while True:
             if not self.run_heartbeat:
@@ -138,7 +131,7 @@ class ActionListener:
 
             try:
                 logger.debug("sending heartbeat")
-                self.client.Heartbeat(
+                await self.aio_client.Heartbeat(
                     HeartbeatRequest(
                         workerId=self.worker_id,
                         heartbeatAt=proto_timestamp_now(),
@@ -152,9 +145,9 @@ class ActionListener:
 
                 now = time.time()
                 diff = now - self.time_last_hb_succeeded
-                if diff > delay + 1:
+                if diff > heartbeat_delay + 1:
                     logger.warn(
-                        f"time since last successful heartbeat: {diff:.2f}s, expects {delay}s"
+                        f"time since last successful heartbeat: {diff:.2f}s, expects {heartbeat_delay}s"
                     )
 
                 self.last_heartbeat_succeeded = True
@@ -186,18 +179,21 @@ class ActionListener:
 
                 if e.code() == grpc.StatusCode.UNIMPLEMENTED:
                     break
+            await asyncio.sleep(heartbeat_delay)
 
-            time.sleep(delay)  # TODO this is blocking the tear down of the listener
-
-    def start_heartbeater(self):
-        if self.heartbeat_thread is not None:
+    async def start_heartbeater(self):
+        if self.heartbeat_task is not None:
             return
 
-        # create a new thread to send heartbeats
-        heartbeat_thread = threading.Thread(target=self.heartbeat)
-        heartbeat_thread.start()
-
-        self.heartbeat_thread = heartbeat_thread
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            if str(e).startswith("There is no current event loop in thread"):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            else:
+                raise e
+        self.heartbeat_task = loop.create_task(self.heartbeat())
 
     def __aiter__(self):
         return self._generator()
@@ -212,7 +208,7 @@ class ActionListener:
 
             try:
                 listener = await self.get_listen_client()
-            except Exception as e:
+            except Exception:
                 logger.info("closing action listener loop")
                 yield None
 
@@ -331,7 +327,6 @@ class ActionListener:
         ):
             # reset retries if last connection was long lived
             self.retries = 0
-            self.run_heartbeat = True
 
         if self.retries > DEFAULT_ACTION_LISTENER_RETRY_COUNT:
             # TODO this is the problem case...
@@ -361,7 +356,7 @@ class ActionListener:
                 timeout=self.config.listener_v2_timeout,
                 metadata=get_metadata(self.token),
             )
-            self.start_heartbeater()
+            await self.start_heartbeater()
         else:
             # if ListenV2 is not available, fallback to Listen
             listener = self.aio_client.Listen(
@@ -376,6 +371,7 @@ class ActionListener:
 
     def cleanup(self):
         self.run_heartbeat = False
+        self.heartbeat_task.cancel()
 
         try:
             self.unregister()
@@ -387,6 +383,7 @@ class ActionListener:
 
     def unregister(self):
         self.run_heartbeat = False
+        self.heartbeat_task.cancel()
 
         try:
             req = self.aio_client.Unsubscribe(

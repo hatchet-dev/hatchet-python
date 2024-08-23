@@ -13,8 +13,6 @@ from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Coroutine, Dict
 
-from pydantic import BaseModel
-
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
@@ -156,7 +154,7 @@ class Runner:
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
         self.worker_context = WorkerContext(
-            labels=labels, client=new_client_raw(config)
+            labels=labels, client=new_client_raw(config).dispatcher
         )
 
     def run(self, action: Action):
@@ -336,6 +334,7 @@ class Runner:
                 self.dispatcher_client,
                 self.admin_client,
                 self.client.event,
+                self.client.rest,
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
@@ -347,6 +346,7 @@ class Runner:
                 self.dispatcher_client,
                 self.admin_client,
                 self.client.event,
+                self.client.rest,
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
@@ -386,6 +386,7 @@ class Runner:
             self.dispatcher_client,
             self.admin_client,
             self.client.event,
+            self.client.rest,
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.worker_context,
@@ -473,23 +474,13 @@ class Runner:
         finally:
             self.cleanup_run_id(run_id)
 
-    def serialize_output(self, output: str | dict | BaseModel) -> str:
+    def serialize_output(self, output: Any) -> str:
         output_bytes = ""
         if output is not None:
-            if isinstance(output, BaseModel):
-
-                try:
-                    output_bytes = output.model_dump_json()
-                except Exception as e:
-                    logger.error(f"Could not serialize Pydantic Model as output: {e}")
-                    raise e
-            elif isinstance(output, dict):
-                try:
-                    output_bytes = json.dumps(output)
-                except Exception as e:
-                    logger.error(f"Could not serialize output: {e}")
-                    raise e
-            else:
+            try:
+                output_bytes = json.dumps(output)
+            except Exception as e:
+                logger.error(f"Could not serialize output: {e}")
                 output_bytes = str(output)
         return output_bytes
 

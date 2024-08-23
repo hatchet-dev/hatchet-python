@@ -136,8 +136,8 @@ class Worker:
         _from_start: bool = False,
     ):
         main_pid = os.getpid()
-        logger.info(f"------------------------------------------")
-        logger.info(f"STARTING HATCHET...")
+        logger.info("------------------------------------------")
+        logger.info("STARTING HATCHET...")
         logger.debug(f"worker runtime starting on PID: {main_pid}")
 
         self._status = WorkerStatus.STARTING
@@ -232,7 +232,7 @@ class Worker:
         self.loop.create_task(self.exit_gracefully())
 
     def _handle_force_quit_signal(self, signum, frame):
-        logger.info(f"received SIGQUIT...")
+        logger.info("received SIGQUIT...")
         self.exit_forcefully()
 
     async def close(self):
@@ -254,15 +254,19 @@ class Worker:
 
         self.killing = True
 
+        await self.action_runner.wait_for_tasks()
+
+        await self.action_runner.exit_gracefully()
+
         if self.action_listener_process and self.action_listener_process.is_alive():
-            self.action_listener_process.kill()  # send SIGTERM to the process
+            self.action_listener_process.kill()
 
         await self.close()
 
         if self.loop:
             self.loop.stop()
 
-        logger.info(f"👋")
+        logger.info("👋")
 
     def exit_forcefully(self):
         self.killing = True
@@ -274,7 +278,7 @@ class Worker:
         if self.action_listener_process:
             self.action_listener_process.kill()  # Forcefully kill the process
 
-        logger.info(f"👋")
+        logger.info("👋")
         sys.exit(
             1
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup

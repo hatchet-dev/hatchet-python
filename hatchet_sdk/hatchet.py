@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, TypedDict
+from typing import List, Optional
 
 from typing_extensions import deprecated
 
@@ -165,7 +165,7 @@ class Hatchet:
             config (ClientConfig, optional): Configuration for creating a new Client. Defaults to ClientConfig().
         """
         if client is not None:
-            self.client = client
+            self._client = client
         else:
             self._client = new_client(config, debug)
 

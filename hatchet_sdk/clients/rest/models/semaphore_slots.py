@@ -17,24 +17,46 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
+from hatchet_sdk.clients.rest.models.step_run_status import StepRunStatus
 
 
-class TenantQueueMetrics(BaseModel):
+class SemaphoreSlots(BaseModel):
     """
-    TenantQueueMetrics
+    SemaphoreSlots
     """  # noqa: E501
 
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
+    slot: StrictStr = Field(description="The slot name.")
+    step_run_id: Optional[StrictStr] = Field(
+        default=None, description="The step run id.", alias="stepRunId"
     )
-    workflow: Optional[Dict[str, QueueMetrics]] = None
-    __properties: ClassVar[List[str]] = ["total", "workflow"]
+    action_id: Optional[StrictStr] = Field(
+        default=None, description="The action id.", alias="actionId"
+    )
+    started_at: Optional[datetime] = Field(
+        default=None, description="The time this slot was started.", alias="startedAt"
+    )
+    timeout_at: Optional[datetime] = Field(
+        default=None, description="The time this slot will timeout.", alias="timeoutAt"
+    )
+    workflow_run_id: Optional[StrictStr] = Field(
+        default=None, description="The workflow run id.", alias="workflowRunId"
+    )
+    status: Optional[StepRunStatus] = None
+    __properties: ClassVar[List[str]] = [
+        "slot",
+        "stepRunId",
+        "actionId",
+        "startedAt",
+        "timeoutAt",
+        "workflowRunId",
+        "status",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -53,7 +75,7 @@ class TenantQueueMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a JSON string"""
+        """Create an instance of SemaphoreSlots from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,21 +95,11 @@ class TenantQueueMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of total
-        if self.total:
-            _dict["total"] = self.total.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each value in workflow (dict)
-        _field_dict = {}
-        if self.workflow:
-            for _key in self.workflow:
-                if self.workflow[_key]:
-                    _field_dict[_key] = self.workflow[_key].to_dict()
-            _dict["workflow"] = _field_dict
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a dict"""
+        """Create an instance of SemaphoreSlots from a dict"""
         if obj is None:
             return None
 
@@ -96,19 +108,13 @@ class TenantQueueMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
-                    else None
-                ),
-                "workflow": (
-                    dict(
-                        (_k, QueueMetrics.from_dict(_v))
-                        for _k, _v in obj["workflow"].items()
-                    )
-                    if obj.get("workflow") is not None
-                    else None
-                ),
+                "slot": obj.get("slot"),
+                "stepRunId": obj.get("stepRunId"),
+                "actionId": obj.get("actionId"),
+                "startedAt": obj.get("startedAt"),
+                "timeoutAt": obj.get("timeoutAt"),
+                "workflowRunId": obj.get("workflowRunId"),
+                "status": obj.get("status"),
             }
         )
         return _obj

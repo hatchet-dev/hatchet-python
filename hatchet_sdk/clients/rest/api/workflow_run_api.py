@@ -45,7 +45,7 @@ class WorkflowRunApi:
         self.api_client = api_client
 
     @validate_call
-    def workflow_run_cancel(
+    async def workflow_run_cancel(
         self,
         tenant: Annotated[
             str,
@@ -113,17 +113,17 @@ class WorkflowRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_run_cancel_with_http_info(
+    async def workflow_run_cancel_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -191,17 +191,17 @@ class WorkflowRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_run_cancel_without_preload_content(
+    async def workflow_run_cancel_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -269,7 +269,7 @@ class WorkflowRunApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -306,9 +306,10 @@ class WorkflowRunApi:
             _body_params = workflow_runs_cancel_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -339,7 +340,7 @@ class WorkflowRunApi:
         )
 
     @validate_call
-    def workflow_run_create(
+    async def workflow_run_create(
         self,
         workflow: Annotated[
             str,
@@ -418,17 +419,17 @@ class WorkflowRunApi:
             "404": "APIErrors",
             "429": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_run_create_with_http_info(
+    async def workflow_run_create_with_http_info(
         self,
         workflow: Annotated[
             str,
@@ -507,17 +508,17 @@ class WorkflowRunApi:
             "404": "APIErrors",
             "429": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_run_create_without_preload_content(
+    async def workflow_run_create_without_preload_content(
         self,
         workflow: Annotated[
             str,
@@ -596,7 +597,7 @@ class WorkflowRunApi:
             "404": "APIErrors",
             "429": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -638,9 +639,10 @@ class WorkflowRunApi:
             _body_params = trigger_workflow_run_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:

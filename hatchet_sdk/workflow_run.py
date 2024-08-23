@@ -1,10 +1,12 @@
-from typing import Any, Coroutine, Generic, TypeVar
+import asyncio
+from typing import Coroutine, Generic, TypeVar
 
 from hatchet_sdk.clients.run_event_listener import (
     RunEventListener,
     RunEventListenerClient,
 )
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
+from hatchet_sdk.utils.aio_utils import EventLoopThread, get_active_event_loop
 
 
 class WorkflowRunRef:
@@ -26,8 +28,20 @@ class WorkflowRunRef:
     def stream(self) -> RunEventListener:
         return self.workflow_run_event_listener.stream(self.workflow_run_id)
 
-    def result(self):
+    def result(self) -> Coroutine:
         return self.workflow_listener.result(self.workflow_run_id)
+
+    def sync_result(self) -> dict:
+        loop = get_active_event_loop()
+        if loop is None:
+            with EventLoopThread() as loop:
+                coro = self.workflow_listener.result(self.workflow_run_id)
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                return future.result()
+        else:
+            coro = self.workflow_listener.result(self.workflow_run_id)
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            return future.result()
 
 
 T = TypeVar("T")
@@ -37,7 +51,6 @@ class RunRef(WorkflowRunRef, Generic[T]):
     async def result(self) -> T:
         res = await self.workflow_listener.result(self.workflow_run_id)
 
-        # if the dict only has 1 key, return the value of that key
         if len(res) == 1:
             return list(res.values())[0]
 

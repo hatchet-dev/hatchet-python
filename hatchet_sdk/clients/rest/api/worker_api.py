@@ -14,7 +14,7 @@
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
+from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr, validate_call
 from typing_extensions import Annotated
 
 from hatchet_sdk.clients.rest.api_client import ApiClient, RequestSerialized
@@ -38,7 +38,7 @@ class WorkerApi:
         self.api_client = api_client
 
     @validate_call
-    def worker_get(
+    async def worker_get(
         self,
         worker: Annotated[
             str,
@@ -46,6 +46,9 @@ class WorkerApi:
                 min_length=36, strict=True, max_length=36, description="The worker id"
             ),
         ],
+        recent_failed: Annotated[
+            Optional[StrictBool], Field(description="Filter recent by failed")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -64,6 +67,8 @@ class WorkerApi:
 
         :param worker: The worker id (required)
         :type worker: str
+        :param recent_failed: Filter recent by failed
+        :type recent_failed: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -88,6 +93,7 @@ class WorkerApi:
 
         _param = self._worker_get_serialize(
             worker=worker,
+            recent_failed=recent_failed,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -99,17 +105,17 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def worker_get_with_http_info(
+    async def worker_get_with_http_info(
         self,
         worker: Annotated[
             str,
@@ -117,6 +123,9 @@ class WorkerApi:
                 min_length=36, strict=True, max_length=36, description="The worker id"
             ),
         ],
+        recent_failed: Annotated[
+            Optional[StrictBool], Field(description="Filter recent by failed")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -135,6 +144,8 @@ class WorkerApi:
 
         :param worker: The worker id (required)
         :type worker: str
+        :param recent_failed: Filter recent by failed
+        :type recent_failed: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -159,6 +170,7 @@ class WorkerApi:
 
         _param = self._worker_get_serialize(
             worker=worker,
+            recent_failed=recent_failed,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -170,17 +182,17 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def worker_get_without_preload_content(
+    async def worker_get_without_preload_content(
         self,
         worker: Annotated[
             str,
@@ -188,6 +200,9 @@ class WorkerApi:
                 min_length=36, strict=True, max_length=36, description="The worker id"
             ),
         ],
+        recent_failed: Annotated[
+            Optional[StrictBool], Field(description="Filter recent by failed")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -206,6 +221,8 @@ class WorkerApi:
 
         :param worker: The worker id (required)
         :type worker: str
+        :param recent_failed: Filter recent by failed
+        :type recent_failed: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -230,6 +247,7 @@ class WorkerApi:
 
         _param = self._worker_get_serialize(
             worker=worker,
+            recent_failed=recent_failed,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -241,7 +259,7 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -249,6 +267,7 @@ class WorkerApi:
     def _worker_get_serialize(
         self,
         worker,
+        recent_failed,
         _request_auth,
         _content_type,
         _headers,
@@ -270,14 +289,19 @@ class WorkerApi:
         if worker is not None:
             _path_params["worker"] = worker
         # process the query parameters
+        if recent_failed is not None:
+
+            _query_params.append(("recentFailed", recent_failed))
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -298,7 +322,7 @@ class WorkerApi:
         )
 
     @validate_call
-    def worker_list(
+    async def worker_list(
         self,
         tenant: Annotated[
             str,
@@ -359,17 +383,17 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def worker_list_with_http_info(
+    async def worker_list_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -430,17 +454,17 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def worker_list_without_preload_content(
+    async def worker_list_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -501,7 +525,7 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -535,9 +559,10 @@ class WorkerApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -558,7 +583,7 @@ class WorkerApi:
         )
 
     @validate_call
-    def worker_update(
+    async def worker_update(
         self,
         worker: Annotated[
             str,
@@ -625,17 +650,17 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def worker_update_with_http_info(
+    async def worker_update_with_http_info(
         self,
         worker: Annotated[
             str,
@@ -702,17 +727,17 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def worker_update_without_preload_content(
+    async def worker_update_without_preload_content(
         self,
         worker: Annotated[
             str,
@@ -779,7 +804,7 @@ class WorkerApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -816,9 +841,10 @@ class WorkerApi:
             _body_params = update_worker_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:

@@ -89,11 +89,14 @@ class ApiClient:
         self.user_agent = "OpenAPI-Generator/1.0.0/python"
         self.client_side_validation = configuration.client_side_validation
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        pass
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
+
+    async def close(self):
+        await self.rest_client.close()
 
     @property
     def user_agent(self):
@@ -217,7 +220,7 @@ class ApiClient:
             body = self.sanitize_for_serialization(body)
 
         # request url
-        if _host is None:
+        if _host is None or self.configuration.ignore_operation_servers:
             url = self.configuration.host + resource_path
         else:
             # use server/host defined in path or operation instead
@@ -231,7 +234,7 @@ class ApiClient:
 
         return method, url, header_params, body, post_params
 
-    def call_api(
+    async def call_api(
         self,
         method,
         url,
@@ -254,7 +257,7 @@ class ApiClient:
 
         try:
             # perform request and return response
-            response_data = self.rest_client.request(
+            response_data = await self.rest_client.request(
                 method,
                 url,
                 headers=header_params,
@@ -308,12 +311,9 @@ class ApiClient:
                     match = re.search(r"charset=([a-zA-Z\-\d]+)[\s;]?", content_type)
                 encoding = match.group(1) if match else "utf-8"
                 response_text = response_data.data.decode(encoding)
-                if response_type in ["bytearray", "str"]:
-                    return_data = self.__deserialize_primitive(
-                        response_text, response_type
-                    )
-                else:
-                    return_data = self.deserialize(response_text, response_type)
+                return_data = self.deserialize(
+                    response_text, response_type, content_type
+                )
         finally:
             if not 200 <= response_data.status <= 299:
                 raise ApiException.from_response(
@@ -376,21 +376,36 @@ class ApiClient:
             key: self.sanitize_for_serialization(val) for key, val in obj_dict.items()
         }
 
-    def deserialize(self, response_text, response_type):
+    def deserialize(
+        self, response_text: str, response_type: str, content_type: Optional[str]
+    ):
         """Deserializes response into an object.
 
         :param response: RESTResponse object to be deserialized.
         :param response_type: class literal for
             deserialized object, or string of class name.
+        :param content_type: content type of response.
 
         :return: deserialized object.
         """
 
         # fetch data from response object
-        try:
-            data = json.loads(response_text)
-        except ValueError:
+        if content_type is None:
+            try:
+                data = json.loads(response_text)
+            except ValueError:
+                data = response_text
+        elif content_type.startswith("application/json"):
+            if response_text == "":
+                data = ""
+            else:
+                data = json.loads(response_text)
+        elif content_type.startswith("text/plain"):
             data = response_text
+        else:
+            raise ApiException(
+                status=0, reason="Unsupported content type: {0}".format(content_type)
+            )
 
         return self.__deserialize(data, response_type)
 

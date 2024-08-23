@@ -11,14 +11,18 @@ hatchet = Hatchet(debug=True)
 
 @hatchet.workflow(on_events=["user:create"])
 class OnFailureWorkflow:
-    @hatchet.step()
+    @hatchet.step(timeout="1s")
     def step1(self, context: Context):
         raise Exception("step1 failed")
 
     @hatchet.on_failure_step()
-    def on_failure(self, context):
+    def on_failure(self, context: Context):
+        failures = context.fetch_run_failures()
         print("executed on_failure")
-        print(context)
+        print(json.dumps(failures, indent=2))
+        if len(failures) == 1 and "step1 failed" in failures[0]["error"]:
+            return {"status": "success"}
+        raise Exception("unexpected failure")
 
 
 def main():

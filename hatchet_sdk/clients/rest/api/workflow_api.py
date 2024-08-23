@@ -54,7 +54,7 @@ class WorkflowApi:
         self.api_client = api_client
 
     @validate_call
-    def tenant_get_queue_metrics(
+    async def tenant_get_queue_metrics(
         self,
         tenant: Annotated[
             str,
@@ -130,17 +130,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def tenant_get_queue_metrics_with_http_info(
+    async def tenant_get_queue_metrics_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -216,17 +216,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def tenant_get_queue_metrics_without_preload_content(
+    async def tenant_get_queue_metrics_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -302,7 +302,7 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -349,9 +349,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -372,7 +373,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_delete(
+    async def workflow_delete(
         self,
         workflow: Annotated[
             str,
@@ -434,17 +435,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_delete_with_http_info(
+    async def workflow_delete_with_http_info(
         self,
         workflow: Annotated[
             str,
@@ -506,17 +507,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_delete_without_preload_content(
+    async def workflow_delete_without_preload_content(
         self,
         workflow: Annotated[
             str,
@@ -578,7 +579,7 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -612,9 +613,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -635,7 +637,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_get(
+    async def workflow_get(
         self,
         workflow: Annotated[
             str,
@@ -696,17 +698,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_get_with_http_info(
+    async def workflow_get_with_http_info(
         self,
         workflow: Annotated[
             str,
@@ -767,17 +769,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_get_without_preload_content(
+    async def workflow_get_without_preload_content(
         self,
         workflow: Annotated[
             str,
@@ -838,7 +840,7 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -872,9 +874,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -895,7 +898,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_get_metrics(
+    async def workflow_get_metrics(
         self,
         workflow: Annotated[
             str,
@@ -970,17 +973,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_get_metrics_with_http_info(
+    async def workflow_get_metrics_with_http_info(
         self,
         workflow: Annotated[
             str,
@@ -1055,17 +1058,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_get_metrics_without_preload_content(
+    async def workflow_get_metrics_without_preload_content(
         self,
         workflow: Annotated[
             str,
@@ -1140,7 +1143,7 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1184,9 +1187,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1207,7 +1211,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_list(
+    async def workflow_list(
         self,
         tenant: Annotated[
             str,
@@ -1268,17 +1272,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_list_with_http_info(
+    async def workflow_list_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -1339,17 +1343,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_list_without_preload_content(
+    async def workflow_list_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -1410,7 +1414,7 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1444,9 +1448,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1467,7 +1472,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_run_get(
+    async def workflow_run_get(
         self,
         tenant: Annotated[
             str,
@@ -1540,17 +1545,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_run_get_with_http_info(
+    async def workflow_run_get_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -1623,17 +1628,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_run_get_without_preload_content(
+    async def workflow_run_get_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -1706,7 +1711,7 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1743,9 +1748,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1766,7 +1772,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_run_get_metrics(
+    async def workflow_run_get_metrics(
         self,
         tenant: Annotated[
             str,
@@ -1862,17 +1868,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_run_get_metrics_with_http_info(
+    async def workflow_run_get_metrics_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -1968,17 +1974,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_run_get_metrics_without_preload_content(
+    async def workflow_run_get_metrics_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -2074,7 +2080,7 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -2135,9 +2141,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2158,7 +2165,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_run_list(
+    async def workflow_run_list(
         self,
         tenant: Annotated[
             str,
@@ -2293,17 +2300,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_run_list_with_http_info(
+    async def workflow_run_list_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -2438,17 +2445,17 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_run_list_without_preload_content(
+    async def workflow_run_list_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -2583,7 +2590,7 @@ class WorkflowApi:
             "400": "APIErrors",
             "403": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -2676,9 +2683,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2699,7 +2707,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_version_get(
+    async def workflow_version_get(
         self,
         workflow: Annotated[
             str,
@@ -2770,17 +2778,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_version_get_with_http_info(
+    async def workflow_version_get_with_http_info(
         self,
         workflow: Annotated[
             str,
@@ -2851,17 +2859,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_version_get_without_preload_content(
+    async def workflow_version_get_without_preload_content(
         self,
         workflow: Annotated[
             str,
@@ -2932,7 +2940,7 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -2971,9 +2979,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2994,7 +3003,7 @@ class WorkflowApi:
         )
 
     @validate_call
-    def workflow_version_get_definition(
+    async def workflow_version_get_definition(
         self,
         workflow: Annotated[
             str,
@@ -3065,17 +3074,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def workflow_version_get_definition_with_http_info(
+    async def workflow_version_get_definition_with_http_info(
         self,
         workflow: Annotated[
             str,
@@ -3146,17 +3155,17 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def workflow_version_get_definition_without_preload_content(
+    async def workflow_version_get_definition_without_preload_content(
         self,
         workflow: Annotated[
             str,
@@ -3227,7 +3236,7 @@ class WorkflowApi:
             "403": "APIErrors",
             "404": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -3266,9 +3275,10 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.34.0a5"
+version = "0.36.4"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -18,6 +18,8 @@ python-dateutil = "^2.9.0.post0"
 urllib3 = "^2.2.1"
 aiostream = "^0.5.2"
 nest-asyncio = "^1.6.0"
+aiohttp = "^3.10.5"
+aiohttp-retry = "^2.8.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
@@ -42,7 +44,7 @@ known_third_party = [
   "python_dotenv",
   "python_dateutil",
   "pyyaml",
-  "urllib3"
+  "urllib3",
 ]
 
 [tool.poetry.scripts]

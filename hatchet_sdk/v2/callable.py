@@ -1,15 +1,5 @@
 import asyncio
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Callable, Dict, Generic, List, Optional, TypedDict, TypeVar, Union
 
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
@@ -182,15 +172,15 @@ class DurableContext(Context):
         if not isinstance(function, str):
             workflow_name = function.function_name
 
-        if (
-            options is not None
-            and "sticky" in options
-            and options["sticky"] == True
-            and not self.worker.has_workflow(workflow_name)
-        ):
-            raise Exception(
-                f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
-            )
+        # if (
+        #     options is not None
+        #     and "sticky" in options
+        #     and options["sticky"] == True
+        #     and not self.worker.has_workflow(workflow_name)
+        # ):
+        #     raise Exception(
+        #         f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
+        #     )
 
         trigger_options = self._prepare_workflow_options(key, options, worker_id)
 

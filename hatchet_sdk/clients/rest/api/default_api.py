@@ -46,7 +46,7 @@ class DefaultApi:
         self.api_client = api_client
 
     @validate_call
-    def tenant_invite_delete(
+    async def tenant_invite_delete(
         self,
         tenant: Annotated[
             str,
@@ -118,17 +118,17 @@ class DefaultApi:
             "200": "TenantInvite",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def tenant_invite_delete_with_http_info(
+    async def tenant_invite_delete_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -200,17 +200,17 @@ class DefaultApi:
             "200": "TenantInvite",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def tenant_invite_delete_without_preload_content(
+    async def tenant_invite_delete_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -282,7 +282,7 @@ class DefaultApi:
             "200": "TenantInvite",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -319,9 +319,10 @@ class DefaultApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -342,7 +343,7 @@ class DefaultApi:
         )
 
     @validate_call
-    def tenant_invite_update(
+    async def tenant_invite_update(
         self,
         tenant: Annotated[
             str,
@@ -420,17 +421,17 @@ class DefaultApi:
             "200": "TenantInvite",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def tenant_invite_update_with_http_info(
+    async def tenant_invite_update_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -508,17 +509,17 @@ class DefaultApi:
             "200": "TenantInvite",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def tenant_invite_update_without_preload_content(
+    async def tenant_invite_update_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -596,7 +597,7 @@ class DefaultApi:
             "200": "TenantInvite",
             "400": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -636,9 +637,10 @@ class DefaultApi:
             _body_params = update_tenant_invite_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -669,7 +671,7 @@ class DefaultApi:
         )
 
     @validate_call
-    def webhook_create(
+    async def webhook_create(
         self,
         tenant: Annotated[
             str,
@@ -735,17 +737,17 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def webhook_create_with_http_info(
+    async def webhook_create_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -811,17 +813,17 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def webhook_create_without_preload_content(
+    async def webhook_create_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -887,7 +889,7 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -924,9 +926,10 @@ class DefaultApi:
             _body_params = webhook_worker_create_request
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -957,7 +960,7 @@ class DefaultApi:
         )
 
     @validate_call
-    def webhook_delete(
+    async def webhook_delete(
         self,
         webhook: Annotated[
             str,
@@ -1019,17 +1022,17 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def webhook_delete_with_http_info(
+    async def webhook_delete_with_http_info(
         self,
         webhook: Annotated[
             str,
@@ -1091,17 +1094,17 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def webhook_delete_without_preload_content(
+    async def webhook_delete_without_preload_content(
         self,
         webhook: Annotated[
             str,
@@ -1163,7 +1166,7 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1197,9 +1200,10 @@ class DefaultApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1220,7 +1224,7 @@ class DefaultApi:
         )
 
     @validate_call
-    def webhook_list(
+    async def webhook_list(
         self,
         tenant: Annotated[
             str,
@@ -1282,17 +1286,17 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
 
     @validate_call
-    def webhook_list_with_http_info(
+    async def webhook_list_with_http_info(
         self,
         tenant: Annotated[
             str,
@@ -1354,17 +1358,17 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
-        response_data.read()
+        await response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
     @validate_call
-    def webhook_list_without_preload_content(
+    async def webhook_list_without_preload_content(
         self,
         tenant: Annotated[
             str,
@@ -1426,7 +1430,7 @@ class DefaultApi:
             "401": "APIErrors",
             "405": "APIErrors",
         }
-        response_data = self.api_client.call_api(
+        response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
         )
         return response_data.response
@@ -1460,9 +1464,10 @@ class DefaultApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        _header_params["Accept"] = self.api_client.select_header_accept(
-            ["application/json"]
-        )
+        if "Accept" not in _header_params:
+            _header_params["Accept"] = self.api_client.select_header_accept(
+                ["application/json"]
+            )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
