@@ -122,6 +122,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowVersionOpts,
     RateLimitDuration,
     StickyStrategy,
+    WorkerLabelComparator,
 )
 from hatchet_sdk.utils.aio_utils import sync_to_async
 
@@ -202,6 +203,7 @@ __all__ = [
     "UserTenantMembershipsList",
     "UserTenantPublic",
     "Worker",
+    "WorkerLabelComparator",
     "WorkerList",
     "Workflow",
     "WorkflowDeploymentConfig",
