@@ -27,6 +27,7 @@ class AffinityWorkflow:
 
         return {"worker": context.worker.id()}
 
+
 def main():
     worker = hatchet.worker(
         "affinity-worker",
@@ -38,6 +39,7 @@ def main():
     )
     worker.register_workflow(AffinityWorkflow())
     worker.start()
+
 
 if __name__ == "__main__":
     main()
