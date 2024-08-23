@@ -133,7 +133,7 @@ class AsyncRestApi:
         order_by_field: WorkflowRunOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
     ) -> WorkflowRunList:
-        return await self.workflow_run_api.workflow_run_list(
+        return await self.workflow_api.workflow_run_list(
             tenant=self.tenant_id,
             offset=offset,
             limit=limit,
