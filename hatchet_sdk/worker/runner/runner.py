@@ -154,7 +154,7 @@ class Runner:
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
         self.worker_context = WorkerContext(
-            labels=labels, client=new_client_raw(config)
+            labels=labels, client=new_client_raw(config).dispatcher
         )
 
     def run(self, action: Action):

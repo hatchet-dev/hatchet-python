@@ -27,14 +27,17 @@ class AffinityWorkflow:
 
         return {"worker": context.worker.id()}
 
+def main():
+    worker = hatchet.worker(
+        "affinity-worker",
+        max_runs=10,
+        labels={
+            "model": "fancy-ai-model-v2",
+            "memory": 512,
+        },
+    )
+    worker.register_workflow(AffinityWorkflow())
+    worker.start()
 
-worker = hatchet.worker(
-    "affinity-worker",
-    max_runs=10,
-    labels={
-        "model": "fancy-ai-model-v2",
-        "memory": 512,
-    },
-)
-worker.register_workflow(AffinityWorkflow())
-worker.start()
+if __name__ == "__main__":
+    main()

@@ -91,15 +91,15 @@ class ContextAioImpl(BaseContext):
         options: ChildTriggerWorkflowOptions = None,
     ) -> WorkflowRunRef:
         worker_id = self.worker.id()
-        if (
-            options is not None
-            and "sticky" in options
-            and options["sticky"] == True
-            and not self.worker.has_workflow(workflow_name)
-        ):
-            raise Exception(
-                f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
-            )
+        # if (
+        #     options is not None
+        #     and "sticky" in options
+        #     and options["sticky"] == True
+        #     and not self.worker.has_workflow(workflow_name)
+        # ):
+        #     raise Exception(
+        #         f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
+        #     )
 
         trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
