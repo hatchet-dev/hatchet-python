@@ -1,9 +1,10 @@
-from typing import Any, Callable, List, Optional, TypeVar
+from typing import Callable, List, Optional, TypeVar
 
 from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy
+from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, StickyStrategy
 from hatchet_sdk.hatchet import Hatchet as HatchetV1
 from hatchet_sdk.hatchet import workflow
+from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
@@ -22,8 +23,10 @@ def function(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
+    sticky: StickyStrategy = None,
     retries: int = 0,
     rate_limits: List[RateLimit] | None = None,
+    desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
     concurrency: ConcurrencyFunction | None = None,
     on_failure: Optional["HatchetCallable"] = None,
 ):
@@ -37,8 +40,10 @@ def function(
             version=version,
             timeout=timeout,
             schedule_timeout=schedule_timeout,
+            sticky=sticky,
             retries=retries,
             rate_limits=rate_limits,
+            desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
         )
@@ -54,8 +59,10 @@ def durable(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
+    sticky: StickyStrategy = None,
     retries: int = 0,
     rate_limits: List[RateLimit] | None = None,
+    desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
     concurrency: ConcurrencyFunction | None = None,
     on_failure: HatchetCallable | None = None,
 ):
@@ -70,8 +77,10 @@ def durable(
             version=version,
             timeout=timeout,
             schedule_timeout=schedule_timeout,
+            sticky=sticky,
             retries=retries,
             rate_limits=rate_limits,
+            desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
         )
@@ -113,6 +122,7 @@ class Hatchet(HatchetV1):
         schedule_timeout: str = "5m",
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
+        desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
         concurrency: ConcurrencyFunction | None = None,
         on_failure: Optional["HatchetCallable"] = None,
     ):
@@ -126,6 +136,7 @@ class Hatchet(HatchetV1):
             schedule_timeout=schedule_timeout,
             retries=retries,
             rate_limits=rate_limits,
+            desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
         )
@@ -151,8 +162,10 @@ class Hatchet(HatchetV1):
         version: str = "",
         timeout: str = "60m",
         schedule_timeout: str = "5m",
+        sticky: StickyStrategy = None,
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
+        desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
         concurrency: ConcurrencyFunction | None = None,
         on_failure: Optional["HatchetCallable"] = None,
     ) -> Callable[[HatchetCallable], HatchetCallable]:
@@ -164,8 +177,10 @@ class Hatchet(HatchetV1):
             version=version,
             timeout=timeout,
             schedule_timeout=schedule_timeout,
+            sticky=sticky,
             retries=retries,
             rate_limits=rate_limits,
+            desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
         )
@@ -182,10 +197,13 @@ class Hatchet(HatchetV1):
 
         return wrapper
 
-    def worker(self, name: str, max_runs: int | None = None):
+    def worker(
+        self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
+    ):
         worker = Worker(
             name=name,
             max_runs=max_runs,
+            labels=labels,
             config=self._client.config,
             debug=self._client.debug,
         )

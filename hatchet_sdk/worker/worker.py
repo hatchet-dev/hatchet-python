@@ -191,6 +191,7 @@ class Worker:
                     self.event_queue,
                     self.handle_kill,
                     self.client.debug,
+                    self.labels,
                 ),
             )
             process.start()

@@ -1,15 +1,5 @@
 import asyncio
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Callable, Dict, Generic, List, Optional, TypedDict, TypeVar, Union
 
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
@@ -18,6 +8,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
+    StickyStrategy,
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
@@ -41,6 +32,7 @@ class HatchetCallable(Generic[T]):
         version: str = "",
         timeout: str = "60m",
         schedule_timeout: str = "5m",
+        sticky: StickyStrategy = None,
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
         concurrency: ConcurrencyFunction | None = None,
@@ -70,7 +62,7 @@ class HatchetCallable(Generic[T]):
                 weight=d["weight"] if "weight" in d else None,
                 comparator=d["comparator"] if "comparator" in d else None,
             )
-
+        self.sticky = sticky
         self.durable = durable
         self.function_name = name.lower() or str(func.__name__).lower()
         self.function_version = version
@@ -131,6 +123,7 @@ class HatchetCallable(Generic[T]):
             event_triggers=self.function_on_events,
             cron_triggers=self.function_on_crons,
             schedule_timeout=self.function_schedule_timeout,
+            sticky=self.sticky,
             on_failure_job=on_failure_job,
             concurrency=concurrency,
             jobs=[
