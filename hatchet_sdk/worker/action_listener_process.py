@@ -55,6 +55,7 @@ class WorkerActionListenerProcess:
     event_queue: Queue
     handle_kill: bool = True
     debug: bool = False
+    labels: dict = field(default_factory=dict)
 
     listener: ActionListener = field(init=False, default=None)
 
@@ -93,6 +94,7 @@ class WorkerActionListenerProcess:
                         services=["default"],
                         actions=self.actions,
                         max_runs=self.max_runs,
+                        _labels=self.labels,
                     )
                 )
             )
