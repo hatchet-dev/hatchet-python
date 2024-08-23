@@ -18,7 +18,7 @@ class WorkerContext:
         self._labels.update(labels)
 
     async def async_upsert_labels(self, labels: dict[str, str | int]):
-        await self.client.aio_client.async_upsert_worker_labels(self._worker_id, labels)
+        await self.client.async_upsert_worker_labels(self._worker_id, labels)
         self._labels.update(labels)
 
     def id(self):

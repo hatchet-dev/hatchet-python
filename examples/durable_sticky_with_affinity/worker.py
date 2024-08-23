@@ -28,7 +28,7 @@ async def my_durable_func(context: DurableContext):
         )
         result = await ref.result()
     except Exception as e:
-        print(e)
+        result = str(e)
 
     await context.worker.async_upsert_labels({"running_workflow": "False"})
     return {"worker_result": result}
