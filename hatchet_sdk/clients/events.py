@@ -1,10 +1,10 @@
 import datetime
 import json
-from dataclasses import dataclass
 from typing import Dict, TypedDict
 
 import grpc
 from google.protobuf import timestamp_pb2
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
 from hatchet_sdk.contracts.events_pb2 import (
     Event,
@@ -43,6 +43,10 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
+    @retry(
+        wait=wait_exponential_jitter(),
+        stop=stop_after_attempt(5),
+    )
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
 
         namespaced_event_key = self.namespace + event_key
