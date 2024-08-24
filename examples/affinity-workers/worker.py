@@ -1,3 +1,4 @@
+#Python
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet, WorkerLabelComparator
@@ -6,7 +7,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START specifying-step-desired-labels
 @hatchet.workflow(on_events=["affinity:run"])
 class AffinityWorkflow:
     @hatchet.step(
@@ -26,9 +27,11 @@ class AffinityWorkflow:
             context.worker.upsert_labels({"model": "fancy-ai-model-v2"})
 
         return {"worker": context.worker.id()}
+#END specifying-step-desired-labels
 
 
 def main():
+    #START specifying-worker-labels
     worker = hatchet.worker(
         "affinity-worker",
         max_runs=10,
@@ -37,6 +40,7 @@ def main():
             "memory": 512,
         },
     )
+    #END specifying-worker-labels
     worker.register_workflow(AffinityWorkflow())
     worker.start()
 
