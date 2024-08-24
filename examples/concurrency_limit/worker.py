@@ -10,7 +10,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START concurrency_cancel_in_progress
 @hatchet.workflow(on_events=["concurrency-test"])
 class ConcurrencyDemoWorkflow:
 
@@ -24,7 +24,7 @@ class ConcurrencyDemoWorkflow:
         time.sleep(3)
         print("executed step1")
         return {"run": input["run"]}
-
+#END concurrency_cancel_in_progress
 
 def main():
     workflow = ConcurrencyDemoWorkflow()
