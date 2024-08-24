@@ -9,7 +9,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START how-to-use-step-level-retries
 @hatchet.workflow(on_events=["user:create"])
 class MyWorkflow:
     @hatchet.step(timeout="11s", retries=3)
@@ -20,7 +20,7 @@ class MyWorkflow:
         return {
             "step1": "step1",
         }
-
+#END how-to-use-step-level-retries
 
 def main():
     #START registering_workflows_starting_workers
