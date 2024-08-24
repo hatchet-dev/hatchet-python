@@ -1,3 +1,4 @@
+#Python
 import time
 
 from dotenv import load_dotenv
@@ -8,16 +9,17 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START scheduling-timeouts
 @hatchet.workflow(on_events=["timeout:create"])
 class TimeoutWorkflow:
-
+#END scheduling-timeouts
+#START step-timeouts
     @hatchet.step(timeout="4s")
     def step1(self, context: Context):
         time.sleep(5)
         return {"status": "success"}
-
-
+#END step-timeouts
+#START refreshing-timeouts
 @hatchet.workflow(on_events=["refresh:create"])
 class RefreshTimeoutWorkflow:
 
@@ -28,7 +30,7 @@ class RefreshTimeoutWorkflow:
         time.sleep(5)
 
         return {"status": "success"}
-
+#END refreshing-timeouts
 
 def main():
     worker = hatchet.worker("timeout-worker", max_runs=4)
