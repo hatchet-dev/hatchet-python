@@ -12,6 +12,7 @@
 """  # noqa: E501
 
 import warnings
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
@@ -1800,6 +1801,14 @@ class WorkflowApi:
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
         ] = None,
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        created_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was created"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1828,6 +1837,10 @@ class WorkflowApi:
         :type parent_step_run_id: str
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param created_after: The time after the workflow run was created
+        :type created_after: datetime
+        :param created_before: The time before the workflow run was created
+        :type created_before: datetime
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1857,6 +1870,8 @@ class WorkflowApi:
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
             additional_metadata=additional_metadata,
+            created_after=created_after,
+            created_before=created_before,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1906,6 +1921,14 @@ class WorkflowApi:
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
         ] = None,
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        created_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was created"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1934,6 +1957,10 @@ class WorkflowApi:
         :type parent_step_run_id: str
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param created_after: The time after the workflow run was created
+        :type created_after: datetime
+        :param created_before: The time before the workflow run was created
+        :type created_before: datetime
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1963,6 +1990,8 @@ class WorkflowApi:
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
             additional_metadata=additional_metadata,
+            created_after=created_after,
+            created_before=created_before,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2012,6 +2041,14 @@ class WorkflowApi:
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
         ] = None,
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        created_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was created"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2040,6 +2077,10 @@ class WorkflowApi:
         :type parent_step_run_id: str
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param created_after: The time after the workflow run was created
+        :type created_after: datetime
+        :param created_before: The time before the workflow run was created
+        :type created_before: datetime
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2069,6 +2110,8 @@ class WorkflowApi:
             parent_workflow_run_id=parent_workflow_run_id,
             parent_step_run_id=parent_step_run_id,
             additional_metadata=additional_metadata,
+            created_after=created_after,
+            created_before=created_before,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2093,6 +2136,8 @@ class WorkflowApi:
         parent_workflow_run_id,
         parent_step_run_id,
         additional_metadata,
+        created_after,
+        created_before,
         _request_auth,
         _content_type,
         _headers,
@@ -2135,6 +2180,32 @@ class WorkflowApi:
         if additional_metadata is not None:
 
             _query_params.append(("additionalMetadata", additional_metadata))
+
+        if created_after is not None:
+            if isinstance(created_after, datetime):
+                _query_params.append(
+                    (
+                        "createdAfter",
+                        created_after.strftime(
+                            self.api_client.configuration.datetime_format
+                        ),
+                    )
+                )
+            else:
+                _query_params.append(("createdAfter", created_after))
+
+        if created_before is not None:
+            if isinstance(created_before, datetime):
+                _query_params.append(
+                    (
+                        "createdBefore",
+                        created_before.strftime(
+                            self.api_client.configuration.datetime_format
+                        ),
+                    )
+                )
+            else:
+                _query_params.append(("createdBefore", created_before))
 
         # process the header parameters
         # process the form parameters
@@ -2207,6 +2278,14 @@ class WorkflowApi:
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
         ] = None,
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        created_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was created"),
+        ] = None,
         order_by_field: Annotated[
             Optional[WorkflowRunOrderByField], Field(description="The order by field")
         ] = None,
@@ -2250,6 +2329,10 @@ class WorkflowApi:
         :type kinds: List[WorkflowKind]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param created_after: The time after the workflow run was created
+        :type created_after: datetime
+        :param created_before: The time before the workflow run was created
+        :type created_before: datetime
         :param order_by_field: The order by field
         :type order_by_field: WorkflowRunOrderByField
         :param order_by_direction: The order by direction
@@ -2287,6 +2370,8 @@ class WorkflowApi:
             statuses=statuses,
             kinds=kinds,
             additional_metadata=additional_metadata,
+            created_after=created_after,
+            created_before=created_before,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
             _request_auth=_request_auth,
@@ -2352,6 +2437,14 @@ class WorkflowApi:
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
         ] = None,
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        created_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was created"),
+        ] = None,
         order_by_field: Annotated[
             Optional[WorkflowRunOrderByField], Field(description="The order by field")
         ] = None,
@@ -2395,6 +2488,10 @@ class WorkflowApi:
         :type kinds: List[WorkflowKind]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param created_after: The time after the workflow run was created
+        :type created_after: datetime
+        :param created_before: The time before the workflow run was created
+        :type created_before: datetime
         :param order_by_field: The order by field
         :type order_by_field: WorkflowRunOrderByField
         :param order_by_direction: The order by direction
@@ -2432,6 +2529,8 @@ class WorkflowApi:
             statuses=statuses,
             kinds=kinds,
             additional_metadata=additional_metadata,
+            created_after=created_after,
+            created_before=created_before,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
             _request_auth=_request_auth,
@@ -2497,6 +2596,14 @@ class WorkflowApi:
             Optional[List[StrictStr]],
             Field(description="A list of metadata key value pairs to filter by"),
         ] = None,
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        created_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was created"),
+        ] = None,
         order_by_field: Annotated[
             Optional[WorkflowRunOrderByField], Field(description="The order by field")
         ] = None,
@@ -2540,6 +2647,10 @@ class WorkflowApi:
         :type kinds: List[WorkflowKind]
         :param additional_metadata: A list of metadata key value pairs to filter by
         :type additional_metadata: List[str]
+        :param created_after: The time after the workflow run was created
+        :type created_after: datetime
+        :param created_before: The time before the workflow run was created
+        :type created_before: datetime
         :param order_by_field: The order by field
         :type order_by_field: WorkflowRunOrderByField
         :param order_by_direction: The order by direction
@@ -2577,6 +2688,8 @@ class WorkflowApi:
             statuses=statuses,
             kinds=kinds,
             additional_metadata=additional_metadata,
+            created_after=created_after,
+            created_before=created_before,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
             _request_auth=_request_auth,
@@ -2607,6 +2720,8 @@ class WorkflowApi:
         statuses,
         kinds,
         additional_metadata,
+        created_after,
+        created_before,
         order_by_field,
         order_by_direction,
         _request_auth,
@@ -2669,6 +2784,32 @@ class WorkflowApi:
         if additional_metadata is not None:
 
             _query_params.append(("additionalMetadata", additional_metadata))
+
+        if created_after is not None:
+            if isinstance(created_after, datetime):
+                _query_params.append(
+                    (
+                        "createdAfter",
+                        created_after.strftime(
+                            self.api_client.configuration.datetime_format
+                        ),
+                    )
+                )
+            else:
+                _query_params.append(("createdAfter", created_after))
+
+        if created_before is not None:
+            if isinstance(created_before, datetime):
+                _query_params.append(
+                    (
+                        "createdBefore",
+                        created_before.strftime(
+                            self.api_client.configuration.datetime_format
+                        ),
+                    )
+                )
+            else:
+                _query_params.append(("createdBefore", created_before))
 
         if order_by_field is not None:
 

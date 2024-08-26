@@ -36,6 +36,7 @@ class Worker(BaseModel):
 
     metadata: APIResourceMeta
     name: StrictStr = Field(description="The name of the worker.")
+    type: StrictStr
     last_heartbeat_at: Optional[datetime] = Field(
         default=None,
         description="The time this worker last sent a heartbeat.",
@@ -80,9 +81,16 @@ class Worker(BaseModel):
     labels: Optional[List[WorkerLabel]] = Field(
         default=None, description="The current label state of the worker."
     )
+    webhook_url: Optional[StrictStr] = Field(
+        default=None, description="The webhook URL for the worker.", alias="webhookUrl"
+    )
+    webhook_id: Optional[StrictStr] = Field(
+        default=None, description="The webhook ID for the worker.", alias="webhookId"
+    )
     __properties: ClassVar[List[str]] = [
         "metadata",
         "name",
+        "type",
         "lastHeartbeatAt",
         "lastListenerEstablished",
         "actions",
@@ -93,7 +101,18 @@ class Worker(BaseModel):
         "availableRuns",
         "dispatcherId",
         "labels",
+        "webhookUrl",
+        "webhookId",
     ]
+
+    @field_validator("type")
+    def type_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(["SELFHOSTED", "MANAGED", "WEBHOOK"]):
+            raise ValueError(
+                "must be one of enum values ('SELFHOSTED', 'MANAGED', 'WEBHOOK')"
+            )
+        return value
 
     @field_validator("status")
     def status_validate_enum(cls, value):
@@ -187,6 +206,7 @@ class Worker(BaseModel):
                     else None
                 ),
                 "name": obj.get("name"),
+                "type": obj.get("type"),
                 "lastHeartbeatAt": obj.get("lastHeartbeatAt"),
                 "lastListenerEstablished": obj.get("lastListenerEstablished"),
                 "actions": obj.get("actions"),
@@ -209,6 +229,8 @@ class Worker(BaseModel):
                     if obj.get("labels") is not None
                     else None
                 ),
+                "webhookUrl": obj.get("webhookUrl"),
+                "webhookId": obj.get("webhookId"),
             }
         )
         return _obj

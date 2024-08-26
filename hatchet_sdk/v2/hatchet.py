@@ -29,6 +29,7 @@ def function(
     desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
     concurrency: ConcurrencyFunction | None = None,
     on_failure: Optional["HatchetCallable"] = None,
+    default_priority: int | None = None,
 ):
     def inner(func: Callable[[Context], T]) -> HatchetCallable[T]:
         return HatchetCallable(
@@ -46,6 +47,7 @@ def function(
             desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
+            default_priority=default_priority,
         )
 
     return inner
@@ -65,6 +67,7 @@ def durable(
     desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
     concurrency: ConcurrencyFunction | None = None,
     on_failure: HatchetCallable | None = None,
+    default_priority: int | None = None,
 ):
     def inner(func: HatchetCallable) -> HatchetCallable:
         func.durable = True
@@ -83,6 +86,7 @@ def durable(
             desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
+            default_priority=default_priority,
         )
 
         resp = f(func)
@@ -125,6 +129,7 @@ class Hatchet(HatchetV1):
         desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
         concurrency: ConcurrencyFunction | None = None,
         on_failure: Optional["HatchetCallable"] = None,
+        default_priority: int | None = None,
     ):
         resp = function(
             name=name,
@@ -139,6 +144,7 @@ class Hatchet(HatchetV1):
             desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
+            default_priority=default_priority,
         )
 
         def wrapper(func: Callable[[Context], T]) -> HatchetCallable[T]:
@@ -168,6 +174,7 @@ class Hatchet(HatchetV1):
         desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
         concurrency: ConcurrencyFunction | None = None,
         on_failure: Optional["HatchetCallable"] = None,
+        default_priority: int | None = None,
     ) -> Callable[[HatchetCallable], HatchetCallable]:
         resp = durable(
             name=name,
@@ -183,6 +190,7 @@ class Hatchet(HatchetV1):
             desired_worker_labels=desired_worker_labels,
             concurrency=concurrency,
             on_failure=on_failure,
+            default_priority=default_priority,
         )
 
         def wrapper(func: Callable[[Context], T]) -> HatchetCallable[T]:

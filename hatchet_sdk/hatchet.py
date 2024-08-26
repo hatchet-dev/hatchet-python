@@ -27,6 +27,7 @@ def workflow(
     timeout: str = "60m",
     schedule_timeout: str = "5m",
     sticky: StickyStrategy = None,
+    default_priority: int | None = None,
 ):
     on_events = on_events or []
     on_crons = on_crons or []
@@ -39,6 +40,7 @@ def workflow(
         cls.timeout = timeout
         cls.schedule_timeout = schedule_timeout
         cls.sticky = sticky
+        cls.default_priority = default_priority
 
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
