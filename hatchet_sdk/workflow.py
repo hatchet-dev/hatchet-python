@@ -8,6 +8,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
+from hatchet_sdk.logger import logger
 
 stepsType = List[Tuple[str, Callable[..., Any]]]
 
@@ -124,6 +125,12 @@ class WorkflowMeta(type):
                     ],
                 )
 
+            validated_priority = max(1, min(3, default_priority))
+            if validated_priority != default_priority:
+                logger.warning(
+                    "Warning: Default Priority Must be between 1 and 3 -- inclusively. Adjusted to be within the range."
+                )
+
             return CreateWorkflowVersionOpts(
                 name=name,
                 kind=WorkflowKind.DAG,
@@ -140,7 +147,7 @@ class WorkflowMeta(type):
                 ],
                 on_failure_job=on_failure_job,
                 concurrency=concurrency,
-                default_priority=default_priority,
+                default_priority=validated_priority,
             )
 
         attrs["get_create_opts"] = get_create_opts
