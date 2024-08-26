@@ -119,7 +119,9 @@ class HatchetCallable(Generic[T]):
                 limit_strategy=self.function_concurrency.limit_strategy,
             )
 
-        validated_priority = max(1, min(3, self.default_priority))
+        validated_priority = (
+            max(1, min(3, self.default_priority)) if self.default_priority else None
+        )
         if validated_priority != self.default_priority:
             logger.warning(
                 "Warning: Default Priority Must be between 1 and 3 -- inclusively. Adjusted to be within the range."

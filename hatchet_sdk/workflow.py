@@ -125,7 +125,9 @@ class WorkflowMeta(type):
                     ],
                 )
 
-            validated_priority = max(1, min(3, default_priority))
+            validated_priority = (
+                max(1, min(3, default_priority)) if default_priority else None
+            )
             if validated_priority != default_priority:
                 logger.warning(
                     "Warning: Default Priority Must be between 1 and 3 -- inclusively. Adjusted to be within the range."
