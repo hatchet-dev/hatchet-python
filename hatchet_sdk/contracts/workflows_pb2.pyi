@@ -96,6 +96,7 @@ class CreateWorkflowVersionOpts(_message.Message):
         "on_failure_job",
         "sticky",
         "kind",
+        "default_priority",
     )
     NAME_FIELD_NUMBER: _ClassVar[int]
     DESCRIPTION_FIELD_NUMBER: _ClassVar[int]
@@ -110,6 +111,7 @@ class CreateWorkflowVersionOpts(_message.Message):
     ON_FAILURE_JOB_FIELD_NUMBER: _ClassVar[int]
     STICKY_FIELD_NUMBER: _ClassVar[int]
     KIND_FIELD_NUMBER: _ClassVar[int]
+    DEFAULT_PRIORITY_FIELD_NUMBER: _ClassVar[int]
     name: str
     description: str
     version: str
@@ -125,6 +127,7 @@ class CreateWorkflowVersionOpts(_message.Message):
     on_failure_job: CreateWorkflowJobOpts
     sticky: StickyStrategy
     kind: WorkflowKind
+    default_priority: int
     def __init__(
         self,
         name: _Optional[str] = ...,
@@ -142,6 +145,7 @@ class CreateWorkflowVersionOpts(_message.Message):
         on_failure_job: _Optional[_Union[CreateWorkflowJobOpts, _Mapping]] = ...,
         sticky: _Optional[_Union[StickyStrategy, str]] = ...,
         kind: _Optional[_Union[WorkflowKind, str]] = ...,
+        default_priority: _Optional[int] = ...,
     ) -> None: ...
 
 class WorkflowConcurrencyOpts(_message.Message):
@@ -356,6 +360,7 @@ class TriggerWorkflowRequest(_message.Message):
         "child_key",
         "additional_metadata",
         "desired_worker_id",
+        "priority",
     )
     NAME_FIELD_NUMBER: _ClassVar[int]
     INPUT_FIELD_NUMBER: _ClassVar[int]
@@ -365,6 +370,7 @@ class TriggerWorkflowRequest(_message.Message):
     CHILD_KEY_FIELD_NUMBER: _ClassVar[int]
     ADDITIONAL_METADATA_FIELD_NUMBER: _ClassVar[int]
     DESIRED_WORKER_ID_FIELD_NUMBER: _ClassVar[int]
+    PRIORITY_FIELD_NUMBER: _ClassVar[int]
     name: str
     input: str
     parent_id: str
@@ -373,6 +379,7 @@ class TriggerWorkflowRequest(_message.Message):
     child_key: str
     additional_metadata: str
     desired_worker_id: str
+    priority: int
     def __init__(
         self,
         name: _Optional[str] = ...,
@@ -383,6 +390,7 @@ class TriggerWorkflowRequest(_message.Message):
         child_key: _Optional[str] = ...,
         additional_metadata: _Optional[str] = ...,
         desired_worker_id: _Optional[str] = ...,
+        priority: _Optional[int] = ...,
     ) -> None: ...
 
 class TriggerWorkflowResponse(_message.Message):
