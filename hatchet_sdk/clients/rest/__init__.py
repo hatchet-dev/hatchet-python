@@ -188,6 +188,13 @@ from hatchet_sdk.clients.rest.models.webhook_worker_created import WebhookWorker
 from hatchet_sdk.clients.rest.models.webhook_worker_list_response import (
     WebhookWorkerListResponse,
 )
+from hatchet_sdk.clients.rest.models.webhook_worker_request import WebhookWorkerRequest
+from hatchet_sdk.clients.rest.models.webhook_worker_request_list_response import (
+    WebhookWorkerRequestListResponse,
+)
+from hatchet_sdk.clients.rest.models.webhook_worker_request_method import (
+    WebhookWorkerRequestMethod,
+)
 from hatchet_sdk.clients.rest.models.worker import Worker
 from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 from hatchet_sdk.clients.rest.models.worker_list import WorkerList
