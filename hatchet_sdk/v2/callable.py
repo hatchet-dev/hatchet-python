@@ -38,6 +38,7 @@ class HatchetCallable(Generic[T]):
         concurrency: ConcurrencyFunction | None = None,
         on_failure: Optional["HatchetCallable"] = None,
         desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
+        default_priority: int | None = None,
     ):
         self.func = func
 
@@ -63,6 +64,7 @@ class HatchetCallable(Generic[T]):
                 comparator=d["comparator"] if "comparator" in d else None,
             )
         self.sticky = sticky
+        self.default_priority = default_priority
         self.durable = durable
         self.function_name = name.lower() or str(func.__name__).lower()
         self.function_version = version
@@ -134,6 +136,7 @@ class HatchetCallable(Generic[T]):
                     ],
                 )
             ],
+            default_priority=self.default_priority,
         )
 
     def to_step(self) -> CreateWorkflowStepOpts:

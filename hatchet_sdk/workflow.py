@@ -73,6 +73,7 @@ class WorkflowMeta(type):
         version = attrs["version"]
         schedule_timeout = attrs["schedule_timeout"]
         sticky = attrs["sticky"]
+        default_priority = attrs["default_priority"]
 
         @functools.cache
         def get_create_opts(self, namespace: str):
@@ -139,6 +140,7 @@ class WorkflowMeta(type):
                 ],
                 on_failure_job=on_failure_job,
                 concurrency=concurrency,
+                default_priority=default_priority,
             )
 
         attrs["get_create_opts"] = get_create_opts
