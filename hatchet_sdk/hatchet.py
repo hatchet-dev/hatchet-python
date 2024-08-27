@@ -205,6 +205,10 @@ class Hatchet:
     def config(self):
         return self._client.config
 
+    @property
+    def tenant_id(self):
+        return self._client.config.tenant_id
+
     concurrency = staticmethod(concurrency)
 
     workflow = staticmethod(workflow)
