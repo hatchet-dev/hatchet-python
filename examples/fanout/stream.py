@@ -9,11 +9,12 @@ from dotenv import load_dotenv
 from hatchet_sdk import new_client
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.run_event_listener import StepRunEventType
+from hatchet_sdk.v2.hatchet import Hatchet
 
 
 async def main():
     load_dotenv()
-    hatchet = new_client()
+    hatchet = Hatchet()
 
     # Generate a random stream key to use to track all
     # stream events for this workflow run.
