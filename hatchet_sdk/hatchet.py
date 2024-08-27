@@ -197,6 +197,10 @@ class Hatchet:
     def rest(self):
         return self._client.rest
 
+    @property
+    def listener(self):
+        return self._client.listener
+
     concurrency = staticmethod(concurrency)
 
     workflow = staticmethod(workflow)
