@@ -3,9 +3,10 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
 
 import grpc
+import tenacity
 from google.protobuf import timestamp_pb2
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
+from hatchet_sdk.clients.rest.utils import tenacity_alert_retry, tenacity_should_retry
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
@@ -169,9 +170,11 @@ class AdminClientAioImpl(AdminClientBase):
             wrr.workflow_run_id, wrr.workflow_listener, wrr.workflow_run_event_listener
         )
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     async def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
@@ -200,9 +203,11 @@ class AdminClientAioImpl(AdminClientBase):
 
             raise ValueError(f"gRPC error: {e}")
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     async def put_workflow(
         self,
@@ -220,9 +225,11 @@ class AdminClientAioImpl(AdminClientBase):
         except grpc.RpcError as e:
             raise ValueError(f"Could not put workflow: {e}")
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     async def put_rate_limit(
         self,
@@ -242,9 +249,11 @@ class AdminClientAioImpl(AdminClientBase):
         except grpc.RpcError as e:
             raise ValueError(f"Could not put rate limit: {e}")
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     async def schedule_workflow(
         self,
@@ -279,9 +288,11 @@ class AdminClient(AdminClientBase):
         self.listener_client = new_listener(config)
         self.namespace = config.namespace
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     def put_workflow(
         self,
@@ -301,9 +312,11 @@ class AdminClient(AdminClientBase):
         except grpc.RpcError as e:
             raise ValueError(f"Could not put workflow: {e}")
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     def put_rate_limit(
         self,
@@ -323,9 +336,11 @@ class AdminClient(AdminClientBase):
         except grpc.RpcError as e:
             raise ValueError(f"Could not put rate limit: {e}")
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     def schedule_workflow(
         self,
@@ -349,9 +364,11 @@ class AdminClient(AdminClientBase):
 
             raise ValueError(f"gRPC error: {e}")
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
+    @tenacity.retry(
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
     )
     def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
