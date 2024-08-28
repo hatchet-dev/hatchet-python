@@ -87,6 +87,7 @@ class ContextAioImpl(BaseContext):
         self.worker = worker
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,

@@ -171,6 +171,7 @@ class AdminClientAioImpl(AdminClientBase):
         )
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -204,6 +205,7 @@ class AdminClientAioImpl(AdminClientBase):
             raise ValueError(f"gRPC error: {e}")
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -226,6 +228,7 @@ class AdminClientAioImpl(AdminClientBase):
             raise ValueError(f"Could not put workflow: {e}")
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -250,6 +253,7 @@ class AdminClientAioImpl(AdminClientBase):
             raise ValueError(f"Could not put rate limit: {e}")
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -289,6 +293,7 @@ class AdminClient(AdminClientBase):
         self.namespace = config.namespace
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -313,6 +318,7 @@ class AdminClient(AdminClientBase):
             raise ValueError(f"Could not put workflow: {e}")
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -337,6 +343,7 @@ class AdminClient(AdminClientBase):
             raise ValueError(f"Could not put rate limit: {e}")
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
@@ -365,6 +372,7 @@ class AdminClient(AdminClientBase):
             raise ValueError(f"gRPC error: {e}")
 
     @tenacity.retry(
+        reraise=True,
         wait=tenacity.wait_exponential_jitter(),
         stop=tenacity.stop_after_attempt(5),
         before_sleep=tenacity_alert_retry,
