@@ -73,3 +73,6 @@ fi
 
 # ensure that pre-commit is applied without errors
 pre-commit run --all-files || pre-commit run --all-files
+
+# apply patch to openapi-generator generated code
+patch -p1 --no-backup-if-mismatch <./openapi_patch.patch
