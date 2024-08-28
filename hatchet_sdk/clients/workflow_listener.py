@@ -1,6 +1,5 @@
 import asyncio
 import json
-import time
 from collections.abc import AsyncIterator
 from typing import AsyncGenerator
 
@@ -95,7 +94,7 @@ class PooledWorkflowRunListener:
                     try:
                         self.listener = await self._retry_subscribe()
 
-                        logger.debug(f"Workflow run listener connected.")
+                        logger.debug("Workflow run listener connected.")
 
                         # spawn an interrupter task
                         if self.interrupter is not None and not self.interrupter.done():
@@ -137,7 +136,7 @@ class PooledWorkflowRunListener:
                                 await self.events[subscription_id].put(workflow_event)
 
                     except grpc.RpcError as e:
-                        logger.error(f"grpc error in workflow run listener: {e}")
+                        logger.debug(f"grpc error in workflow run listener: {e}")
                         await asyncio.sleep(DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL)
                         continue
 
