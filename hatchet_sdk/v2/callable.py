@@ -1,15 +1,5 @@
 import asyncio
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Callable, Dict, Generic, List, Optional, TypedDict, TypeVar, Union
 
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
@@ -18,10 +8,12 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
+    StickyStrategy,
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
 from hatchet_sdk.labels import DesiredWorkerLabel
+from hatchet_sdk.logger import logger
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.workflow_run import RunRef
@@ -41,11 +33,13 @@ class HatchetCallable(Generic[T]):
         version: str = "",
         timeout: str = "60m",
         schedule_timeout: str = "5m",
+        sticky: StickyStrategy = None,
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
         concurrency: ConcurrencyFunction | None = None,
         on_failure: Optional["HatchetCallable"] = None,
         desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
+        default_priority: int | None = None,
     ):
         self.func = func
 
@@ -70,7 +64,8 @@ class HatchetCallable(Generic[T]):
                 weight=d["weight"] if "weight" in d else None,
                 comparator=d["comparator"] if "comparator" in d else None,
             )
-
+        self.sticky = sticky
+        self.default_priority = default_priority
         self.durable = durable
         self.function_name = name.lower() or str(func.__name__).lower()
         self.function_version = version
@@ -124,6 +119,14 @@ class HatchetCallable(Generic[T]):
                 limit_strategy=self.function_concurrency.limit_strategy,
             )
 
+        validated_priority = (
+            max(1, min(3, self.default_priority)) if self.default_priority else None
+        )
+        if validated_priority != self.default_priority:
+            logger.warning(
+                "Warning: Default Priority Must be between 1 and 3 -- inclusively. Adjusted to be within the range."
+            )
+
         return CreateWorkflowVersionOpts(
             name=self.function_name,
             kind=kind,
@@ -131,6 +134,7 @@ class HatchetCallable(Generic[T]):
             event_triggers=self.function_on_events,
             cron_triggers=self.function_on_crons,
             schedule_timeout=self.function_schedule_timeout,
+            sticky=self.sticky,
             on_failure_job=on_failure_job,
             concurrency=concurrency,
             jobs=[
@@ -141,6 +145,7 @@ class HatchetCallable(Generic[T]):
                     ],
                 )
             ],
+            default_priority=validated_priority,
         )
 
     def to_step(self) -> CreateWorkflowStepOpts:

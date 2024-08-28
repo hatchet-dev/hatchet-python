@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.36.4"
+version = "0.36.13"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -20,6 +20,7 @@ aiostream = "^0.5.2"
 nest-asyncio = "^1.6.0"
 aiohttp = "^3.10.5"
 aiohttp-retry = "^2.8.3"
+tenacity = ">=8.4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

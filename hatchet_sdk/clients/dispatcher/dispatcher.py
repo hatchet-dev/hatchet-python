@@ -145,3 +145,22 @@ class DispatcherClient:
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )
+
+    async def async_upsert_worker_labels(
+        self,
+        worker_id: str,
+        labels: dict[str, str | int],
+    ):
+        worker_labels = {}
+
+        for key, value in labels.items():
+            if isinstance(value, int):
+                worker_labels[key] = WorkerLabels(intValue=value)
+            else:
+                worker_labels[key] = WorkerLabels(strValue=str(value))
+
+        await self.aio_client.UpsertWorkerLabels(
+            UpsertWorkerLabelsRequest(workerId=worker_id, labels=worker_labels),
+            timeout=DEFAULT_REGISTER_TIMEOUT,
+            metadata=get_metadata(self.token),
+        )

@@ -4,6 +4,7 @@ import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 
 from hatchet_sdk.clients.events import EventClient
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
@@ -83,6 +84,7 @@ class ContextAioImpl(BaseContext):
         self.spawn_index = -1
         self.worker = worker
 
+    @tenacity_retry
     async def spawn_workflow(
         self,
         workflow_name: str,

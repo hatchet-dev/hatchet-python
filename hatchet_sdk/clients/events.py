@@ -6,6 +6,7 @@ import grpc
 from google.protobuf import timestamp_pb2
 from pydantic import BaseModel
 
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.contracts.events_pb2 import (
     Event,
     PushEventRequest,
@@ -43,6 +44,7 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
+    @tenacity_retry
     def push(
         self,
         event_key,

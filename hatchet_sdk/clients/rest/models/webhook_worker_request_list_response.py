@@ -19,21 +19,21 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.workflow_runs_metrics_counts import (
-    WorkflowRunsMetricsCounts,
-)
+from hatchet_sdk.clients.rest.models.webhook_worker_request import WebhookWorkerRequest
 
 
-class WorkflowRunsMetrics(BaseModel):
+class WebhookWorkerRequestListResponse(BaseModel):
     """
-    WorkflowRunsMetrics
+    WebhookWorkerRequestListResponse
     """  # noqa: E501
 
-    counts: Optional[WorkflowRunsMetricsCounts] = None
-    __properties: ClassVar[List[str]] = ["counts"]
+    requests: Optional[List[WebhookWorkerRequest]] = Field(
+        default=None, description="The list of webhook requests."
+    )
+    __properties: ClassVar[List[str]] = ["requests"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +52,7 @@ class WorkflowRunsMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of WorkflowRunsMetrics from a JSON string"""
+        """Create an instance of WebhookWorkerRequestListResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,14 +72,18 @@ class WorkflowRunsMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of counts
-        if self.counts:
-            _dict["counts"] = self.counts.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in requests (list)
+        _items = []
+        if self.requests:
+            for _item in self.requests:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict["requests"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of WorkflowRunsMetrics from a dict"""
+        """Create an instance of WebhookWorkerRequestListResponse from a dict"""
         if obj is None:
             return None
 
@@ -88,9 +92,9 @@ class WorkflowRunsMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "counts": (
-                    WorkflowRunsMetricsCounts.from_dict(obj["counts"])
-                    if obj.get("counts") is not None
+                "requests": (
+                    [WebhookWorkerRequest.from_dict(_item) for _item in obj["requests"]]
+                    if obj.get("requests") is not None
                     else None
                 )
             }

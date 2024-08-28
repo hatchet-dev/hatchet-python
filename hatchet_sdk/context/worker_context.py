@@ -14,7 +14,12 @@ class WorkerContext:
         return self._labels
 
     def upsert_labels(self, labels: dict[str, str | int]):
-        return self.client.upsert_worker_labels(self._worker_id, labels)
+        self.client.upsert_worker_labels(self._worker_id, labels)
+        self._labels.update(labels)
+
+    async def async_upsert_labels(self, labels: dict[str, str | int]):
+        await self.client.async_upsert_worker_labels(self._worker_id, labels)
+        self._labels.update(labels)
 
     def id(self):
         return self._worker_id
