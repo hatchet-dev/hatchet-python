@@ -3,9 +3,8 @@ import json
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter
-
 from hatchet_sdk.clients.events import EventClient
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
@@ -85,10 +84,7 @@ class ContextAioImpl(BaseContext):
         self.spawn_index = -1
         self.worker = worker
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
-    )
+    @tenacity_retry
     async def spawn_workflow(
         self,
         workflow_name: str,

@@ -4,8 +4,8 @@ from typing import Dict, TypedDict
 
 import grpc
 from google.protobuf import timestamp_pb2
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter
 
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.contracts.events_pb2 import (
     Event,
     PushEventRequest,
@@ -43,10 +43,7 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
-    @retry(
-        wait=wait_exponential_jitter(),
-        stop=stop_after_attempt(5),
-    )
+    @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
 
         namespaced_event_key = self.namespace + event_key
