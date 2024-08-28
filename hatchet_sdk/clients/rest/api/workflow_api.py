@@ -11,7 +11,6 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-import warnings
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -2186,9 +2185,7 @@ class WorkflowApi:
                 _query_params.append(
                     (
                         "createdAfter",
-                        created_after.strftime(
-                            self.api_client.configuration.datetime_format
-                        ),
+                        created_after.isoformat(),
                     )
                 )
             else:
@@ -2199,9 +2196,7 @@ class WorkflowApi:
                 _query_params.append(
                     (
                         "createdBefore",
-                        created_before.strftime(
-                            self.api_client.configuration.datetime_format
-                        ),
+                        created_before.isoformat(),
                     )
                 )
             else:
@@ -2790,9 +2785,7 @@ class WorkflowApi:
                 _query_params.append(
                     (
                         "createdAfter",
-                        created_after.strftime(
-                            self.api_client.configuration.datetime_format
-                        ),
+                        created_after.isoformat(),
                     )
                 )
             else:
@@ -2803,9 +2796,7 @@ class WorkflowApi:
                 _query_params.append(
                     (
                         "createdBefore",
-                        created_before.strftime(
-                            self.api_client.configuration.datetime_format
-                        ),
+                        created_before.isoformat(),
                     )
                 )
             else:
