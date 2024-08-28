@@ -1,10 +1,20 @@
 import grpc
-from tenacity import RetryCallState
+import tenacity
 
 from hatchet_sdk.logger import logger
 
 
-def tenacity_alert_retry(retry_state: RetryCallState) -> None:
+def tenacity_retry(func):
+    return tenacity.retry(
+        reraise=True,
+        wait=tenacity.wait_exponential_jitter(),
+        stop=tenacity.stop_after_attempt(5),
+        before_sleep=tenacity_alert_retry,
+        retry=tenacity.retry_if_exception(tenacity_should_retry),
+    )(func)
+
+
+def tenacity_alert_retry(retry_state: tenacity.RetryCallState) -> None:
     """Called between tenacity retries."""
     logger.debug(
         f"Retrying {retry_state.fn}: attempt "

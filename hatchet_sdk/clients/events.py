@@ -3,10 +3,9 @@ import json
 from typing import Dict, TypedDict
 
 import grpc
-import tenacity
 from google.protobuf import timestamp_pb2
 
-from hatchet_sdk.clients.rest.utils import tenacity_alert_retry, tenacity_should_retry
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.contracts.events_pb2 import (
     Event,
     PushEventRequest,
@@ -44,13 +43,7 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
-    @tenacity.retry(
-        reraise=True,
-        wait=tenacity.wait_exponential_jitter(),
-        stop=tenacity.stop_after_attempt(5),
-        before_sleep=tenacity_alert_retry,
-        retry=tenacity.retry_if_exception(tenacity_should_retry),
-    )
+    @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
 
         namespaced_event_key = self.namespace + event_key
