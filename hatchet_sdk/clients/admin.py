@@ -46,11 +46,7 @@ class ChildTriggerWorkflowOptions(TypedDict):
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
     desired_worker_id: str | None = None
-
-
-class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
-    additional_metadata: Dict[str, str] | None = None
-    desired_worker_id: str | None = None
+    namespace: str | None = None
 
 
 class DedupeViolationErr(Exception):
@@ -177,9 +173,13 @@ class AdminClientAioImpl(AdminClientBase):
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            # if workflow_name does not start with namespace, prepend it
-            if self.namespace != "" and not workflow_name.startswith(self.namespace):
-                workflow_name = f"{self.namespace}{workflow_name}"
+            namespace = self.namespace
+
+            if options is not None and "namespace" in options and options["namespace"] is not None:
+                namespace = options["namespace"]
+
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
             request = self._prepare_workflow_request(workflow_name, input, options)
             resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
@@ -336,8 +336,13 @@ class AdminClient(AdminClientBase):
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            if self.namespace != "" and not workflow_name.startswith(self.namespace):
-                workflow_name = f"{self.namespace}{workflow_name}"
+            namespace = self.namespace
+
+            if options is not None and "namespace" in options and options["namespace"] is not None:
+                namespace = options["namespace"]
+
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
             request = self._prepare_workflow_request(workflow_name, input, options)
             resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
