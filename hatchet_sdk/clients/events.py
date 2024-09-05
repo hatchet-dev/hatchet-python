@@ -1,9 +1,10 @@
 import datetime
 import json
-from typing import Dict, TypedDict
+from typing import Optional
 
 import grpc
 from google.protobuf import timestamp_pb2
+from pydantic import BaseModel
 
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.contracts.events_pb2 import (
@@ -33,8 +34,8 @@ def proto_timestamp_now():
     return timestamp_pb2.Timestamp(seconds=seconds, nanos=nanos)
 
 
-class PushEventOptions(TypedDict):
-    additional_metadata: Dict[str, str] | None = None
+class PushEventOptions(BaseModel):
+    additional_metadata: dict[str, str] | None = None
 
 
 class EventClient:
@@ -44,20 +45,33 @@ class EventClient:
         self.namespace = config.namespace
 
     @tenacity_retry
-    def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
+    def push(
+        self,
+        event_key,
+        payload: dict | BaseModel,
+        options: Optional[dict | PushEventOptions] = {},
+    ) -> Event:
 
         namespaced_event_key = self.namespace + event_key
+        if isinstance(options, dict):
+            options = PushEventOptions(**options)
 
         try:
-            meta = None if options is None else options["additional_metadata"]
+            meta = options.additional_metadata
             meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
         except Exception as e:
             raise ValueError(f"Error encoding meta: {e}")
 
-        try:
-            payload_bytes = json.dumps(payload).encode("utf-8")
-        except json.UnicodeEncodeError as e:
-            raise ValueError(f"Error encoding payload: {e}")
+        if isinstance(payload, BaseModel):
+            try:
+                payload_bytes = payload.model_dump_json().encode("utf-8")
+            except json.UnicodeEncodeError as e:
+                raise ValueError(f"Error encoding Pydantic model: {e}")
+        else:
+            try:
+                payload_bytes = json.dumps(payload).encode("utf-8")
+            except json.UnicodeEncodeError as e:
+                raise ValueError(f"Error encoding dict payload: {e}")
 
         request = PushEventRequest(
             key=namespaced_event_key,
