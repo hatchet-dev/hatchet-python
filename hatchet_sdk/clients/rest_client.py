@@ -42,6 +42,7 @@ from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
+from hatchet_sdk.utils.aio_utils import create_new_event_loop
 
 
 class AsyncRestApi:
@@ -246,7 +247,7 @@ class AsyncRestApi:
 
 class RestApi:
     def __init__(self, host: str, api_key: str, tenant_id: str):
-        self._loop = asyncio.new_event_loop()
+        self._loop = create_new_event_loop()
         self._thread = threading.Thread(target=self._run_event_loop, daemon=True)
         self._thread.start()
 

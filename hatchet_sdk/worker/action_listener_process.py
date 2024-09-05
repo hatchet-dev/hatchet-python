@@ -21,6 +21,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import get_active_event_loop, patch_exception_handler
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 ACTION_EVENT_RETRY_COUNT = 5
@@ -70,7 +71,8 @@ class WorkerActionListenerProcess:
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
-        loop = asyncio.get_event_loop()
+        loop = get_active_event_loop()
+        patch_exception_handler(loop)
         loop.add_signal_handler(signal.SIGINT, noop_handler)
         loop.add_signal_handler(signal.SIGTERM, noop_handler)
         loop.add_signal_handler(
@@ -111,7 +113,7 @@ class WorkerActionListenerProcess:
 
     # TODO move event methods to separate class
     async def _get_event(self):
-        loop = asyncio.get_running_loop()
+        loop = get_active_event_loop()
         return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_event_send_loop(self):

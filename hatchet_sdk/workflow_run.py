@@ -32,7 +32,7 @@ class WorkflowRunRef:
         return self.workflow_listener.result(self.workflow_run_id)
 
     def sync_result(self) -> dict:
-        loop = get_active_event_loop()
+        loop = get_active_event_loop(should_raise=False)
         if loop is None:
             with EventLoopThread() as loop:
                 coro = self.workflow_listener.result(self.workflow_run_id)

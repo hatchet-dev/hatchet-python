@@ -13,6 +13,7 @@ from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import create_new_event_loop, get_active_event_loop
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
@@ -102,15 +103,15 @@ class Worker:
     def status(self) -> WorkerStatus:
         return self._status
 
-    def setup_loop(self, loop: asyncio.AbstractEventLoop = None):
-        try:
-            loop = loop or asyncio.get_running_loop()
-            self.loop = loop
+    def setup_loop(self, loop: asyncio.AbstractEventLoop | None = None):
+        loop = loop or get_active_event_loop(should_raise=False)
+        if loop:
             created_loop = False
             logger.debug("using existing event loop")
+            self.loop = loop
             return created_loop
-        except RuntimeError:
-            self.loop = asyncio.new_event_loop()
+        else:
+            self.loop = create_new_event_loop()
             logger.debug("creating new event loop")
             asyncio.set_event_loop(self.loop)
             created_loop = True

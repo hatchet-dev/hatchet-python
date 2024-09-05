@@ -1,6 +1,8 @@
 import asyncio
 from typing import Any
 
+from hatchet_sdk.utils.aio_utils import get_active_event_loop
+
 
 class Event_ts(asyncio.Event):
     """
@@ -10,7 +12,7 @@ class Event_ts(asyncio.Event):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self._loop is None:
-            self._loop = asyncio.get_event_loop()
+            self._loop = get_active_event_loop()
 
     def set(self):
         if not self._loop.is_closed():

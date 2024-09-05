@@ -8,6 +8,7 @@ from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import get_active_event_loop
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
@@ -50,7 +51,7 @@ class WorkerActionRunLoopManager:
 
     async def _async_start(self, retry_count=1):
         logger.info("starting runner...")
-        self.loop = asyncio.get_running_loop()
+        self.loop = get_active_event_loop()
         k = self.loop.create_task(self._start_action_loop())
 
     def cleanup(self):
