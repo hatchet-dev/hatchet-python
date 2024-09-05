@@ -1,6 +1,6 @@
 import os
 from logging import Logger, getLogger
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import yaml
 
@@ -36,6 +36,8 @@ class ClientConfig:
         namespace: str = None,
         listener_v2_timeout: int = None,
         logger: Logger = None,
+        grpc_max_recv_message_length: int = 4 * 1024 * 1024,  # 4MB
+        grpc_max_send_message_length: int = 4 * 1024 * 1024,  # 4MB
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -44,6 +46,8 @@ class ClientConfig:
         self.server_url = server_url
         self.namespace = ""
         self.logger = logger
+        self.grpc_max_recv_message_length = grpc_max_recv_message_length
+        self.grpc_max_send_message_length = grpc_max_send_message_length
 
         if not self.logger:
             self.logger = getLogger()
@@ -98,6 +102,13 @@ class ConfigLoader:
         host_port = get_config_value("hostPort", "HATCHET_CLIENT_HOST_PORT")
         server_url: str | None = None
 
+        grpc_max_recv_message_length = get_config_value(
+            "grpc_max_recv_message_length", "HATCHET_GRPC_MAX_RECV_MESSAGE_LENGTH"
+        )
+        grpc_max_send_message_length = get_config_value(
+            "grpc_max_send_message_length", "HATCHET_GRPC_MAX_SEND_MESSAGE_LENGTH"
+        )
+
         if not host_port:
             # extract host and port from token
             server_url, grpc_broadcast_address = get_addresses_from_jwt(token)
@@ -109,14 +120,16 @@ class ConfigLoader:
         tls_config = self._load_tls_config(config_data["tls"], host_port)
 
         return ClientConfig(
-            tenant_id,
-            tls_config,
-            token,
-            host_port,
-            server_url,
-            namespace,
-            listener_v2_timeout,
-            defaults.logger,
+            tenant_id=tenant_id,
+            tls_config=tls_config,
+            token=token,
+            host_port=host_port,
+            server_url=server_url,
+            namespace=namespace,
+            listener_v2_timeout=listener_v2_timeout,
+            logger=defaults.logger,
+            grpc_max_recv_message_length=grpc_max_recv_message_length,
+            grpc_max_send_message_length=grpc_max_send_message_length,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
