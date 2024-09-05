@@ -1,4 +1,5 @@
 import asyncio
+import concurrent
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import Queue
@@ -85,7 +86,8 @@ class WorkerActionRunLoopManager:
         logger.debug("action runner loop stopped")
 
     async def _get_action(self):
-        return await self.loop.run_in_executor(None, self.action_queue.get)
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            return await self.loop.run_in_executor(pool, self.action_queue.get)
 
     async def exit_gracefully(self):
         if self.killing:
@@ -94,11 +96,6 @@ class WorkerActionRunLoopManager:
         logger.info("gracefully exiting runner...")
 
         self.cleanup()
-
-        # Wait for 1 second to allow last calls to flush. These are calls which have been
-        # added to the event loop as callbacks to tasks, so we're not aware of them in the
-        # task list.
-        await asyncio.sleep(1)
 
     def exit_forcefully(self):
         logger.info("forcefully exiting runner...")
