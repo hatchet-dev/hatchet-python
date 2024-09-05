@@ -175,7 +175,11 @@ class AdminClientAioImpl(AdminClientBase):
 
             namespace = self.namespace
 
-            if options is not None and "namespace" in options and options["namespace"] is not None:
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
                 namespace = options["namespace"]
 
             if namespace != "" and not workflow_name.startswith(self.namespace):
@@ -338,7 +342,11 @@ class AdminClient(AdminClientBase):
 
             namespace = self.namespace
 
-            if options is not None and "namespace" in options and options["namespace"] is not None:
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
                 namespace = options["namespace"]
 
             if namespace != "" and not workflow_name.startswith(self.namespace):

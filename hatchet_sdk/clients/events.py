@@ -49,7 +49,11 @@ class EventClient:
 
         namespace = self.namespace
 
-        if options is not None and "namespace" in options and options["namespace"] is not None:
+        if (
+            options is not None
+            and "namespace" in options
+            and options["namespace"] is not None
+        ):
             namespace = options["namespace"]
 
         namespaced_event_key = namespace + event_key
