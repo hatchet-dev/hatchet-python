@@ -120,12 +120,18 @@ def get_active_event_loop(should_raise=True) -> asyncio.AbstractEventLoop | None
         event loop in the current thread.
     """
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         patch_exception_handler(loop)
         return loop
     except RuntimeError as e:
         if (
-            str(e).startswith("There is no current event loop in thread")
+            any(
+                substring in str(e)
+                for substring in [
+                    "There is no current event loop in thread",
+                    "no running event loop",
+                ]
+            )
             and not should_raise
         ):
             return None
