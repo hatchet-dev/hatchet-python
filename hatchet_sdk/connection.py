@@ -1,10 +1,13 @@
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import grpc
 
+if TYPE_CHECKING:
+    from hatchet_sdk.loader import ClientConfig
 
-def new_conn(config, aio=False):
+
+def new_conn(config: "ClientConfig", aio=False):
 
     credentials: grpc.ChannelCredentials | None = None
 
@@ -30,6 +33,8 @@ def new_conn(config, aio=False):
     strat = grpc if not aio else grpc.aio
 
     channel_options = [
+        ("grpc.max_send_message_length", config.grpc_max_send_message_length),
+        ("grpc.max_receive_message_length", config.grpc_max_recv_message_length),
         ("grpc.keepalive_time_ms", 10 * 1000),
         ("grpc.keepalive_timeout_ms", 60 * 1000),
         ("grpc.client_idle_timeout_ms", 60 * 1000),
