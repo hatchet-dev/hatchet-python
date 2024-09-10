@@ -259,7 +259,6 @@ class AdminClientAioImpl(AdminClientBase):
             if namespace != "" and not name.startswith(self.namespace):
                 name = f"{namespace}{name}"
 
-
             request = self._prepare_schedule_workflow_request(
                 name, schedules, input, options
             )
@@ -344,7 +343,6 @@ class AdminClient(AdminClientBase):
 
             if namespace != "" and not name.startswith(self.namespace):
                 name = f"{namespace}{name}"
-
 
             request = self._prepare_schedule_workflow_request(
                 name, schedules, input, options
