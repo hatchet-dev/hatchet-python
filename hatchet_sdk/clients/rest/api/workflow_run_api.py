@@ -306,10 +306,9 @@ class WorkflowRunApi:
             _body_params = workflow_runs_cancel_request
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -639,10 +638,9 @@ class WorkflowRunApi:
             _body_params = trigger_workflow_run_request
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # set the HTTP header `Content-Type`
         if _content_type:

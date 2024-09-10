@@ -31,25 +31,19 @@ class SemaphoreSlots(BaseModel):
     SemaphoreSlots
     """  # noqa: E501
 
-    slot: StrictStr = Field(description="The slot name.")
-    step_run_id: Optional[StrictStr] = Field(
-        default=None, description="The step run id.", alias="stepRunId"
-    )
-    action_id: Optional[StrictStr] = Field(
-        default=None, description="The action id.", alias="actionId"
-    )
+    step_run_id: StrictStr = Field(description="The step run id.", alias="stepRunId")
+    action_id: StrictStr = Field(description="The action id.", alias="actionId")
     started_at: Optional[datetime] = Field(
         default=None, description="The time this slot was started.", alias="startedAt"
     )
     timeout_at: Optional[datetime] = Field(
         default=None, description="The time this slot will timeout.", alias="timeoutAt"
     )
-    workflow_run_id: Optional[StrictStr] = Field(
-        default=None, description="The workflow run id.", alias="workflowRunId"
+    workflow_run_id: StrictStr = Field(
+        description="The workflow run id.", alias="workflowRunId"
     )
-    status: Optional[StepRunStatus] = None
+    status: StepRunStatus
     __properties: ClassVar[List[str]] = [
-        "slot",
         "stepRunId",
         "actionId",
         "startedAt",
@@ -108,7 +102,6 @@ class SemaphoreSlots(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "slot": obj.get("slot"),
                 "stepRunId": obj.get("stepRunId"),
                 "actionId": obj.get("actionId"),
                 "startedAt": obj.get("startedAt"),

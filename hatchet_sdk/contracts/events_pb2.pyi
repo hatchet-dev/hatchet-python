@@ -1,24 +1,12 @@
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import (
-    ClassVar as _ClassVar,
-    Mapping as _Mapping,
-    Optional as _Optional,
-    Union as _Union,
-)
+from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Event(_message.Message):
-    __slots__ = (
-        "tenantId",
-        "eventId",
-        "key",
-        "payload",
-        "eventTimestamp",
-        "additionalMetadata",
-    )
+    __slots__ = ("tenantId", "eventId", "key", "payload", "eventTimestamp", "additionalMetadata")
     TENANTID_FIELD_NUMBER: _ClassVar[int]
     EVENTID_FIELD_NUMBER: _ClassVar[int]
     KEY_FIELD_NUMBER: _ClassVar[int]
@@ -31,15 +19,7 @@ class Event(_message.Message):
     payload: str
     eventTimestamp: _timestamp_pb2.Timestamp
     additionalMetadata: str
-    def __init__(
-        self,
-        tenantId: _Optional[str] = ...,
-        eventId: _Optional[str] = ...,
-        key: _Optional[str] = ...,
-        payload: _Optional[str] = ...,
-        eventTimestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...,
-        additionalMetadata: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, tenantId: _Optional[str] = ..., eventId: _Optional[str] = ..., key: _Optional[str] = ..., payload: _Optional[str] = ..., eventTimestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., additionalMetadata: _Optional[str] = ...) -> None: ...
 
 class PutLogRequest(_message.Message):
     __slots__ = ("stepRunId", "createdAt", "message", "level", "metadata")
@@ -53,14 +33,7 @@ class PutLogRequest(_message.Message):
     message: str
     level: str
     metadata: str
-    def __init__(
-        self,
-        stepRunId: _Optional[str] = ...,
-        createdAt: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...,
-        message: _Optional[str] = ...,
-        level: _Optional[str] = ...,
-        metadata: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, stepRunId: _Optional[str] = ..., createdAt: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., message: _Optional[str] = ..., level: _Optional[str] = ..., metadata: _Optional[str] = ...) -> None: ...
 
 class PutLogResponse(_message.Message):
     __slots__ = ()
@@ -76,13 +49,7 @@ class PutStreamEventRequest(_message.Message):
     createdAt: _timestamp_pb2.Timestamp
     message: bytes
     metadata: str
-    def __init__(
-        self,
-        stepRunId: _Optional[str] = ...,
-        createdAt: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...,
-        message: _Optional[bytes] = ...,
-        metadata: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, stepRunId: _Optional[str] = ..., createdAt: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., message: _Optional[bytes] = ..., metadata: _Optional[str] = ...) -> None: ...
 
 class PutStreamEventResponse(_message.Message):
     __slots__ = ()
@@ -98,13 +65,7 @@ class PushEventRequest(_message.Message):
     payload: str
     eventTimestamp: _timestamp_pb2.Timestamp
     additionalMetadata: str
-    def __init__(
-        self,
-        key: _Optional[str] = ...,
-        payload: _Optional[str] = ...,
-        eventTimestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ...,
-        additionalMetadata: _Optional[str] = ...,
-    ) -> None: ...
+    def __init__(self, key: _Optional[str] = ..., payload: _Optional[str] = ..., eventTimestamp: _Optional[_Union[_timestamp_pb2.Timestamp, _Mapping]] = ..., additionalMetadata: _Optional[str] = ...) -> None: ...
 
 class ReplayEventRequest(_message.Message):
     __slots__ = ("eventId",)
