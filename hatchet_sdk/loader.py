@@ -103,10 +103,12 @@ class ConfigLoader:
         server_url: str | None = None
 
         grpc_max_recv_message_length = get_config_value(
-            "grpc_max_recv_message_length", "HATCHET_CLIENT_GRPC_MAX_RECV_MESSAGE_LENGTH"
+            "grpc_max_recv_message_length",
+            "HATCHET_CLIENT_GRPC_MAX_RECV_MESSAGE_LENGTH",
         )
         grpc_max_send_message_length = get_config_value(
-            "grpc_max_send_message_length", "HATCHET_CLIENT_GRPC_MAX_SEND_MESSAGE_LENGTH"
+            "grpc_max_send_message_length",
+            "HATCHET_CLIENT_GRPC_MAX_SEND_MESSAGE_LENGTH",
         )
 
         if not host_port:
