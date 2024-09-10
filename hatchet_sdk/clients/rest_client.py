@@ -8,6 +8,7 @@ from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
 from hatchet_sdk.clients.rest.api.workflow_api import WorkflowApi
 from hatchet_sdk.clients.rest.api.workflow_run_api import WorkflowRunApi
+from hatchet_sdk.clients.rest.api.workflow_runs_api import WorkflowRunsApi
 from hatchet_sdk.clients.rest.api_client import ApiClient
 from hatchet_sdk.clients.rest.configuration import Configuration
 from hatchet_sdk.clients.rest.models import TriggerWorkflowRunRequest
@@ -23,6 +24,12 @@ from hatchet_sdk.clients.rest.models.log_line_order_by_direction import (
 )
 from hatchet_sdk.clients.rest.models.log_line_order_by_field import LogLineOrderByField
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
+from hatchet_sdk.clients.rest.models.replay_workflow_runs_request import (
+    ReplayWorkflowRunsRequest,
+)
+from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
+    ReplayWorkflowRunsResponse,
+)
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
@@ -152,6 +159,16 @@ class AsyncRestApi:
         return await self.workflow_api.workflow_run_get(
             tenant=self.tenant_id,
             workflow_run=workflow_run_id,
+        )
+
+    async def workflow_run_replay(
+        self, workflow_run_ids: list[str]
+    ) -> ReplayWorkflowRunsResponse:
+        return await self.workflow_run_api.workflow_run_update_replay(
+            tenant=self.tenant_id,
+            replay_workflow_runs_request=ReplayWorkflowRunsRequest(
+                workflow_run_ids=workflow_run_ids,
+            ),
         )
 
     async def workflow_run_cancel(

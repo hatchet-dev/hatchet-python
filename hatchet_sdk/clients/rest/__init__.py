@@ -32,7 +32,6 @@ from hatchet_sdk.clients.rest.api.user_api import UserApi
 from hatchet_sdk.clients.rest.api.worker_api import WorkerApi
 from hatchet_sdk.clients.rest.api.workflow_api import WorkflowApi
 from hatchet_sdk.clients.rest.api.workflow_run_api import WorkflowRunApi
-from hatchet_sdk.clients.rest.api.workflow_runs_api import WorkflowRunsApi
 from hatchet_sdk.clients.rest.api_client import ApiClient
 
 # import ApiClient
