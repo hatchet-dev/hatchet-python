@@ -13,7 +13,8 @@ from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.v2.callable import HatchetCallable
+
+# from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 from hatchet_sdk.workflow import WorkflowMeta
@@ -62,8 +63,8 @@ class Worker:
         self.name = self.client.config.namespace + self.name
         self._setup_signal_handlers()
 
-    def register_function(self, action: str, func: HatchetCallable):
-        self.action_registry[action] = func
+    # def register_function(self, action: str, func: HatchetCallable):
+        # self.action_registry[action] = func
 
     def register_workflow_from_opts(self, name: str, opts: CreateWorkflowVersionOpts):
         try:
@@ -285,20 +286,20 @@ class Worker:
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
 
 
-def register_on_worker(callable: HatchetCallable, worker: Worker):
-    worker.register_function(callable.get_action_name(), callable)
+# def register_on_worker(callable: HatchetCallable, worker: Worker):
+#     worker.register_function(callable.get_action_name(), callable)
 
-    if callable.function_on_failure is not None:
-        worker.register_function(
-            callable.function_on_failure.get_action_name(), callable.function_on_failure
-        )
+#     if callable.function_on_failure is not None:
+#         worker.register_function(
+#             callable.function_on_failure.get_action_name(), callable.function_on_failure
+#         )
 
-    if callable.function_concurrency is not None:
-        worker.register_function(
-            callable.function_concurrency.get_action_name(),
-            callable.function_concurrency,
-        )
+#     if callable.function_concurrency is not None:
+#         worker.register_function(
+#             callable.function_concurrency.get_action_name(),
+#             callable.function_concurrency,
+#         )
 
-    opts = callable.to_workflow_opts()
+#     opts = callable.to_workflow_opts()
 
-    worker.register_workflow_from_opts(opts.name, opts)
+#     worker.register_workflow_from_opts(opts.name, opts)
