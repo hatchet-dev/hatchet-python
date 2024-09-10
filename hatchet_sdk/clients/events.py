@@ -35,6 +35,7 @@ def proto_timestamp_now():
 
 class PushEventOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
+    namespace: str | None = None
 
 
 class EventClient:
@@ -46,7 +47,16 @@ class EventClient:
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
 
-        namespaced_event_key = self.namespace + event_key
+        namespace = self.namespace
+
+        if (
+            options is not None
+            and "namespace" in options
+            and options["namespace"] is not None
+        ):
+            namespace = options["namespace"]
+
+        namespaced_event_key = namespace + event_key
 
         try:
             meta = None if options is None else options["additional_metadata"]
