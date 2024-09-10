@@ -350,10 +350,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -614,10 +613,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -875,10 +873,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1188,10 +1185,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1449,10 +1445,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1749,10 +1744,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2208,10 +2202,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -2816,10 +2809,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -3112,10 +3104,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -3408,10 +3399,9 @@ class WorkflowApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]

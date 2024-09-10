@@ -307,10 +307,9 @@ class EventApi:
             _body_params = create_event_request
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -578,10 +577,9 @@ class EventApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -839,10 +837,9 @@ class EventApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1321,10 +1318,9 @@ class EventApi:
         # process the body parameter
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # authentication setting
         _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
@@ -1606,10 +1602,9 @@ class EventApi:
             _body_params = replay_event_request
 
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
-            )
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
 
         # set the HTTP header `Content-Type`
         if _content_type:
