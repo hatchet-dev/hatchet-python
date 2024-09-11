@@ -1,3 +1,4 @@
+import asyncio
 from logging import Logger
 from typing import Callable
 
@@ -30,6 +31,12 @@ class Client:
         debug: bool = False,
         *opts_functions: Callable[[ClientConfig], None],
     ):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
             opt_function(config)
@@ -42,6 +49,12 @@ class Client:
         config: ClientConfig = ClientConfig(),
         debug: bool = False,
     ):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         if config.tls_config is None:
             raise ValueError("TLS config is required")
 
@@ -77,6 +90,12 @@ class Client:
         config: ClientConfig,
         debug: bool = False,
     ):
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         self.admin = admin_client
         self.dispatcher = dispatcher_client
         self.event = event_client

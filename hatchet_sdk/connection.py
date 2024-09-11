@@ -30,7 +30,7 @@ def new_conn(config: "ClientConfig", aio=False):
             certificate_chain=certificate_chain,
         )
 
-    strat = grpc if not aio else grpc.aio
+    start = grpc if not aio else grpc.aio
 
     channel_options = [
         ("grpc.max_send_message_length", config.grpc_max_send_message_length),
@@ -47,7 +47,7 @@ def new_conn(config: "ClientConfig", aio=False):
     os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "False"
 
     if config.tls_config.tls_strategy == "none":
-        conn = strat.insecure_channel(
+        conn = start.insecure_channel(
             target=config.host_port,
             options=channel_options,
         )
@@ -56,7 +56,7 @@ def new_conn(config: "ClientConfig", aio=False):
             ("grpc.ssl_target_name_override", config.tls_config.server_name)
         )
 
-        conn = strat.secure_channel(
+        conn = start.secure_channel(
             target=config.host_port,
             credentials=credentials,
             options=channel_options,
