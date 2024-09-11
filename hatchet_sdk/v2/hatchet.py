@@ -1,8 +1,9 @@
 import functools
 import inspect
-from typing import Callable, List, Optional, ParamSpec, TypeVar
+from typing import Callable, List, Optional, ParamSpec, TypeVar, Dict
 
 import hatchet_sdk.hatchet as v1
+import hatchet_sdk.runtime.registry as hatchet_registry
 import hatchet_sdk.v2.callable as v2_callable
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, StickyStrategy
@@ -15,7 +16,7 @@ from hatchet_sdk.rate_limit import RateLimit
 from ..worker import Worker
 
 # from hatchet_sdk.v2.concurrency import ConcurrencyFunction
-# from hatchet_sdk.worker.worker import register_on_worker
+from hatchet_sdk.worker.worker import register_on_worker
 
 
 T = TypeVar("T")
@@ -79,10 +80,10 @@ P = ParamSpec("P")
 
 
 class Hatchet(v1.Hatchet):
-    dag = staticmethod(v1.workflow)
+    # dag = staticmethod(v1.workflow)
     # concurrency = staticmethod(concurrency)
 
-    functions: List[v2_callable.HatchetCallable] = []
+    _registry: hatchet_registry.ActionRegistry = hatchet_registry.ActionRegistry()
 
     def function(
         self,
@@ -93,14 +94,16 @@ class Hatchet(v1.Hatchet):
         options.hatchet = self
 
         def inner(func: Callable[P, T]) -> v2_callable.HatchetCallable[P, T]:
-            if inspect.iscoroutine(func):
+            if inspect.iscoroutinefunction(func):
                 callable = v2_callable.HatchetAwaitable(
                     func=func,
                     name=name,
                     namespace=namespace,
                     options=options,
                 )
-                return functools.update_wrapper(callable, func)
+                callable = functools.update_wrapper(callable, func)
+                callable.action_name = self._registry.register(callable)
+                return callable
             elif inspect.isfunction(func):
                 callable = v2_callable.HatchetCallable(
                     func=func,
@@ -108,7 +111,9 @@ class Hatchet(v1.Hatchet):
                     namespace=namespace,
                     options=options,
                 )
-                return functools.update_wrapper(callable, func)
+                callable = functools.update_wrapper(callable, func)
+                callable.action_name = self._registry.register(callable)
+                return callable
             else:
                 raise TypeError(
                     "the @function decorator can only be applied to functions (def) and async functions (async def)"
@@ -162,18 +167,21 @@ class Hatchet(v1.Hatchet):
 
     #     return wrapper
 
-    # def worker(
-    #     self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    # ):
-    #     worker = Worker(
-    #         name=name,
-    #         max_runs=max_runs,
-    #         labels=labels,
-    #         config=self._client.config,
-    #         debug=self._client.debug,
-    #     )
+    def worker(
+        self,
+        name: str,
+        max_runs: Optional[int] = None,
+        labels: Dict[str, str | int] = {},
+    ):
+        worker = Worker(
+            name=name,
+            max_runs=max_runs,
+            labels=labels,
+            config=self._client.config,
+            debug=self._client.debug,
+        )
 
-    #     for func in self.functions:
-    #         register_on_worker(func, worker)
+        for func in self._registry.registry.values():
+            register_on_worker(func, worker)
 
-    #     return worker
+        return worker

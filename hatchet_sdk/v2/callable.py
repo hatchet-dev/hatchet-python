@@ -74,7 +74,6 @@ class HatchetCallableBase(Generic[P, T]):
             options=options,
             sourceloc=self.sourceloc,
         )
-        self.action_name = registry.global_registry.register(self)
 
     @property
     def sourceloc(self) -> str:
@@ -151,6 +150,7 @@ class HatchetCallableBase(Generic[P, T]):
         return step
 
     def _to_trigger_proto(self) -> Optional[TriggerWorkflowOptions]:
+        return None
         ctx = CallableContext.current()
         if not ctx:
             return None
@@ -180,25 +180,29 @@ class HatchetCallableBase(Generic[P, T]):
 
 class HatchetCallable(HatchetCallableBase[P, T]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        input = json.dumps({args: args, kwargs: kwargs})
+        print(f"trigering {self.action_name}")
+        input = json.dumps({"args": args, "kwargs": kwargs})
         client = self._.options.hatchet
         ref = client.admin.run(
-            self.action_name, input=input, options=self._to_trigger_proto()
+            self._.name, input=input, options=self._to_trigger_proto()
         )
-        return asyncio.gather(ref.result()).result
+        return asyncio.run(ref.result())
 
     def _run(self, context: Context) -> T:
+        print(f"running {self.action_name}")
         input = json.loads(context.workflow_input)
         return self.func(*input.args, **input.kwargs)
 
 
 class HatchetAwaitable(HatchetCallableBase[P, Awaitable[T]]):
     async def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        input = json.dumps({args: args, kwargs: kwargs})
+        print(f"trigering {self.action_name}")
+        input = json.dumps({"args": args, "kwargs": kwargs})
         client = self._.options.hatchet
-        return (await client.admin.run(self.action_name, input)).result()
+        return await client.admin.run(self._.name, input).result()
 
     async def _run(self, context: ContextAioImpl) -> T:
+        print(f"trigering {self.action_name}")
         input = json.loads(context.workflow_input)
         return await self.func(*input.args, **input.kwargs)
 

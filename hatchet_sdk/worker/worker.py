@@ -63,9 +63,10 @@ class Worker:
         self.name = self.client.config.namespace + self.name
         self._setup_signal_handlers()
 
-    # def register_function(self, action: str, func: HatchetCallable):
-        # self.action_registry[action] = func
+    def register_function(self, action: str, func):
+        self.action_registry[action] = func
 
+    # TODO: why do it on the worker, it seems unrelated. we should do that on the registry
     def register_workflow_from_opts(self, name: str, opts: CreateWorkflowVersionOpts):
         try:
             self.client.admin.put_workflow(opts.name, opts)
@@ -286,20 +287,19 @@ class Worker:
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
 
 
-# def register_on_worker(callable: HatchetCallable, worker: Worker):
-#     worker.register_function(callable.get_action_name(), callable)
+def register_on_worker(callable, worker: Worker):
+    worker.register_function(callable.action_name, callable)
 
-#     if callable.function_on_failure is not None:
-#         worker.register_function(
-#             callable.function_on_failure.get_action_name(), callable.function_on_failure
-#         )
+    # if callable.function_on_failure is not None:
+    #     worker.register_function(
+    #         callable.function_on_failure.action_name, callable.function_on_failure
+    #     )
 
-#     if callable.function_concurrency is not None:
-#         worker.register_function(
-#             callable.function_concurrency.get_action_name(),
-#             callable.function_concurrency,
-#         )
+    # if callable.function_concurrency is not None:
+    #     worker.register_function(
+    #         callable.function_concurrency.action_name,
+    #         callable.function_concurrency,
+    #     )
 
-#     opts = callable.to_workflow_opts()
-
-#     worker.register_workflow_from_opts(opts.name, opts)
+    opts = callable._to_workflow_proto()
+    worker.register_workflow_from_opts(opts.name, opts)

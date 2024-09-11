@@ -1,19 +1,19 @@
 from typing import Dict, List
 
+import hatchet_sdk.v2.callable as v2
+
 
 class ActionRegistry:
+    """A registry from action names (e.g. 'namespace:func') to Hatchet's callables.
 
-    _registry: Dict[str, "HatchetCallable"] = dict()
+    This is intended to be used per Hatchet client instance.
+    """
 
-    def register(self, callable: "HatchetCallable") -> str:
+    registry: Dict[str, v2.HatchetCallableBase] = dict()
+
+    def register(self, callable: v2.HatchetCallableBase) -> str:
         key = "{namespace}:{name}".format(
             namespace=callable._.namespace, name=callable._.name
         )
-        self._registry[key] = callable
+        self.registry[key] = callable
         return key
-
-    def list(self) -> List[str]:
-        return list(self._registry.keys())
-
-
-global_registry = ActionRegistry()
