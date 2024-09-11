@@ -36,6 +36,7 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     parent_step_run_id: Optional[str]
     child_index: Optional[int]
     child_key: Optional[str]
+    namespace: Optional[str]
 
 
 class ChildTriggerWorkflowOptions(TypedDict):
@@ -246,6 +247,18 @@ class AdminClientAioImpl(AdminClientBase):
         options: ScheduleTriggerWorkflowOptions = None,
     ) -> WorkflowVersion:
         try:
+            namespace = self.namespace
+
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
+                namespace = options["namespace"]
+
+            if namespace != "" and not name.startswith(self.namespace):
+                name = f"{namespace}{name}"
+
             request = self._prepare_schedule_workflow_request(
                 name, schedules, input, options
             )
@@ -318,6 +331,19 @@ class AdminClient(AdminClientBase):
         options: ScheduleTriggerWorkflowOptions = None,
     ) -> WorkflowVersion:
         try:
+
+            namespace = self.namespace
+
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
+                namespace = options["namespace"]
+
+            if namespace != "" and not name.startswith(self.namespace):
+                name = f"{namespace}{name}"
+
             request = self._prepare_schedule_workflow_request(
                 name, schedules, input, options
             )
