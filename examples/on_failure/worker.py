@@ -1,3 +1,4 @@
+#Python
 import json
 
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START defining-an-on-failure-step
 @hatchet.workflow(on_events=["user:create"])
 class OnFailureWorkflow:
     @hatchet.step(timeout="1s")
@@ -23,7 +24,7 @@ class OnFailureWorkflow:
         if len(failures) == 1 and "step1 failed" in failures[0]["error"]:
             return {"status": "success"}
         raise Exception("unexpected failure")
-
+#END defining-an-on-failure-step
 
 def main():
     workflow = OnFailureWorkflow()

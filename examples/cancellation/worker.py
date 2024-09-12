@@ -1,3 +1,4 @@
+#Python
 import asyncio
 
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START cancellation-mechanisms
 @hatchet.workflow(on_events=["user:create"])
 class CancelWorkflow:
     @hatchet.step(timeout="10s", retries=1)
@@ -21,7 +22,7 @@ class CancelWorkflow:
 
         if context.exit_flag:
             print("Cancelled")
-
+#END cancellation-mechanisms
 
 workflow = CancelWorkflow()
 worker = hatchet.worker("cancellation-worker", max_runs=4)

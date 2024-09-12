@@ -1,3 +1,4 @@
+#Python
 import asyncio
 import base64
 import json
@@ -9,7 +10,7 @@ from hatchet_sdk import new_client
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.run_event_listener import StepRunEventType
 
-
+#START listeners
 async def main():
     load_dotenv()
     hatchet = new_client()
@@ -49,7 +50,7 @@ async def main():
     result = await workflowRun.result()
 
     print("result: " + json.dumps(result, indent=2))
-
+#END listeners
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,3 +1,4 @@
+#Python
 import time
 
 from dotenv import load_dotenv
@@ -9,7 +10,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
+#START concurrency_cancel_in_progress
 @hatchet.workflow(on_events=["concurrency-test"])
 class ConcurrencyDemoWorkflow:
 
@@ -23,11 +24,13 @@ class ConcurrencyDemoWorkflow:
         time.sleep(3)
         print("executed step1")
         return {"run": input["run"]}
-
+#END concurrency_cancel_in_progress
 
 def main():
     workflow = ConcurrencyDemoWorkflow()
+    #START setting-concurrency-on-workers
     worker = hatchet.worker("concurrency-demo-worker", max_runs=10)
+    #END setting-concurrency-on-workers
     worker.register_workflow(workflow)
 
     worker.start()

@@ -1,3 +1,4 @@
+#Python
 import asyncio
 import base64
 import json
@@ -11,7 +12,7 @@ from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.run_event_listener import StepRunEventType
 from hatchet_sdk.v2.hatchet import Hatchet
 
-
+#START streaming-by-additional-metadata
 async def main():
     load_dotenv()
     hatchet = Hatchet()
@@ -39,7 +40,7 @@ async def main():
 
     async for event in listener:
         print(event.type, event.payload)
-
+#END streaming-by-additional-metadata
 
 if __name__ == "__main__":
     asyncio.run(main())
