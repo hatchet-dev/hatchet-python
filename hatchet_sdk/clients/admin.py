@@ -339,13 +339,9 @@ class AdminClient(AdminClientBase):
             if self.namespace != "" and not workflow_name.startswith(self.namespace):
                 workflow_name = f"{self.namespace}{workflow_name}"
 
-            request = self._prepare_workflow_request(workflow_name, input, options)
-            resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
-                request,
-                metadata=get_metadata(self.token),
-            )
+            id = self.trigger_workflow(workflow_name, input, options)
             return WorkflowRunRef(
-                workflow_run_id=resp.workflow_run_id,
+                workflow_run_id=id,
                 workflow_listener=self.pooled_workflow_listener,
                 workflow_run_event_listener=self.listener_client,
             )
@@ -354,6 +350,19 @@ class AdminClient(AdminClientBase):
                 raise DedupeViolationErr(e.details())
 
             raise ValueError(f"gRPC error: {e}")
+
+    def trigger_workflow(
+        self,
+        workflow_name: str,
+        input,
+        options: TriggerWorkflowOptions = None,
+    ) -> str:
+        request = self._prepare_workflow_request(workflow_name, input, options)
+        resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
+            request,
+            metadata=get_metadata(self.token),
+        )
+        return resp.workflow_run_id
 
     def run(
         self,

@@ -1,119 +1,99 @@
 import functools
 import inspect
-from typing import Callable, List, Optional, ParamSpec, TypeVar, Dict
+from typing import Callable, Dict, List, Optional, ParamSpec, TypeVar
 
 import hatchet_sdk.hatchet as v1
-import hatchet_sdk.runtime.registry as hatchet_registry
-import hatchet_sdk.v2.callable as v2_callable
-from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, StickyStrategy
+import hatchet_sdk.v2.runtime.config as config
+import hatchet_sdk.v2.runtime.logging as logging
+import hatchet_sdk.v2.runtime.registry as registry
+import hatchet_sdk.v2.runtime.worker as worker
+import hatchet_sdk.v2.callable as callable
+import asyncio
+
+
+
+# import hatchet_sdk.runtime.registry as hatchet_registry
+# import hatchet_sdk.v2.callable as v2_callable
+# from hatchet_sdk.context import Context
+# from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, StickyStrategy
 
 # import Hatchet as HatchetV1
 # from hatchet_sdk.hatchet import workflow
-from hatchet_sdk.labels import DesiredWorkerLabel
-from hatchet_sdk.rate_limit import RateLimit
-
-from ..worker import Worker
+# from hatchet_sdk.labels import DesiredWorkerLabel
+# from hatchet_sdk.rate_limit import RateLimit
 
 # from hatchet_sdk.v2.concurrency import ConcurrencyFunction
-from hatchet_sdk.worker.worker import register_on_worker
+# from hatchet_sdk.worker.worker import register_on_worker
 
+# from ..worker import Worker
 
 T = TypeVar("T")
 P = ParamSpec("P")
 
 
-# def durable(
-#     name: str = "",
-#     auto_register: bool = True,
-#     on_events: list | None = None,
-#     on_crons: list | None = None,
-#     version: str = "",
-#     timeout: str = "60m",
-#     schedule_timeout: str = "5m",
-#     sticky: StickyStrategy = None,
-#     retries: int = 0,
-#     rate_limits: List[RateLimit] | None = None,
-#     desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
-#     concurrency: v2.concurrency.ConcurrencyFunction | None = None,
-#     on_failure: v2.callable.HatchetCallable | None = None,
-#     default_priority: int | None = None,
-# ):
-#     def inner(func: v2.callable.HatchetCallable) -> v2.callable.HatchetCallable:
-#         func.durable = True
+class Hatchet:
 
-#         f = function(
-#             name=name,
-#             auto_register=auto_register,
-#             on_events=on_events,
-#             on_crons=on_crons,
-#             version=version,
-#             timeout=timeout,
-#             schedule_timeout=schedule_timeout,
-#             sticky=sticky,
-#             retries=retries,
-#             rate_limits=rate_limits,
-#             desired_worker_labels=desired_worker_labels,
-#             concurrency=concurrency,
-#             on_failure=on_failure,
-#             default_priority=default_priority,
-#         )
+    def __init__(
+        self,
+        config: config.ClientConfig = config.ClientConfig(),
+        debug=False,
+    ):
+        # ensure a event loop is created before gRPC
+        try:
+            asyncio.get_event_loop()
+        finally:
+            pass
 
-#         resp = f(func)
+        self.registry = registry.ActionRegistry()
+        self.v1: v1.Hatchet = v1.Hatchet.from_environment(
+            defaults=config,
+            debug=debug,
+        )
 
-#         resp.durable = True
+    @property
+    def admin(self):
+        return self.v1.admin
 
-#         return resp
+    @property
+    def dispatcher(self):
+        return self.v1.dispatcher
 
-#     return inner
+    @property
+    def config(self):
+        return self.v1.config
 
-
-# def concurrency(
-#     name: str = "concurrency",
-#     max_runs: int = 1,
-#     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN,
-# ):
-#     def inner(func: Callable[[Context], str]) -> v2.concurrency.ConcurrencyFunction:
-#         return v2.concurrency.ConcurrencyFunction(func, name, max_runs, limit_strategy)
-
-#     return inner
-
-
-class Hatchet(v1.Hatchet):
-    # dag = staticmethod(v1.workflow)
-    # concurrency = staticmethod(concurrency)
-
-    _registry: hatchet_registry.ActionRegistry = hatchet_registry.ActionRegistry()
+    @property
+    def logger(self):
+        return logging.logger
 
     def function(
         self,
         name: str = "",
         namespace: str = "default",
-        options: v2_callable.Options = v2_callable.Options(),
+        options: "callable.Options" = callable.Options(),
     ):
-        options.hatchet = self
 
-        def inner(func: Callable[P, T]) -> v2_callable.HatchetCallable[P, T]:
+        def inner(func: Callable[P, T]) -> "callable.HatchetCallable[P, T]":
             if inspect.iscoroutinefunction(func):
-                callable = v2_callable.HatchetAwaitable(
+                wrapped = callable.HatchetAwaitable(
                     func=func,
                     name=name,
                     namespace=namespace,
+                    client=self,
                     options=options,
                 )
-                callable = functools.update_wrapper(callable, func)
-                callable.action_name = self._registry.register(callable)
-                return callable
+                wrapped = functools.update_wrapper(wrapped, func)
+                return wrapped
             elif inspect.isfunction(func):
-                callable = v2_callable.HatchetCallable(
+                wrapped = callable.HatchetCallable(
                     func=func,
                     name=name,
                     namespace=namespace,
+                    client=self,
                     options=options,
                 )
-                callable = functools.update_wrapper(callable, func)
-                callable.action_name = self._registry.register(callable)
-                return callable
+                wrapped = functools.update_wrapper(wrapped, func)
+                return wrapped
             else:
                 raise TypeError(
                     "the @function decorator can only be applied to functions (def) and async functions (async def)"
@@ -121,8 +101,11 @@ class Hatchet(v1.Hatchet):
 
         return inner
 
+    def worker(self, options: worker.WorkerOptions) -> worker.Worker:
+        w = worker.Worker(client=self, options=options)
+        return w
+
     # def durable(
-    #     self,
     #     name: str = "",
     #     auto_register: bool = True,
     #     on_events: list | None = None,
@@ -135,53 +118,115 @@ class Hatchet(v1.Hatchet):
     #     rate_limits: List[RateLimit] | None = None,
     #     desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
     #     concurrency: v2.concurrency.ConcurrencyFunction | None = None,
-    #     on_failure: Optional["HatchetCallable"] = None,
+    #     on_failure: v2.callable.HatchetCallable | None = None,
     #     default_priority: int | None = None,
-    # ) -> Callable[[v2.callable.HatchetCallable], v2.callable.HatchetCallable]:
-    #     resp = durable(
-    #         name=name,
-    #         auto_register=auto_register,
-    #         on_events=on_events,
-    #         on_crons=on_crons,
-    #         version=version,
-    #         timeout=timeout,
-    #         schedule_timeout=schedule_timeout,
-    #         sticky=sticky,
-    #         retries=retries,
-    #         rate_limits=rate_limits,
-    #         desired_worker_labels=desired_worker_labels,
-    #         concurrency=concurrency,
-    #         on_failure=on_failure,
-    #         default_priority=default_priority,
-    #     )
+    # ):
+    #     def inner(func: v2.callable.HatchetCallable) -> v2.callable.HatchetCallable:
+    #         func.durable = True
 
-    #     def wrapper(func: Callable[[Context], T]) -> v2.callable.HatchetCallable[T]:
-    #         wrapped_resp = resp(func)
+    #         f = function(
+    #             name=name,
+    #             auto_register=auto_register,
+    #             on_events=on_events,
+    #             on_crons=on_crons,
+    #             version=version,
+    #             timeout=timeout,
+    #             schedule_timeout=schedule_timeout,
+    #             sticky=sticky,
+    #             retries=retries,
+    #             rate_limits=rate_limits,
+    #             desired_worker_labels=desired_worker_labels,
+    #             concurrency=concurrency,
+    #             on_failure=on_failure,
+    #             default_priority=default_priority,
+    #         )
 
-    #         if wrapped_resp.function_auto_register:
-    #             self.functions.append(wrapped_resp)
+    #         resp = f(func)
 
-    #         wrapped_resp.with_namespace(self._client.config.namespace)
+    #         resp.durable = True
 
-    #         return wrapped_resp
+    #         return resp
 
-    #     return wrapper
+    #     return inner
 
-    def worker(
-        self,
-        name: str,
-        max_runs: Optional[int] = None,
-        labels: Dict[str, str | int] = {},
-    ):
-        worker = Worker(
-            name=name,
-            max_runs=max_runs,
-            labels=labels,
-            config=self._client.config,
-            debug=self._client.debug,
-        )
+    # def concurrency(
+    #     name: str = "concurrency",
+    #     max_runs: int = 1,
+    #     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN,
+    # ):
+    #     def inner(func: Callable[[Context], str]) -> v2.concurrency.ConcurrencyFunction:
+    #         return v2.concurrency.ConcurrencyFunction(func, name, max_runs, limit_strategy)
 
-        for func in self._registry.registry.values():
-            register_on_worker(func, worker)
+    #     return inner
 
-        return worker
+    # class OldHatchet(v1.Hatchet):
+    #     # dag = staticmethod(v1.workflow)
+    #     # concurrency = staticmethod(concurrency)
+
+    #     _registry: hatchet_registry.ActionRegistry = hatchet_registry.ActionRegistry()
+
+
+#     # def durable(
+#     #     self,
+#     #     name: str = "",
+#     #     auto_register: bool = True,
+#     #     on_events: list | None = None,
+#     #     on_crons: list | None = None,
+#     #     version: str = "",
+#     #     timeout: str = "60m",
+#     #     schedule_timeout: str = "5m",
+#     #     sticky: StickyStrategy = None,
+#     #     retries: int = 0,
+#     #     rate_limits: List[RateLimit] | None = None,
+#     #     desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
+#     #     concurrency: v2.concurrency.ConcurrencyFunction | None = None,
+#     #     on_failure: Optional["HatchetCallable"] = None,
+#     #     default_priority: int | None = None,
+#     # ) -> Callable[[v2.callable.HatchetCallable], v2.callable.HatchetCallable]:
+#     #     resp = durable(
+#     #         name=name,
+#     #         auto_register=auto_register,
+#     #         on_events=on_events,
+#     #         on_crons=on_crons,
+#     #         version=version,
+#     #         timeout=timeout,
+#     #         schedule_timeout=schedule_timeout,
+#     #         sticky=sticky,
+#     #         retries=retries,
+#     #         rate_limits=rate_limits,
+#     #         desired_worker_labels=desired_worker_labels,
+#     #         concurrency=concurrency,
+#     #         on_failure=on_failure,
+#     #         default_priority=default_priority,
+#     #     )
+
+#     #     def wrapper(func: Callable[[Context], T]) -> v2.callable.HatchetCallable[T]:
+#     #         wrapped_resp = resp(func)
+
+#     #         if wrapped_resp.function_auto_register:
+#     #             self.functions.append(wrapped_resp)
+
+#     #         wrapped_resp.with_namespace(self._client.config.namespace)
+
+#     #         return wrapped_resp
+
+#     #     return wrapper
+
+#     def worker(
+#         self,
+#         name: str,
+#         max_runs: Optional[int] = None,
+#         labels: Dict[str, str | int] = {},
+#     ):
+#         worker = Worker(
+#             name=name,
+#             max_runs=max_runs,
+#             labels=labels,
+#             config=self._client.config,
+#             debug=self._client.debug,
+#         )
+
+#         for func in self._registry.registry.values():
+#             register_on_worker(func, worker)
+
+#         return worker

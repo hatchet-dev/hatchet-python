@@ -4,9 +4,11 @@ import asyncio
 import inspect
 import json
 from collections.abc import Awaitable, Callable
-from contextvars import ContextVar, copy_context
+
+# from contextvars import ContextVar, copy_context
 from dataclasses import dataclass
-from datetime import timedelta
+
+# from datetime import timedelta
 from typing import (
     Any,
     Dict,
@@ -25,6 +27,7 @@ from google.protobuf.json_format import MessageToDict
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema
 
+import hatchet_sdk.v2.hatchet as v2hatchet
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.context import Context
 from hatchet_sdk.context.context import BaseContext, Context, ContextAioImpl
@@ -41,8 +44,8 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.logger import logger
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.runtime import registry
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
+from hatchet_sdk.v2.runtime import registry
 from hatchet_sdk.workflow_run import RunRef
 
 # from typing import TYPE_CHECKING
@@ -54,47 +57,43 @@ from hatchet_sdk.workflow_run import RunRef
 T = TypeVar("T")
 P = ParamSpec("P")
 
-# TODO: according to Python, we should just use strings.
-Options = ForwardRef("Options", is_class=True)
-CallableMetadata = ForwardRef("CallableMetadata", is_class=True)
+
+def _sourceloc(fn) -> str:
+    try:
+        return "{}:{}".format(
+            inspect.getsourcefile(fn),
+            inspect.getsourcelines(fn)[1],
+        )
+    except:
+        return ""
 
 
 class HatchetCallableBase(Generic[P, T]):
-    action_name: str
-    func: Callable[P, T]  # note that T can be an Awaitable if func is a coroutine
-    _: CallableMetadata
 
     def __init__(
-        self, *, func: Callable[P, T], name: str, namespace: str, options: Options
+        self,
+        *,
+        func: Callable[P, T],
+        name: str,
+        namespace: str,
+        client: v2hatchet.Hatchet,
+        options: Options,
     ):
-        self.func = func
-        self._ = CallableMetadata(
+
+        self._hatchet = CallableMetadata(
+            # TODO: maybe use __qualname__
             name=name.lower() or str(func.__name__).lower(),
             namespace=namespace,
+            sourceloc=_sourceloc(func),
             options=options,
-            sourceloc=self.sourceloc,
+            client=client,
+            func=func,
+            action=f"{namespace}:{name}",
         )
-
-    @property
-    def sourceloc(self) -> str:
-        try:
-            return "{}:{}".format(
-                inspect.getsourcefile(self.func),
-                inspect.getsourcelines(self.func)[1],
-            )
-        except:
-            return ""
-
-    # def __call__(self, context: Context) -> T:
-    # return self.func(context)
-
-    # def with_namespace(self, namespace: str):
-    # if namespace is not None and namespace != "":
-    # self.function_namespace = namespace
-    # self.function_name = namespace + self.function_name
+        client.registry.add(key=self._hatchet.action, callable=self)
 
     def _to_workflow_proto(self) -> CreateWorkflowVersionOpts:
-        options = self._.options
+        options = self._hatchet.options
 
         # if self.function_on_failure is not None:
         #     on_failure_job = CreateWorkflowJobOpts(
@@ -113,7 +112,7 @@ class HatchetCallableBase(Generic[P, T]):
         #     )
 
         workflow = CreateWorkflowVersionOpts(
-            name=self._.name,
+            name=self._hatchet.name,
             kind=WorkflowKind.DURABLE if options.durable else WorkflowKind.FUNCTION,
             version=options.version,
             event_triggers=options.on_events,
@@ -132,14 +131,16 @@ class HatchetCallableBase(Generic[P, T]):
         return workflow
 
     def _to_job_proto(self) -> CreateWorkflowJobOpts:
-        job = CreateWorkflowJobOpts(name=self._.name, steps=[self._to_step_proto()])
+        job = CreateWorkflowJobOpts(
+            name=self._hatchet.name, steps=[self._to_step_proto()]
+        )
         return job
 
     def _to_step_proto(self) -> CreateWorkflowStepOpts:
-        options = self._.options
+        options = self._hatchet.options
         step = CreateWorkflowStepOpts(
-            readable_id=self._.name,
-            action=self.action_name,
+            readable_id=self._hatchet.name,
+            action=self._hatchet.action,
             timeout=options.execution_timeout,
             inputs="{}",  # TODO: not sure that this is, we're defining a step, not running a step
             parents=[],  # this is a single step workflow, always empty
@@ -162,9 +163,8 @@ class HatchetCallableBase(Generic[P, T]):
 
     def _debug(self):
         data = {
-            "action_name": self.action_name,
-            "func": repr(self.func),
-            "metadata": self._.model_dump(),
+            "self": repr(self),
+            "metadata": self._hatchet._debug(),
             "def_proto": MessageToDict(self._to_workflow_proto()),
             "call_proto": (
                 MessageToDict(self._to_trigger_proto())
@@ -180,13 +180,14 @@ class HatchetCallableBase(Generic[P, T]):
 
 class HatchetCallable(HatchetCallableBase[P, T]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        print(f"trigering {self.action_name}")
+        self._hatchet.client.logger.info(f"triggering {self._hatchet.action}")
         input = json.dumps({"args": args, "kwargs": kwargs})
-        client = self._.options.hatchet
-        ref = client.admin.run(
-            self._.name, input=input, options=self._to_trigger_proto()
+        client = self._hatchet.client
+        ref = client.admin.trigger_workflow(
+            self._hatchet.name, input=input, options=self._to_trigger_proto()
         )
-        return asyncio.run(ref.result())
+        self._hatchet.client.logger.info(f"runid: {ref}")
+        return None
 
     def _run(self, context: Context) -> T:
         print(f"running {self.action_name}")
@@ -211,9 +212,6 @@ class Options(BaseModel):
     # pydantic configuration
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    hatchet: Any = Field(
-        default=None, exclude=True
-    )  # circular dependencies trying to import v2.hatchet.Hatchet
     durable: bool = Field(default=False)
     auto_register: bool = Field(default=True)
     on_failure: Optional[HatchetCallableBase] = Field(default=None, exclude=True)
@@ -261,76 +259,93 @@ class Options(BaseModel):
         return labels
 
 
-class CallableMetadata(BaseModel):
+@dataclass
+class CallableMetadata:
+    func: Callable[P, T]  # the original function
+
     name: str
     namespace: str
+    action: str
     sourceloc: str  # source location of the callable
+
     options: Options
+    client: v2hatchet.Hatchet
+
+    def _debug(self):
+        return {
+            "func": repr(self.func),
+            "name": self.name,
+            "namespace": self.namespace,
+            "action": self.action,
+            "sourceloc": self.sourceloc,
+            "client": repr(self.client),
+            "options": self.options.model_dump(),
+        }
 
 
-# Context variable used for propagating hatchet context.
-# The type of the variable is CallableContext.
-_callable_cv = ContextVar("hatchet.callable")
+# # Context variable used for propagating hatchet context.
+# # The type of the variable is CallableContext.
+# _callable_cv = ContextVar("hatchet.callable")
 
 
-# The context object to be propagated between parent/child workflows.
-class CallableContext(BaseModel):
-    # pydantic configuration
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+# # The context object to be propagated between parent/child workflows.
+# class CallableContext(BaseModel):
+#     # pydantic configuration
+#     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    caller: Optional["HatchetCallable[P,T]"] = None
-    workflow_run_id: str  # caller's workflow run id
-    step_run_id: str  # caller's step run id
+#     caller: Optional["HatchetCallable[P,T]"] = None
+#     workflow_run_id: str  # caller's workflow run id
+#     step_run_id: str  # caller's step run id
 
-    @staticmethod
-    def cv() -> ContextVar:
-        return _callable_cv
+#     @staticmethod
+#     def cv() -> ContextVar:
+#         return _callable_cv
 
-    @staticmethod
-    def current() -> Optional["CallableContext"]:
-        try:
-            cv: ContextVar = CallableContext.cv()
-            return cv.get()
-        except LookupError:
-            return None
-
-
-T = TypeVar("T")
+#     @staticmethod
+#     def current() -> Optional["CallableContext"]:
+#         try:
+#             cv: ContextVar = CallableContext.cv()
+#             return cv.get()
+#         except LookupError:
+#             return None
 
 
-class TriggerOptions(TypedDict):
-    additional_metadata: Dict[str, str] | None = None
-    sticky: bool | None = None
+# T = TypeVar("T")
 
 
-class DurableContext(Context):
-    pass
+# class TriggerOptions(TypedDict):
+#     additional_metadata: Dict[str, str] | None = None
+#     sticky: bool | None = None
 
 
-#     def run(
-#         self,
-#         function: Union[str, HatchetCallable[T]],
-#         input: dict = {},
-#         key: str = None,
-#         options: TriggerOptions = None,
-#     ) -> "RunRef[T]":
-#         worker_id = self.worker.id()
+# class DurableContext(Context):
+#     pass
 
-#         workflow_name = function
 
-#         if not isinstance(function, str):
-#             workflow_name = function.function_name
+# #     def run(
+# #         self,
+# #         function: Union[str, HatchetCallable[T]],
+# #         input: dict = {},
+# #         key: str = None,
+# #         options: TriggerOptions = None,
+# #     ) -> "RunRef[T]":
+# #         worker_id = self.worker.id()
 
-#         # if (
-#         #     options is not None
-#         #     and "sticky" in options
-#         #     and options["sticky"] == True
-#         #     and not self.worker.has_workflow(workflow_name)
-#         # ):
-#         #     raise Exception(
-#         #         f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
-#         #     )
+# #         workflow_name = function
 
-#         trigger_options = self._prepare_workflow_options(key, options, worker_id)
+# #         if not isinstance(function, str):
+# #             workflow_name = function.function_name
 
-#         return self.admin_client.run(function, input, trigger_options)
+# #         # if (
+# #         #     options is not None
+# #         #     and "sticky" in options
+# #         #     and options["sticky"] == True
+# #         #     and not self.worker.has_workflow(workflow_name)
+# #         # ):
+# #         #     raise Exception(
+# #         #         f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
+# #         #     )
+
+# #         trigger_options = self._prepare_workflow_options(key, options, worker_id)
+
+# #         return self.admin_client.run(function, input, trigger_options)
