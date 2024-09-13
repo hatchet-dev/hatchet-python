@@ -182,6 +182,7 @@ class AdminClientAioImpl(AdminClientBase):
                 and options["namespace"] is not None
             ):
                 namespace = options["namespace"]
+                del options["namespace"]
 
             if namespace != "" and not workflow_name.startswith(self.namespace):
                 workflow_name = f"{namespace}{workflow_name}"
@@ -255,6 +256,7 @@ class AdminClientAioImpl(AdminClientBase):
                 and options["namespace"] is not None
             ):
                 namespace = options["namespace"]
+                del options["namespace"]
 
             if namespace != "" and not name.startswith(self.namespace):
                 name = f"{namespace}{name}"
@@ -340,6 +342,7 @@ class AdminClient(AdminClientBase):
                 and options["namespace"] is not None
             ):
                 namespace = options["namespace"]
+                del options["namespace"]
 
             if namespace != "" and not name.startswith(self.namespace):
                 name = f"{namespace}{name}"
@@ -374,6 +377,7 @@ class AdminClient(AdminClientBase):
                 and options["namespace"] is not None
             ):
                 namespace = options["namespace"]
+                del options["namespace"]
 
             if namespace != "" and not workflow_name.startswith(self.namespace):
                 workflow_name = f"{namespace}{workflow_name}"
