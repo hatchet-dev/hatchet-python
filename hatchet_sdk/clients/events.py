@@ -55,6 +55,7 @@ class EventClient:
             and options["namespace"] is not None
         ):
             namespace = options["namespace"]
+            del options["namespace"]
 
         namespaced_event_key = namespace + event_key
 
