@@ -24,10 +24,12 @@ from typing import (
 )
 
 from google.protobuf.json_format import MessageToDict
+from loguru import logger
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema
 
 import hatchet_sdk.v2.hatchet as v2hatchet
+import hatchet_sdk.v2.runtime.context as context
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.context import Context
 from hatchet_sdk.context.context import BaseContext, Context, ContextAioImpl
@@ -69,7 +71,6 @@ def _sourceloc(fn) -> str:
 
 
 class HatchetCallableBase(Generic[P, T]):
-
     def __init__(
         self,
         *,
@@ -79,10 +80,10 @@ class HatchetCallableBase(Generic[P, T]):
         client: v2hatchet.Hatchet,
         options: Options,
     ):
-
+        # TODO: maybe use __qualname__
+        name = name.lower() or func.__name__.lower()
         self._hatchet = CallableMetadata(
-            # TODO: maybe use __qualname__
-            name=name.lower() or str(func.__name__).lower(),
+            name=name,
             namespace=namespace,
             sourceloc=_sourceloc(func),
             options=options,
@@ -151,15 +152,12 @@ class HatchetCallableBase(Generic[P, T]):
         return step
 
     def _to_trigger_proto(self) -> Optional[TriggerWorkflowOptions]:
-        return None
-        ctx = CallableContext.current()
-        if not ctx:
-            return None
-        trigger: TriggerWorkflowOptions = {
-            "parent_id": ctx.workflow_run_id,
-            "parent_step_run_id": ctx.step_run_id,
-        }
-        return trigger
+        with context.EnsureContext(self._hatchet.client) as ctx:
+            trigger: TriggerWorkflowOptions = {
+                "parent_id": ctx.parent.workflow_run_id if ctx.parent else None,
+                "parent_step_run_id": ctx.parent.step_run_id if ctx.parent else None,
+            }
+            return trigger
 
     def _debug(self):
         data = {
@@ -174,25 +172,24 @@ class HatchetCallableBase(Generic[P, T]):
         }
         return data
 
-    def _run(self, context: BaseContext):
+    def _run(self, ctx: BaseContext):
         raise NotImplementedError
 
 
 class HatchetCallable(HatchetCallableBase[P, T]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        self._hatchet.client.logger.info(f"triggering {self._hatchet.action}")
-        input = json.dumps({"args": args, "kwargs": kwargs})
+        logger.trace("triggering {}", self._to_trigger_proto())
+        input = {"args": args, "kwargs": kwargs}
         client = self._hatchet.client
         ref = client.admin.trigger_workflow(
             self._hatchet.name, input=input, options=self._to_trigger_proto()
         )
-        self._hatchet.client.logger.info(f"runid: {ref}")
+        logger.trace("runid: {}", ref)
         return None
 
-    def _run(self, context: Context) -> T:
-        print(f"running {self.action_name}")
-        input = json.loads(context.workflow_input)
-        return self.func(*input.args, **input.kwargs)
+    def _run(self, *args: P.args, **kwargs: P.kwargs) -> T:
+        print(f"running {self._hatchet.action}")
+        return self._hatchet.func(*args, **kwargs)
 
 
 class HatchetAwaitable(HatchetCallableBase[P, Awaitable[T]]):
@@ -202,9 +199,9 @@ class HatchetAwaitable(HatchetCallableBase[P, Awaitable[T]]):
         client = self._.options.hatchet
         return await client.admin.run(self._.name, input).result()
 
-    async def _run(self, context: ContextAioImpl) -> T:
+    async def _run(self, ctx: ContextAioImpl) -> T:
         print(f"trigering {self.action_name}")
-        input = json.loads(context.workflow_input)
+        input = json.loads(ctx.workflow_input)
         return await self.func(*input.args, **input.kwargs)
 
 
@@ -281,6 +278,10 @@ class CallableMetadata:
             "client": repr(self.client),
             "options": self.options.model_dump(),
         }
+
+
+class HatchetContextBase:
+    pass
 
 
 # # Context variable used for propagating hatchet context.

@@ -4,7 +4,7 @@ import os
 import threading
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import hatchet_sdk.v2.hatchet as hatchet
@@ -42,12 +42,12 @@ class _RunInfo:
 class BackgroundContext:
     """Background context at function execution time."""
 
-    current: _RunInfo = _RunInfo()
+    # The Hatchet client is a required property.
+    client: "hatchet.Hatchet"
+
+    current: _RunInfo = field(default_factory=_RunInfo)
     parent: Optional[_RunInfo] = None
     root: _RunInfo = current
-
-    # The Hatchet client is a required property.
-    client: hatchet.Hatchet
 
     def set_workflow_run_id(self, id: str):
         self.current.workflow_run_id = id
@@ -76,7 +76,7 @@ class BackgroundContext:
 
 
 @contextmanager
-def EnsureContext(client: Optional[hatchet.Hatchet] = None):
+def EnsureContext(client: Optional["hatchet.Hatchet"] = None):
     cleanup = False
     ctx = BackgroundContext.get()
     if ctx is None:

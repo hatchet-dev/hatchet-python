@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Unio
 
 import grpc
 from google.protobuf import timestamp_pb2
+from loguru import logger
 
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.clients.run_event_listener import new_listener
@@ -358,6 +359,8 @@ class AdminClient(AdminClientBase):
         options: TriggerWorkflowOptions = None,
     ) -> str:
         request = self._prepare_workflow_request(workflow_name, input, options)
+
+        logger.trace("trigger proto: {}", request)
         resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
             request,
             metadata=get_metadata(self.token),

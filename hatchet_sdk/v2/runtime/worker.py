@@ -1,16 +1,21 @@
 import asyncio
+import multiprocessing as mp
 import time
 from collections.abc import AsyncGenerator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Set
-from concurrent.futures import ThreadPoolExecutor
 
 import grpc
 from google.protobuf import timestamp_pb2
 from google.protobuf.json_format import MessageToDict, MessageToJson
+from loguru import logger
 
+import hatchet_sdk.contracts.dispatcher_pb2
 import hatchet_sdk.v2.hatchet as hatchet
+import hatchet_sdk.v2.runtime.connection as connection
+import hatchet_sdk.v2.runtime.messages as messages
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
@@ -22,8 +27,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     WorkerUnsubscribeRequest,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
-
-import hatchet_sdk.connection as connection
 
 
 @dataclass
@@ -58,82 +61,94 @@ class _HeartBeater:
     def __init__(self, worker: "Worker"):
         self.worker = worker
         self.last_heartbeat: int = -1  # unix epoch in seconds
+        self.stub = DispatcherStub(
+            connection.new_conn(self.worker.client.config, aio=False)
+        )
         self.missed = 0
         self.error = 0
 
     async def heartbeat(self):
-        while not self.worker._shutdown:
-            now = int(time.time())
-            proto = HeartbeatRequest(
-                workerId=self.worker.id,
-                heartbeatAt=timestamp_pb2.Timestamp(seconds=now),
-            )
-            try:
-                resp = self.worker.client.dispatcher.client.Heartbeat(
-                    proto, timeout=5, metadata=self.worker._grpc_metadata()
+        try:
+            # It will exit the loop when a asyncio.CancelledError is raised
+            # by calling task.cancel() from outside.
+            while True:
+                now = int(time.time())
+                proto = HeartbeatRequest(
+                    workerId=self.worker.id,
+                    heartbeatAt=timestamp_pb2.Timestamp(seconds=now),
                 )
-                self.worker.client.logger.info(f"heartbeat: {MessageToJson(resp)}")
-            except grpc.RpcError as e:
-                self.error += 1
+                try:
+                    resp = self.stub.Heartbeat(
+                        proto, timeout=5, metadata=self.worker._grpc_metadata()
+                    )
+                    logger.trace("heartbeat: {}", MessageToJson(resp))
+                except grpc.RpcErrors:
+                    self.error += 1
 
-            if self.last_heartbeat < 0:
-                self.last_heartbeat = now
-                self.status = WorkerStatus.HEALTHY
-            else:
-                diff = proto.heartbeatAt.seconds - self.last_heartbeat
-                if diff > self.worker.options.heartbeat:
-                    self.missed += 1
+                if self.last_heartbeat < 0:
+                    self.last_heartbeat = now
+                    self.status = WorkerStatus.HEALTHY
+                else:
+                    diff = proto.heartbeatAt.seconds - self.last_heartbeat
+                    if diff > self.worker.options.heartbeat:
+                        self.missed += 1
+                await asyncio.sleep(self.worker.options.heartbeat)
 
-            await asyncio.sleep(self.worker.options.heartbeat)
+        finally:
+            logger.info("shutting down heartbeater")
 
 
 class _Listner:
     def __init__(self, worker: "Worker"):
         self.worker = worker
         self.attempt = 0
-
-        conn = connection.new_conn(self.worker.client.config, aio=True)
-        self.stub = DispatcherStub(conn)
+        self.stub = DispatcherStub(
+            connection.new_conn(self.worker.client.config, aio=True)
+        )
 
     async def listen(self) -> AsyncGenerator[AssignedAction]:
         resp = None
         try:
-            while not self.worker._shutdown:
+            # It will exit the loop when asyncio.CancelledError is
+            # raised by calling task.cancel() from outside.
+            while True:
                 proto = WorkerListenRequest(workerId=self.worker.id)
-                print(repr(asyncio.get_running_loop()))
-                resp = self.stub.ListenV2(
-                    proto, timeout=5, metadata=self.worker._grpc_metadata()
-                )
-                self.worker.client.logger.info("listening")
-                async for event in resp:
-                    yield event
-                    if self.worker._shutdown:
-                        resp.cancel()
-                        resp = None
-                        break
-                resp = None
-                self.attempt += 1
-        except Exception as e:
-            self.worker.client.logger.info(e)
-            raise e
+                try:
+                    resp = self.stub.ListenV2(
+                        proto, metadata=self.worker._grpc_metadata()
+                    )
+                    logger.trace("listening")
+                    async for event in resp:
+                        yield event
+
+                    resp = None
+                    self.attempt += 1
+                except grpc.aio.AioRpcError as e:
+                    logger.warning(e)
+
+                # TODO: expotential backoff, retry limit, etc
+
         finally:
+            logger.info("shutting down listener")
             if resp:
                 resp.cancel()
 
 
 class Worker:
-
     def __init__(
         self,
         client: "hatchet.Hatchet",
+        inbound: mp.Queue,
+        outbound: mp.Queue,
         options: WorkerOptions,
     ):
         self.options = options
         self.client = client
         self.status = WorkerStatus.UNKNOWN
         self.id: Optional[str] = None
+        self.inbound = inbound
+        self.outbound = outbound
 
-        self._shutdown = False  # flag for shutting down
         self._heartbeater = _HeartBeater(self)
         self._heartbeater_task: Optional[asyncio.Task] = None
         self._listener = _Listner(self)
@@ -145,40 +160,43 @@ class Worker:
             timeout=30,
             metadata=self._grpc_metadata(),
         )
-        self.client.logger.info(f"registered: {MessageToDict(resp)}")
+        logger.debug(f"worker registered: {MessageToDict(resp)}")
         self.id = resp.workerId
         self.status = WorkerStatus.REGISTERED
         return resp.workerId
 
     async def start(self):
         self._register()
-        # self._heartbeat_task = asyncio.create_task(
-        #     self._heartbeater.heartbeat(), name="heartbeat"
-        # )
-        agen = self._listener.listen()
-        self._listener_task = asyncio.create_task(self._onevent(agen), name="listner")
-        # while True:
-        #     if self._heartbeater.last_heartbeat > 0:
-        #         return
-        #     await asyncio.sleep(0.1)
+        self._heartbeat_task = asyncio.create_task(
+            self._heartbeater.heartbeat(), name="heartbeat"
+        )
+        self._listener_task = asyncio.create_task(
+            self._onevent(self._listener.listen()), name="listner"
+        )
+        while True:
+            if self._heartbeater.last_heartbeat > 0:
+                return
+            await asyncio.sleep(0.1)
 
     async def shutdown(self):
-        print("shutting down")
-        self._shutdown = True
-        # self._listener_task.cancel()
-        # self._heartbeat_task.cancel()
-        await asyncio.gather(self._heartbeat_task, self._listener_task)
+        tg = asyncio.gather(self._heartbeat_task, self._listener_task)
+        tg.cancel()
+        try:
+            await tg
+        except asyncio.CancelledError:
+            logger.info("bye")
 
     async def _onevent(self, agen: AsyncGenerator[AssignedAction]):
-        self.client.logger.info(repr(agen))
-        try:
-            async for action in agen:
-                print(MessageToDict(action))
-        except Exception as e:
-            print(e)
-            raise
-        finally:
-            pass
+        async for action in agen:
+            if action.actionType == ActionType.START_STEP_RUN:
+                await asyncio.to_thread(
+                    self.outbound.put,
+                    messages.Message(
+                        action=MessageToDict(action),
+                        type=messages.MessageType.ACTION_RUN,
+                    ),
+                )
+            logger.trace(MessageToDict(action))
 
     def _grpc_metadata(self):
         return [("authorization", f"bearer {self.client.config.token}")]

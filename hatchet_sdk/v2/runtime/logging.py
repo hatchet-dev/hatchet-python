@@ -1,7 +1,8 @@
-import hatchet_sdk.logger as v1
-import threading
 import asyncio
 import os
+import threading
+
+import hatchet_sdk.logger as v1
 
 
 def _loopid():
@@ -12,7 +13,6 @@ def _loopid():
 
 
 class HatchetLogger:
-
     def log(self, *args, **kwargs):
         v1.logger.log(*args, **kwargs)
 

@@ -13,9 +13,9 @@ class ActionRegistry:
     """
 
     def __init__(self):
-        self.registry: Dict[str, callable.HatchetCallableBase] = dict()
+        self.registry: Dict[str, "callable.HatchetCallableBase"] = dict()
 
-    def add(self, key: str, callable: callable.HatchetCallableBase):
+    def add(self, key: str, callable: "callable.HatchetCallableBase"):
         if key in self.registry:
             raise KeyError(f"duplicated Hatchet callable: {key}")
         self.registry[key] = callable

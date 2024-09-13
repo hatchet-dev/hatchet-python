@@ -1,16 +1,16 @@
+import asyncio
 import functools
 import inspect
+import multiprocessing as mp
 from typing import Callable, Dict, List, Optional, ParamSpec, TypeVar
 
 import hatchet_sdk.hatchet as v1
+import hatchet_sdk.v2.callable as callable
 import hatchet_sdk.v2.runtime.config as config
 import hatchet_sdk.v2.runtime.logging as logging
 import hatchet_sdk.v2.runtime.registry as registry
+import hatchet_sdk.v2.runtime.runner as runner
 import hatchet_sdk.v2.runtime.worker as worker
-import hatchet_sdk.v2.callable as callable
-import asyncio
-
-
 
 # import hatchet_sdk.runtime.registry as hatchet_registry
 # import hatchet_sdk.v2.callable as v2_callable
@@ -32,7 +32,6 @@ P = ParamSpec("P")
 
 
 class Hatchet:
-
     def __init__(
         self,
         config: config.ClientConfig = config.ClientConfig(),
@@ -49,6 +48,9 @@ class Hatchet:
             defaults=config,
             debug=debug,
         )
+        self._q_action = mp.Queue()
+        self._q_event = mp.Queue()
+        self._runner = runner.BaseRunnerLoop(self, self._q_action, self._q_event)
 
     @property
     def admin(self):
@@ -72,7 +74,6 @@ class Hatchet:
         namespace: str = "default",
         options: "callable.Options" = callable.Options(),
     ):
-
         def inner(func: Callable[P, T]) -> "callable.HatchetCallable[P, T]":
             if inspect.iscoroutinefunction(func):
                 wrapped = callable.HatchetAwaitable(
@@ -102,7 +103,9 @@ class Hatchet:
         return inner
 
     def worker(self, options: worker.WorkerOptions) -> worker.Worker:
-        w = worker.Worker(client=self, options=options)
+        w = worker.Worker(
+            client=self, options=options, inbound=self._q_event, outbound=self._q_action
+        )
         return w
 
     # def durable(
