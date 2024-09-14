@@ -45,15 +45,23 @@ class BackgroundContext:
     # The Hatchet client is a required property.
     client: "hatchet.Hatchet"
 
-    current: _RunInfo = field(default_factory=_RunInfo)
+    current: _RunInfo
+    root: _RunInfo
     parent: Optional[_RunInfo] = None
-    root: _RunInfo = current
 
     def set_workflow_run_id(self, id: str):
         self.current.workflow_run_id = id
 
     def set_step_run_id(self, id: str):
         self.current.step_run_id = id
+
+    def set_parent_workflow_run_id(self, id: str):
+        if self.parent is None:
+            self.parent = _RunInfo(
+                workflow_run_id=id, step_run_id=None, pid=None, tid=None, loopid=None
+            )
+        else:
+            self.parent.workflow_run_id = id
 
     def copy(self):
         ret = BackgroundContext(
@@ -82,7 +90,7 @@ def EnsureContext(client: Optional["hatchet.Hatchet"] = None):
     if ctx is None:
         cleanup = True
         assert client is not None
-        ctx = BackgroundContext(client=client)
+        ctx = BackgroundContext(client=client, current=_RunInfo(), root=_RunInfo())
         BackgroundContext.set(ctx)
     try:
         yield ctx

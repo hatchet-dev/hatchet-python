@@ -11,6 +11,7 @@ import hatchet_sdk.v2.runtime.logging as logging
 import hatchet_sdk.v2.runtime.registry as registry
 import hatchet_sdk.v2.runtime.runner as runner
 import hatchet_sdk.v2.runtime.worker as worker
+import hatchet_sdk.v2.runtime.runtime as runtime
 
 # import hatchet_sdk.runtime.registry as hatchet_registry
 # import hatchet_sdk.v2.callable as v2_callable
@@ -48,9 +49,6 @@ class Hatchet:
             defaults=config,
             debug=debug,
         )
-        self._q_action = mp.Queue()
-        self._q_event = mp.Queue()
-        self._runner = runner.BaseRunnerLoop(self, self._q_action, self._q_event)
 
     @property
     def admin(self):
@@ -102,11 +100,8 @@ class Hatchet:
 
         return inner
 
-    def worker(self, options: worker.WorkerOptions) -> worker.Worker:
-        w = worker.Worker(
-            client=self, options=options, inbound=self._q_event, outbound=self._q_action
-        )
-        return w
+    def worker(self, options: "worker.WorkerOptions") -> "runtime.Runtime":
+        return runtime.Runtime(self, options)
 
     # def durable(
     #     name: str = "",

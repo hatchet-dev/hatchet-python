@@ -34,3 +34,4 @@ async def test_worker():
     await asyncio.sleep(10)
     await worker.shutdown()
     await hatchet._runner.shutdown()
+    return None

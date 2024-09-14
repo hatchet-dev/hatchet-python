@@ -179,8 +179,9 @@ class Worker:
             await asyncio.sleep(0.1)
 
     async def shutdown(self):
-        tg = asyncio.gather(self._heartbeat_task, self._listener_task)
+        tg: asyncio.Future = asyncio.gather(self._heartbeat_task, self._listener_task)
         tg.cancel()
+        self.outbound.close()
         try:
             await tg
         except asyncio.CancelledError:
@@ -188,14 +189,8 @@ class Worker:
 
     async def _onevent(self, agen: AsyncGenerator[AssignedAction]):
         async for action in agen:
-            if action.actionType == ActionType.START_STEP_RUN:
-                await asyncio.to_thread(
-                    self.outbound.put,
-                    messages.Message(
-                        action=MessageToDict(action),
-                        type=messages.MessageType.ACTION_RUN,
-                    ),
-                )
+            msg = messages.Message(_action=MessageToDict(action))
+            await asyncio.to_thread(self.outbound.put, msg)
             logger.trace(MessageToDict(action))
 
     def _grpc_metadata(self):

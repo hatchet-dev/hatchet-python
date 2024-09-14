@@ -43,8 +43,11 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
+from hatchet_sdk.contracts.dispatcher_pb2 import AssignedAction
 from hatchet_sdk.labels import DesiredWorkerLabel
-from hatchet_sdk.logger import logger
+
+# from hatchet_sdk.logger import logger
+from loguru import logger
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.v2.runtime import registry
@@ -172,7 +175,8 @@ class HatchetCallableBase(Generic[P, T]):
         }
         return data
 
-    def _run(self, ctx: BaseContext):
+    def _run(self, ctx: BaseContext) -> str:
+        # actually invokes the function, and serializing the output
         raise NotImplementedError
 
 
@@ -187,9 +191,17 @@ class HatchetCallable(HatchetCallableBase[P, T]):
         logger.trace("runid: {}", ref)
         return None
 
-    def _run(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        print(f"running {self._hatchet.action}")
-        return self._hatchet.func(*args, **kwargs)
+    def _run(self, action: AssignedAction) -> str:
+        assert action.actionId == self._hatchet.action
+        logger.trace("invoking {}", action.actionId)
+        input = json.loads(action.actionPayload)["input"]
+
+        with context.EnsureContext(self._hatchet.client) as ctx:
+            ctx.set_step_run_id(action.stepRunId)
+            ctx.set_workflow_run_id(action.workflowRunId)
+            ctx.set_parent_workflow_run_id(action.parent_workflow_run_id)
+            with context.WithContext(ctx):
+                return self._hatchet.func(*input["args"], **input["kwargs"])
 
 
 class HatchetAwaitable(HatchetCallableBase[P, Awaitable[T]]):
