@@ -6,7 +6,7 @@ import json
 from collections.abc import Awaitable, Callable
 
 # from contextvars import ContextVar, copy_context
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 # from datetime import timedelta
 from typing import (
@@ -24,6 +24,8 @@ from typing import (
 )
 
 from google.protobuf.json_format import MessageToDict
+
+# from hatchet_sdk.logger import logger
 from loguru import logger
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 from pydantic.json_schema import SkipJsonSchema
@@ -33,6 +35,7 @@ import hatchet_sdk.v2.runtime.context as context
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.context import Context
 from hatchet_sdk.context.context import BaseContext, Context, ContextAioImpl
+from hatchet_sdk.contracts.dispatcher_pb2 import AssignedAction
 from hatchet_sdk.contracts.workflows_pb2 import (
     CreateStepRateLimit,
     CreateWorkflowJobOpts,
@@ -43,11 +46,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
-from hatchet_sdk.contracts.dispatcher_pb2 import AssignedAction
 from hatchet_sdk.labels import DesiredWorkerLabel
-
-# from hatchet_sdk.logger import logger
-from loguru import logger
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.v2.runtime import registry
@@ -154,26 +153,56 @@ class HatchetCallableBase(Generic[P, T]):
         )
         return step
 
-    def _to_trigger_proto(self) -> Optional[TriggerWorkflowOptions]:
-        with context.EnsureContext(self._hatchet.client) as ctx:
-            trigger: TriggerWorkflowOptions = {
-                "parent_id": ctx.parent.workflow_run_id if ctx.parent else None,
-                "parent_step_run_id": ctx.parent.step_run_id if ctx.parent else None,
-            }
-            return trigger
+    def _ctx_to_trigger_proto(
+        self, ctx: "context.BackgroundContext"
+    ) -> Optional[TriggerWorkflowOptions]:
+        # We are not in any valid Hatchet context. This means we're the root.
+        if ctx.current is None:
+            return None
 
-    def _debug(self):
-        data = {
-            "self": repr(self),
-            "metadata": self._hatchet._debug(),
-            "def_proto": MessageToDict(self._to_workflow_proto()),
-            "call_proto": (
-                MessageToDict(self._to_trigger_proto())
-                if self._to_trigger_proto()
-                else None
+        # Otherwise, the current context is the parent.
+        assert ctx.current is not None
+        trigger: TriggerWorkflowOptions = {
+            "parent_id": ctx.current.workflow_run_id,
+            "parent_step_run_id": ctx.current.step_run_id,
+            "additional_metadata": json.dumps(
+                {"_hatchet_background_context": ctx.asdict()}
             ),
         }
-        return data
+        return trigger
+
+    def _ctx_from_action(
+        self, action: AssignedAction
+    ) -> Optional["context.BackgroundContext"]:
+        if not action.additional_metadata:
+            return None
+
+        d: Optional[Dict] = None
+        try:
+            d = json.loads(action.additional_metadata)
+        except json.JSONDecodeError:
+            logger.warning("failed to decode additional metadata from assigned action")
+            return None
+
+        if "_hatchet_background_context" not in d:
+            return None
+
+        ctx = context.BackgroundContext.fromdict(d["_hatchet_background_context"])
+        ctx.client = self._hatchet.client
+        return ctx
+
+    # def _debug(self):
+    #     data = {
+    #         "self": repr(self),
+    #         "metadata": self._hatchet._debug(),
+    #         "def_proto": MessageToDict(self._to_workflow_proto()),
+    #         "call_proto": (
+    #             MessageToDict(self._ctx_to_trigger_proto())
+    #             if self._to_trigger_proto()
+    #             else None
+    #         ),
+    #     }
+    #     return data
 
     def _run(self, ctx: BaseContext) -> str:
         # actually invokes the function, and serializing the output
@@ -182,14 +211,17 @@ class HatchetCallableBase(Generic[P, T]):
 
 class HatchetCallable(HatchetCallableBase[P, T]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        logger.trace("triggering {}", self._to_trigger_proto())
-        input = {"args": args, "kwargs": kwargs}
-        client = self._hatchet.client
-        ref = client.admin.trigger_workflow(
-            self._hatchet.name, input=input, options=self._to_trigger_proto()
-        )
-        logger.trace("runid: {}", ref)
-        return None
+        with context.EnsureContext(self._hatchet.client) as ctx:
+            trigger = self._ctx_to_trigger_proto(ctx)
+            input = {"args": args, "kwargs": kwargs}
+            client = self._hatchet.client
+
+            logger.trace("triggering {}", trigger)
+            ref = client.admin.trigger_workflow(
+                self._hatchet.name, input=input, options=trigger
+            )
+            logger.trace("runid: {}", ref)
+            return None
 
     def _run(self, action: AssignedAction) -> str:
         assert action.actionId == self._hatchet.action
@@ -197,11 +229,21 @@ class HatchetCallable(HatchetCallableBase[P, T]):
         input = json.loads(action.actionPayload)["input"]
 
         with context.EnsureContext(self._hatchet.client) as ctx:
-            ctx.set_step_run_id(action.stepRunId)
-            ctx.set_workflow_run_id(action.workflowRunId)
-            ctx.set_parent_workflow_run_id(action.parent_workflow_run_id)
-            with context.WithContext(ctx):
-                return self._hatchet.func(*input["args"], **input["kwargs"])
+            assert ctx.current is None
+
+        ctx: Optional["context.BackgroundContext"] = self._ctx_from_action(action)
+        if ctx is None:
+            info = context.RunInfo(
+                workflow_run_id=action.workflowRunId,
+                step_run_id=action.stepRunId,
+                name=self._hatchet.name,
+                namespace=self._hatchet.namespace,
+            )
+            ctx = context.BackgroundContext(
+                client=self._hatchet.client, current=info, root=info
+            )
+        with context.WithParentContext(ctx):
+            return self._hatchet.func(*input["args"], **input["kwargs"])
 
 
 class HatchetAwaitable(HatchetCallableBase[P, Awaitable[T]]):

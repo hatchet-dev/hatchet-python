@@ -1,22 +1,23 @@
 import asyncio
 import json
 import multiprocessing as mp
+import time
+import traceback
 from typing import Any, Dict, Optional, Tuple
 
+from google.protobuf.json_format import MessageToDict
+from google.protobuf.timestamp_pb2 import Timestamp
 from loguru import logger
 
-from hatchet_sdk.contracts.dispatcher_pb2 import (
-    ActionType,
-    StepActionEvent,
-    StepActionEventType,
-)
 import hatchet_sdk.v2.callable as callable
 import hatchet_sdk.v2.hatchet as hatchet
 import hatchet_sdk.v2.runtime.messages as messages
-from google.protobuf.timestamp_pb2 import Timestamp
-import time
-from google.protobuf.json_format import MessageToDict
-import traceback
+from hatchet_sdk.contracts.dispatcher_pb2 import (
+    ActionType,
+    AssignedAction,
+    StepActionEvent,
+    StepActionEventType,
+)
 
 
 def _timestamp():
@@ -26,53 +27,40 @@ def _timestamp():
 
 def _format_exc(e: Exception):
     trace = "".join(traceback.format_exception(e))
-    return "\n".join[str(e), trace]
+    return "\n".join([str(e), trace])
 
 
-class _Runner:
-    def __init__(
-        self,
-        registry: Dict[str, "callable.HatchetCallableBase"],
-        msg: "messages.Message",
-    ):
-        self.registry = registry
-        assert msg.kind == messages.MessageKind.ACTION
-        self.msg = msg
-
-    async def run(self) -> Tuple[str, Exception]:
-        logger.trace("runner invoking: {}", repr(self.fn))
-        try:
-            if isinstance(self.fn, callable.HatchetCallable):
-                return await asyncio.to_thread(self.fn._run, self.msg.action), None
-            else:
-                return await self.fn._run(self.msg.action), None
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:
-            logger.exception(e)
-            return None, e
-
-    @property
-    def action(self):
-        return self.msg.action.actionId
-
-    @property
-    def fn(self):
-        return self.registry[self.action]
+async def _invoke(
+    action: AssignedAction, registry: Dict[str, "callable.HatchetCallableBase"]
+):
+    key = action.actionId
+    fn: "callable.HatchetCallableBase" = registry[key]  # TODO
+    logger.trace("invoking: {}", repr(fn))
+    try:
+        if isinstance(fn, callable.HatchetCallable):
+            return await asyncio.to_thread(fn._run, action), None
+        else:
+            return await fn._run(action), None
+    except asyncio.CancelledError:
+        raise
+    except Exception as e:
+        logger.exception(e)
+        return None, e
 
 
 class BaseRunnerLoop:
     def __init__(
         self,
         client: "hatchet.Hatchet",
-        inbound: mp.Queue,  # inbound queue
-        outbound: mp.Queue,  # outbound queue
+        inbound: mp.Queue,  # inbound queue, not owned
+        outbound: mp.Queue,  # outbound queue, not owned
     ):
+        logger.trace("init runner loop")
         self.client = client
         self.registry: Dict[str, "callable.HatchetCallableBase"] = (
             client.registry.registry
         )
-        self.worker_id:Optional[str] = None
+        self.worker_id: Optional[str] = None
 
         self.inbound = inbound
         self.outbound = outbound
@@ -80,20 +68,20 @@ class BaseRunnerLoop:
         self.looptask: Optional[asyncio.Task] = None
 
         # a dict from StepRunId to its tasks
-        self.runners: Dict[str, asyncio.Task] = dict()
+        self.tasks: Dict[str, asyncio.Task] = dict()
 
     def start(self):
-        self.looptask = asyncio.create_task(self.loop(), name="runnerloop")
+        logger.debug("runner loop started")
+        self.looptask = asyncio.create_task(self.loop(), name="runner loop")
 
     async def shutdown(self):
-        logger.info("shutting down runner loop")
-        t = asyncio.gather(*self.runners.values(), self.looptask)
-        self.outbound.close()
+        logger.trace("shutting down runner loop")
+        t = asyncio.gather(*self.tasks.values(), self.looptask)
         t.cancel()
         try:
             await t
         except asyncio.CancelledError:
-            logger.info("bye")
+            logger.debug("bye")
 
     async def loop(self):
         while True:
@@ -109,17 +97,18 @@ class BaseRunnerLoop:
 
     def on_run(self, msg: "messages.Message"):
         async def task():
+            logger.trace("running {}", msg.action.stepRunId)
             try:
                 await self.emit_started(msg)
-                result, e = await _Runner(self.registry, msg).run()
+                result, e = await _invoke(msg.action, self.registry)
                 if e is None:
                     await self.emit_finished(msg, result)
                 else:
                     await self.emit_failed(msg, _format_exc(e))
             finally:
-                del self.runners[msg.action.stepRunId]
+                del self.tasks[msg.action.stepRunId]
 
-        self.runners[msg.action.stepRunId] = asyncio.create_task(
+        self.tasks[msg.action.stepRunId] = asyncio.create_task(
             task(), name=msg.action.stepRunId
         )
 
@@ -170,10 +159,12 @@ class BaseRunnerLoop:
         )
 
     async def send(self, msg: "messages.Message"):
-        logger.trace("sending: {}", msg)
+        logger.trace("send:\n{}", msg)
         await asyncio.to_thread(self.outbound.put, msg)
 
     async def next(self) -> "messages.Message":
-        msg = await asyncio.to_thread(self.inbound.get) # raise EOFError if the queue is closed
-        logger.trace("recv: {}", msg)
+        msg = await asyncio.to_thread(
+            self.inbound.get
+        )  # raise EOFError if the queue is closed
+        logger.trace("recv:\n{}", msg)
         return msg

@@ -10,8 +10,8 @@ import hatchet_sdk.v2.runtime.config as config
 import hatchet_sdk.v2.runtime.logging as logging
 import hatchet_sdk.v2.runtime.registry as registry
 import hatchet_sdk.v2.runtime.runner as runner
-import hatchet_sdk.v2.runtime.worker as worker
 import hatchet_sdk.v2.runtime.runtime as runtime
+import hatchet_sdk.v2.runtime.worker as worker
 
 # import hatchet_sdk.runtime.registry as hatchet_registry
 # import hatchet_sdk.v2.callable as v2_callable

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, Optional
+
+from google.protobuf.json_format import ParseDict
 
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_COMPLETED,
@@ -12,13 +14,11 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
     GroupKeyActionEventType,
+    StepActionEvent,
     StepActionEventType,
     WorkflowRunEventType,
-    StepActionEvent,
 )
 from hatchet_sdk.worker.action_listener_process import Action
-from google.protobuf.json_format import ParseDict
-from typing import Optional, Dict
 
 
 class MessageKind(Enum):

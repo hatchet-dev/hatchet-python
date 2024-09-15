@@ -4,10 +4,12 @@ import os
 import threading
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass, asdict
+from typing import Optional, Dict
 
 import hatchet_sdk.v2.hatchet as hatchet
+
+from loguru import logger
 
 
 def _loopid() -> Optional[int]:
@@ -23,13 +25,14 @@ _ctxvar: ContextVar[Optional["BackgroundContext"]] = ContextVar(
 
 
 @dataclass
-class _RunInfo:
+class RunInfo:
     workflow_run_id: Optional[str] = None
     step_run_id: Optional[str] = None
 
     namespace: str = "<unknown>"
     name: str = "<unknown>"
 
+    # TODO, pid/tid/loopid is not propagated to the engine, we are not able to restore them
     pid: int = os.getpid()
     tid: int = threading.get_ident()
     loopid: Optional[int] = _loopid()
@@ -45,30 +48,38 @@ class BackgroundContext:
     # The Hatchet client is a required property.
     client: "hatchet.Hatchet"
 
-    current: _RunInfo
-    root: _RunInfo
-    parent: Optional[_RunInfo] = None
+    current: Optional[RunInfo] = None
+    root: Optional[RunInfo] = None
+    parent: Optional[RunInfo] = None
 
-    def set_workflow_run_id(self, id: str):
-        self.current.workflow_run_id = id
+    def asdict(self):
+        """Return BackgroundContext as a serializable dict."""
+        ret = dict()
+        if self.current:
+            ret["current"] = asdict(self.current)
+        if self.root:
+            ret["root"] = asdict(self.root)
+        if self.parent:
+            ret["parent"] = asdict(self.parent)
+        return ret
 
-    def set_step_run_id(self, id: str):
-        self.current.step_run_id = id
-
-    def set_parent_workflow_run_id(self, id: str):
-        if self.parent is None:
-            self.parent = _RunInfo(
-                workflow_run_id=id, step_run_id=None, pid=None, tid=None, loopid=None
-            )
-        else:
-            self.parent.workflow_run_id = id
+    @staticmethod
+    def fromdict(d: Dict) -> "BackgroundContext":
+        ctx = BackgroundContext()
+        if "current" in d:
+            ctx.current = RunInfo(**(d["current"]))
+        if "root" in d:
+            ctx.root = RunInfo(**(d["root"]))
+        if "parent" in d:
+            ctx.parent = RunInfo(**(d["parent"]))
+        return ctx
 
     def copy(self):
         ret = BackgroundContext(
             client=self.client,
-            current=self.current.copy(),
+            current=self.current.copy() if self.current else None,
             parent=self.parent.copy() if self.parent else None,
-            root=self.root.copy(),
+            root=self.root.copy() if self.root else None,
         )
         return ret
 
@@ -90,9 +101,10 @@ def EnsureContext(client: Optional["hatchet.Hatchet"] = None):
     if ctx is None:
         cleanup = True
         assert client is not None
-        ctx = BackgroundContext(client=client, current=_RunInfo(), root=_RunInfo())
+        ctx = BackgroundContext(client=client)
         BackgroundContext.set(ctx)
     try:
+        logger.trace("using context:\n{}", ctx)
         yield ctx
     finally:
         if cleanup:
@@ -104,19 +116,22 @@ def WithContext(ctx: BackgroundContext):
     prev = BackgroundContext.get()
     BackgroundContext.set(ctx)
     try:
+        logger.trace("using context:\n{}", ctx)
         yield ctx
     finally:
         BackgroundContext.set(prev)
 
 
 @contextmanager
-def EnterFunc():
-    with EnsureContext() as current:
-        child = current.copy()
-        child.parent = current.current.copy()
-        child.current = _RunInfo()
-        with WithContext(child) as ctx:
-            try:
-                yield ctx
-            finally:
-                pass
+def WithParentContext(ctx: BackgroundContext):
+    prev = BackgroundContext.get()
+
+    child = ctx.copy()
+    child.parent = ctx.current.copy()
+    child.current = None
+    BackgroundContext.set(child)
+    try:
+        logger.trace("using context:\n{}", child)
+        yield child
+    finally:
+        BackgroundContext.set(prev)
