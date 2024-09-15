@@ -2,7 +2,7 @@ import asyncio
 import functools
 import inspect
 import multiprocessing as mp
-from typing import Callable, Dict, List, Optional, ParamSpec, TypeVar
+from typing import Callable, Dict, Tuple, List, Optional, ParamSpec, TypeVar
 
 import hatchet_sdk.hatchet as v1
 import hatchet_sdk.v2.callable as callable
@@ -103,7 +103,10 @@ class Hatchet:
     def worker(self, options: "worker.WorkerOptions") -> "runtime.Runtime":
         return runtime.Runtime(self, options)
 
-    # def durable(
+    def _grpc_metadata(self) -> List[Tuple]:
+        return [("authorization", f"bearer {self.config.token}")]
+
+    # def durable(s
     #     name: str = "",
     #     auto_register: bool = True,
     #     on_events: list | None = None,

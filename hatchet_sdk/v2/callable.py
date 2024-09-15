@@ -6,7 +6,7 @@ import json
 from collections.abc import Awaitable, Callable
 
 # from contextvars import ContextVar, copy_context
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, field
 
 # from datetime import timedelta
 from typing import (
@@ -43,6 +43,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
     StickyStrategy,
+    TriggerWorkflowRequest,
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
@@ -72,6 +73,33 @@ def _sourceloc(fn) -> str:
         return ""
 
 
+@dataclass
+class _CallableInput:
+    args: List[Any] = field(default_factory=list)
+    kwargs: Dict[str, Any] = field(default_factory=dict)
+
+    def dumps(self):
+        return json.dumps(asdict(self))
+
+    @staticmethod
+    def loads(s: str):
+        # NOTE: AssignedAction.actionPayload looks like the following
+        # '{"input": <from self.dumps()>, "parents": {}, "overrides": {}, "user_data": {}, "triggered_by": "manual"}'
+        return _CallableInput(**(json.loads(s)["input"]))
+
+
+@dataclass
+class _CallableOutput(Generic[T]):
+    output: Optional[T] = None
+
+    def dumps(self):
+        return json.dumps(asdict(self))
+
+    @staticmethod
+    def loads(s: str):
+        return _CallableOutput(**json.loads(s))
+
+
 class HatchetCallableBase(Generic[P, T]):
     def __init__(
         self,
@@ -97,23 +125,7 @@ class HatchetCallableBase(Generic[P, T]):
 
     def _to_workflow_proto(self) -> CreateWorkflowVersionOpts:
         options = self._hatchet.options
-
-        # if self.function_on_failure is not None:
-        #     on_failure_job = CreateWorkflowJobOpts(
-        #         name=self.function_name + "-on-failure",
-        #         steps=[
-        #             self.function_on_failure.to_step(),
-        #         ],
-        #     )
-        # # concurrency: WorkflowConcurrencyOpts | None = None
-        # if self.function_concurrency is not None:
-        #     self.function_concurrency.set_namespace(self.function_namespace)
-        #     concurrency = WorkflowConcurrencyOpts(
-        #         action=self.function_concurrency.get_action_name(),
-        #         max_runs=self.function_concurrency.max_runs,
-        #         limit_strategy=self.function_concurrency.limit_strategy,
-        #     )
-
+        # handle concurrency function and on failure function
         workflow = CreateWorkflowVersionOpts(
             name=self._hatchet.name,
             kind=WorkflowKind.DURABLE if options.durable else WorkflowKind.FUNCTION,
@@ -153,25 +165,35 @@ class HatchetCallableBase(Generic[P, T]):
         )
         return step
 
-    def _ctx_to_trigger_proto(
+    def _encode_context(
         self, ctx: "context.BackgroundContext"
-    ) -> Optional[TriggerWorkflowOptions]:
+    ) -> TriggerWorkflowRequest:
+        trigger = TriggerWorkflowRequest(
+            additional_metadata=json.dumps(
+                {"_hatchet_background_context": ctx.asdict()}
+            ),
+        )
+
         # We are not in any valid Hatchet context. This means we're the root.
         if ctx.current is None:
-            return None
+            return trigger
 
         # Otherwise, the current context is the parent.
         assert ctx.current is not None
-        trigger: TriggerWorkflowOptions = {
-            "parent_id": ctx.current.workflow_run_id,
-            "parent_step_run_id": ctx.current.step_run_id,
-            "additional_metadata": json.dumps(
-                {"_hatchet_background_context": ctx.asdict()}
-            ),
-        }
+        trigger.parent_id = ctx.current.workflow_run_id
+        trigger.parent_step_run_id = ctx.current.step_run_id
+        trigger.child_index = 0  # TODO: what is this
         return trigger
 
-    def _ctx_from_action(
+    def _to_trigger_proto(
+        self, ctx: "context.BackgroundContext", inputs: _CallableInput
+    ) -> TriggerWorkflowRequest:
+        # NOTE: serialization error will be raised as TypeError
+        req = TriggerWorkflowRequest(name=self._hatchet.name, input=inputs.dumps())
+        req.MergeFrom(self._encode_context(ctx))
+        return req
+
+    def _decode_context(
         self, action: AssignedAction
     ) -> Optional["context.BackgroundContext"]:
         if not action.additional_metadata:
@@ -187,7 +209,9 @@ class HatchetCallableBase(Generic[P, T]):
         if "_hatchet_background_context" not in d:
             return None
 
-        ctx = context.BackgroundContext.fromdict(d["_hatchet_background_context"])
+        ctx = context.BackgroundContext.fromdict(
+            client=self._hatchet.client, data=d["_hatchet_background_context"]
+        )
         ctx.client = self._hatchet.client
         return ctx
 
@@ -212,38 +236,43 @@ class HatchetCallableBase(Generic[P, T]):
 class HatchetCallable(HatchetCallableBase[P, T]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
         with context.EnsureContext(self._hatchet.client) as ctx:
-            trigger = self._ctx_to_trigger_proto(ctx)
-            input = {"args": args, "kwargs": kwargs}
+            trigger = self._to_trigger_proto(
+                ctx, inputs=_CallableInput(args=args, kwargs=kwargs)
+            )
+            logger.trace("triggering\n{}", MessageToDict(trigger))
             client = self._hatchet.client
-
-            logger.trace("triggering {}", trigger)
-            ref = client.admin.trigger_workflow(
-                self._hatchet.name, input=input, options=trigger
+            ref = client.admin.client.TriggerWorkflow(
+                trigger, metadata=self._hatchet.client._grpc_metadata()
             )
             logger.trace("runid: {}", ref)
+
+            # TODO: wait for the run.
             return None
 
     def _run(self, action: AssignedAction) -> str:
         assert action.actionId == self._hatchet.action
-        logger.trace("invoking {}", action.actionId)
-        input = json.loads(action.actionPayload)["input"]
-
+        logger.trace("invoking:\n{}", MessageToDict(action))
         with context.EnsureContext(self._hatchet.client) as ctx:
             assert ctx.current is None
 
-        ctx: Optional["context.BackgroundContext"] = self._ctx_from_action(action)
-        if ctx is None:
-            info = context.RunInfo(
+        parent: Optional["context.BackgroundContext"] = self._decode_context(action)
+        with context.WithParentContext(parent) as ctx:
+            assert ctx.current is None
+            ctx.current = context.RunInfo(
                 workflow_run_id=action.workflowRunId,
                 step_run_id=action.stepRunId,
                 name=self._hatchet.name,
                 namespace=self._hatchet.namespace,
             )
-            ctx = context.BackgroundContext(
-                client=self._hatchet.client, current=info, root=info
-            )
-        with context.WithParentContext(ctx):
-            return self._hatchet.func(*input["args"], **input["kwargs"])
+            if ctx.root is None:
+                ctx.root = ctx.current.copy()
+            with context.WithContext(ctx):
+                inputs = _CallableInput.loads(action.actionPayload)
+                output = _CallableOutput(
+                    output=self._hatchet.func(*inputs.args, **inputs.kwargs)
+                )
+                logger.trace("output:\n{}", output)
+                return output.dumps()
 
 
 class HatchetAwaitable(HatchetCallableBase[P, Awaitable[T]]):

@@ -4,12 +4,12 @@ import os
 import threading
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass, asdict
-from typing import Optional, Dict
-
-import hatchet_sdk.v2.hatchet as hatchet
+from dataclasses import asdict, dataclass
+from typing import Dict, Optional
 
 from loguru import logger
+
+import hatchet_sdk.v2.hatchet as hatchet
 
 
 def _loopid() -> Optional[int]:
@@ -64,14 +64,14 @@ class BackgroundContext:
         return ret
 
     @staticmethod
-    def fromdict(d: Dict) -> "BackgroundContext":
-        ctx = BackgroundContext()
-        if "current" in d:
-            ctx.current = RunInfo(**(d["current"]))
-        if "root" in d:
-            ctx.root = RunInfo(**(d["root"]))
-        if "parent" in d:
-            ctx.parent = RunInfo(**(d["parent"]))
+    def fromdict(client: "hatchet.Hatchet", data: Dict) -> "BackgroundContext":
+        ctx = BackgroundContext(client=client)
+        if "current" in data:
+            ctx.current = RunInfo(**(data["current"]))
+        if "root" in data:
+            ctx.root = RunInfo(**(data["root"]))
+        if "parent" in data:
+            ctx.parent = RunInfo(**(data["parent"]))
         return ctx
 
     def copy(self):
@@ -124,14 +124,25 @@ def WithContext(ctx: BackgroundContext):
 
 @contextmanager
 def WithParentContext(ctx: BackgroundContext):
+    """Use the given context as the parent. 
+    
+    Note that this is to be used in the following pattern:
+    
+        with WithParentContext(parent) as ctx:
+          ctx.current = ...
+          with WithContext(ctx):
+            # code in the correct context here
+    
+    """
     prev = BackgroundContext.get()
 
+    # NOTE: ctx.current could be None, which means there's no parent.
+
     child = ctx.copy()
-    child.parent = ctx.current.copy()
+    child.parent = ctx.current.copy() if ctx.current else None
     child.current = None
     BackgroundContext.set(child)
     try:
-        logger.trace("using context:\n{}", child)
         yield child
     finally:
         BackgroundContext.set(prev)

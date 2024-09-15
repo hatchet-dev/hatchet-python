@@ -169,7 +169,9 @@ class _EventListner:
     async def on_step_event(self, e: StepActionEvent):
         # TODO: need retry
         logger.trace("emit step action:\n{}", MessageToDict(e))
-        resp = await asyncio.to_thread(self.stub.SendStepActionEvent, e, metadata=self.worker._grpc_metadata())
+        resp = await asyncio.to_thread(
+            self.stub.SendStepActionEvent, e, metadata=self.worker._grpc_metadata()
+        )
         logger.trace(resp)
 
     @property
