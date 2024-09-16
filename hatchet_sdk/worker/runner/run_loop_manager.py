@@ -1,4 +1,5 @@
 import asyncio
+import concurrent
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import Queue
@@ -8,6 +9,7 @@ from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import get_active_event_loop
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
@@ -50,7 +52,7 @@ class WorkerActionRunLoopManager:
 
     async def _async_start(self, retry_count=1):
         logger.info("starting runner...")
-        self.loop = asyncio.get_running_loop()
+        self.loop = get_active_event_loop()
         k = self.loop.create_task(self._start_action_loop())
 
     def cleanup(self):
@@ -84,7 +86,8 @@ class WorkerActionRunLoopManager:
         logger.debug("action runner loop stopped")
 
     async def _get_action(self):
-        return await self.loop.run_in_executor(None, self.action_queue.get)
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            return await self.loop.run_in_executor(pool, self.action_queue.get)
 
     async def exit_gracefully(self):
         if self.killing:
@@ -93,11 +96,6 @@ class WorkerActionRunLoopManager:
         logger.info("gracefully exiting runner...")
 
         self.cleanup()
-
-        # Wait for 1 second to allow last calls to flush. These are calls which have been
-        # added to the event loop as callbacks to tasks, so we're not aware of them in the
-        # task list.
-        await asyncio.sleep(1)
 
     def exit_forcefully(self):
         logger.info("forcefully exiting runner...")

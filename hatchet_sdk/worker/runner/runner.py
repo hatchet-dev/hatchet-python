@@ -33,6 +33,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import create_new_event_loop, get_active_event_loop
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 
@@ -284,19 +285,24 @@ class Runner:
             ) or asyncio.iscoroutinefunction(action_func):
                 return await action_func(context)
             else:
-                pfunc = functools.partial(
-                    # we must copy the context vars to the new thread, as only asyncio natively supports
-                    # contextvars
-                    copy_context_vars,
-                    contextvars.copy_context().items(),
-                    self.thread_action_func,
-                    context,
-                    action_func,
-                    action,
-                )
 
-                loop = asyncio.get_event_loop()
-                res = await loop.run_in_executor(self.thread_pool, pfunc)
+                def thread_action_wrapper():
+                    loop = create_new_event_loop()
+                    asyncio.set_event_loop(loop)
+
+                    wr.set(context.workflow_run_id())
+                    sr.set(context.step_run_id)
+
+                    try:
+                        result = action_func(context)
+                        return result
+                    finally:
+                        loop.close()
+
+                loop = get_active_event_loop()
+                res = await loop.run_in_executor(
+                    self.thread_pool, thread_action_wrapper
+                )
 
                 return res
         except Exception as e:
@@ -363,7 +369,7 @@ class Runner:
                 )
             )
 
-            loop = asyncio.get_event_loop()
+            loop = get_active_event_loop()
             task = loop.create_task(
                 self.async_wrapped_action_func(
                     context, action_func, action, action.step_run_id
@@ -406,7 +412,7 @@ class Runner:
                 )
             )
 
-            loop = asyncio.get_event_loop()
+            loop = get_active_event_loop()
             task = loop.create_task(
                 self.async_wrapped_action_func(
                     context, action_func, action, action.get_group_key_run_id

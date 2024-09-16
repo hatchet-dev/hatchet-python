@@ -4,6 +4,7 @@ import signal
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
+from multiprocessing.synchronize import Event as EventClass
 from typing import Any, List, Mapping, Optional
 
 import grpc
@@ -21,6 +22,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import get_active_event_loop, patch_exception_handler
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 ACTION_EVENT_RETRY_COUNT = 5
@@ -70,12 +72,11 @@ class WorkerActionListenerProcess:
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
-        loop = asyncio.get_event_loop()
+        loop = get_active_event_loop()
+        patch_exception_handler(loop)
         loop.add_signal_handler(signal.SIGINT, noop_handler)
         loop.add_signal_handler(signal.SIGTERM, noop_handler)
-        loop.add_signal_handler(
-            signal.SIGQUIT, lambda: asyncio.create_task(self.exit_gracefully())
-        )
+        loop.add_signal_handler(signal.SIGQUIT, noop_handler)
 
     async def start(self, retry_attempt=0):
         if retry_attempt > 5:
@@ -111,7 +112,7 @@ class WorkerActionListenerProcess:
 
     # TODO move event methods to separate class
     async def _get_event(self):
-        loop = asyncio.get_running_loop()
+        loop = get_active_event_loop()
         return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_event_send_loop(self):
@@ -119,7 +120,7 @@ class WorkerActionListenerProcess:
             event: ActionEvent = await self._get_event()
             if event == STOP_LOOP:
                 logger.debug("stopping event send loop...")
-                break
+                return
 
             logger.debug(f"tx: event: {event.action.action_id}/{event.type}")
             asyncio.create_task(self.send_event(event))
@@ -248,6 +249,7 @@ class WorkerActionListenerProcess:
             self.listener.cleanup()
 
         self.event_queue.put(STOP_LOOP)
+        await asyncio.sleep(1)
 
     async def exit_gracefully(self, skip_unregister=False):
         if self.killing:
@@ -267,12 +269,13 @@ class WorkerActionListenerProcess:
         logger.debug("forcefully closing listener...")
 
 
-def worker_action_listener_process(*args, **kwargs):
+def worker_action_listener_process(stop_event: EventClass, *args, **kwargs):
     async def run():
         process = WorkerActionListenerProcess(*args, **kwargs)
         await process.start()
         # Keep the process running
-        while not process.killing:
+        while not stop_event.is_set():
             await asyncio.sleep(0.1)
+        await process.exit_gracefully()
 
     asyncio.run(run())

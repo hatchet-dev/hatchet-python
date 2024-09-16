@@ -3,9 +3,17 @@ import multiprocessing
 import os
 import signal
 import sys
+from concurrent.futures import (
+    CancelledError,
+    Future,
+    ProcessPoolExecutor,
+    ThreadPoolExecutor,
+)
 from dataclasses import dataclass, field
 from enum import Enum
-from multiprocessing import Process, Queue
+from multiprocessing.context import SpawnContext
+from multiprocessing.managers import SyncManager
+from multiprocessing.synchronize import Event as EventClass
 from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.client import Client, new_client_raw
@@ -13,6 +21,7 @@ from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import create_new_event_loop, get_active_event_loop
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
@@ -47,15 +56,20 @@ class Worker:
     killing: bool = field(init=False, default=False)
     _status: WorkerStatus = field(init=False, default=WorkerStatus.INITIALIZED)
 
-    action_listener_process: Process = field(init=False, default=None)
+    action_listener_process: Future = field(init=False, default=None)
+    action_listener_process_cancel_signal: EventClass = field(init=False, default=None)
     action_listener_health_check: asyncio.Task = field(init=False, default=None)
     action_runner: WorkerActionRunLoopManager = field(init=False, default=None)
-    ctx = multiprocessing.get_context("spawn")
 
-    action_queue: Queue = field(init=False, default_factory=ctx.Queue)
-    event_queue: Queue = field(init=False, default_factory=ctx.Queue)
+    ctx: SpawnContext = field(init=False, default=None)
+    manager: SyncManager = field(init=False, default=None)
+    executor: ProcessPoolExecutor = field(init=False, default=None)
+
+    action_queue: multiprocessing.Queue = field(init=False, default=None)
+    event_queue: multiprocessing.Queue = field(init=False, default=None)
 
     loop: asyncio.AbstractEventLoop = field(init=False, default=None)
+    created_loop: bool = field(init=False, default=False)
 
     def __post_init__(self):
         self.client = new_client_raw(self.config, self.debug)
@@ -102,29 +116,28 @@ class Worker:
     def status(self) -> WorkerStatus:
         return self._status
 
-    def setup_loop(self, loop: asyncio.AbstractEventLoop = None):
-        try:
-            loop = loop or asyncio.get_running_loop()
-            self.loop = loop
+    def setup_loop(self, loop: asyncio.AbstractEventLoop | None = None):
+        loop = loop or get_active_event_loop(should_raise=False)
+        if loop:
             created_loop = False
             logger.debug("using existing event loop")
+            self.loop = loop
             return created_loop
-        except RuntimeError:
-            self.loop = asyncio.new_event_loop()
+        else:
+            self.loop = create_new_event_loop()
             logger.debug("creating new event loop")
             asyncio.set_event_loop(self.loop)
             created_loop = True
             return created_loop
 
     def start(self, options: WorkerStartOptions = WorkerStartOptions()):
-        created_loop = self.setup_loop(options.loop)
+        self.created_loop = self.setup_loop(options.loop)
         f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
         # start the loop and wait until its closed
-        if created_loop:
+        if self.created_loop:
             self.loop.run_forever()
-
             if self.handle_kill:
                 sys.exit(0)
         return f
@@ -136,6 +149,7 @@ class Worker:
         _from_start: bool = False,
     ):
         main_pid = os.getpid()
+        print("foo")
         logger.info("------------------------------------------")
         logger.info("STARTING HATCHET...")
         logger.debug(f"worker runtime starting on PID: {main_pid}")
@@ -151,6 +165,13 @@ class Worker:
         # non blocking setup
         if not _from_start:
             self.setup_loop(options.loop)
+
+        self.ctx = multiprocessing.get_context("spawn")
+        self.manager = self.ctx.Manager()
+        self.action_listener_process_cancel_signal = self.manager.Event()
+        self.action_queue = self.manager.Queue()
+        self.event_queue = self.manager.Queue()
+        self.executor = ProcessPoolExecutor(mp_context=self.ctx)
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()
@@ -180,46 +201,42 @@ class Worker:
     def _start_listener(self):
         action_list = [str(key) for key in self.action_registry.keys()]
         try:
-            process = self.ctx.Process(
-                target=worker_action_listener_process,
-                args=(
-                    self.name,
-                    action_list,
-                    self.max_runs,
-                    self.config,
-                    self.action_queue,
-                    self.event_queue,
-                    self.handle_kill,
-                    self.client.debug,
-                    self.labels,
-                ),
+            future = self.executor.submit(
+                worker_action_listener_process,
+                self.action_listener_process_cancel_signal,
+                self.name,
+                action_list,
+                self.max_runs,
+                self.config,
+                self.action_queue,
+                self.event_queue,
+                self.handle_kill,
+                self.client.debug,
+                self.labels,
             )
-            process.start()
-            logger.debug(f"action listener starting on PID: {process.pid}")
+            logger.debug(f"action listener started: {future}")
 
-            return process
+            return future
         except Exception as e:
             logger.error(f"failed to start action listener: {e}")
             sys.exit(1)
 
     async def _check_listener_health(self):
         logger.debug("starting action listener health check...")
-        try:
-            while not self.killing:
-                if (
-                    self.action_listener_process is None
-                    or not self.action_listener_process.is_alive()
-                ):
-                    logger.debug("child action listener process killed...")
-                    self._status = WorkerStatus.UNHEALTHY
-                    if not self.killing:
-                        self.loop.create_task(self.exit_gracefully())
-                    break
-                else:
-                    self._status = WorkerStatus.HEALTHY
-                await asyncio.sleep(1)
-        except Exception as e:
-            logger.error(f"error checking listener health: {e}")
+        while not self.killing:
+            if (
+                self.action_listener_process is None
+                or self.action_listener_process.done()
+            ):
+                print(self.action_listener_process.exception())
+                logger.debug("child action listener process killed...")
+                self._status = WorkerStatus.UNHEALTHY
+                if not self.killing:
+                    self.loop.create_task(self.exit_gracefully())
+                break
+            else:
+                self._status = WorkerStatus.HEALTHY
+            await asyncio.sleep(1)
 
     ## Cleanup methods
     def _setup_signal_handlers(self):
@@ -236,7 +253,7 @@ class Worker:
         logger.info("received SIGQUIT...")
         self.exit_forcefully()
 
-    async def close(self):
+    def close(self):
         logger.info(f"closing worker '{self.name}'...")
         self.killing = True
         # self.action_queue.close()
@@ -245,7 +262,13 @@ class Worker:
         if self.action_runner is not None:
             self.action_runner.cleanup()
 
-        await self.action_listener_health_check
+    def close_listener(self):
+        if self.action_listener_process and not self.action_listener_process.done():
+            self.action_listener_process_cancel_signal.set()
+            try:
+                self.action_listener_process.result(timeout=60)
+            except CancelledError:
+                logger.debug("action listener error on close")
 
     async def exit_gracefully(self):
         logger.debug(f"gracefully stopping worker: {self.name}")
@@ -256,15 +279,17 @@ class Worker:
         self.killing = True
 
         await self.action_runner.wait_for_tasks()
+        with ThreadPoolExecutor() as pool:
+            await self.loop.run_in_executor(pool, self.close_listener)
+        await asyncio.sleep(1)
+        self.executor.shutdown(wait=False)
 
         await self.action_runner.exit_gracefully()
 
-        if self.action_listener_process and self.action_listener_process.is_alive():
-            self.action_listener_process.kill()
+        self.close()
+        await self.action_listener_health_check
 
-        await self.close()
-
-        if self.loop:
+        if self.created_loop:
             self.loop.stop()
 
         logger.info("👋")
@@ -273,16 +298,13 @@ class Worker:
         self.killing = True
 
         logger.debug(f"forcefully stopping worker: {self.name}")
-
-        self.close()
-
-        if self.action_listener_process:
-            self.action_listener_process.kill()  # Forcefully kill the process
-
+        self.executor.shutdown(wait=False)
+        if self.created_loop:
+            self.loop.stop()
         logger.info("👋")
-        sys.exit(
-            1
-        )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
+
+        # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
+        sys.exit(1)
 
 
 def register_on_worker(callable: HatchetCallable, worker: Worker):

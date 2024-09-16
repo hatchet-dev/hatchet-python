@@ -22,6 +22,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.aio_utils import create_new_event_loop, get_active_event_loop
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 from ...loader import ClientConfig
@@ -184,15 +185,10 @@ class ActionListener:
     async def start_heartbeater(self):
         if self.heartbeat_task is not None:
             return
-
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError as e:
-            if str(e).startswith("There is no current event loop in thread"):
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            else:
-                raise e
+        loop = get_active_event_loop(should_raise=False)
+        if not loop:
+            loop = create_new_event_loop()
+            asyncio.set_event_loop(loop)
         self.heartbeat_task = loop.create_task(self.heartbeat())
 
     def __aiter__(self):
