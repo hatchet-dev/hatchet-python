@@ -5,6 +5,7 @@ from hatchet_sdk.clients.dispatcher.action_listener import (
     ActionListener,
     GetActionListenerRequest,
 )
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionEventResponse,
@@ -21,7 +22,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     WorkerRegisterResponse,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
-from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 
 from ...loader import ClientConfig
 from ...metadata import get_metadata
