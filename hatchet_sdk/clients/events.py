@@ -1,6 +1,7 @@
+import asyncio
 import datetime
 import json
-from typing import Dict, TypedDict
+from typing import Dict, Optional, TypedDict
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -44,9 +45,15 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
+    async def async_push(
+        self, event_key, payload, options: Optional[PushEventOptions] = None
+    ) -> Event:
+        return await asyncio.to_thread(
+            self.push, event_key=event_key, payload=payload, options=options
+        )
+
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-
         namespace = self.namespace
 
         if (
