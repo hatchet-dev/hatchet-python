@@ -85,8 +85,6 @@ T = TypeVar("T")
 #         stream = self.request(stub)
 
 
-
-
 class WorkflowRunEventListener:
 
     @dataclass
