@@ -21,6 +21,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     WorkerRegisterResponse,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 
 from ...loader import ClientConfig
 from ...metadata import get_metadata
@@ -62,6 +63,7 @@ class DispatcherClient:
 
         return ActionListener(self.config, response.workerId)
 
+    @tenacity_retry
     async def send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
     ):
