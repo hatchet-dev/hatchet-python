@@ -5,7 +5,7 @@ import logging
 import pytest
 from loguru import logger
 
-from hatchet_sdk.v2.runtime.utils import interuptable
+from hatchet_sdk.v2.runtime.utils import InterruptableAgen, ForeverAgen
 
 
 logging.getLogger("asyncio").setLevel(logging.DEBUG)
@@ -27,7 +27,9 @@ async def consumer(agen):
 async def test_interruptable_agen():
 
     q = asyncio.Queue()
-    agen = interuptable(producer(), q, 1)
+
+    agen_factory = lambda: InterruptableAgen(producer(), q, 1)
+    agen = ForeverAgen(agen_factory)
 
     async with asyncio.TaskGroup() as tg:
         tg.create_task(consumer(agen))

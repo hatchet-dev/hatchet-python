@@ -18,6 +18,11 @@ import hatchet_sdk.contracts.dispatcher_pb2
 import hatchet_sdk.v2.hatchet as hatchet
 import hatchet_sdk.v2.runtime.connection as connection
 import hatchet_sdk.v2.runtime.messages as messages
+import hatchet_sdk.v2.runtime.listeners as listeners
+import hatchet_sdk.v2.runtime.context as context
+import hatchet_sdk.v2.runtime.utils as utils
+
+
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
@@ -28,6 +33,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
+    StepRunResult,
     WorkerUnsubscribeRequest,
     WorkflowRunEvent,
 )
@@ -108,104 +114,40 @@ class _HeartBeater:
 T = TypeVar("T")
 
 
-class _ActionListner:
-    def __init__(self, worker: "Worker"):
-        logger.debug("init action listener")
-        self.worker = worker
-        self.attempt = 0
-        self.stub = DispatcherStub(
-            connection.new_conn(self.worker.client.config, aio=True)
-        )
-
-    async def listen(self):
-        resp = None
-        try:
-            # It will exit the loop when asyncio.CancelledError is
-            # raised by calling task.cancel() from outside.
-            while True:
-                proto = WorkerListenRequest(workerId=self.worker.id)
-                try:
-                    resp = self.stub.ListenV2(
-                        proto, metadata=self.worker._grpc_metadata()
-                    )
-                    logger.trace("connection established")
-                    async for event in resp:
-                        msg = messages.Message(_action=MessageToDict(event))
-                        logger.trace("assigned action:\n{}", msg)
-                        await asyncio.to_thread(self.queue.put, msg)
-
-                    resp = None
-                    self.attempt += 1
-                except grpc.aio.AioRpcError as e:
-                    logger.warning(e)
-
-                # TODO: expotential backoff, retry limit, etc
-
-        finally:
-            if resp:
-                resp.cancel()
-            logger.debug("bye")
-
-    @property
-    def queue(self):
-        return self.worker.outbound
-
-
-class _EventListner:
-    def __init__(self, worker: "Worker"):
-        logger.debug("init event listener")
-        self.worker = worker
-        self.stub = DispatcherStub(connection.new_conn(self.worker.client.config))
-
-    async def listen(self):
-        try:
-            while True:
-                msg: "messages.Message" = await asyncio.to_thread(self.queue.get)
-                logger.trace("event:\n{}", msg)
-                assert msg.kind in [messages.MessageKind.STEP_EVENT]
-                match msg.kind:
-                    case messages.MessageKind.STEP_EVENT:
-                        await self.on_step_event(msg.step_event)
-                    case _:
-                        raise NotImplementedError(msg.kind)
-        finally:
-            logger.debug("bye")
-
-    async def on_step_event(self, e: StepActionEvent):
-        # TODO: need retry
-        logger.trace("emit step action:\n{}", MessageToDict(e))
-        resp = await asyncio.to_thread(
-            self.stub.SendStepActionEvent, e, metadata=self.worker._grpc_metadata()
-        )
-        logger.trace(resp)
-
-    @property
-    def queue(self):
-        return self.worker.inbound
-
-
 class Worker:
     def __init__(
         self,
         client: "hatchet.Hatchet",
-        inbound: mp.Queue,
-        outbound: mp.Queue,
+        inbound: mp.Queue["messages.Message"],
+        outbound: mp.Queue["messages.Message"],
         options: WorkerOptions,
     ):
         logger.debug("init worker")
+        context.ensure_background_context(client=client)
+
         self.options = options
         self.client = client
-        self.status = WorkerStatus.UNKNOWN
         self.id: Optional[str] = None
         self.inbound = inbound
         self.outbound = outbound
+        self.status = WorkerStatus.UNKNOWN
 
         self._heartbeater = _HeartBeater(self)
         self._heartbeater_task: Optional[asyncio.Task] = None
-        self._action_listener = _ActionListner(self)
-        self._action_listener_task: Optional[asyncio.Task] = None
-        self._event_listner = _EventListner(self)
+
+        self._action_listener_interrupt: asyncio.Queue[StopAsyncIteration] = (
+            asyncio.Queue()
+        )
+        self._action_listener = listeners.AssignedActionListner(
+            worker=self, interrupt=self._action_listener_interrupt
+        )
+
+        self._event_listner_q: asyncio.Queue["messages.Message"] = asyncio.Queue()
+        self._event_listner = listeners.StepEventListener(self._event_listner_q)
         self._event_listner_task: Optional[asyncio.Task] = None
+
+        self._workflow_run_event_listener = listeners.WorkflowRunEventListener()
+        self._workflow_run_event_listener_task: Optional[asyncio.Task] = None
 
     def _register(self) -> str:
         req = self._to_register_proto()
@@ -213,7 +155,7 @@ class Worker:
         resp: WorkerRegisterResponse = self.client.dispatcher.client.Register(
             req,
             timeout=30,
-            metadata=self._grpc_metadata(),
+            metadata=context.ensure_background_context().client._grpc_metadata(),
         )
         logger.debug("worker registered:\n{}", MessageToDict(resp))
         self.id = resp.workerId
@@ -229,14 +171,43 @@ class Worker:
         self._event_listner_task = asyncio.create_task(
             self._event_listner.listen(), name="event_listener"
         )
-        self._action_listener_task = asyncio.create_task(
-            self._action_listener.listen(), name="action_listener"
-        )
         while True:
             if self._heartbeater.last_heartbeat > 0:
                 logger.debug("worker started: {}", self.id)
                 return
             await asyncio.sleep(0.1)
+
+    async def server_message_loop(self):
+        async for action in self._action_listener.listen():
+            if isinstance(action, StopAsyncIteration):
+                # interrupted, ignore
+                pass
+            elif isinstance(action, grpc.aio.AioRpcError):
+                # errored out, ignored
+                pass
+            else:
+                assert isinstance(action, AssignedAction)
+                msg = messages.Message(_action=MessageToDict(action))
+                await asyncio.to_thread(self.outbound.put, msg)
+
+    async def client_message_loop(self):
+        async for msg in utils.QueueAgen(self.inbound):
+            match msg.kind:
+                case messages.MessageKind.STEP_EVENT:
+                    await asyncio.to_thread(self._event_listner_q.put, msg)
+                case messages.MessageKind.SUBSCRIBE_TO_WORKFLOW_RUN:
+                    await self.on_workflow_run_subscription(msg)
+
+    async def on_workflow_run_subscription(self, msg: "messages.Message"):
+        def callback(f: asyncio.Future[WorkflowRunEvent]):
+            self.outbound.put(
+                messages.Message(_workflow_run_event=MessageToDict(f.result()))
+            )
+
+        sub = await self._workflow_run_event_listener.subscribe(
+            msg.subscribe_to_workflow_run.workflowRunId
+        )
+        sub.future.add_done_callback(callback)
 
     async def shutdown(self):
         logger.trace("shutting down worker {}", self.id)
@@ -248,9 +219,6 @@ class Worker:
             await tg
         except asyncio.CancelledError:
             logger.debug("bye")
-
-    def _grpc_metadata(self):
-        return [("authorization", f"bearer {self.client.config.token}")]
 
     def _to_register_proto(self) -> WorkerRegisterRequest:
         options = self.options

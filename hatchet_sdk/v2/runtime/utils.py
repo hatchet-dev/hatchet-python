@@ -1,7 +1,11 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 import asyncio
+import tenacity
+import grpc
+import multiprocessing as mp
+import multiprocessing.queues as mpq
+from typing import TypeVar, Tuple
 
-from typing import TypeVar
 
 from contextlib import suppress
 
@@ -42,3 +46,34 @@ async def InterruptableAgen(
     producer_task.cancel()
     with suppress(asyncio.CancelledError):
         await producer_task
+
+
+async def ForeverAgen(
+    agen_factory: Callable[[], AsyncGenerator[T]], exceptions: Tuple[Exception]
+) -> AsyncGenerator[T | Exception]:
+    """Run a async generator forever until its cancelled.
+
+    Args:
+        agen_factory: a callable that returns the async generator of type T
+        exceptions: a tuple of exceptions that should be suppressed and yielded.
+            Exceptions not listed here will be re-raised.
+
+    Returns:
+        An async generator that yields T or yields the suppressed exceptions.
+    """
+    while True:
+        agen = agen_factory()
+        try:
+            async for item in agen:
+                yield item
+        except Exception as e:
+            if isinstance(e, exceptions):
+                yield e
+            else:
+                raise
+
+
+async def QueueAgen(inbound: asyncio.Queue[T] | mpq.Queue[T]) -> AsyncGenerator[T]:
+    while True:
+        item = await asyncio.to_thread(inbound.get)
+        yield item

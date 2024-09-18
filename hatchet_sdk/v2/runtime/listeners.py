@@ -4,11 +4,11 @@ import multiprocessing as mp
 import os
 import threading
 import time
-from collections.abc import AsyncGenerator, Generator, AsyncIterator
+from collections.abc import AsyncGenerator, Generator, AsyncIterator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Generic, List, Optional, Set, TypeVar, Literal
+from typing import Dict, Generic, List, Optional, Set, TypeVar, Literal, Any
 from contextlib import suppress
 
 
@@ -23,6 +23,7 @@ import hatchet_sdk.v2.runtime.connection as connection
 import hatchet_sdk.v2.runtime.context as context
 import hatchet_sdk.v2.runtime.messages as messages
 import hatchet_sdk.v2.runtime.worker as worker
+import hatchet_sdk.v2.runtime.utils as utils
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
@@ -44,61 +45,19 @@ from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 T = TypeVar("T")
 
 
-# class _GrpcAioListnerBase(Generic[T]):
-#     def __init__(self):
-#         self.attempt = 0
-#         self.interrupt = False
-
-#     def channel(self):
-#         raise NotImplementedError()
-
-#     def stub(self, channel):
-#         raise NotImplementedError
-
-#     def request(self, stub):
-#         raise NotImplementedError()
-
-#     def interrupt(self):
-#         self.interrupt = True
-
-#     async def listen(self) -> AsyncGenerator[T]:
-#         while True:
-#             stub: DispatcherStub = self.stub()
-#             stub.ListenV2
-
-#             stream = None
-#             try:
-#                 stream = self.request(stub)
-#                 async for msg in stream:
-#                     if not self.interrupt:
-#                         yield msg
-#             except grpc.aio.AioRpcError as e:
-#                 logger.warning(e)
-#             finally:
-#                 if stream is not None:
-#                     stream.cancel()
-#                 self.interrupt = False
-#                 self.attempt += 1
-
-#     def read(self) -> Generator[T]:
-#         stub = self.stub()
-#         stream = self.request(stub)
-
-
 class WorkflowRunEventListener:
 
     @dataclass
     class Sub:
         id: str
         run_id: str
-        future: asyncio.Future[List[StepRunResult]]
+        future: asyncio.Future[WorkflowRunEvent]
 
         def __hash__(self):
             return hash(self.id)
 
     def __init__(self):
-        logger.trace("init workflow run event listener")
-        self._token = context.ensure_background_context(None).client.config.token
+        logger.debug("init workflow run event listener")
 
         # the set of active subscriptions
         self._subs: Set[WorkflowRunEventListener.Sub] = set()
@@ -114,47 +73,40 @@ class WorkflowRunEventListener:
         # must be created inside the loop
         self._q_request: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
-        self._events_agen: AsyncGenerator[WorkflowRunEvent] = self._events()
-
     async def loop(self):
-        await self._events_agen.aclose()
-        async for event in self._events_agen:
-            assert (
-                event.eventType == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FINISHED
-            )
-            self._by_run_id[event.workflowRunId].future.set_result(list(event.results))
-            self._unsubscribe(event.workflowRunId)
+        try:
+            agen = utils.ForeverAgen(self._events, exceptions=(grpc.aio.AioRpcError,))
+            async for event in agen:
+                if isinstance(event, grpc.aio.AioRpcError):
+                    logger.trace("encountered error, retrying: {}", event)
+                    await self._resubscribe()
+
+                else:
+                    self._by_run_id[event.workflowRunId].future.set_result(event)
+                    self._unsubscribe(event.workflowRunId)
+        finally:
+            logger.debug("bye")
 
     async def _events(self) -> AsyncGenerator[WorkflowRunEvent]:
 
         # keep trying until asyncio.CancelledError is raised into this coroutine
         # TODO: handle retry, backoff, etc.
         stub = DispatcherStub(channel=connection.ensure_background_achannel())
-        agen = self._requests()
-        while True:
-            try:
-                stream: grpc.aio.StreamStreamCall[
-                    SubscribeToWorkflowRunsRequest, WorkflowRunEvent
-                ] = stub.SubscribeToWorkflowRuns(
-                    agen,
-                    metadata=[("authorization", f"bearer {self._token}")],
-                )
-                logger.trace("stream established")
-                async for event in stream:
-                    logger.trace(event)
-                    yield event
+        requests = utils.QueueAgen(self._q_request)
 
-            except grpc.aio.AioRpcError as e:
-                logger.exception(e)
-                pass
-
-            await self._resubscribe()
-
-    async def _requests(self) -> AsyncGenerator[SubscribeToWorkflowRunsRequest]:
-        while True:
-            req = await self._q_request.get()
-            logger.trace("client streaming req to server: {}", MessageToDict(req))
-            yield req
+        stream: grpc.aio.StreamStreamCall[
+            SubscribeToWorkflowRunsRequest, WorkflowRunEvent
+        ] = stub.SubscribeToWorkflowRuns(
+            requests,
+            metadata=context.ensure_background_context().client._grpc_metadata(),
+        )
+        logger.trace("stream established")
+        async for event in stream:
+            logger.trace("received workflow run event:\n{}", event)
+            assert (
+                event.eventType == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FINISHED
+            )
+            yield event
 
     async def _resubscribe(self):
         logger.trace("re-subscribing all")
@@ -178,9 +130,81 @@ class WorkflowRunEventListener:
         return sub
 
     def _unsubscribe(self, run_id: str):
-        logger.trace("unsubscribing {}", run_id)
+        logger.trace("unsubscribing: {}", run_id)
         sub = self._by_run_id.get(run_id, None)
         if sub is None:
             return
         self._subs.remove(sub)
         del self._by_run_id[run_id]
+
+
+class AssignedActionListner:
+    def __init__(self, worker: "worker.Worker", interrupt: asyncio.Queue[T]):
+        logger.debug("init action listener")
+        self._worker = worker
+        self._interrupt = interrupt
+
+    async def _action_stream(self) -> AsyncGenerator[AssignedAction]:
+        stub = DispatcherStub(connection.ensure_background_achannel())
+        proto = WorkerListenRequest(workerId=self._worker.id)
+        resp = stub.ListenV2(
+            proto,
+            metadata=context.ensure_background_context(None).client._grpc_metadata(),
+        )
+        logger.trace("connection established")
+        async for action in resp:
+            logger.trace("assigned action:\n{}", MessageToDict(action))
+            yield action
+
+    async def listen(self) -> AsyncGenerator[AssignedAction | grpc.aio.AioRpcError | T]:
+        try:
+
+            def agen_factory():
+                return utils.InterruptableAgen(
+                    self._action_stream(), interrupt=self._interrupt, timeout=5
+                )
+
+            agen = utils.ForeverAgen(agen_factory, exceptions=(grpc.aio.AioRpcError,))
+            async for action in agen:
+                if isinstance(action, grpc.aio.AioRpcError):
+                    logger.trace("encountered error, retrying: {}", action)
+                    yield action
+                else:
+                    yield action
+        finally:
+            logger.debug("bye")
+
+
+class StepEventListener:
+    def __init__(self, inbound: asyncio.Queue["messages.Message"]):
+        logger.debug("init event listener")
+        self.inbound = inbound
+        self.stub = DispatcherStub(connection.ensure_background_channel())
+
+    async def _message_stream(self) -> AsyncGenerator["messages.Message"]:
+        while True:
+            msg: "messages.Message" = await asyncio.to_thread(self.inbound.get)
+            assert msg.kind in [messages.MessageKind.STEP_EVENT]
+            logger.trace("event:\n{}", msg)
+            yield msg
+
+    async def listen(self):
+        try:
+            async for msg in self._message_stream():
+                match msg.kind:
+                    case messages.MessageKind.STEP_EVENT:
+                        await self.on_step_event(msg.step_event)
+                    case _:
+                        raise NotImplementedError(msg.kind)
+        finally:
+            logger.debug("bye")
+
+    async def on_step_event(self, e: StepActionEvent):
+        # TODO: need retry
+        logger.trace("emit step action:\n{}", MessageToDict(e))
+        resp = await asyncio.to_thread(
+            self.stub.SendStepActionEvent,
+            e,
+            metadata=context.ensure_background_context().client._grpc_metadata(),
+        )
+        logger.trace(resp)
