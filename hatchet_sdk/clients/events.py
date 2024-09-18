@@ -54,7 +54,6 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-
         namespace = self.namespace
 
         if (

@@ -13,6 +13,7 @@ async def test_event_push(hatchet: Hatchet):
 
     assert e.eventId is not None
 
+
 @pytest.mark.asyncio(scope="session")
 async def test_async_event_push(hatchet: Hatchet):
     e = await hatchet.event.async_push("user:create", {"test": "test"})
