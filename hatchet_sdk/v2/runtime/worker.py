@@ -7,7 +7,7 @@ from collections.abc import AsyncGenerator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, Generic, List, Optional, Set, TypeVar
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -23,11 +23,13 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     AssignedAction,
     HeartbeatRequest,
     StepActionEvent,
+    SubscribeToWorkflowRunsRequest,
     WorkerLabels,
     WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
     WorkerUnsubscribeRequest,
+    WorkflowRunEvent,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 
@@ -101,6 +103,56 @@ class _HeartBeater:
 
         finally:
             logger.debug("bye")
+
+
+T = TypeVar("T")
+
+
+class _GrpcAioListnerBase(Generic[T]):
+    def __init__(self):
+        self.attempt = 0
+        self.interrupt = False
+
+    def stub(self):
+        raise NotImplementedError()
+
+    def request(self, stub):
+        raise NotImplementedError()
+
+    def interrupt(self):
+        self.interrupt = True
+
+    async def listen(self) -> AsyncGenerator[T]:
+        while True:
+            stub = self.stub()
+            stream = None
+            try:
+                stream = self.request(stub)
+                async for msg in stream:
+                    if not self.interrupt:
+                        yield msg
+            except grpc.aio.AioRpcError as e:
+                logger.warning(e)
+            finally:
+                if stream is not None:
+                    stream.cancel()
+                self.interrupt = False
+                self.attempt += 1
+
+
+class _WorkflowRunListner(_GrpcAioListnerBase[WorkflowRunEvent]):
+    def __init__(self, worker: "Worker", run_id: str, stub: DispatcherStub):
+        super().__init__()
+        self._worker = worker
+        self._run_id = run_id
+        self._stub = stub
+
+    def stub(self) -> DispatcherStub:
+        return self._stub
+
+    def request(self, stub: DispatcherStub):
+        req = SubscribeToWorkflowRunsRequest(workflowRunId=self._run_id)
+        return stub.SubscribeToWorkflowRuns(req, metadata=self._worker._grpc_metadata())
 
 
 class _ActionListner:

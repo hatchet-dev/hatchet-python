@@ -120,7 +120,7 @@ class Worker:
 
     def start(self, options: WorkerStartOptions = WorkerStartOptions()):
         created_loop = self.setup_loop(options.loop)
-        f = asyncio.run_coroutine_threadsafe(
+        self.result_f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
         # start the loop and wait until its closed
@@ -129,7 +129,7 @@ class Worker:
 
             if self.handle_kill:
                 sys.exit(0)
-        return f
+        return self.result_f
 
     ## Start methods
     async def async_start(
@@ -265,7 +265,7 @@ class Worker:
             self.action_listener_process.kill()
 
         await self.close()
-
+        # self.result_f.set_result("")
         if self.loop:
             self.loop.stop()
 

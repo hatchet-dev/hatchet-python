@@ -16,6 +16,8 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     GroupKeyActionEventType,
     StepActionEvent,
     StepActionEventType,
+    SubscribeToWorkflowRunsRequest,
+    WorkflowRunEvent,
     WorkflowRunEventType,
 )
 from hatchet_sdk.worker.action_listener_process import Action
@@ -25,6 +27,8 @@ class MessageKind(Enum):
     UNKNOWN = 0
     ACTION = 1
     STEP_EVENT = 2
+    WORKFLOW_RUN_EVENT = 3
+    SUBSCRIBE_TO_WORKFLOW_RUN = 4
 
 
 @dataclass
@@ -33,6 +37,8 @@ class Message:
 
     _action: Optional[Dict] = None
     _step_event: Optional[Dict] = None
+    _workflow_run_event: Optional[Dict] = None
+    _subscribe_to_workflow_run: Optional[Dict] = None
 
     @property
     def kind(self) -> MessageKind:
@@ -40,6 +46,10 @@ class Message:
             return MessageKind.ACTION
         if self._step_event is not None:
             return MessageKind.STEP_EVENT
+        if self._workflow_run_event is not None:
+            return MessageKind.WORKFLOW_RUN_EVENT
+        if self._subscribe_to_workflow_run is not None:
+            return MessageKind.SUBSCRIBE_TO_WORKFLOW_RUN
         return MessageKind.UNKNOWN
 
     @property
@@ -53,3 +63,15 @@ class Message:
         assert self._step_event is not None
         ret = StepActionEvent()
         return ParseDict(self._step_event, ret)
+
+    @property
+    def workflow_run_event(self) -> WorkflowRunEvent:
+        assert self._workflow_run_event is not None
+        ret = WorkflowRunEvent()
+        return ParseDict(self._workflow_run_event, ret)
+
+    @property
+    def subscribe_to_workflow_run(self) -> SubscribeToWorkflowRunsRequest:
+        assert self._subscribe_to_workflow_run is not None
+        ret = SubscribeToWorkflowRunsRequest()
+        return ParseDict(self._subscribe_to_workflow_run, ret)

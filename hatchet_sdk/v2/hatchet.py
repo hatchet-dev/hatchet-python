@@ -2,7 +2,8 @@ import asyncio
 import functools
 import inspect
 import multiprocessing as mp
-from typing import Callable, Dict, Tuple, List, Optional, ParamSpec, TypeVar
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Dict, List, Optional, ParamSpec, Tuple, TypeVar
 
 import hatchet_sdk.hatchet as v1
 import hatchet_sdk.v2.callable as callable
@@ -12,6 +13,7 @@ import hatchet_sdk.v2.runtime.registry as registry
 import hatchet_sdk.v2.runtime.runner as runner
 import hatchet_sdk.v2.runtime.runtime as runtime
 import hatchet_sdk.v2.runtime.worker as worker
+import hatchet_sdk.v2.runtime.context as context
 
 # import hatchet_sdk.runtime.registry as hatchet_registry
 # import hatchet_sdk.v2.callable as v2_callable
@@ -28,6 +30,7 @@ import hatchet_sdk.v2.runtime.worker as worker
 
 # from ..worker import Worker
 
+
 T = TypeVar("T")
 P = ParamSpec("P")
 
@@ -37,6 +40,7 @@ class Hatchet:
         self,
         config: config.ClientConfig = config.ClientConfig(),
         debug=False,
+        executor: ThreadPoolExecutor = ThreadPoolExecutor(),
     ):
         # ensure a event loop is created before gRPC
         try:
@@ -49,6 +53,9 @@ class Hatchet:
             defaults=config,
             debug=debug,
         )
+        self.executor = executor
+
+        context.ensure_background_context(client=self)
 
     @property
     def admin(self):

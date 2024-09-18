@@ -3,7 +3,8 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
+from concurrent.futures.thread import ThreadPoolExecutor
 
 # from contextvars import ContextVar, copy_context
 from dataclasses import asdict, dataclass, field
@@ -14,6 +15,7 @@ from typing import (
     Dict,
     ForwardRef,
     Generic,
+    Iterable,
     List,
     Literal,
     Optional,
@@ -35,7 +37,12 @@ import hatchet_sdk.v2.runtime.context as context
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.context import Context
 from hatchet_sdk.context.context import BaseContext, Context, ContextAioImpl
-from hatchet_sdk.contracts.dispatcher_pb2 import AssignedAction
+from hatchet_sdk.contracts.dispatcher_pb2 import (
+    AssignedAction,
+    SubscribeToWorkflowRunsRequest,
+    WorkflowRunEvent,
+    WorkflowRunEventType,
+)
 from hatchet_sdk.contracts.workflows_pb2 import (
     CreateStepRateLimit,
     CreateWorkflowJobOpts,
@@ -44,6 +51,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     DesiredWorkerLabels,
     StickyStrategy,
     TriggerWorkflowRequest,
+    TriggerWorkflowResponse,
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
@@ -125,7 +133,7 @@ class HatchetCallableBase(Generic[P, T]):
 
     def _to_workflow_proto(self) -> CreateWorkflowVersionOpts:
         options = self._hatchet.options
-        # handle concurrency function and on failure function
+        # TODO: handle concurrency function and on failure function
         workflow = CreateWorkflowVersionOpts(
             name=self._hatchet.name,
             kind=WorkflowKind.DURABLE if options.durable else WorkflowKind.FUNCTION,
@@ -228,7 +236,7 @@ class HatchetCallableBase(Generic[P, T]):
     #     }
     #     return data
 
-    def _run(self, ctx: BaseContext) -> str:
+    def _run(self, action: AssignedAction) -> str:
         # actually invokes the function, and serializing the output
         raise NotImplementedError
 
@@ -241,13 +249,34 @@ class HatchetCallable(HatchetCallableBase[P, T]):
             )
             logger.trace("triggering\n{}", MessageToDict(trigger))
             client = self._hatchet.client
-            ref = client.admin.client.TriggerWorkflow(
+            ref: TriggerWorkflowResponse = client.admin.client.TriggerWorkflow(
                 trigger, metadata=self._hatchet.client._grpc_metadata()
             )
             logger.trace("runid: {}", ref)
+            # TODO: look into timeouts for Future.result()
+            return self._hatchet.client.executor.submit(
+                self._result, ref.workflow_run_id
+            ).result()
 
-            # TODO: wait for the run.
-            return None
+    def _result(self, run_id: str) -> Optional[WorkflowRunEvent]:
+        # NOTE: SubscribeToWorkflowRuns is a stream-stream RPC.
+        request = SubscribeToWorkflowRunsRequest(workflowRunId=run_id)
+        stream: Iterator[WorkflowRunEvent] = (
+            self._hatchet.client.dispatcher.client.SubscribeToWorkflowRuns(
+                iter((request,)),
+                metadata=self._hatchet.client._grpc_metadata(),
+            )
+        )
+        logger.debug(list(stream))
+        for event in stream:
+            logger.trace("workflow run events:\n{}", MessageToDict(event))
+            if event.eventType == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FINISHED:
+                return event.results
+            else:
+                logger.warning(
+                    "unexpected workflow run events:\n{}", MessageToDict(event)
+                )
+                break
 
     def _run(self, action: AssignedAction) -> str:
         assert action.actionId == self._hatchet.action

@@ -21,22 +21,25 @@ logging.getLogger("asyncio").setLevel(logging.DEBUG)
 
 @hatchet.function()
 def foo():
-    print("Foo")
-    bar("from foo")
+    print("entering Foo")
+    print("result from bar: ", bar("from foo"))
     return "foo"
 
 
 @hatchet.function()
 def bar(x):
-    print(x)
+    print("entering Bar")
+    print("arguments for bar: ", x)
     return "bar"
 
 
 @pytest.mark.asyncio
 async def test_worker():
-    worker = hatchet.worker(WorkerOptions(name="worker", actions=["default:foo", "default:bar"]))
+    worker = hatchet.worker(
+        WorkerOptions(name="worker", actions=["default:foo", "default:bar"])
+    )
     await worker.start()
-    foo()
+    print("result from foo: ", foo())
     await asyncio.sleep(10)
     await worker.shutdown()
     return None

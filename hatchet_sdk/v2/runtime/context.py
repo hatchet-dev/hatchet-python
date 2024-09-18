@@ -94,21 +94,15 @@ class BackgroundContext:
         return _ctxvar.get()
 
 
-@contextmanager
-def EnsureContext(client: Optional["hatchet.Hatchet"] = None):
-    cleanup = False
+def ensure_background_context(
+    client: Optional["hatchet.Hatchet"] = None,
+) -> BackgroundContext:
     ctx = BackgroundContext.get()
     if ctx is None:
-        cleanup = True
         assert client is not None
         ctx = BackgroundContext(client=client)
         BackgroundContext.set(ctx)
-    try:
-        logger.trace("using context:\n{}", ctx)
-        yield ctx
-    finally:
-        if cleanup:
-            BackgroundContext.set(None)
+    return ctx
 
 
 @contextmanager
@@ -124,15 +118,15 @@ def WithContext(ctx: BackgroundContext):
 
 @contextmanager
 def WithParentContext(ctx: BackgroundContext):
-    """Use the given context as the parent. 
-    
+    """Use the given context as the parent.
+
     Note that this is to be used in the following pattern:
-    
+
         with WithParentContext(parent) as ctx:
           ctx.current = ...
           with WithContext(ctx):
             # code in the correct context here
-    
+
     """
     prev = BackgroundContext.get()
 
