@@ -10,11 +10,14 @@ load_dotenv()
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow()
+@hatchet.workflow(name="MyWorkflow")
 class MyWorkflow:
     @hatchet.step()
-    def step1(self, context: Context):
-        pass
+    async def step(self, context: Context):
+        print("started")
+        await asyncio.sleep(10)
+        print("finished")
+        return {"result": "returned result"}
 
 
 async def async_main():
@@ -24,6 +27,9 @@ async def async_main():
         worker = hatchet.worker("test-worker", max_runs=1)
         worker.register_workflow(workflow)
         worker.start()
+
+        ref = hatchet.admin.run_workflow("MyWorkflow", input={})
+        print(await ref.result())
         while True:
             await asyncio.sleep(1)
     finally:
