@@ -169,23 +169,23 @@ class Worker(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in slots (list)
         _items = []
         if self.slots:
-            for _item in self.slots:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_slots in self.slots:
+                if _item_slots:
+                    _items.append(_item_slots.to_dict())
             _dict["slots"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in recent_step_runs (list)
         _items = []
         if self.recent_step_runs:
-            for _item in self.recent_step_runs:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_recent_step_runs in self.recent_step_runs:
+                if _item_recent_step_runs:
+                    _items.append(_item_recent_step_runs.to_dict())
             _dict["recentStepRuns"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in labels (list)
         _items = []
         if self.labels:
-            for _item in self.labels:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_labels in self.labels:
+                if _item_labels:
+                    _items.append(_item_labels.to_dict())
             _dict["labels"] = _items
         return _dict
 
