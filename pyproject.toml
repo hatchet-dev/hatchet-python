@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.36.23-a0"
+version = "0.37.0"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -66,3 +66,4 @@ rate_limit = "examples.rate_limit.worker:main"
 simple = "examples.simple.worker:main"
 timeout = "examples.timeout.worker:main"
 blocked = "examples.blocked_async.worker:main"
+existing_loop = "examples.worker_existing_loop.worker:main"

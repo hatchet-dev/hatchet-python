@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import List, Optional
 
@@ -243,10 +244,12 @@ class Hatchet:
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
     ):
+        loop = asyncio.get_running_loop()
         return Worker(
             name=name,
             max_runs=max_runs,
             labels=labels,
             config=self._client.config,
             debug=self._client.debug,
+            owned_loop=loop is None,
         )
