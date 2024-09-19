@@ -56,11 +56,13 @@ class Worker:
     event_queue: Queue = field(init=False, default_factory=ctx.Queue)
 
     loop: asyncio.AbstractEventLoop = field(init=False, default=None)
+    owned_loop: bool = True
 
     def __post_init__(self):
         self.client = new_client_raw(self.config, self.debug)
         self.name = self.client.config.namespace + self.name
-        self._setup_signal_handlers()
+        if self.owned_loop:
+            self._setup_signal_handlers()
 
     def register_function(self, action: str, func: HatchetCallable):
         self.action_registry[action] = func
@@ -117,12 +119,12 @@ class Worker:
             return created_loop
 
     def start(self, options: WorkerStartOptions = WorkerStartOptions()):
-        created_loop = self.setup_loop(options.loop)
+        self.owned_loop = self.setup_loop(options.loop)
         f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
         # start the loop and wait until its closed
-        if created_loop:
+        if self.owned_loop:
             self.loop.run_forever()
 
             if self.handle_kill:
@@ -263,8 +265,7 @@ class Worker:
             self.action_listener_process.kill()
 
         await self.close()
-
-        if self.loop:
+        if self.loop and self.owned_loop:
             self.loop.stop()
 
         logger.info("👋")
