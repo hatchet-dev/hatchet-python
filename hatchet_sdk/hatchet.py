@@ -115,10 +115,6 @@ def on_failure_step(
 
     return inner
 
-
-@deprecated(
-    "Concurrency methods are deprecated and will be removed in a future version. Use ConcurrencyExpression on the workflow decorator instead. [0.37.0]",
-)
 def concurrency(
     name: str = "",
     max_runs: int = 1,
