@@ -47,6 +47,9 @@ known_third_party = [
   "pyyaml",
   "urllib3",
 ]
+skip = [
+  "hatchet_sdk/contracts",
+]
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"

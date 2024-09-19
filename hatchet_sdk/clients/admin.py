@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Unio
 
 import grpc
 from google.protobuf import timestamp_pb2
+from loguru import logger
 
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.clients.run_event_listener import new_listener
@@ -382,13 +383,9 @@ class AdminClient(AdminClientBase):
             if namespace != "" and not workflow_name.startswith(self.namespace):
                 workflow_name = f"{namespace}{workflow_name}"
 
-            request = self._prepare_workflow_request(workflow_name, input, options)
-            resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
-                request,
-                metadata=get_metadata(self.token),
-            )
+            id = self.trigger_workflow(workflow_name, input, options)
             return WorkflowRunRef(
-                workflow_run_id=resp.workflow_run_id,
+                workflow_run_id=id,
                 workflow_listener=self.pooled_workflow_listener,
                 workflow_run_event_listener=self.listener_client,
             )
@@ -397,6 +394,21 @@ class AdminClient(AdminClientBase):
                 raise DedupeViolationErr(e.details())
 
             raise ValueError(f"gRPC error: {e}")
+
+    def trigger_workflow(
+        self,
+        workflow_name: str,
+        input,
+        options: TriggerWorkflowOptions = None,
+    ) -> str:
+        request = self._prepare_workflow_request(workflow_name, input, options)
+
+        logger.trace("trigger proto: {}", request)
+        resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
+            request,
+            metadata=get_metadata(self.token),
+        )
+        return resp.workflow_run_id
 
     def run(
         self,
