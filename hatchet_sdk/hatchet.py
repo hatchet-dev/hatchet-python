@@ -244,7 +244,11 @@ class Hatchet:
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
     ):
-        loop = asyncio.get_running_loop()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
         return Worker(
             name=name,
             max_runs=max_runs,
