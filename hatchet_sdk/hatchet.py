@@ -134,7 +134,7 @@ class HatchetRest:
     Main client for interacting with the Hatchet API.
 
     This class provides access to various client interfaces and utility methods
-    for working with Hatchet via the REST API, 
+    for working with Hatchet via the REST API,
 
     Attributes:
         rest (RestApi): Interface for REST API operations.

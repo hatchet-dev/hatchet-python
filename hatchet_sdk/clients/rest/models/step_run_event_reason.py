@@ -42,6 +42,8 @@ class StepRunEventReason(str, Enum):
     TIMED_OUT = "TIMED_OUT"
     SLOT_RELEASED = "SLOT_RELEASED"
     RETRIED_BY_USER = "RETRIED_BY_USER"
+    WORKFLOW_RUN_GROUP_KEY_SUCCEEDED = "WORKFLOW_RUN_GROUP_KEY_SUCCEEDED"
+    WORKFLOW_RUN_GROUP_KEY_FAILED = "WORKFLOW_RUN_GROUP_KEY_FAILED"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

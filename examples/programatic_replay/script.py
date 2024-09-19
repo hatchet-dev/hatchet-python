@@ -1,9 +1,11 @@
 from dotenv import load_dotenv
+
 from hatchet_sdk.hatchet import HatchetRest
 
 load_dotenv()
 
 hatchet = HatchetRest()
+
 
 def main():
     # Look up the failed workflow runs

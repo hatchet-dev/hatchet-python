@@ -19,6 +19,9 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.rest.api_response import ApiResponse
+from hatchet_sdk.clients.rest.models.event_update_cancel200_response import (
+    EventUpdateCancel200Response,
+)
 from hatchet_sdk.clients.rest.models.replay_workflow_runs_request import (
     ReplayWorkflowRunsRequest,
 )
@@ -29,9 +32,6 @@ from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
     TriggerWorkflowRunRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
-from hatchet_sdk.clients.rest.models.workflow_run_cancel200_response import (
-    WorkflowRunCancel200Response,
-)
 from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
@@ -74,7 +74,7 @@ class WorkflowRunApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowRunCancel200Response:
+    ) -> EventUpdateCancel200Response:
         """Cancel workflow runs
 
         Cancel a batch of workflow runs
@@ -115,7 +115,7 @@ class WorkflowRunApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "WorkflowRunCancel200Response",
+            "200": "EventUpdateCancel200Response",
             "400": "APIErrors",
             "403": "APIErrors",
         }
@@ -152,7 +152,7 @@ class WorkflowRunApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowRunCancel200Response]:
+    ) -> ApiResponse[EventUpdateCancel200Response]:
         """Cancel workflow runs
 
         Cancel a batch of workflow runs
@@ -193,7 +193,7 @@ class WorkflowRunApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "WorkflowRunCancel200Response",
+            "200": "EventUpdateCancel200Response",
             "400": "APIErrors",
             "403": "APIErrors",
         }
@@ -271,7 +271,7 @@ class WorkflowRunApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "WorkflowRunCancel200Response",
+            "200": "EventUpdateCancel200Response",
             "400": "APIErrors",
             "403": "APIErrors",
         }
@@ -679,6 +679,12 @@ class WorkflowRunApi:
     @validate_call
     async def workflow_run_get_input(
         self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         workflow_run: Annotated[
             str,
             Field(
@@ -704,6 +710,8 @@ class WorkflowRunApi:
 
         Get the input for a workflow run.
 
+        :param tenant: The tenant id (required)
+        :type tenant: str
         :param workflow_run: The workflow run id (required)
         :type workflow_run: str
         :param _request_timeout: timeout setting for this request. If one
@@ -729,6 +737,7 @@ class WorkflowRunApi:
         """  # noqa: E501
 
         _param = self._workflow_run_get_input_serialize(
+            tenant=tenant,
             workflow_run=workflow_run,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -754,6 +763,12 @@ class WorkflowRunApi:
     @validate_call
     async def workflow_run_get_input_with_http_info(
         self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         workflow_run: Annotated[
             str,
             Field(
@@ -779,6 +794,8 @@ class WorkflowRunApi:
 
         Get the input for a workflow run.
 
+        :param tenant: The tenant id (required)
+        :type tenant: str
         :param workflow_run: The workflow run id (required)
         :type workflow_run: str
         :param _request_timeout: timeout setting for this request. If one
@@ -804,6 +821,7 @@ class WorkflowRunApi:
         """  # noqa: E501
 
         _param = self._workflow_run_get_input_serialize(
+            tenant=tenant,
             workflow_run=workflow_run,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -829,6 +847,12 @@ class WorkflowRunApi:
     @validate_call
     async def workflow_run_get_input_without_preload_content(
         self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         workflow_run: Annotated[
             str,
             Field(
@@ -854,6 +878,8 @@ class WorkflowRunApi:
 
         Get the input for a workflow run.
 
+        :param tenant: The tenant id (required)
+        :type tenant: str
         :param workflow_run: The workflow run id (required)
         :type workflow_run: str
         :param _request_timeout: timeout setting for this request. If one
@@ -879,6 +905,7 @@ class WorkflowRunApi:
         """  # noqa: E501
 
         _param = self._workflow_run_get_input_serialize(
+            tenant=tenant,
             workflow_run=workflow_run,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -899,6 +926,7 @@ class WorkflowRunApi:
 
     def _workflow_run_get_input_serialize(
         self,
+        tenant,
         workflow_run,
         _request_auth,
         _content_type,
@@ -918,6 +946,8 @@ class WorkflowRunApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
+        if tenant is not None:
+            _path_params["tenant"] = tenant
         if workflow_run is not None:
             _path_params["workflow-run"] = workflow_run
         # process the query parameters
@@ -935,7 +965,7 @@ class WorkflowRunApi:
 
         return self.api_client.param_serialize(
             method="GET",
-            resource_path="/api/v1/workflow-runs/{workflow-run}/input",
+            resource_path="/api/v1/tenants/{tenant}/workflow-runs/{workflow-run}/input",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

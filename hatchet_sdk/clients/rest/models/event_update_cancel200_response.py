@@ -19,31 +19,19 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing_extensions import Self
-
-from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Annotated, Self
 
 
-class WorkflowRunTriggeredBy(BaseModel):
+class EventUpdateCancel200Response(BaseModel):
     """
-    WorkflowRunTriggeredBy
+    EventUpdateCancel200Response
     """  # noqa: E501
 
-    metadata: APIResourceMeta
-    parent_workflow_run_id: Optional[StrictStr] = Field(
-        default=None, alias="parentWorkflowRunId"
-    )
-    event_id: Optional[StrictStr] = Field(default=None, alias="eventId")
-    cron_parent_id: Optional[StrictStr] = Field(default=None, alias="cronParentId")
-    cron_schedule: Optional[StrictStr] = Field(default=None, alias="cronSchedule")
-    __properties: ClassVar[List[str]] = [
-        "metadata",
-        "parentWorkflowRunId",
-        "eventId",
-        "cronParentId",
-        "cronSchedule",
-    ]
+    workflow_run_ids: Optional[
+        List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]
+    ] = Field(default=None, alias="workflowRunIds")
+    __properties: ClassVar[List[str]] = ["workflowRunIds"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -62,7 +50,7 @@ class WorkflowRunTriggeredBy(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of WorkflowRunTriggeredBy from a JSON string"""
+        """Create an instance of EventUpdateCancel200Response from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -82,31 +70,16 @@ class WorkflowRunTriggeredBy(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of metadata
-        if self.metadata:
-            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of WorkflowRunTriggeredBy from a dict"""
+        """Create an instance of EventUpdateCancel200Response from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "metadata": (
-                    APIResourceMeta.from_dict(obj["metadata"])
-                    if obj.get("metadata") is not None
-                    else None
-                ),
-                "parentWorkflowRunId": obj.get("parentWorkflowRunId"),
-                "eventId": obj.get("eventId"),
-                "cronParentId": obj.get("cronParentId"),
-                "cronSchedule": obj.get("cronSchedule"),
-            }
-        )
+        _obj = cls.model_validate({"workflowRunIds": obj.get("workflowRunIds")})
         return _obj
