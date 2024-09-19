@@ -17,7 +17,7 @@ from hatchet_sdk.rate_limit import RateLimit
 from .client import Client, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
-from .workflow import WorkflowMeta
+from .workflow import ConcurrencyExpression, WorkflowMeta
 
 
 def workflow(
@@ -29,6 +29,7 @@ def workflow(
     schedule_timeout: str = "5m",
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
+    concurrency: ConcurrencyExpression | None = None,
 ):
     on_events = on_events or []
     on_crons = on_crons or []
@@ -42,7 +43,7 @@ def workflow(
         cls.schedule_timeout = schedule_timeout
         cls.sticky = sticky
         cls.default_priority = default_priority
-
+        cls.concurrency_expression = concurrency
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
@@ -114,6 +115,9 @@ def on_failure_step(
     return inner
 
 
+@deprecated(
+    "Concurrency methods are deprecated and will be removed in a future version. Use ConcurrencyExpression on the workflow decorator instead. [0.37.0]",
+)
 def concurrency(
     name: str = "",
     max_runs: int = 1,
