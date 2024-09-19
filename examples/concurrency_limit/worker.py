@@ -4,18 +4,23 @@ from dotenv import load_dotenv
 
 from hatchet_sdk import Hatchet
 from hatchet_sdk.context import Context
+from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy
+from hatchet_sdk.workflow import ConcurrencyExpression
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["concurrency-test"])
+@hatchet.workflow(
+    on_events=["concurrency-test"],
+    concurrency=ConcurrencyExpression(
+        expression="input.group",
+        max_runs=5,
+        limit_strategy=ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
+    ),
+)
 class ConcurrencyDemoWorkflow:
-
-    @hatchet.concurrency(max_runs=5)
-    def concurrency(self, context) -> str:
-        return "concurrency-key"
 
     @hatchet.step()
     def step1(self, context: Context):
