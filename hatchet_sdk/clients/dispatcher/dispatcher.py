@@ -5,6 +5,7 @@ from hatchet_sdk.clients.dispatcher.action_listener import (
     ActionListener,
     GetActionListenerRequest,
 )
+from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionEventResponse,
@@ -62,6 +63,7 @@ class DispatcherClient:
 
         return ActionListener(self.config, response.workerId)
 
+    @tenacity_retry
     async def send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
     ):
