@@ -6,4 +6,4 @@ load_dotenv()
 
 client = new_client()
 
-client.event.push("concurrency-test", {"test": "test"})
+client.event.push("concurrency-test", {"group": "test"})

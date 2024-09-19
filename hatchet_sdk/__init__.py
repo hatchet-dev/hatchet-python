@@ -139,6 +139,7 @@ from .context.context import Context
 from .context.worker_context import WorkerContext
 from .hatchet import ClientConfig, Hatchet, concurrency, on_failure_step, step, workflow
 from .worker import Worker, WorkerStartOptions, WorkerStatus
+from .workflow import ConcurrencyExpression
 
 __all__ = [
     "AcceptInviteRequest",
@@ -242,4 +243,5 @@ __all__ = [
     "Worker",
     "WorkerStartOptions",
     "WorkerStatus",
+    "ConcurrencyExpression",
 ]

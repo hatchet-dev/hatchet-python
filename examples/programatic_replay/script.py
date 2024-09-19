@@ -1,24 +1,17 @@
-import asyncio
-
 from dotenv import load_dotenv
 
-from hatchet_sdk import Hatchet, WorkflowRunStatus
+from hatchet_sdk.hatchet import HatchetRest
 
 load_dotenv()
 
-hatchet = Hatchet(debug=True)
+hatchet = HatchetRest()
 
 
-async def main():
+def main():
     # Look up the failed workflow runs
-    failed = await hatchet.rest.aio.workflow_run_list(
-        statuses=[WorkflowRunStatus.FAILED], limit=3
-    )
-    # Replay the failed workflow runs
-    retried = await hatchet.rest.aio.workflow_run_replay(
-        workflow_run_ids=[run.metadata.id for run in failed.rows]
-    )
+    run = hatchet.rest.workflow_run_create("19528945-17df-48df-88f4-72d650ce7cae", {})
+    print(run)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

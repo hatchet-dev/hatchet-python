@@ -2,22 +2,23 @@ import time
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import ConcurrencyLimitStrategy, Context, Hatchet
+from hatchet_sdk import ConcurrencyExpression, ConcurrencyLimitStrategy, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["concurrency-test"], schedule_timeout="10m")
+@hatchet.workflow(
+    on_events=["concurrency-test"],
+    schedule_timeout="10m",
+    concurrency=ConcurrencyExpression(
+        expression="input.group",
+        max_runs=1,
+        limit_strategy=ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN,
+    ),
+)
 class ConcurrencyDemoWorkflowRR:
-    @hatchet.concurrency(
-        max_runs=1, limit_strategy=ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN
-    )
-    def concurrency(self, context: Context) -> str:
-        input = context.workflow_input()
-        print(input)
-        return f'group-{input["group"]}'
 
     @hatchet.step()
     def step1(self, context):

@@ -1,6 +1,7 @@
 import functools
 from typing import Any, Callable, List, Tuple
 
+from hatchet_sdk import ConcurrencyLimitStrategy
 from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
@@ -11,6 +12,27 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 from hatchet_sdk.logger import logger
 
 stepsType = List[Tuple[str, Callable[..., Any]]]
+
+
+class ConcurrencyExpression:
+    """
+    Defines concurrency limits for a workflow using a CEL expression.
+
+    Args:
+        expression (str): CEL expression to determine concurrency grouping. (i.e. "input.user_id")
+        max_runs (int): Maximum number of concurrent workflow runs.
+        limit_strategy (ConcurrencyLimitStrategy): Strategy for handling limit violations.
+
+    Example:
+        ConcurrencyExpression("input.user_id", 5, ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS)
+    """
+
+    def __init__(
+        self, expression: str, max_runs: int, limit_strategy: ConcurrencyLimitStrategy
+    ):
+        self.expression = expression
+        self.max_runs = max_runs
+        self.limit_strategy = limit_strategy
 
 
 class WorkflowMeta(type):
@@ -104,6 +126,18 @@ class WorkflowMeta(type):
                     action=serviceName + ":" + action[0],
                     max_runs=action[1]._concurrency_max_runs,
                     limit_strategy=action[1]._concurrency_limit_strategy,
+                )
+
+            if self.concurrency_expression:
+                concurrency = WorkflowConcurrencyOpts(
+                    expression=self.concurrency_expression.expression,
+                    max_runs=self.concurrency_expression.max_runs,
+                    limit_strategy=self.concurrency_expression.limit_strategy,
+                )
+
+            if len(concurrencyActions) > 0 and self.concurrency_expression:
+                raise ValueError(
+                    "Error: Both concurrencyActions and concurrency_expression are defined. Please use only one concurrency configuration method."
                 )
 
             on_failure_job: List[CreateWorkflowJobOpts] | None = None

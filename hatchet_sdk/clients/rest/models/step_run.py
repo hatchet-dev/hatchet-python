@@ -39,7 +39,9 @@ class StepRun(BaseModel):
     job_run: Optional[JobRun] = Field(default=None, alias="jobRun")
     step_id: StrictStr = Field(alias="stepId")
     step: Optional[Step] = None
-    children: Optional[List[StrictStr]] = None
+    child_workflows_count: Optional[StrictInt] = Field(
+        default=None, alias="childWorkflowsCount"
+    )
     parents: Optional[List[StrictStr]] = None
     child_workflow_runs: Optional[List[StrictStr]] = Field(
         default=None, alias="childWorkflowRuns"
@@ -72,7 +74,7 @@ class StepRun(BaseModel):
         "jobRun",
         "stepId",
         "step",
-        "children",
+        "childWorkflowsCount",
         "parents",
         "childWorkflowRuns",
         "workerId",
@@ -169,7 +171,7 @@ class StepRun(BaseModel):
                 "step": (
                     Step.from_dict(obj["step"]) if obj.get("step") is not None else None
                 ),
-                "children": obj.get("children"),
+                "childWorkflowsCount": obj.get("childWorkflowsCount"),
                 "parents": obj.get("parents"),
                 "childWorkflowRuns": obj.get("childWorkflowRuns"),
                 "workerId": obj.get("workerId"),

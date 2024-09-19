@@ -38,6 +38,14 @@ class WorkflowVersion(BaseModel):
     version: StrictStr = Field(description="The version of the workflow.")
     order: StrictInt
     workflow_id: StrictStr = Field(alias="workflowId")
+    sticky: Optional[StrictStr] = Field(
+        default=None, description="The sticky strategy of the workflow."
+    )
+    default_priority: Optional[StrictInt] = Field(
+        default=None,
+        description="The default priority of the workflow.",
+        alias="defaultPriority",
+    )
     workflow: Optional[Workflow] = None
     concurrency: Optional[WorkflowConcurrency] = None
     triggers: Optional[WorkflowTriggers] = None
@@ -48,6 +56,8 @@ class WorkflowVersion(BaseModel):
         "version",
         "order",
         "workflowId",
+        "sticky",
+        "defaultPriority",
         "workflow",
         "concurrency",
         "triggers",
@@ -132,6 +142,8 @@ class WorkflowVersion(BaseModel):
                 "version": obj.get("version"),
                 "order": obj.get("order"),
                 "workflowId": obj.get("workflowId"),
+                "sticky": obj.get("sticky"),
+                "defaultPriority": obj.get("defaultPriority"),
                 "workflow": (
                     Workflow.from_dict(obj["workflow"])
                     if obj.get("workflow") is not None

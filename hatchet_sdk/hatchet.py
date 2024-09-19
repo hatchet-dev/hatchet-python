@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from typing_extensions import deprecated
 
+from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
@@ -11,13 +12,13 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     StickyStrategy,
 )
 from hatchet_sdk.labels import DesiredWorkerLabel
-from hatchet_sdk.loader import ClientConfig
+from hatchet_sdk.loader import ClientConfig, ConfigLoader
 from hatchet_sdk.rate_limit import RateLimit
 
 from .client import Client, new_client, new_client_raw
 from .logger import logger
 from .worker import Worker
-from .workflow import WorkflowMeta
+from .workflow import ConcurrencyExpression, WorkflowMeta
 
 
 def workflow(
@@ -29,6 +30,7 @@ def workflow(
     schedule_timeout: str = "5m",
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
+    concurrency: ConcurrencyExpression | None = None,
 ):
     on_events = on_events or []
     on_crons = on_crons or []
@@ -42,7 +44,7 @@ def workflow(
         cls.schedule_timeout = schedule_timeout
         cls.sticky = sticky
         cls.default_priority = default_priority
-
+        cls.concurrency_expression = concurrency
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
@@ -127,6 +129,24 @@ def concurrency(
         return func
 
     return inner
+
+
+class HatchetRest:
+    """
+    Main client for interacting with the Hatchet API.
+
+    This class provides access to various client interfaces and utility methods
+    for working with Hatchet via the REST API,
+
+    Attributes:
+        rest (RestApi): Interface for REST API operations.
+    """
+
+    rest: RestApi
+
+    def __init__(self, config: ClientConfig = ClientConfig()):
+        config: ClientConfig = ConfigLoader(".").load_client_config(config)
+        self.rest = RestApi(config.server_url, config.token, config.tenant_id)
 
 
 class Hatchet:
