@@ -1,5 +1,6 @@
-from __future__ import annotations
+# from __future__ import annotations
 
+import threading
 import asyncio
 import inspect
 import json
@@ -34,11 +35,14 @@ from pydantic.json_schema import SkipJsonSchema
 
 import hatchet_sdk.v2.hatchet as v2hatchet
 import hatchet_sdk.v2.runtime.context as context
+import hatchet_sdk.v2.runtime.messages as messages
+import hatchet_sdk.v2.runtime.utils as utils
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.context import Context
 from hatchet_sdk.context.context import BaseContext, Context, ContextAioImpl
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     AssignedAction,
+    StepRunResult,
     SubscribeToWorkflowRunsRequest,
     WorkflowRunEvent,
     WorkflowRunEventType,
@@ -115,8 +119,8 @@ class HatchetCallableBase(Generic[P, T]):
         func: Callable[P, T],
         name: str,
         namespace: str,
-        client: v2hatchet.Hatchet,
-        options: Options,
+        client: "v2hatchet.Hatchet",
+        options: "Options",
     ):
         # TODO: maybe use __qualname__
         name = name.lower() or func.__name__.lower()
@@ -236,6 +240,15 @@ class HatchetCallableBase(Generic[P, T]):
     #     }
     #     return data
 
+    def _decode_output(self, result: WorkflowRunEvent):
+        steps = list(result.results)
+        assert len(steps) == 1
+        step = steps[0]
+        if step.error:
+            raise RuntimeError(step.error)
+        else:
+            return _CallableOutput.loads(step.output).output
+
     def _run(self, action: AssignedAction) -> str:
         # actually invokes the function, and serializing the output
         raise NotImplementedError
@@ -243,46 +256,32 @@ class HatchetCallableBase(Generic[P, T]):
 
 class HatchetCallable(HatchetCallableBase[P, T]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> T:
-        with context.EnsureContext(self._hatchet.client) as ctx:
-            trigger = self._to_trigger_proto(
-                ctx, inputs=_CallableInput(args=args, kwargs=kwargs)
-            )
-            logger.trace("triggering\n{}", MessageToDict(trigger))
-            client = self._hatchet.client
-            ref: TriggerWorkflowResponse = client.admin.client.TriggerWorkflow(
-                trigger, metadata=self._hatchet.client._grpc_metadata()
-            )
-            logger.trace("runid: {}", ref)
-            # TODO: look into timeouts for Future.result()
-            return self._hatchet.client.executor.submit(
-                self._result, ref.workflow_run_id
-            ).result()
-
-    def _result(self, run_id: str) -> Optional[WorkflowRunEvent]:
-        # NOTE: SubscribeToWorkflowRuns is a stream-stream RPC.
-        request = SubscribeToWorkflowRunsRequest(workflowRunId=run_id)
-        stream: Iterator[WorkflowRunEvent] = (
-            self._hatchet.client.dispatcher.client.SubscribeToWorkflowRuns(
-                iter((request,)),
-                metadata=self._hatchet.client._grpc_metadata(),
-            )
+        ctx = context.ensure_background_context()
+        trigger = self._to_trigger_proto(
+            ctx, inputs=_CallableInput(args=args, kwargs=kwargs)
         )
-        logger.debug(list(stream))
-        for event in stream:
-            logger.trace("workflow run events:\n{}", MessageToDict(event))
-            if event.eventType == WorkflowRunEventType.WORKFLOW_RUN_EVENT_TYPE_FINISHED:
-                return event.results
-            else:
-                logger.warning(
-                    "unexpected workflow run events:\n{}", MessageToDict(event)
-                )
-                break
+        logger.trace(
+            "triggering on {}: {}", threading.get_ident(), MessageToDict(trigger)
+        )
+        client = self._hatchet.client
+        ref: TriggerWorkflowResponse = client.admin.client.TriggerWorkflow(
+            trigger, metadata=self._hatchet.client._grpc_metadata()
+        )
+        logger.trace("runid: {}", ref)
+        # TODO: look into timeouts for Future.result()
+
+        sub = SubscribeToWorkflowRunsRequest(workflowRunId=ref.workflow_run_id)
+        wfre_future = self._hatchet.client._runtime.wfr_futures.submit(sub)
+
+        return utils.MapFuture(
+            self._decode_output, wfre_future, self._hatchet.client.executor
+        ).result()
 
     def _run(self, action: AssignedAction) -> str:
         assert action.actionId == self._hatchet.action
         logger.trace("invoking:\n{}", MessageToDict(action))
-        with context.EnsureContext(self._hatchet.client) as ctx:
-            assert ctx.current is None
+        ctx = context.ensure_background_context(client=self._hatchet.client)
+        assert ctx.current is None
 
         parent: Optional["context.BackgroundContext"] = self._decode_context(action)
         with context.WithParentContext(parent) as ctx:
@@ -377,8 +376,8 @@ class CallableMetadata:
     action: str
     sourceloc: str  # source location of the callable
 
-    options: Options
-    client: v2hatchet.Hatchet
+    options: "Options"
+    client: "v2hatchet.Hatchet"
 
     def _debug(self):
         return {

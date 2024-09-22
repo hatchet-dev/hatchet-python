@@ -1,9 +1,12 @@
+import threading
 import asyncio
 import json
 import multiprocessing as mp
+import multiprocessing.queues as mpq
+import queue
 import time
 import traceback
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, TypeAlias, TypeVar
 
 from google.protobuf.json_format import MessageToDict
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -38,6 +41,7 @@ async def _invoke(
     logger.trace("invoking: {}", repr(fn))
     try:
         if isinstance(fn, callable.HatchetCallable):
+            logger.trace("invoking {} on a separate thread", fn._hatchet.name)
             return await asyncio.to_thread(fn._run, action), None
         else:
             return await fn._run(action), None
@@ -48,12 +52,17 @@ async def _invoke(
         return None, e
 
 
-class BaseRunnerLoop:
+# TODO: Use better generics for Python >= 3.12
+T = TypeVar("T")
+_ThreadSafeQueue: TypeAlias = queue.Queue[T] | mpq.Queue[T]
+
+
+class RunnerLoop:
     def __init__(
         self,
         client: "hatchet.Hatchet",
-        inbound: mp.Queue,  # inbound queue, not owned
-        outbound: mp.Queue,  # outbound queue, not owned
+        inbound: _ThreadSafeQueue["messages.Message"],  # inbound queue, not owned
+        outbound: _ThreadSafeQueue["messages.Message"],  # outbound queue, not owned
     ):
         logger.trace("init runner loop")
         self.client = client
@@ -71,7 +80,7 @@ class BaseRunnerLoop:
         self.tasks: Dict[str, asyncio.Task] = dict()
 
     def start(self):
-        logger.debug("runner loop started")
+        logger.debug("starting runner loop on {}", threading.get_ident())
         self.looptask = asyncio.create_task(self.loop(), name="runner loop")
 
     async def shutdown(self):

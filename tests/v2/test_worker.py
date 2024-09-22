@@ -1,16 +1,20 @@
+import time
 import asyncio
 import logging
 import sys
-
+import multiprocessing as mp
 import dotenv
 import pytest
 from loguru import logger
 
 from hatchet_sdk.v2.hatchet import Hatchet
-from hatchet_sdk.v2.runtime.worker import WorkerOptions
+from hatchet_sdk.v2.runtime.worker import WorkerOptions, WorkerProcess
+from concurrent.futures import ThreadPoolExecutor
 
 logger.remove()
-logger.add(sys.stdout, level="TRACE")
+logger.add(
+    sys.stdout, level="TRACE"
+)  # , format="{level}\t|{module}:{function}:{line}[{process}:{thread}] - {message}")
 
 dotenv.load_dotenv()
 
@@ -39,7 +43,29 @@ async def test_worker():
         WorkerOptions(name="worker", actions=["default:foo", "default:bar"])
     )
     await worker.start()
-    print("result from foo: ", foo())
+    print("result from foo: ", await asyncio.to_thread(foo))
     await asyncio.sleep(10)
     await worker.shutdown()
     return None
+
+
+# def test_worker_process():
+#     to_worker = mp.Queue()
+#     from_worker = mp.Queue()
+#     p = WorkerProcess(
+#         config=hatchet.config,
+#         options=WorkerOptions(name="worker", actions=[]),
+#         inbound=to_worker,
+#         outbound=from_worker,
+#     )
+
+#     pool = ThreadPoolExecutor()
+#     id = pool.submit(from_worker.get)
+#     print(p.start())
+#     print(id.result())
+#     time.sleep(10)
+#     print("shutting down")
+#     p.shutdown()
+
+#     to_worker.close()
+#     from_worker.close()

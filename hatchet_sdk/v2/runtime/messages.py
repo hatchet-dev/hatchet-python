@@ -29,6 +29,7 @@ class MessageKind(Enum):
     STEP_EVENT = 2
     WORKFLOW_RUN_EVENT = 3
     SUBSCRIBE_TO_WORKFLOW_RUN = 4
+    WORKER_ID = 5
 
 
 @dataclass
@@ -40,6 +41,8 @@ class Message:
     _workflow_run_event: Optional[Dict] = None
     _subscribe_to_workflow_run: Optional[Dict] = None
 
+    worker_id: Optional[str] = None
+
     @property
     def kind(self) -> MessageKind:
         if self._action is not None:
@@ -50,6 +53,8 @@ class Message:
             return MessageKind.WORKFLOW_RUN_EVENT
         if self._subscribe_to_workflow_run is not None:
             return MessageKind.SUBSCRIBE_TO_WORKFLOW_RUN
+        if self.worker_id:
+            return MessageKind.WORKER_ID
         return MessageKind.UNKNOWN
 
     @property

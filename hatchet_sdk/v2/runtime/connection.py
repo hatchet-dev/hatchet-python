@@ -1,11 +1,11 @@
-import hatchet_sdk.connection as v1
 import contextvars as cv
-import grpc
-import grpc.aio
 from typing import Optional
 
-import hatchet_sdk.v2.runtime.context as context
+import grpc
+import grpc.aio
 
+import hatchet_sdk.connection as v1
+import hatchet_sdk.v2.runtime.context as context
 
 _aio_channel_cv: cv.ContextVar[Optional[grpc.aio.Channel]] = cv.ContextVar(
     "hatchet_background_aio_channel", default=None

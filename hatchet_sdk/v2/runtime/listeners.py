@@ -1,16 +1,15 @@
 import asyncio
-from asyncio.taskgroups import TaskGroup
 import multiprocessing as mp
 import os
 import threading
 import time
-from collections.abc import AsyncGenerator, Generator, AsyncIterator, Callable
+from asyncio.taskgroups import TaskGroup
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Generator
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Generic, List, Optional, Set, TypeVar, Literal, Any
-from contextlib import suppress
-
+from typing import Any, Dict, Generic, List, Literal, Optional, Set, TypeVar
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -22,31 +21,29 @@ import hatchet_sdk.v2.hatchet as hatchet
 import hatchet_sdk.v2.runtime.connection as connection
 import hatchet_sdk.v2.runtime.context as context
 import hatchet_sdk.v2.runtime.messages as messages
-import hatchet_sdk.v2.runtime.worker as worker
 import hatchet_sdk.v2.runtime.utils as utils
+import hatchet_sdk.v2.runtime.worker as worker
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     ActionType,
     AssignedAction,
     HeartbeatRequest,
     StepActionEvent,
+    StepRunResult,
     SubscribeToWorkflowRunsRequest,
     WorkerLabels,
     WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
     WorkerUnsubscribeRequest,
-    WorkflowRunEventType,
-    StepRunResult,
     WorkflowRunEvent,
+    WorkflowRunEventType,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
-
 
 T = TypeVar("T")
 
 
 class WorkflowRunEventListener:
-
     @dataclass
     class Sub:
         id: str
@@ -73,6 +70,21 @@ class WorkflowRunEventListener:
         # must be created inside the loop
         self._q_request: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
+        self._task = None
+
+    def start(self):
+        self._task = asyncio.create_task(
+            self.loop(), name="workflow run event listener loop"
+        )
+        logger.debug("started workflow run event listener")
+
+    async def shutdown(self):
+        if self._task:
+            self._task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._task
+            self._task = None
+
     async def loop(self):
         try:
             agen = utils.ForeverAgen(self._events, exceptions=(grpc.aio.AioRpcError,))
@@ -85,10 +97,9 @@ class WorkflowRunEventListener:
                     self._by_run_id[event.workflowRunId].future.set_result(event)
                     self._unsubscribe(event.workflowRunId)
         finally:
-            logger.debug("bye")
+            logger.debug("bye: workflow run event listner shuts down")
 
     async def _events(self) -> AsyncGenerator[WorkflowRunEvent]:
-
         # keep trying until asyncio.CancelledError is raised into this coroutine
         # TODO: handle retry, backoff, etc.
         stub = DispatcherStub(channel=connection.ensure_background_achannel())
@@ -140,9 +151,24 @@ class WorkflowRunEventListener:
 
 class AssignedActionListner:
     def __init__(self, worker: "worker.Worker", interrupt: asyncio.Queue[T]):
-        logger.debug("init action listener")
+        logger.debug("init assigned action listener")
         self._worker = worker
         self._interrupt = interrupt
+
+        self._task = None
+
+    def start(
+        self, async_on: Callable[[AssignedAction | grpc.aio.AioRpcError | T], Any]
+    ):
+        self._task = asyncio.create_task(self.loop(async_on))
+        logger.debug("started assigned action listener")
+
+    async def shutdown(self):
+        if self._task:
+            self._task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._task
+            self._task = None
 
     async def _action_stream(self) -> AsyncGenerator[AssignedAction]:
         stub = DispatcherStub(connection.ensure_background_achannel())
@@ -172,7 +198,13 @@ class AssignedActionListner:
                 else:
                     yield action
         finally:
-            logger.debug("bye")
+            logger.debug("bye: assigned action listener")
+
+    async def loop(
+        self, async_on: Callable[[AssignedAction | grpc.aio.AioRpcError | T], Any]
+    ):
+        async for event in self.listen():
+            await async_on(event)
 
 
 class StepEventListener:
@@ -181,9 +213,21 @@ class StepEventListener:
         self.inbound = inbound
         self.stub = DispatcherStub(connection.ensure_background_channel())
 
+        self.task = None
+
+    def start(self):
+        self.task = asyncio.create_task(self.listen())
+
+    async def shutdown(self):
+        if self.task:
+            self.task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self.task
+            self.task = None
+
     async def _message_stream(self) -> AsyncGenerator["messages.Message"]:
         while True:
-            msg: "messages.Message" = await asyncio.to_thread(self.inbound.get)
+            msg: "messages.Message" = await self.inbound.get()
             assert msg.kind in [messages.MessageKind.STEP_EVENT]
             logger.trace("event:\n{}", msg)
             yield msg
@@ -193,13 +237,16 @@ class StepEventListener:
             async for msg in self._message_stream():
                 match msg.kind:
                     case messages.MessageKind.STEP_EVENT:
-                        await self.on_step_event(msg.step_event)
+                        await self._on_step_event(msg.step_event)
                     case _:
                         raise NotImplementedError(msg.kind)
+        except Exception as e:
+            logger.exception(e)
+            raise
         finally:
-            logger.debug("bye")
+            logger.debug("bye: step event listener")
 
-    async def on_step_event(self, e: StepActionEvent):
+    async def _on_step_event(self, e: StepActionEvent):
         # TODO: need retry
         logger.trace("emit step action:\n{}", MessageToDict(e))
         resp = await asyncio.to_thread(

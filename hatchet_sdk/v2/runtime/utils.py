@@ -1,16 +1,18 @@
-from collections.abc import AsyncGenerator, Callable
 import asyncio
-import tenacity
-import grpc
 import multiprocessing as mp
 import multiprocessing.queues as mpq
-from typing import TypeVar, Tuple
-
-
+import queue
+from collections.abc import AsyncGenerator, Callable
+from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import suppress
+from typing import Tuple, TypeVar
+
+import grpc
+import tenacity
 
 T = TypeVar("T")
 I = TypeVar("I")
+R = TypeVar("R")
 
 
 async def InterruptableAgen(
@@ -18,7 +20,6 @@ async def InterruptableAgen(
     interrupt: asyncio.Queue[I],
     timeout: float,
 ) -> AsyncGenerator[T | I]:
-
     queue: asyncio.Queue[T | StopAsyncIteration] = asyncio.Queue()
 
     async def producer():
@@ -26,25 +27,25 @@ async def InterruptableAgen(
             await queue.put(item)
         await queue.put(StopAsyncIteration())
 
-    producer_task = asyncio.create_task(producer())
+    try:
+        producer_task = asyncio.create_task(producer())
+        while True:
+            with suppress(asyncio.TimeoutError):
+                item = await asyncio.wait_for(queue.get(), timeout=timeout)
+                # it is not timeout if we reach this line
+                if isinstance(item, StopAsyncIteration):
+                    break
+                else:
+                    yield item
 
-    while True:
-        with suppress(asyncio.TimeoutError):
-            item = await asyncio.wait_for(queue.get(), timeout=timeout)
-            # it is not timeout if we reach this line
-            if isinstance(item, StopAsyncIteration):
+            with suppress(asyncio.QueueEmpty):
+                v = interrupt.get_nowait()
+                # we are interrupted if we reach this line
+                yield v
                 break
-            else:
-                yield item
 
-        with suppress(asyncio.QueueEmpty):
-            v = interrupt.get_nowait()
-            # we are interrupted if we reach this line
-            yield v
-            break
-
-    producer_task.cancel()
-    with suppress(asyncio.CancelledError):
+    finally:
+        producer_task.cancel()
         await producer_task
 
 
@@ -73,7 +74,28 @@ async def ForeverAgen(
                 raise
 
 
-async def QueueAgen(inbound: asyncio.Queue[T] | mpq.Queue[T]) -> AsyncGenerator[T]:
-    while True:
-        item = await asyncio.to_thread(inbound.get)
-        yield item
+async def QueueAgen(
+    inbound: queue.Queue[T] | asyncio.Queue[T] | mpq.Queue[T],
+) -> AsyncGenerator[T]:
+    if isinstance(inbound, asyncio.Queue):
+        while True:
+            yield await inbound.get()
+            inbound.task_done()
+    elif isinstance(inbound, queue.Queue):
+        while True:
+            yield await asyncio.to_thread(inbound.get)
+            inbound.task_done()
+    elif isinstance(inbound, mpq.Queue):
+        while True:
+            yield await asyncio.to_thread(inbound.get)
+    else:
+        raise TypeError(f"unsupported queue type: {type(inbound)}")
+
+
+def MapFuture(
+    fn: Callable[[T], R], fut: Future[T], pool: ThreadPoolExecutor
+) -> Future[R]:
+    def task(fn: Callable[[T], R], fut: Future[T]):
+        return fn(fut.result())
+
+    return pool.submit(task, fn, fut)
