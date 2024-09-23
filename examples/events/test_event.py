@@ -53,7 +53,6 @@ async def test_async_event_bulk_push(hatchet: Hatchet):
     # Sort both lists of events by their key to ensure comparison order
     sorted_events = sorted(events, key=lambda x: x["key"])
     sorted_returned_events = sorted(e, key=lambda x: x.key)
-
     namespace = "bulk-test"
 
     # Check that the returned events match the original events
