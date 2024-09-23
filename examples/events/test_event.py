@@ -1,4 +1,5 @@
 from typing import List
+
 import pytest
 
 from hatchet_sdk.clients.events import BulkPushEventOptions, BulkPushEventWithMetadata
@@ -21,6 +22,7 @@ async def test_async_event_push(hatchet: Hatchet):
     e = await hatchet.event.async_push("user:create", {"test": "test"})
 
     assert e.eventId is not None
+
 
 @pytest.mark.asyncio(scope="session")
 async def test_async_event_bulk_push(hatchet: Hatchet):
@@ -51,10 +53,9 @@ async def test_async_event_bulk_push(hatchet: Hatchet):
     # Sort both lists of events by their key to ensure comparison order
     sorted_events = sorted(events, key=lambda x: x["key"])
     sorted_returned_events = sorted(e, key=lambda x: x.key)
-  
+
     namespace = "bulk-test"
 
     # Check that the returned events match the original events
     for original_event, returned_event in zip(sorted_events, sorted_returned_events):
-        assert returned_event.key == namespace + original_event['key']     
-
+        assert returned_event.key == namespace + original_event["key"]

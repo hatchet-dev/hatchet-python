@@ -1,7 +1,8 @@
 from typing import List
+
 from dotenv import load_dotenv
 
-from hatchet_sdk import  new_client
+from hatchet_sdk import new_client
 from hatchet_sdk.clients.events import BulkPushEventWithMetadata
 
 load_dotenv()
@@ -29,9 +30,6 @@ events: List[BulkPushEventWithMetadata] = [
         "payload": {"message": "This is event 3"},
         "additional_metadata": {"source": "test", "user_id": "user789"},
     },
-    
-    
-
 ]
 
 
@@ -41,4 +39,3 @@ result = client.event.bulk_push(
 )
 
 print(result)
-

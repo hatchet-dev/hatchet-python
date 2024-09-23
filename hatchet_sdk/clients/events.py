@@ -19,6 +19,7 @@ from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 
+
 def new_event(conn, config: ClientConfig):
     return EventClient(
         client=EventsServiceStub(conn),
@@ -38,14 +39,15 @@ class PushEventOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
     namespace: str | None = None
 
+
 class BulkPushEventOptions(TypedDict):
     namespace: str | None = None
 
+
 class BulkPushEventWithMetadata(TypedDict):
     key: str
-    payload: Any  
+    payload: Any
     additional_metadata: Optional[Dict[str, Any]]  # Optional metadata
-
 
 
 class EventClient:
@@ -60,13 +62,13 @@ class EventClient:
         return await asyncio.to_thread(
             self.push, event_key=event_key, payload=payload, options=options
         )
-    
+
     async def async_bulk_push(
-        self, events: List[BulkPushEventWithMetadata], options: Optional[BulkPushEventOptions] = None
+        self,
+        events: List[BulkPushEventWithMetadata],
+        options: Optional[BulkPushEventOptions] = None,
     ) -> List[Event]:
-        return await asyncio.to_thread(
-            self.bulk_push, events=events, options=options
-        )
+        return await asyncio.to_thread(self.bulk_push, events=events, options=options)
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
@@ -104,10 +106,12 @@ class EventClient:
             return self.client.Push(request, metadata=get_metadata(self.token))
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
-        
+
     @tenacity_retry
     def bulk_push(
-        self, events: List[BulkPushEventWithMetadata], options: BulkPushEventOptions = None
+        self,
+        events: List[BulkPushEventWithMetadata],
+        options: BulkPushEventOptions = None,
     ) -> List[Event]:
         namespace = self.namespace
 
@@ -121,11 +125,11 @@ class EventClient:
 
         bulk_events = []
         for event in events:
-            event_key = namespace + event['key']
-            payload = event['payload']
+            event_key = namespace + event["key"]
+            payload = event["payload"]
 
             try:
-                meta = event.get('additional_metadata')
+                meta = event.get("additional_metadata")
                 meta_bytes = json.dumps(meta).encode("utf-8") if meta else None
             except Exception as e:
                 raise ValueError(f"Error encoding meta: {e}")
@@ -146,8 +150,10 @@ class EventClient:
         bulk_request = BulkPushEventRequest(events=bulk_events)
 
         try:
-            response = self.client.BulkPush(bulk_request, metadata=get_metadata(self.token))
-            return response.events  
+            response = self.client.BulkPush(
+                bulk_request, metadata=get_metadata(self.token)
+            )
+            return response.events
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
