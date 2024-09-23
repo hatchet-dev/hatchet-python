@@ -1,11 +1,10 @@
 import asyncio
-import multiprocessing as mp
 import multiprocessing.queues as mpq
 import queue
 import threading
 import time
 from collections.abc import Callable, MutableSet
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
 from contextlib import suppress
 from typing import Dict, Generic, Optional, TypeAlias, TypeVar
 
@@ -38,9 +37,13 @@ class RequestResponseBroker(Generic[ReqT, RespT]):
         resp_key: Callable[[RespT], str],
         executor: ThreadPoolExecutor,
     ):
-        """A broker that can send a request and returns a future for the response.
+        """A broker that can send/forward a request and returns a future for the caller to wait upon.
 
-        The broker loop runs forever and quits upon asyncio.CancelledError.
+        This is to be used in the main process. The broker loop runs forever and quits upon asyncio.CancelledError.
+        The broker is essentially an adaptor from server-streams to either concurrent.futures.Future or asyncio.Future.
+        For the blocking case (i.e. concurrent.futures.Future), the broker uses polling.
+
+        The class needs to be thread-safe for the concurrent.futures.Future case.
 
         Args:
             outbound: a thread-safe blocking queue to which the request should be forwarded to
@@ -49,13 +52,14 @@ class RequestResponseBroker(Generic[ReqT, RespT]):
             resp_key: a function that computes the key of the response, which is used to match the requests
             executor: a thread pool for running any blocking code
         """
+        logger.trace("init broker")
         self._inbound = inbound
         self._outbound = outbound
         self._req_key = req_key
         self._resp_key = resp_key
 
         # NOTE: this is used for running the polling tasks for results.
-        # The tasks we submit to the (any) executor should NOT wait indefinitely.
+        # The tasks we submit to the executor (or any executor) should NOT wait indefinitely.
         # We must provide it with a way to self-cancelling.
         self._executor = executor
 
@@ -69,60 +73,81 @@ class RequestResponseBroker(Generic[ReqT, RespT]):
         self._akeys: MutableSet[str] = set()
         self._afutures: Dict[str, asyncio.Future[RespT]] = dict()
 
-        self.loop_task: Optional[asyncio.Task] = None
+        self._task: Optional[asyncio.Task] = None
 
     def start(self):
-        logger.trace("starting broker on {}", threading.get_native_id())
-        self.loop_task = asyncio.create_task(self.loop())
+        logger.trace("starting broker")
+        self._task = asyncio.create_task(self._loop())
         return
 
     async def shutdown(self):
-        self.loop_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await self.loop_task
+        if self._task:
+            self._task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._task
+            self._task = None
 
-    async def loop(self):
+    async def _loop(self):
+        """The main broker loop.
+
+        The loop listens for any responses and resolves the corresponding futures.
+        """
+        logger.trace("broker started")
         try:
             async for resp in utils.QueueAgen(self._inbound):
                 logger.trace("broker got: {}", resp)
                 key = self._resp_key(resp)
 
+                # if the response is for a concurrent.futures.Future,
+                # finds/resolves it and return True.
                 def update():
                     with self._lock:
                         if key in self._futures:
                             self._futures[key] = resp
                             return True
+                        # NOTE: the clean up happens at submission time
+                        # See self.submit()
                     return False
 
                 if await asyncio.to_thread(update):
                     continue
 
+                # if the previous step didn't find a corresponding future,
+                # looks for the asyncio.Future instead.
                 if key in self._afutures:
                     self._afutures[key].set_result(resp)
+
+                    # clean up
                     self._akeys.remove(key)
                     del self._afutures[key]
                     continue
 
                 raise KeyError(f"key not found: {key}")
         finally:
+            logger.trace("broker shutting down")
             self._shutdown = True
 
     async def asubmit(self, req: ReqT) -> asyncio.Future[RespT]:
+        """Submits a request for an asyncio.Future."""
         key = self._req_key(req)
         assert key not in self._keys
 
-        f = None
-        if key not in self._akeys:
+        f = self._afutures.get(key, None)
+        if f is None:
             self._afutures[key] = asyncio.Future()
             f = self._afutures[key]
             self._akeys.add(key)
-            await asyncio.to_thread(self._outbound.put, key)
+            # TODO: pyright can't figure out that both alternatives in the union type is individualy type-checked
+            await asyncio.to_thread(self._outbound.put, req)  # type: ignore
 
         return f
 
     def submit(self, req: ReqT) -> Future[RespT]:
-        key = self._req_key(req)
+        """Submits a request for a concurrent.futures.Future.
 
+        The future may raise CancelledError if the broker is shutting down.
+        """
+        key = self._req_key(req)
         assert key not in self._akeys
 
         def poll():
@@ -142,40 +167,54 @@ class RequestResponseBroker(Generic[ReqT, RespT]):
                         self._keys.remove(key)
                         del self._futures[key]
 
+            if self._shutdown:
+                logger.trace("broker polling task shutting down")
+                raise CancelledError("shutting down")
+
+            assert resp is not None
             return resp
 
         return self._executor.submit(poll)
 
 
 class WorkflowRunFutures:
+    """A workflow run listener to be used in the main process.
+
+    It is a high-level interface that wraps a RequestResponseBroker.
+    """
+
     def __init__(
         self,
+        *,
+        executor: ThreadPoolExecutor,
         broker: RequestResponseBroker["messages.Message", "messages.Message"],
     ):
         self._broker = broker
-        self._thread = None
+        self._executor = executor
 
     def start(self):
-        logger.trace("starting workflow run wrapper on {}", threading.get_native_id())
-        self._thread = threading.Thread(target=asyncio.run, args=[self._broker.start()], name="workflow run event broker")
-        self._thread.start()
+        logger.trace("starting main-process workflow run listener")
+        self._broker.start()
 
     async def shutdown(self):
-        del self._thread
+        logger.trace("shutting down main-process workflow run listener")
+        await self._broker.shutdown()
+        logger.trace("bye: main-process workflow run listener")
 
     def submit(self, req: SubscribeToWorkflowRunsRequest) -> Future[WorkflowRunEvent]:
-        logger.trace("requesting workflow run result: {}", req)
+        logger.trace("requesting workflow run result: {}", MessageToDict(req))
         f = self._broker.submit(
             messages.Message(_subscribe_to_workflow_run=MessageToDict(req))
         )
-        logger.trace("submitted")
-        return self._broker._executor.submit(lambda: f.result().workflow_run_event)
+        return self._executor.submit(lambda: f.result().workflow_run_event)
 
     async def asubmit(
         self, req: SubscribeToWorkflowRunsRequest
     ) -> asyncio.Future[WorkflowRunEvent]:
-        logger.trace("requesting workflow run result: {}", req)
-        f = await self._broker.asubmit(req)
+        logger.trace("requesting workflow run result: {}", MessageToDict(req))
+        f = await self._broker.asubmit(
+            messages.Message(_subscribe_to_workflow_run=MessageToDict(req))
+        )
         event: asyncio.Future[WorkflowRunEvent] = asyncio.Future()
         f.add_done_callback(lambda f: event.set_result(f.result().workflow_run_event))
         return event

@@ -11,10 +11,10 @@ from hatchet_sdk.v2.hatchet import Hatchet
 from hatchet_sdk.v2.runtime.worker import WorkerOptions, WorkerProcess
 from concurrent.futures import ThreadPoolExecutor
 
-logger.remove()
-logger.add(
-    sys.stdout, level="TRACE"
-)  # , format="{level}\t|{module}:{function}:{line}[{process}:{thread}] - {message}")
+# logger.remove()
+# logger.add(
+#     sys.stdout, level="TRACE"
+# )  # , format="{level}\t|{module}:{function}:{line}[{process}:{thread}] - {message}")
 
 dotenv.load_dotenv()
 
@@ -26,7 +26,7 @@ logging.getLogger("asyncio").setLevel(logging.DEBUG)
 @hatchet.function()
 def foo():
     print("entering Foo")
-    print("result from bar: ", bar("from foo"))
+    print("result from bar: ", bar("from foo").result())
     return "foo"
 
 
@@ -39,11 +39,12 @@ def bar(x):
 
 @pytest.mark.asyncio
 async def test_worker():
+
     worker = hatchet.worker(
-        WorkerOptions(name="worker", actions=["default:foo", "default:bar"])
+        options=WorkerOptions(name="worker", actions=["default:foo", "default:bar"])
     )
     await worker.start()
-    print("result from foo: ", await asyncio.to_thread(foo))
+    print("result from foo: ", await asyncio.to_thread(foo().result))
     await asyncio.sleep(10)
     await worker.shutdown()
     return None

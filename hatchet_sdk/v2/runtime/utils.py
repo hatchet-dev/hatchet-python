@@ -1,14 +1,10 @@
 import asyncio
-import multiprocessing as mp
 import multiprocessing.queues as mpq
 import queue
 from collections.abc import AsyncGenerator, Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import suppress
-from typing import Tuple, TypeVar
-
-import grpc
-import tenacity
+from typing import Tuple, Type, TypeVar
 
 T = TypeVar("T")
 I = TypeVar("I")
@@ -27,6 +23,7 @@ async def InterruptableAgen(
             await queue.put(item)
         await queue.put(StopAsyncIteration())
 
+    producer_task = None
     try:
         producer_task = asyncio.create_task(producer())
         while True:
@@ -45,13 +42,17 @@ async def InterruptableAgen(
                 break
 
     finally:
-        producer_task.cancel()
-        await producer_task
+        if producer_task:
+            producer_task.cancel()
+            await producer_task
+
+
+E = TypeVar("E")
 
 
 async def ForeverAgen(
-    agen_factory: Callable[[], AsyncGenerator[T]], exceptions: Tuple[Exception]
-) -> AsyncGenerator[T | Exception]:
+    agen_factory: Callable[[], AsyncGenerator[T]], exceptions: Tuple[Type[E]]
+) -> AsyncGenerator[T | E]:
     """Run a async generator forever until its cancelled.
 
     Args:
@@ -95,7 +96,7 @@ async def QueueAgen(
 def MapFuture(
     fn: Callable[[T], R], fut: Future[T], pool: ThreadPoolExecutor
 ) -> Future[R]:
-    def task(fn: Callable[[T], R], fut: Future[T]):
+    def task(fn: Callable[[T], R], fut: Future[T]) -> R:
         return fn(fut.result())
 
     return pool.submit(task, fn, fut)

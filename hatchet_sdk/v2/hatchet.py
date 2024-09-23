@@ -1,10 +1,9 @@
 import asyncio
 import functools
 import inspect
-import multiprocessing as mp
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, Future
 from contextlib import suppress
-from typing import Callable, Dict, List, Optional, ParamSpec, Tuple, TypeVar
+from typing import Callable, List, Optional, ParamSpec, Tuple, TypeVar
 
 import hatchet_sdk.hatchet as v1
 import hatchet_sdk.v2.callable as callable
@@ -15,22 +14,6 @@ import hatchet_sdk.v2.runtime.registry as registry
 import hatchet_sdk.v2.runtime.runner as runner
 import hatchet_sdk.v2.runtime.runtime as runtime
 import hatchet_sdk.v2.runtime.worker as worker
-
-# import hatchet_sdk.runtime.registry as hatchet_registry
-# import hatchet_sdk.v2.callable as v2_callable
-# from hatchet_sdk.context import Context
-# from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, StickyStrategy
-
-# import Hatchet as HatchetV1
-# from hatchet_sdk.hatchet import workflow
-# from hatchet_sdk.labels import DesiredWorkerLabel
-# from hatchet_sdk.rate_limit import RateLimit
-
-# from hatchet_sdk.v2.concurrency import ConcurrencyFunction
-# from hatchet_sdk.worker.worker import register_on_worker
-
-# from ..worker import Worker
-
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -44,7 +27,6 @@ class Hatchet:
         executor: ThreadPoolExecutor = ThreadPoolExecutor(),
     ):
         # ensure a event loop is created before gRPC
-
         with suppress(RuntimeError):
             asyncio.get_event_loop()
 
@@ -71,27 +53,30 @@ class Hatchet:
     def config(self):
         return self.v1.config
 
-    @property
-    def logger(self):
-        return logging.logger
-
+    # FIXME: consider separating this into @func and @afunc for better type hints.
+    # Right now, the type hint for the return type is (P -> T) | (P -> Future[T]) and this is because we
+    # don't statically know whether "func" is a def or an async def.
     def function(
         self,
+        *,
         name: str = "",
         namespace: str = "default",
         options: "callable.Options" = callable.Options(),
     ):
-        def inner(func: Callable[P, T]) -> "callable.HatchetCallable[P, T]":
+        # TODO: needs to detect and reject an already decorated free function.
+        # TODO: needs to detect and reject a classmethod/staticmethod.
+        def inner(func: Callable[P, T]):
             if inspect.iscoroutinefunction(func):
-                wrapped = callable.HatchetAwaitable(
+                wrapped = callable.HatchetAwaitable[P, T](
                     func=func,
                     name=name,
                     namespace=namespace,
                     client=self,
                     options=options,
                 )
-                wrapped = functools.update_wrapper(wrapped, func)
-                return wrapped
+                # TODO: investigate the type error here.
+                aret: Callable[P, T] = functools.update_wrapper(wrapped, func)
+                return aret
             elif inspect.isfunction(func):
                 wrapped = callable.HatchetCallable(
                     func=func,
@@ -100,8 +85,8 @@ class Hatchet:
                     client=self,
                     options=options,
                 )
-                wrapped = functools.update_wrapper(wrapped, func)
-                return wrapped
+                ret: Callable[P, Future[T]] = functools.update_wrapper(wrapped, func)
+                return ret
             else:
                 raise TypeError(
                     "the @function decorator can only be applied to functions (def) and async functions (async def)"
@@ -110,9 +95,13 @@ class Hatchet:
         return inner
 
     # TODO: make it 1 worker : 1 client, which means moving the options to the initializer, and cache the result.
-    def worker(self, options: "worker.WorkerOptions") -> "runtime.Runtime":
+    # TODO: rename it to runtime
+    def worker(
+        self, *, options: Optional["worker.WorkerOptions"] = None
+    ) -> "runtime.Runtime":
         if self._runtime is None:
-            self._runtime = runtime.Runtime(self, options)
+            assert options is not None
+            self._runtime = runtime.Runtime(client=self, options=options)
         return self._runtime
 
     def _grpc_metadata(self) -> List[Tuple]:

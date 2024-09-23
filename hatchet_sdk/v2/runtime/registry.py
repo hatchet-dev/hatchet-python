@@ -1,9 +1,10 @@
 import sys
 from typing import Dict
 
+from loguru import logger
+
 import hatchet_sdk.v2.callable as callable
 import hatchet_sdk.v2.hatchet as hatchet
-import hatchet_sdk.v2.runtime.logging as logging
 
 
 class ActionRegistry:
@@ -26,6 +27,6 @@ class ActionRegistry:
             try:
                 client.admin.put_workflow(proto.name, proto)
             except Exception as e:
-                logging.logger.error(f"failed to register workflow: {proto.name}")
-                logging.logger.error(e)
+                logger.error("failed to register workflow: {}", proto.name)
+                logger.exception(e)
                 sys.exit(1)

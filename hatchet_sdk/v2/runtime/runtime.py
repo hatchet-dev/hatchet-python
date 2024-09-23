@@ -1,106 +1,130 @@
 import asyncio
 import multiprocessing as mp
-import os
 import queue
-import sys
 import threading
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import CancelledError
 from contextlib import suppress
 
 from loguru import logger
 
-import hatchet_sdk.loader as loader
 import hatchet_sdk.v2.hatchet as hatchet
 import hatchet_sdk.v2.runtime.future as future
 import hatchet_sdk.v2.runtime.messages as messages
 import hatchet_sdk.v2.runtime.runner as runner
 import hatchet_sdk.v2.runtime.utils as utils
 import hatchet_sdk.v2.runtime.worker as worker
-from hatchet_sdk.contracts.dispatcher_pb2 import (
-    SubscribeToWorkflowRunsRequest,
-    WorkflowRunEvent,
-)
 
 
 class Runtime:
-    def __init__(self, client: "hatchet.Hatchet", options: "worker.WorkerOptions"):
+    """The Hatchet runtime.
+
+    The runtime is managine the runner on the main process, the run event listener on the main process,
+    and the worker on the sidecar process, together with the queues among them. A Hatchet client should
+    only contain one Runtime object. The behavior will be undefined if there are multiple Runtime per
+    Hatchet client.
+    """
+
+    # TODO: rename WorkerOptions to RuntimeOptions.
+    def __init__(self, *, client: "hatchet.Hatchet", options: "worker.WorkerOptions"):
         logger.trace("init runtime")
 
-        self.client = client
-        self.process_pool = ProcessPoolExecutor()
+        self._client = client
+        self._executor = client.executor
 
-        self.to_worker: mp.Queue["messages.Message"] = mp.Queue()
-        self.from_worker: mp.Queue["messages.Message"] = mp.Queue()
+        # the main queues between the sidecar process and the main process
+        self._to_worker: mp.Queue["messages.Message"] = mp.Queue()
+        self._from_worker: mp.Queue["messages.Message"] = mp.Queue()
 
-        self.to_runner = queue.Queue()
-        self.to_wfr_futures = queue.Queue()
+        # the queue to the runner on the main process
+        self._to_runner = queue.Queue()
 
-        self.worker = worker.WorkerProcess(
+        # the queue to the workflow run event listener on the main process
+        self._to_wfr_futures = queue.Queue()
+
+        # the worker on the sidecar process
+        self._worker = worker.WorkerProcess(
             config=client.config,
-            inbound=self.to_worker,
-            outbound=self.from_worker,
+            inbound=self._to_worker,
+            outbound=self._from_worker,
             options=options,
         )
         self.worker_id = None
 
-        self.runner = runner.RunnerLoop(
-            client=client, inbound=self.to_runner, outbound=self.to_worker
+        # the runner on the main process
+        self._runner = runner.RunnerLoop(
+            reg=client.registry,
+            inbound=self._to_runner,
+            outbound=self._to_worker,
         )
-        self.wfr_futures = future.WorkflowRunFutures(
-            # pool=client.executor,
+
+        # the workflow run event listener on the main process
+        self._wfr_futures = future.WorkflowRunFutures(
+            executor=self._executor,
             broker=future.RequestResponseBroker(
-                inbound=self.to_wfr_futures,
-                outbound=self.to_worker,
+                inbound=self._to_wfr_futures,
+                outbound=self._to_worker,
                 req_key=lambda msg: msg.subscribe_to_workflow_run.workflowRunId,
                 resp_key=lambda msg: msg.workflow_run_event.workflowRunId,
-                executor=client.executor,
+                executor=self._executor,
             ),
         )
 
-        self.loop_task = None
+        # the shutdown signal
+        self._shutdown = threading.Event()
+        self._loop_task = None
 
-    async def loop(self):
-        async for msg in utils.QueueAgen(self.from_worker):
+    async def _loop(self):
+        async for msg in utils.QueueAgen(self._from_worker):
             match msg.kind:
                 case messages.MessageKind.ACTION:
-                    await asyncio.to_thread(self.to_runner.put, msg)
+                    await asyncio.to_thread(self._to_runner.put, msg)
                 case messages.MessageKind.WORKFLOW_RUN_EVENT:
-                    await asyncio.to_thread(self.to_wfr_futures.put, msg)
+                    await asyncio.to_thread(self._to_wfr_futures.put, msg)
                 case messages.MessageKind.WORKER_ID:
-                    self.runner.worker_id = msg.worker_id
+                    self._runner.worker_id = msg.worker_id
                     self.worker_id = msg.worker_id
                 case _:
                     raise NotImplementedError
+            if self._shutdown.is_set():
+                break
+
+        logger.trace("bye: runtime")
 
     async def start(self):
-        logger.trace("starting runtime on {}", threading.get_ident())
-        self.runner.start()
-        self.wfr_futures.start()
-        self.worker.start()
+        logger.debug("starting runtime")
 
-        self.client.executor.submit(asyncio.run, self.loop())
+        # NOTE: the order matters, we should start things in topological order
+        self._runner.start()
+        self._wfr_futures.start()
 
+        # schedule the runtime on a separate thread
+        self._loop_task = self._executor.submit(asyncio.run, self._loop())
+
+        self._worker.start()
         while self.worker_id is None:
             await asyncio.sleep(1)
+
         logger.debug("runtime started")
         return self.worker_id
 
     async def shutdown(self):
         logger.trace("shutting down runtime")
 
-        self.worker.shutdown()
-        # await self.worker.shutdown()
-        self.from_worker.close()
-        self.from_worker.join_thread()
+        # NOTE: the order matters, we should shut things down in topological order
+        self._worker.shutdown()
+        self._from_worker.close()
+        self._from_worker.join_thread()
 
-        await self.runner.shutdown()
-        self.to_worker.close()
-        self.to_worker.join_thread()
+        await self._runner.shutdown()
+        self._to_worker.close()
+        self._to_worker.join_thread()
 
-        await self.wfr_futures.shutdown()
+        await self._wfr_futures.shutdown()
 
-        self.loop_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await self.loop_task
+        self._shutdown.set()
 
-        logger.debug("bye")
+        if self._loop_task is not None:
+            with suppress(CancelledError):
+                self._loop_task.result(timeout=10)
+
+        logger.debug("bye: runtime")

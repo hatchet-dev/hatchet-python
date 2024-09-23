@@ -1,24 +1,18 @@
-import sys
 import asyncio
 import multiprocessing as mp
 import multiprocessing.queues as mpq
 import multiprocessing.synchronize as mps
-import os
-import threading
+import sys
 import time
-from collections.abc import AsyncGenerator
-from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Dict, Generic, List, Optional, Set, TypeVar
-import logging
+from typing import Dict, List, Optional, TypeVar
+
 import grpc
 from google.protobuf import timestamp_pb2
-from google.protobuf.json_format import MessageToDict, MessageToJson
+from google.protobuf.json_format import MessageToDict
 from loguru import logger
 
-import hatchet_sdk.contracts.dispatcher_pb2
 import hatchet_sdk.v2.hatchet as hatchet
 import hatchet_sdk.v2.runtime.config as config
 import hatchet_sdk.v2.runtime.connection as connection
@@ -27,24 +21,21 @@ import hatchet_sdk.v2.runtime.listeners as listeners
 import hatchet_sdk.v2.runtime.messages as messages
 import hatchet_sdk.v2.runtime.utils as utils
 from hatchet_sdk.contracts.dispatcher_pb2 import (
-    ActionType,
     AssignedAction,
     HeartbeatRequest,
-    StepActionEvent,
-    StepRunResult,
-    SubscribeToWorkflowRunsRequest,
     WorkerLabels,
-    WorkerListenRequest,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
-    WorkerUnsubscribeRequest,
     WorkflowRunEvent,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 
 
+# TODO: change it to RuntimeOptions
 @dataclass
 class WorkerOptions:
+    """Options for the runtime behavior of a Runtime."""
+
     name: str
     actions: List[str]
     slots: int = 5
@@ -65,37 +56,41 @@ class WorkerOptions:
 
 class HeartBeater:
     def __init__(self, worker: "Worker"):
-        logger.debug("init heartbeater")
-        self.worker = worker
+        logger.trace("init heartbeater")
+        self._worker = worker  # used to access worker id
+        self._stub = DispatcherStub(connection.ensure_background_channel())
+
         self.last_heartbeat: int = -1  # unix epoch in seconds
-        self.stub = DispatcherStub(connection.ensure_background_channel())
         self.missed = 0
         self.error = 0
 
-        self.task = None
+        self._task = None
 
     async def start(self):
-        self.task = asyncio.create_task(self.heartbeat())
+        logger.trace("starting heart beater")
+        self._task = asyncio.create_task(self._heartbeat())
         while self.last_heartbeat < 0:
             await asyncio.sleep(1)
 
     async def shutdown(self):
-        if self.task:
-            self.task.cancel()
+        logger.trace("shutting down heart beater")
+        if self._task:
+            self._task.cancel()
             with suppress(asyncio.CancelledError):
-                await self.task
-            self.task = None
+                await self._task
+            self._task = None
 
-    async def heartbeat(self):
+    async def _heartbeat(self):
+        """The main heart beater loop."""
         try:
             while True:
                 now = int(time.time())
                 proto = HeartbeatRequest(
-                    workerId=self.worker.id,
+                    workerId=self._worker.id,
                     heartbeatAt=timestamp_pb2.Timestamp(seconds=now),  # TODO
                 )
                 try:
-                    _ = self.stub.Heartbeat(
+                    _ = self._stub.Heartbeat(
                         proto,
                         timeout=5,
                         metadata=context.ensure_background_context().client._grpc_metadata(),
@@ -110,9 +105,9 @@ class HeartBeater:
                     self.last_heartbeat = now
                 else:
                     diff = proto.heartbeatAt.seconds - self.last_heartbeat
-                    if diff > self.worker.options.heartbeat:
+                    if diff > self._worker.options.heartbeat:
                         self.missed += 1
-                await asyncio.sleep(self.worker.options.heartbeat)
+                await asyncio.sleep(self._worker.options.heartbeat)
         except Exception as e:
             logger.exception(e)
             raise
@@ -125,6 +120,8 @@ T = TypeVar("T")
 
 
 class Worker:
+    """The main worker logic for the sidecar process."""
+
     def __init__(
         self,
         *,
@@ -133,17 +130,20 @@ class Worker:
         inbound: mpq.Queue["messages.Message"],
         outbound: mpq.Queue["messages.Message"],
     ):
-        logger.debug("init worker")
+        logger.trace("init worker")
         context.ensure_background_context(client=client)
 
         self.id: Optional[str] = None
-
         self.options = options
-        self.inbound = inbound
-        self.outbound = outbound
+
+        # the main queues to/from the main process
+        self._inbound = inbound
+        self._outbound = outbound
 
         self._heartbeater = HeartBeater(self)
 
+        # used to interrupt the action listener
+        # TODO: need to hook this up to the heart beater so that the exceptions from heart beater can interrupt the action listener
         self._action_listener_interrupt: asyncio.Queue[StopAsyncIteration] = (
             asyncio.Queue()
         )
@@ -152,48 +152,57 @@ class Worker:
             interrupt=self._action_listener_interrupt,
         )
 
+        # the step event forwarder
         self._to_event_listner: asyncio.Queue["messages.Message"] = asyncio.Queue()
-        self._event_listner = listeners.StepEventListener(self._to_event_listner)
+        self._event_listner = listeners.StepEventListener(
+            inbound=self._to_event_listner
+        )
 
+        # the workflow run listener
         self._workflow_run_event_listener = listeners.WorkflowRunEventListener()
 
-        self.main_loop_task = None
+        self._main_loop_task = None
 
     def _register(self) -> str:
         req = self._to_register_proto()
-        logger.trace("registering worker:\n{}", req)
-        resp: (
-            WorkerRegisterResponse
-        ) = context.ensure_background_context().client.dispatcher.client.Register(
-            req,
-            timeout=30,
-            metadata=context.ensure_background_context().client._grpc_metadata(),
+        logger.trace("registering worker: {}", MessageToDict(req))
+        resp: WorkerRegisterResponse = (
+            context.ensure_background_context().client.dispatcher.client.Register(
+                req,
+                timeout=30,
+                metadata=context.ensure_background_context().client._grpc_metadata(),
+            )
         )
-        logger.debug("worker registered:\n{}", MessageToDict(resp))
+        logger.debug("worker registered: {}", MessageToDict(resp))
         return resp.workerId
 
     async def start(self) -> str:
         logger.trace("starting worker")
         self.id = self._register()
+
+        # NOTE: order matters, we start them in topological order
         self._event_listner.start()
         self._workflow_run_event_listener.start()
-        self._action_listener.start(async_on=self.on_assigned_action)
+        self._action_listener.start(async_on=self._on_assigned_action)
 
-        self.main_loop_task = asyncio.create_task(self.loop())
+        self._main_loop_task = asyncio.create_task(self._loop())
 
         await self._heartbeater.start()
-        await asyncio.to_thread(self.outbound.put, messages.Message(worker_id=self.id))
+
+        # notify the worker id to the main process
+        await asyncio.to_thread(self._outbound.put, messages.Message(worker_id=self.id))
+
         logger.debug("worker started: {}", self.id)
         return self.id
 
     async def shutdown(self):
         logger.trace("shutting down worker {}", self.id)
 
-        if self.main_loop_task:
-            self.main_loop_task.cancel()
+        if self._main_loop_task:
+            self._main_loop_task.cancel()
             with suppress(asyncio.CancelledError):
-                await self.main_loop_task
-                self.main_loop_task = None
+                await self._main_loop_task
+                self._main_loop_task = None
 
         tg: asyncio.Future = asyncio.gather(
             self._heartbeater.shutdown(),
@@ -202,17 +211,17 @@ class Worker:
             self._workflow_run_event_listener.shutdown(),
         )
         await tg
-        logger.debug("bye")
+        logger.debug("bye: worker {}", self.id)
 
-    async def loop(self):
+    async def _loop(self):
         try:
-            async for msg in utils.QueueAgen(self.inbound):
+            async for msg in utils.QueueAgen(self._inbound):
                 logger.trace("worker received msg: {}", msg)
                 match msg.kind:
                     case messages.MessageKind.STEP_EVENT:
                         await self._to_event_listner.put(msg)
                     case messages.MessageKind.SUBSCRIBE_TO_WORKFLOW_RUN:
-                        await self.on_workflow_run_subscription(msg)
+                        await self._on_workflow_run_subscription(msg)
                     case _:
                         raise NotImplementedError
         except Exception as e:
@@ -221,7 +230,7 @@ class Worker:
         finally:
             logger.trace("bye: worker")
 
-    async def on_assigned_action(
+    async def _on_assigned_action(
         self, action: StopAsyncIteration | grpc.aio.AioRpcError | AssignedAction
     ):
         if isinstance(action, StopAsyncIteration):
@@ -233,12 +242,12 @@ class Worker:
         else:
             assert isinstance(action, AssignedAction)
             msg = messages.Message(_action=MessageToDict(action))
-            await asyncio.to_thread(self.outbound.put, msg)
+            await asyncio.to_thread(self._outbound.put, msg)
 
-    async def on_workflow_run_subscription(self, msg: "messages.Message"):
+    async def _on_workflow_run_subscription(self, msg: "messages.Message"):
         def callback(f: asyncio.Future[WorkflowRunEvent]):
             logger.trace("workflow run event future resolved")
-            self.outbound.put(
+            self._outbound.put(
                 messages.Message(_workflow_run_event=MessageToDict(f.result()))
             )
 
@@ -266,10 +275,18 @@ def _worker_process(
     outbound: mpq.Queue["messages.Message"],
     shutdown: mps.Event,
 ):
+    """The worker process logic.
+
+    It has to be a top-level function since it needs to be pickled.
+    """
+    # TODO: propagate options, debug, etc.
     client = hatchet.Hatchet(config=config, debug=True)
+
+    # TODO: re-configure the loggers based on the options, etc.
     logger.remove()
     logger.add(sys.stdout, level="TRACE")
 
+    # FIXME: the loop is not exiting correctly. It hangs, instead. Investigate why.
     async def loop():
         worker = Worker(
             client=client,
@@ -278,10 +295,10 @@ def _worker_process(
             options=options,
         )
         try:
-            id = await worker.start()
+            _ = await worker.start()
             while not await asyncio.to_thread(shutdown.wait, 1):
                 pass
-            asyncio.current_task().cancel()
+            # asyncio.current_task().cancel()
         except Exception as e:
             logger.exception(e)
             raise
@@ -291,10 +308,12 @@ def _worker_process(
                 logger.trace("worker process shuts down")
 
     asyncio.run(loop(), debug=True)
-    logger.trace("here")
+    logger.trace("bye: worker process")
 
 
 class WorkerProcess:
+    """A wrapper to control the sidecar worker process."""
+
     def __init__(
         self,
         *,
@@ -303,8 +322,8 @@ class WorkerProcess:
         inbound: mpq.Queue["messages.Message"],
         outbound: mpq.Queue["messages.Message"],
     ):
-        self.to_worker = inbound
-        self.shutdown_ev = mp.Event()
+        self._to_worker = inbound
+        self._shutdown_ev = mp.Event()
         self.proc = mp.Process(
             target=_worker_process,
             kwargs={
@@ -312,7 +331,7 @@ class WorkerProcess:
                 "options": options,
                 "inbound": inbound,
                 "outbound": outbound,
-                "shutdown": self.shutdown_ev,
+                "shutdown": self._shutdown_ev,
             },
         )
 
@@ -321,5 +340,5 @@ class WorkerProcess:
         self.proc.start()
 
     def shutdown(self):
-        self.shutdown_ev.set()
+        self._shutdown_ev.set()
         logger.debug("worker process shuts down")

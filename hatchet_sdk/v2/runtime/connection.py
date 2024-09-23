@@ -17,19 +17,23 @@ _channel_cv: cv.ContextVar[Optional[grpc.Channel]] = cv.ContextVar(
 
 def ensure_background_channel() -> grpc.Channel:
     ctx = context.ensure_background_context(client=None)
-    channel: grpc.Channel = _channel_cv.get()
+    channel: Optional[grpc.Channel] = _channel_cv.get()
     if channel is None:
-        channel = v1.new_conn(ctx.client.config, aio=False)
+        # TODO: fix the typing of new_conn
+        channel = v1.new_conn(ctx.client.config, aio=False)  # type: ignore
         _channel_cv.set(channel)
+    assert channel is not None
     return channel
 
 
 def ensure_background_achannel() -> grpc.aio.Channel:
     ctx = context.ensure_background_context(client=None)
-    achannel: grpc.aio.Channel = _aio_channel_cv.get()
+    achannel: Optional[grpc.aio.Channel] = _aio_channel_cv.get()
     if achannel is None:
-        achannel = v1.new_conn(ctx.client.config, aio=True)
+        # TODO: fix the typing of new_conn
+        achannel = v1.new_conn(ctx.client.config, aio=True)  # type: ignore
         _aio_channel_cv.set(achannel)
+    assert achannel is not None
     return achannel
 
 
@@ -41,7 +45,7 @@ def reset_background_channel():
 
 
 async def reset_background_achannel():
-    c: grpc.aio.Channel = _aio_channel_cv.get()
+    c: Optional[grpc.aio.Channel] = _aio_channel_cv.get()
     if c is not None:
         await c.close()
     _aio_channel_cv.set(None)

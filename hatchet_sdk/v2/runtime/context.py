@@ -84,7 +84,7 @@ class BackgroundContext:
         return ret
 
     @staticmethod
-    def set(ctx: "BackgroundContext"):
+    def set(ctx: Optional["BackgroundContext"]):
         global _ctxvar
         _ctxvar.set(ctx)
 
