@@ -1,4 +1,4 @@
 [submodule "hatchet"]
 	path = hatchet
 	url = git@github.com:hatchet-dev/hatchet.git
-	branch = bulk-inserts
+	branch = main
