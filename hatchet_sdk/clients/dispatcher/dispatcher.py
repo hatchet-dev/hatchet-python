@@ -20,6 +20,8 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     WorkerLabels,
     WorkerRegisterRequest,
     WorkerRegisterResponse,
+    STEP_EVENT_TYPE_COMPLETED,
+    STEP_EVENT_TYPE_FAILED,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 
@@ -63,8 +65,23 @@ class DispatcherClient:
 
         return ActionListener(self.config, response.workerId)
 
-    @tenacity_retry
+    
     async def send_step_action_event(
+        self, action: Action, event_type: StepActionEventType, payload: str
+    ):
+        try:
+            return await self._try_send_step_action_event(action, event_type, payload)
+        except Exception as e:
+            # for step action events, send a failure event when we cannot send the completed event
+            if event_type == STEP_EVENT_TYPE_COMPLETED or event_type == STEP_EVENT_TYPE_FAILED:
+                await self._try_send_step_action_event(
+                    action, STEP_EVENT_TYPE_FAILED, "Failed to send finished event: " + str(e)
+                )
+
+            return
+        
+    @tenacity_retry
+    async def _try_send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
     ):
         eventTimestamp = Timestamp()

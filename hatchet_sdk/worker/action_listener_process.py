@@ -140,6 +140,8 @@ class WorkerActionListenerProcess:
     async def send_event(self, event: ActionEvent, retry_attempt: int = 1):
         try:
             match event.action.action_type:
+                # FIXME: all events sent from an execution of a function are of type ActionType.START_STEP_RUN since
+                # the action is re-used. We should change this. 
                 case ActionType.START_STEP_RUN:
                     # TODO right now we're sending two start_step_run events
                     # one on the action loop and one on the event loop
