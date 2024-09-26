@@ -15,13 +15,59 @@ def validate_cel_expression(expr: str) -> bool:
         return False
 
 
+class RateLimitDuration:
+    SECOND = "SECOND"
+    MINUTE = "MINUTE"
+    HOUR = "HOUR"
+    DAY = "DAY"
+    WEEK = "WEEK"
+    MONTH = "MONTH"
+    YEAR = "YEAR"
+
 @dataclass
 class RateLimit:
+    """
+    Represents a rate limit configuration for a step in a workflow.
+
+    This class allows for both static and dynamic rate limiting based on various parameters.
+    It supports both simple integer values and Common Expression Language (CEL) expressions
+    for dynamic evaluation.
+
+    Attributes:
+        static_key (str, optional): A static key for rate limiting.
+        dynamic_key (str, optional): A CEL expression for dynamic key evaluation.
+        units (int or str, default=1): The number of units or a CEL expression for dynamic unit calculation.
+        limit (int or str, optional): The rate limit value or a CEL expression for dynamic limit calculation.
+        duration (str, default=RateLimitDuration.MINUTE): The window duration of the rate limit.
+        key (str, optional): Deprecated. Use static_key instead.
+
+    Usage:
+        1. Static rate limit:
+           rate_limit = RateLimit(static_key="external-api", units=100)
+           > NOTE: if you want to use a static key, you must first put the rate limit: hatchet.admin.put_rate_limit("external-api", 200, RateLimitDuration.SECOND)
+
+        2. Dynamic rate limit with CEL expressions:
+           rate_limit = RateLimit(
+               dynamic_key="input.user_id",
+               units="input.units",
+               limit="input.limit * input.user_tier"
+           )
+
+    Note:
+        - Either static_key or dynamic_key must be set, but not both.
+        - When using dynamic_key, limit must also be set.
+        - CEL expressions are validated upon instantiation.
+
+    Raises:
+        ValueError: If invalid combinations of attributes are provided or if CEL expressions are invalid.
+        DeprecationWarning: If the deprecated 'key' attribute is used.
+    """
     key: Union[str, None] = None
     static_key: Union[str, None] = None
     dynamic_key: Union[str, None] = None
     units: Union[int, str] = 1
     limit: Union[int, str, None] = None
+    duration: RateLimitDuration = RateLimitDuration.MINUTE
 
     _req: CreateStepRateLimit = None
 
@@ -31,7 +77,7 @@ class RateLimit:
         key_expression = self.dynamic_key
 
         if self.key is not None:
-            print(
+            DeprecationWarning(
                 "key is deprecated and will be removed in a future release, please use static_key instead"
             )
             key = self.key
@@ -74,14 +120,6 @@ class RateLimit:
             units=units,
             units_expr=units_expression,
             limit_values_expr=limit_expression,
+            duration=self.duration
         )
 
-
-class RateLimitDuration:
-    SECOND = "SECOND"
-    MINUTE = "MINUTE"
-    HOUR = "HOUR"
-    DAY = "DAY"
-    WEEK = "WEEK"
-    MONTH = "MONTH"
-    YEAR = "YEAR"
