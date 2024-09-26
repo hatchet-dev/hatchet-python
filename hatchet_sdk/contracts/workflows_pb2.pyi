@@ -170,12 +170,20 @@ class CreateWorkflowStepOpts(_message.Message):
     def __init__(self, readable_id: _Optional[str] = ..., action: _Optional[str] = ..., timeout: _Optional[str] = ..., inputs: _Optional[str] = ..., parents: _Optional[_Iterable[str]] = ..., user_data: _Optional[str] = ..., retries: _Optional[int] = ..., rate_limits: _Optional[_Iterable[_Union[CreateStepRateLimit, _Mapping]]] = ..., worker_labels: _Optional[_Mapping[str, DesiredWorkerLabels]] = ...) -> None: ...
 
 class CreateStepRateLimit(_message.Message):
-    __slots__ = ("key", "units")
+    __slots__ = ("key", "units", "key_expr", "units_expr", "limit_values_expr", "duration")
     KEY_FIELD_NUMBER: _ClassVar[int]
     UNITS_FIELD_NUMBER: _ClassVar[int]
+    KEY_EXPR_FIELD_NUMBER: _ClassVar[int]
+    UNITS_EXPR_FIELD_NUMBER: _ClassVar[int]
+    LIMIT_VALUES_EXPR_FIELD_NUMBER: _ClassVar[int]
+    DURATION_FIELD_NUMBER: _ClassVar[int]
     key: str
     units: int
-    def __init__(self, key: _Optional[str] = ..., units: _Optional[int] = ...) -> None: ...
+    key_expr: str
+    units_expr: str
+    limit_values_expr: str
+    duration: RateLimitDuration
+    def __init__(self, key: _Optional[str] = ..., units: _Optional[int] = ..., key_expr: _Optional[str] = ..., units_expr: _Optional[str] = ..., limit_values_expr: _Optional[str] = ..., duration: _Optional[_Union[RateLimitDuration, str]] = ...) -> None: ...
 
 class ListWorkflowsRequest(_message.Message):
     __slots__ = ()

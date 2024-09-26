@@ -48,10 +48,7 @@ class HatchetCallable(Generic[T]):
 
         limits = None
         if rate_limits:
-            limits = [
-                CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
-                for rate_limit in rate_limits or []
-            ]
+            limits = [rate_limit._req for rate_limit in rate_limits or []]
 
         self.function_desired_worker_labels = {}
 

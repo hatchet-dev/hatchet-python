@@ -19,23 +19,21 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
+from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from hatchet_sdk.clients.rest.models.event import Event
 
 
-class TenantQueueMetrics(BaseModel):
+class BulkCreateEventResponse(BaseModel):
     """
-    TenantQueueMetrics
+    BulkCreateEventResponse
     """  # noqa: E501
 
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
-    )
-    workflow: Optional[Dict[str, QueueMetrics]] = None
-    queues: Optional[Dict[str, StrictInt]] = None
-    __properties: ClassVar[List[str]] = ["total", "workflow", "queues"]
+    metadata: APIResourceMeta
+    events: List[Event] = Field(description="The events.")
+    __properties: ClassVar[List[str]] = ["metadata", "events"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -54,7 +52,7 @@ class TenantQueueMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a JSON string"""
+        """Create an instance of BulkCreateEventResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,14 +72,21 @@ class TenantQueueMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of total
-        if self.total:
-            _dict["total"] = self.total.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of metadata
+        if self.metadata:
+            _dict["metadata"] = self.metadata.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in events (list)
+        _items = []
+        if self.events:
+            for _item in self.events:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict["events"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a dict"""
+        """Create an instance of BulkCreateEventResponse from a dict"""
         if obj is None:
             return None
 
@@ -90,9 +95,14 @@ class TenantQueueMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
+                "metadata": (
+                    APIResourceMeta.from_dict(obj["metadata"])
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "events": (
+                    [Event.from_dict(_item) for _item in obj["events"]]
+                    if obj.get("events") is not None
                     else None
                 ),
             }

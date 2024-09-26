@@ -19,23 +19,23 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
 
-
-class TenantQueueMetrics(BaseModel):
+class WorkflowWorkersCount(BaseModel):
     """
-    TenantQueueMetrics
+    WorkflowWorkersCount
     """  # noqa: E501
 
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
-    )
-    workflow: Optional[Dict[str, QueueMetrics]] = None
-    queues: Optional[Dict[str, StrictInt]] = None
-    __properties: ClassVar[List[str]] = ["total", "workflow", "queues"]
+    free_slot_count: Optional[StrictInt] = Field(default=None, alias="freeSlotCount")
+    max_slot_count: Optional[StrictInt] = Field(default=None, alias="maxSlotCount")
+    workflow_run_id: Optional[StrictStr] = Field(default=None, alias="workflowRunId")
+    __properties: ClassVar[List[str]] = [
+        "freeSlotCount",
+        "maxSlotCount",
+        "workflowRunId",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -54,7 +54,7 @@ class TenantQueueMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a JSON string"""
+        """Create an instance of WorkflowWorkersCount from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,14 +74,11 @@ class TenantQueueMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of total
-        if self.total:
-            _dict["total"] = self.total.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a dict"""
+        """Create an instance of WorkflowWorkersCount from a dict"""
         if obj is None:
             return None
 
@@ -90,11 +87,9 @@ class TenantQueueMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
-                    else None
-                ),
+                "freeSlotCount": obj.get("freeSlotCount"),
+                "maxSlotCount": obj.get("maxSlotCount"),
+                "workflowRunId": obj.get("workflowRunId"),
             }
         )
         return _obj
