@@ -11,12 +11,15 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["rate_limit:create"])
 class RateLimitWorkflow:
 
-    @hatchet.step(rate_limits=[
-        RateLimit(
-            dynamic_key=f'"LIMIT:"+input.group',
-            units="input.units",
-            limit="input.limit",
-        )])
+    @hatchet.step(
+        rate_limits=[
+            RateLimit(
+                dynamic_key=f'"LIMIT:"+input.group',
+                units="input.units",
+                limit="input.limit",
+            )
+        ]
+    )
     def step1(self, context: Context):
         print("executed step1")
         pass

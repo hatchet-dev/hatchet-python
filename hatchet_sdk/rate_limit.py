@@ -24,6 +24,7 @@ class RateLimitDuration:
     MONTH = "MONTH"
     YEAR = "YEAR"
 
+
 @dataclass
 class RateLimit:
     """
@@ -62,6 +63,7 @@ class RateLimit:
         ValueError: If invalid combinations of attributes are provided or if CEL expressions are invalid.
         DeprecationWarning: If the deprecated 'key' attribute is used.
     """
+
     key: Union[str, None] = None
     static_key: Union[str, None] = None
     dynamic_key: Union[str, None] = None
@@ -120,6 +122,5 @@ class RateLimit:
             units=units,
             units_expr=units_expression,
             limit_values_expr=limit_expression,
-            duration=self.duration
+            duration=self.duration,
         )
-
