@@ -22,18 +22,16 @@ from typing import Any, ClassVar, Dict, List, Optional, Set
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.pagination_response import PaginationResponse
-from hatchet_sdk.clients.rest.models.tenant_invite import TenantInvite
+from hatchet_sdk.clients.rest.models.create_event_request import CreateEventRequest
 
 
-class TenantInviteList(BaseModel):
+class BulkCreateEventRequest(BaseModel):
     """
-    TenantInviteList
+    BulkCreateEventRequest
     """  # noqa: E501
 
-    pagination: Optional[PaginationResponse] = None
-    rows: Optional[List[TenantInvite]] = None
-    __properties: ClassVar[List[str]] = ["pagination", "rows"]
+    events: List[CreateEventRequest]
+    __properties: ClassVar[List[str]] = ["events"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +50,7 @@ class TenantInviteList(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantInviteList from a JSON string"""
+        """Create an instance of BulkCreateEventRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,21 +70,18 @@ class TenantInviteList(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of pagination
-        if self.pagination:
-            _dict["pagination"] = self.pagination.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each item in rows (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in events (list)
         _items = []
-        if self.rows:
-            for _item_rows in self.rows:
-                if _item_rows:
-                    _items.append(_item_rows.to_dict())
-            _dict["rows"] = _items
+        if self.events:
+            for _item_events in self.events:
+                if _item_events:
+                    _items.append(_item_events.to_dict())
+            _dict["events"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantInviteList from a dict"""
+        """Create an instance of BulkCreateEventRequest from a dict"""
         if obj is None:
             return None
 
@@ -95,16 +90,11 @@ class TenantInviteList(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "pagination": (
-                    PaginationResponse.from_dict(obj["pagination"])
-                    if obj.get("pagination") is not None
+                "events": (
+                    [CreateEventRequest.from_dict(_item) for _item in obj["events"]]
+                    if obj.get("events") is not None
                     else None
-                ),
-                "rows": (
-                    [TenantInvite.from_dict(_item) for _item in obj["rows"]]
-                    if obj.get("rows") is not None
-                    else None
-                ),
+                )
             }
         )
         return _obj

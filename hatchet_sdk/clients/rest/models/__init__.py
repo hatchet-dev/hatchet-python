@@ -24,6 +24,12 @@ from hatchet_sdk.clients.rest.models.api_meta_integration import APIMetaIntegrat
 from hatchet_sdk.clients.rest.models.api_meta_posthog import APIMetaPosthog
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.api_token import APIToken
+from hatchet_sdk.clients.rest.models.bulk_create_event_request import (
+    BulkCreateEventRequest,
+)
+from hatchet_sdk.clients.rest.models.bulk_create_event_response import (
+    BulkCreateEventResponse,
+)
 from hatchet_sdk.clients.rest.models.cancel_event_request import CancelEventRequest
 from hatchet_sdk.clients.rest.models.create_api_token_request import (
     CreateAPITokenRequest,
@@ -207,3 +213,4 @@ from hatchet_sdk.clients.rest.models.workflow_version_definition import (
     WorkflowVersionDefinition,
 )
 from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
+from hatchet_sdk.clients.rest.models.workflow_workers_count import WorkflowWorkersCount

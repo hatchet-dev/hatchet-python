@@ -75,9 +75,9 @@ class TenantResourcePolicy(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in limits (list)
         _items = []
         if self.limits:
-            for _item in self.limits:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_limits in self.limits:
+                if _item_limits:
+                    _items.append(_item_limits.to_dict())
             _dict["limits"] = _items
         return _dict
 
