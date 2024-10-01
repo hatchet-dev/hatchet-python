@@ -111,6 +111,12 @@ class ConfigLoader:
             "HATCHET_CLIENT_GRPC_MAX_SEND_MESSAGE_LENGTH",
         )
 
+        if grpc_max_recv_message_length:
+            grpc_max_recv_message_length = int(grpc_max_recv_message_length)
+
+        if grpc_max_send_message_length:
+            grpc_max_send_message_length = int(grpc_max_send_message_length)
+
         if not host_port:
             # extract host and port from token
             server_url, grpc_broadcast_address = get_addresses_from_jwt(token)
