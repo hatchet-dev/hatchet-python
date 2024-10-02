@@ -16,6 +16,7 @@ from hatchet_sdk.clients.dispatcher.dispatcher import (
 )
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_STARTED,
+    STEP_EVENT_TYPE_ACKNOWLEDGED,
     STEP_EVENT_TYPE_STARTED,
     ActionType,
 )
@@ -140,29 +141,22 @@ class WorkerActionListenerProcess:
     async def send_event(self, event: ActionEvent, retry_attempt: int = 1):
         try:
             match event.action.action_type:
-                # FIXME: all events sent from an execution of a function are of type ActionType.START_STEP_RUN since
-                # the action is re-used. We should change this.
                 case ActionType.START_STEP_RUN:
-                    # TODO right now we're sending two start_step_run events
-                    # one on the action loop and one on the event loop
-                    # ideally we change the first to an ack to set the time
+                    if event.type == STEP_EVENT_TYPE_ACKNOWLEDGED:
+                        print(f"ACK{event.action.step_run_id}")
+                        self.running_step_runs[event.action.step_run_id] = self.now()
                     if event.type == STEP_EVENT_TYPE_STARTED:
-                        if event.action.step_run_id in self.running_step_runs:
-                            diff = (
-                                self.now()
-                                - self.running_step_runs[event.action.step_run_id]
+                        diff = (
+                            self.now()
+                            - self.running_step_runs[event.action.step_run_id]
+                        )
+                        if diff > 0.1:
+                            logger.warning(
+                                f"{BLOCKED_THREAD_WARNING}: time to start: {diff}s"
                             )
-                            if diff > 0.1:
-                                logger.warning(
-                                    f"{BLOCKED_THREAD_WARNING}: time to start: {diff}s"
-                                )
-                            else:
-                                logger.debug(f"start time: {diff}")
-                            del self.running_step_runs[event.action.step_run_id]
                         else:
-                            self.running_step_runs[event.action.step_run_id] = (
-                                self.now()
-                            )
+                            logger.debug(f"start time: {diff}")
+                        del self.running_step_runs[event.action.step_run_id]
 
                     asyncio.create_task(
                         self.dispatcher_client.send_step_action_event(
@@ -201,8 +195,7 @@ class WorkerActionListenerProcess:
                     case ActionType.START_STEP_RUN:
                         self.event_queue.put(
                             ActionEvent(
-                                action=action,
-                                type=STEP_EVENT_TYPE_STARTED,  # TODO ack type
+                                action=action, type=STEP_EVENT_TYPE_ACKNOWLEDGED
                             )
                         )
                         logger.info(
