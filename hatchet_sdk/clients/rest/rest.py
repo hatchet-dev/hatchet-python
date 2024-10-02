@@ -81,7 +81,7 @@ class RESTClientObject:
             self.retry_client = aiohttp_retry.RetryClient(
                 client_session=self.pool_manager,
                 retry_options=aiohttp_retry.ExponentialRetry(
-                    attempts=retries, factor=2.0, start_timeout=0.1, max_timeout=120.0
+                    attempts=retries, factor=0.0, start_timeout=0.0, max_timeout=120.0
                 ),
             )
         else:
@@ -159,10 +159,10 @@ class RESTClientObject:
                         data.add_field(k, v)
                 args["data"] = data
 
-            # Pass a `bytes` or `str` parameter directly in the body to support
+            # Pass a `bytes` parameter directly in the body to support
             # other content types than Json when `body` argument is provided
             # in serialized form
-            elif isinstance(body, str) or isinstance(body, bytes):
+            elif isinstance(body, bytes):
                 args["data"] = body
             else:
                 # Cannot generate the request from given parameters
