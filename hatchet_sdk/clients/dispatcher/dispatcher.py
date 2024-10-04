@@ -16,6 +16,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     OverridesData,
     RefreshTimeoutRequest,
     ReleaseSlotRequest,
+    RuntimeInfo,
     StepActionEvent,
     StepActionEventType,
     UpsertWorkerLabelsRequest,
@@ -48,8 +49,11 @@ class DispatcherClient:
         self.config = config
 
     async def get_action_listener(
-        self, req: GetActionListenerRequest
+        self,
+        req: GetActionListenerRequest,
+        runtime_info: RuntimeInfo,
     ) -> ActionListener:
+
         # Register the worker
         response: WorkerRegisterResponse = await self.aio_client.Register(
             WorkerRegisterRequest(
@@ -58,6 +62,7 @@ class DispatcherClient:
                 services=req.services,
                 maxRuns=req.max_runs,
                 labels=req.labels,
+                runtimeInfo=runtime_info
             ),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
