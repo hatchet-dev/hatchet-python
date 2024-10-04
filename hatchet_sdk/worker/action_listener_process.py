@@ -30,6 +30,7 @@ from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 ACTION_EVENT_RETRY_COUNT = 5
 
+
 def get_runtime_info() -> RuntimeInfo:
     try:
         return RuntimeInfo(
@@ -43,6 +44,7 @@ def get_runtime_info() -> RuntimeInfo:
             extra=str(e),
             language=SDKS.PYTHON,
         )
+
 
 @dataclass
 class ActionEvent:
@@ -116,7 +118,7 @@ class WorkerActionListenerProcess:
                         max_runs=self.max_runs,
                         _labels=self.labels,
                     ),
-                    runtime_info
+                    runtime_info,
                 )
             )
 

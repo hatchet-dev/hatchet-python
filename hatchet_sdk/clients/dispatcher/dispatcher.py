@@ -62,7 +62,7 @@ class DispatcherClient:
                 services=req.services,
                 maxRuns=req.max_runs,
                 labels=req.labels,
-                runtimeInfo=runtime_info
+                runtimeInfo=runtime_info,
             ),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
