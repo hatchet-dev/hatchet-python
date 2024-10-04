@@ -73,9 +73,9 @@ class BulkCreateEventRequest(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in events (list)
         _items = []
         if self.events:
-            for _item_events in self.events:
-                if _item_events:
-                    _items.append(_item_events.to_dict())
+            for _item in self.events:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["events"] = _items
         return _dict
 

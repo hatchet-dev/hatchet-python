@@ -75,9 +75,9 @@ class WorkflowRunList(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in rows (list)
         _items = []
         if self.rows:
-            for _item_rows in self.rows:
-                if _item_rows:
-                    _items.append(_item_rows.to_dict())
+            for _item in self.rows:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["rows"] = _items
         # override the default output from pydantic by calling `to_dict()` of pagination
         if self.pagination:
