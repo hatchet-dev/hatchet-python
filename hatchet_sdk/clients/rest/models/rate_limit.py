@@ -17,25 +17,44 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
 
-
-class TenantQueueMetrics(BaseModel):
+class RateLimit(BaseModel):
     """
-    TenantQueueMetrics
+    RateLimit
     """  # noqa: E501
 
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
+    key: StrictStr = Field(description="The key for the rate limit.")
+    tenant_id: StrictStr = Field(
+        description="The ID of the tenant associated with this rate limit.",
+        alias="tenantId",
     )
-    workflow: Optional[Dict[str, QueueMetrics]] = None
-    queues: Optional[Dict[str, StrictInt]] = None
-    __properties: ClassVar[List[str]] = ["total", "workflow", "queues"]
+    limit_value: StrictInt = Field(
+        description="The maximum number of requests allowed within the window.",
+        alias="limitValue",
+    )
+    value: StrictInt = Field(
+        description="The current number of requests made within the window."
+    )
+    window: StrictStr = Field(
+        description="The window of time in which the limitValue is enforced."
+    )
+    last_refill: datetime = Field(
+        description="The last time the rate limit was refilled.", alias="lastRefill"
+    )
+    __properties: ClassVar[List[str]] = [
+        "key",
+        "tenantId",
+        "limitValue",
+        "value",
+        "window",
+        "lastRefill",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -54,7 +73,7 @@ class TenantQueueMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a JSON string"""
+        """Create an instance of RateLimit from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,14 +93,11 @@ class TenantQueueMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of total
-        if self.total:
-            _dict["total"] = self.total.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a dict"""
+        """Create an instance of RateLimit from a dict"""
         if obj is None:
             return None
 
@@ -90,11 +106,12 @@ class TenantQueueMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
-                    else None
-                ),
+                "key": obj.get("key"),
+                "tenantId": obj.get("tenantId"),
+                "limitValue": obj.get("limitValue"),
+                "value": obj.get("value"),
+                "window": obj.get("window"),
+                "lastRefill": obj.get("lastRefill"),
             }
         )
         return _obj

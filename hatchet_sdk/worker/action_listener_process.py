@@ -1,12 +1,15 @@
 import asyncio
 import logging
+import platform
 import signal
+import sys
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
 from typing import Any, List, Mapping, Optional
 
 import grpc
+import pkg_resources
 
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import (
@@ -16,14 +19,31 @@ from hatchet_sdk.clients.dispatcher.dispatcher import (
 )
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_STARTED,
+    SDKS,
     STEP_EVENT_TYPE_STARTED,
     ActionType,
+    RuntimeInfo,
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 
 ACTION_EVENT_RETRY_COUNT = 5
+
+
+def get_runtime_info() -> RuntimeInfo:
+    try:
+        return RuntimeInfo(
+            sdkVersion=pkg_resources.get_distribution("hatchet-sdk").version,
+            language=SDKS.PYTHON,
+            languageVersion=sys.version,
+            os=platform.platform(),
+        )
+    except Exception as e:
+        return RuntimeInfo(
+            extra=str(e),
+            language=SDKS.PYTHON,
+        )
 
 
 @dataclass
@@ -87,6 +107,8 @@ class WorkerActionListenerProcess:
         try:
             self.dispatcher_client = new_dispatcher(self.config)
 
+            runtime_info = get_runtime_info()
+            logger.debug(f"Runtime Info:\n{runtime_info}")
             self.listener: ActionListener = (
                 await self.dispatcher_client.get_action_listener(
                     GetActionListenerRequest(
@@ -95,7 +117,8 @@ class WorkerActionListenerProcess:
                         actions=self.actions,
                         max_runs=self.max_runs,
                         _labels=self.labels,
-                    )
+                    ),
+                    runtime_info,
                 )
             )
 

@@ -24,7 +24,6 @@ from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.event import Event
-from hatchet_sdk.clients.rest.models.pagination_response import PaginationResponse
 
 
 class BulkCreateEventResponse(BaseModel):
@@ -34,8 +33,7 @@ class BulkCreateEventResponse(BaseModel):
 
     metadata: APIResourceMeta
     events: List[Event] = Field(description="The events.")
-    pagination: PaginationResponse = Field(description="The pagination information.")
-    __properties: ClassVar[List[str]] = ["metadata", "events", "pagination"]
+    __properties: ClassVar[List[str]] = ["metadata", "events"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -80,13 +78,10 @@ class BulkCreateEventResponse(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in events (list)
         _items = []
         if self.events:
-            for _item_events in self.events:
-                if _item_events:
-                    _items.append(_item_events.to_dict())
+            for _item in self.events:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["events"] = _items
-        # override the default output from pydantic by calling `to_dict()` of pagination
-        if self.pagination:
-            _dict["pagination"] = self.pagination.to_dict()
         return _dict
 
     @classmethod
@@ -108,11 +103,6 @@ class BulkCreateEventResponse(BaseModel):
                 "events": (
                     [Event.from_dict(_item) for _item in obj["events"]]
                     if obj.get("events") is not None
-                    else None
-                ),
-                "pagination": (
-                    PaginationResponse.from_dict(obj["pagination"])
-                    if obj.get("pagination") is not None
                     else None
                 ),
             }

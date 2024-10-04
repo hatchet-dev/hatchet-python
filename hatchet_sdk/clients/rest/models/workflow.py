@@ -19,7 +19,7 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
@@ -37,6 +37,9 @@ class Workflow(BaseModel):
     description: Optional[StrictStr] = Field(
         default=None, description="The description of the workflow."
     )
+    is_paused: Optional[StrictBool] = Field(
+        default=None, description="Whether the workflow is paused.", alias="isPaused"
+    )
     versions: Optional[List[WorkflowVersionMeta]] = None
     tags: Optional[List[WorkflowTag]] = Field(
         default=None, description="The tags of the workflow."
@@ -48,6 +51,7 @@ class Workflow(BaseModel):
         "metadata",
         "name",
         "description",
+        "isPaused",
         "versions",
         "tags",
         "jobs",
@@ -96,23 +100,23 @@ class Workflow(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in versions (list)
         _items = []
         if self.versions:
-            for _item_versions in self.versions:
-                if _item_versions:
-                    _items.append(_item_versions.to_dict())
+            for _item in self.versions:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["versions"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in tags (list)
         _items = []
         if self.tags:
-            for _item_tags in self.tags:
-                if _item_tags:
-                    _items.append(_item_tags.to_dict())
+            for _item in self.tags:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["tags"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
         _items = []
         if self.jobs:
-            for _item_jobs in self.jobs:
-                if _item_jobs:
-                    _items.append(_item_jobs.to_dict())
+            for _item in self.jobs:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["jobs"] = _items
         return _dict
 
@@ -134,6 +138,7 @@ class Workflow(BaseModel):
                 ),
                 "name": obj.get("name"),
                 "description": obj.get("description"),
+                "isPaused": obj.get("isPaused"),
                 "versions": (
                     [WorkflowVersionMeta.from_dict(_item) for _item in obj["versions"]]
                     if obj.get("versions") is not None
