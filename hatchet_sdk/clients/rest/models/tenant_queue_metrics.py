@@ -13,26 +13,21 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing_extensions import Self
-
+from typing import Any, ClassVar, Dict, List, Optional
 from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
-
+from typing import Optional, Set
+from typing_extensions import Self
 
 class TenantQueueMetrics(BaseModel):
     """
     TenantQueueMetrics
-    """  # noqa: E501
-
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
-    )
+    """ # noqa: E501
+    total: Optional[QueueMetrics] = Field(default=None, description="The total queue metrics.")
     workflow: Optional[Dict[str, QueueMetrics]] = None
     __properties: ClassVar[List[str]] = ["total", "workflow"]
 
@@ -41,6 +36,7 @@ class TenantQueueMetrics(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,7 +62,8 @@ class TenantQueueMetrics(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -75,7 +72,7 @@ class TenantQueueMetrics(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of total
         if self.total:
-            _dict["total"] = self.total.to_dict()
+            _dict['total'] = self.total.to_dict()
         return _dict
 
     @classmethod
@@ -87,13 +84,9 @@ class TenantQueueMetrics(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
-                    else None
-                ),
-            }
-        )
+        _obj = cls.model_validate({
+            "total": QueueMetrics.from_dict(obj["total"]) if obj.get("total") is not None else None,
+        })
         return _obj
+
+
