@@ -19,11 +19,6 @@ class EventsServiceStub(object):
                 request_serializer=events__pb2.PushEventRequest.SerializeToString,
                 response_deserializer=events__pb2.Event.FromString,
                 )
-        self.BulkPush = channel.unary_unary(
-                '/EventsService/BulkPush',
-                request_serializer=events__pb2.BulkPushEventRequest.SerializeToString,
-                response_deserializer=events__pb2.Events.FromString,
-                )
         self.ReplaySingleEvent = channel.unary_unary(
                 '/EventsService/ReplaySingleEvent',
                 request_serializer=events__pb2.ReplayEventRequest.SerializeToString,
@@ -45,12 +40,6 @@ class EventsServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Push(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def BulkPush(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -81,11 +70,6 @@ def add_EventsServiceServicer_to_server(servicer, server):
                     servicer.Push,
                     request_deserializer=events__pb2.PushEventRequest.FromString,
                     response_serializer=events__pb2.Event.SerializeToString,
-            ),
-            'BulkPush': grpc.unary_unary_rpc_method_handler(
-                    servicer.BulkPush,
-                    request_deserializer=events__pb2.BulkPushEventRequest.FromString,
-                    response_serializer=events__pb2.Events.SerializeToString,
             ),
             'ReplaySingleEvent': grpc.unary_unary_rpc_method_handler(
                     servicer.ReplaySingleEvent,
@@ -126,23 +110,6 @@ class EventsService(object):
         return grpc.experimental.unary_unary(request, target, '/EventsService/Push',
             events__pb2.PushEventRequest.SerializeToString,
             events__pb2.Event.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def BulkPush(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/EventsService/BulkPush',
-            events__pb2.BulkPushEventRequest.SerializeToString,
-            events__pb2.Events.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

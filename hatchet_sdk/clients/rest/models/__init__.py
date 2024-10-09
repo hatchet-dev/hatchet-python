@@ -24,13 +24,6 @@ from hatchet_sdk.clients.rest.models.api_meta_integration import APIMetaIntegrat
 from hatchet_sdk.clients.rest.models.api_meta_posthog import APIMetaPosthog
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.api_token import APIToken
-from hatchet_sdk.clients.rest.models.bulk_create_event_request import (
-    BulkCreateEventRequest,
-)
-from hatchet_sdk.clients.rest.models.bulk_create_event_response import (
-    BulkCreateEventResponse,
-)
-from hatchet_sdk.clients.rest.models.cancel_event_request import CancelEventRequest
 from hatchet_sdk.clients.rest.models.create_api_token_request import (
     CreateAPITokenRequest,
 )
@@ -59,9 +52,6 @@ from hatchet_sdk.clients.rest.models.event_order_by_direction import (
     EventOrderByDirection,
 )
 from hatchet_sdk.clients.rest.models.event_order_by_field import EventOrderByField
-from hatchet_sdk.clients.rest.models.event_update_cancel200_response import (
-    EventUpdateCancel200Response,
-)
 from hatchet_sdk.clients.rest.models.event_workflow_run_summary import (
     EventWorkflowRunSummary,
 )
@@ -181,6 +171,9 @@ from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
 from hatchet_sdk.clients.rest.models.workflow_metrics import WorkflowMetrics
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
+from hatchet_sdk.clients.rest.models.workflow_run_cancel200_response import (
+    WorkflowRunCancel200Response,
+)
 from hatchet_sdk.clients.rest.models.workflow_run_list import WorkflowRunList
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
@@ -188,7 +181,6 @@ from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_field import (
     WorkflowRunOrderByField,
 )
-from hatchet_sdk.clients.rest.models.workflow_run_shape import WorkflowRunShape
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import (
     WorkflowRunTriggeredBy,
@@ -213,4 +205,3 @@ from hatchet_sdk.clients.rest.models.workflow_version_definition import (
     WorkflowVersionDefinition,
 )
 from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
-from hatchet_sdk.clients.rest.models.workflow_workers_count import WorkflowWorkersCount

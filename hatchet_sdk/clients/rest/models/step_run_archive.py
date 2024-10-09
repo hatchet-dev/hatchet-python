@@ -35,7 +35,6 @@ class StepRunArchive(BaseModel):
     output: Optional[StrictStr] = None
     started_at: Optional[datetime] = Field(default=None, alias="startedAt")
     error: Optional[StrictStr] = None
-    retry_count: StrictInt = Field(alias="retryCount")
     created_at: datetime = Field(alias="createdAt")
     started_at_epoch: Optional[StrictInt] = Field(default=None, alias="startedAtEpoch")
     finished_at: Optional[datetime] = Field(default=None, alias="finishedAt")
@@ -57,7 +56,6 @@ class StepRunArchive(BaseModel):
         "output",
         "startedAt",
         "error",
-        "retryCount",
         "createdAt",
         "startedAtEpoch",
         "finishedAt",
@@ -126,7 +124,6 @@ class StepRunArchive(BaseModel):
                 "output": obj.get("output"),
                 "startedAt": obj.get("startedAt"),
                 "error": obj.get("error"),
-                "retryCount": obj.get("retryCount"),
                 "createdAt": obj.get("createdAt"),
                 "startedAtEpoch": obj.get("startedAtEpoch"),
                 "finishedAt": obj.get("finishedAt"),

@@ -96,23 +96,23 @@ class Workflow(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in versions (list)
         _items = []
         if self.versions:
-            for _item_versions in self.versions:
-                if _item_versions:
-                    _items.append(_item_versions.to_dict())
+            for _item in self.versions:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["versions"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in tags (list)
         _items = []
         if self.tags:
-            for _item_tags in self.tags:
-                if _item_tags:
-                    _items.append(_item_tags.to_dict())
+            for _item in self.tags:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["tags"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
         _items = []
         if self.jobs:
-            for _item_jobs in self.jobs:
-                if _item_jobs:
-                    _items.append(_item_jobs.to_dict())
+            for _item in self.jobs:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["jobs"] = _items
         return _dict
 

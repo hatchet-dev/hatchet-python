@@ -23,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from hatchet_sdk.clients.rest.models.event import Event
 
 
 class WorkflowRunTriggeredBy(BaseModel):
@@ -31,16 +32,16 @@ class WorkflowRunTriggeredBy(BaseModel):
     """  # noqa: E501
 
     metadata: APIResourceMeta
-    parent_workflow_run_id: Optional[StrictStr] = Field(
-        default=None, alias="parentWorkflowRunId"
-    )
+    parent_id: StrictStr = Field(alias="parentId")
     event_id: Optional[StrictStr] = Field(default=None, alias="eventId")
+    event: Optional[Event] = None
     cron_parent_id: Optional[StrictStr] = Field(default=None, alias="cronParentId")
     cron_schedule: Optional[StrictStr] = Field(default=None, alias="cronSchedule")
     __properties: ClassVar[List[str]] = [
         "metadata",
-        "parentWorkflowRunId",
+        "parentId",
         "eventId",
+        "event",
         "cronParentId",
         "cronSchedule",
     ]
@@ -85,6 +86,9 @@ class WorkflowRunTriggeredBy(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
             _dict["metadata"] = self.metadata.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of event
+        if self.event:
+            _dict["event"] = self.event.to_dict()
         return _dict
 
     @classmethod
@@ -103,8 +107,13 @@ class WorkflowRunTriggeredBy(BaseModel):
                     if obj.get("metadata") is not None
                     else None
                 ),
-                "parentWorkflowRunId": obj.get("parentWorkflowRunId"),
+                "parentId": obj.get("parentId"),
                 "eventId": obj.get("eventId"),
+                "event": (
+                    Event.from_dict(obj["event"])
+                    if obj.get("event") is not None
+                    else None
+                ),
                 "cronParentId": obj.get("cronParentId"),
                 "cronSchedule": obj.get("cronSchedule"),
             }

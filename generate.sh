@@ -1,8 +1,36 @@
 #!/bin/bash
 #
-# Builds python auto-generated protobuf files
+# Builds python auto-generated protobuf files for both OSS and Cloud versions
 
 set -eux
+
+# Parse command line options
+mode="oss"
+while getopts ":n:" opt; do
+  case $opt in
+    n)
+      mode=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# Set the submodule name based on the mode
+if [ "$mode" = "cloud" ]; then
+  submodule_name="hatchet-cloud"
+else
+  submodule_name="hatchet"
+fi
+
+echo "Mode: $mode"
+echo "Submodule name: $submodule_name"
 
 ROOT_DIR=$(pwd)
 
@@ -16,7 +44,7 @@ openapi-generator-cli version || npm install @openapitools/openapi-generator-cli
 # fi
 
 # generate deps from hatchet repo
-cd hatchet/ && sh ./hack/oas/generate-server.sh && cd $ROOT_DIR
+cd $submodule_name/ && sh ./hack/oas/generate-server.sh && cd $ROOT_DIR
 
 # generate python rest client
 
@@ -27,7 +55,7 @@ mkdir -p $dst_dir
 tmp_dir=./tmp
 
 # generate into tmp folder
-openapi-generator-cli generate -i ./hatchet/bin/oas/openapi.yaml -g python -o ./tmp --skip-validate-spec \
+openapi-generator-cli generate -i ./$submodule_name/bin/oas/openapi.yaml -g python -o ./tmp --skip-validate-spec \
     --library asyncio \
     --global-property=apiTests=false \
     --global-property=apiDocs=true \
@@ -42,7 +70,7 @@ mv $tmp_dir/hatchet_sdk/clients/rest/exceptions.py $dst_dir/exceptions.py
 mv $tmp_dir/hatchet_sdk/clients/rest/__init__.py $dst_dir/__init__.py
 mv $tmp_dir/hatchet_sdk/clients/rest/rest.py $dst_dir/rest.py
 
-openapi-generator-cli generate -i ./hatchet/bin/oas/openapi.yaml -g python -o . --skip-validate-spec \
+openapi-generator-cli generate -i ./$submodule_name/bin/oas/openapi.yaml -g python -o . --skip-validate-spec \
     --library asyncio \
     --global-property=apis,models \
     --global-property=apiTests=false \
@@ -58,9 +86,14 @@ cp $tmp_dir/hatchet_sdk/clients/rest/api/__init__.py $dst_dir/api/__init__.py
 # remove tmp folder
 rm -rf $tmp_dir
 
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/dispatcher --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts dispatcher.proto
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/events --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts events.proto
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/workflows --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts workflows.proto
+# Generate protobuf files
+proto_files=("dispatcher" "events" "workflows")
+
+for proto in "${proto_files[@]}"; do
+    poetry run python -m grpc_tools.protoc --proto_path=$submodule_name/api-contracts/$proto \
+    --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts \
+    --grpc_python_out=./hatchet_sdk/contracts $proto.proto
+done
 
 # Fix relative imports in _grpc.py files
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -76,3 +109,5 @@ pre-commit run --all-files || pre-commit run --all-files
 
 # apply patch to openapi-generator generated code
 patch -p1 --no-backup-if-mismatch <./openapi_patch.patch
+
+echo "Generation completed for $mode mode"

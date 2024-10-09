@@ -92,16 +92,16 @@ class WorkflowTriggers(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in events (list)
         _items = []
         if self.events:
-            for _item_events in self.events:
-                if _item_events:
-                    _items.append(_item_events.to_dict())
+            for _item in self.events:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["events"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in crons (list)
         _items = []
         if self.crons:
-            for _item_crons in self.crons:
-                if _item_crons:
-                    _items.append(_item_crons.to_dict())
+            for _item in self.crons:
+                if _item:
+                    _items.append(_item.to_dict())
             _dict["crons"] = _items
         return _dict
 

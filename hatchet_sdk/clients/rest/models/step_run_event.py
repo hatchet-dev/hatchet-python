@@ -35,8 +35,7 @@ class StepRunEvent(BaseModel):
     id: StrictInt
     time_first_seen: datetime = Field(alias="timeFirstSeen")
     time_last_seen: datetime = Field(alias="timeLastSeen")
-    step_run_id: Optional[StrictStr] = Field(default=None, alias="stepRunId")
-    workflow_run_id: Optional[StrictStr] = Field(default=None, alias="workflowRunId")
+    step_run_id: StrictStr = Field(alias="stepRunId")
     reason: StepRunEventReason
     severity: StepRunEventSeverity
     message: StrictStr
@@ -47,7 +46,6 @@ class StepRunEvent(BaseModel):
         "timeFirstSeen",
         "timeLastSeen",
         "stepRunId",
-        "workflowRunId",
         "reason",
         "severity",
         "message",
@@ -109,7 +107,6 @@ class StepRunEvent(BaseModel):
                 "timeFirstSeen": obj.get("timeFirstSeen"),
                 "timeLastSeen": obj.get("timeLastSeen"),
                 "stepRunId": obj.get("stepRunId"),
-                "workflowRunId": obj.get("workflowRunId"),
                 "reason": obj.get("reason"),
                 "severity": obj.get("severity"),
                 "message": obj.get("message"),
