@@ -1,7 +1,7 @@
 [submodule "hatchet"]
 	path = hatchet
-	url = git@github.com:hatchet-dev/hatchet.git
-	branch = feat/iac
+	url = https://github.com/hatchet-dev/hatchet.git
+	branch = main
 [submodule "hatchet-cloud"]
 	path = hatchet-cloud
 	url = https://github.com/hatchet-dev/hatchet-cloud.git
