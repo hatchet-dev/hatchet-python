@@ -24,7 +24,7 @@ class ClientTLSConfig:
 
 
 class ClientConfig:
-    logger: Logger
+    logInterceptor: Logger
 
     def __init__(
         self,
@@ -45,12 +45,12 @@ class ClientConfig:
         self.token = token
         self.server_url = server_url
         self.namespace = ""
-        self.logger = logger
+        self.logInterceptor = logger
         self.grpc_max_recv_message_length = grpc_max_recv_message_length
         self.grpc_max_send_message_length = grpc_max_send_message_length
 
-        if not self.logger:
-            self.logger = getLogger()
+        if not self.logInterceptor:
+            self.logInterceptor = getLogger()
 
         # case on whether the namespace already has a trailing underscore
         if namespace and not namespace.endswith("_"):
@@ -135,7 +135,7 @@ class ConfigLoader:
             server_url=server_url,
             namespace=namespace,
             listener_v2_timeout=listener_v2_timeout,
-            logger=defaults.logger,
+            logger=defaults.logInterceptor,
             grpc_max_recv_message_length=grpc_max_recv_message_length,
             grpc_max_send_message_length=grpc_max_send_message_length,
         )

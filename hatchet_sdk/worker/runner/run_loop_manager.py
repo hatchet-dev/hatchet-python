@@ -43,7 +43,7 @@ class WorkerActionRunLoopManager:
 
     async def async_start(self, retry_count=1):
         await capture_logs(
-            self.client.logger,
+            self.client.logInterceptor,
             self.client.event,
             self._async_start,
         )(retry_count=retry_count)
