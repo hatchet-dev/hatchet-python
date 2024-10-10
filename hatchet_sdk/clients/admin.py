@@ -400,18 +400,17 @@ class AdminClient(AdminClientBase):
                 raise DedupeViolationErr(e.details())
 
             raise ValueError(f"gRPC error: {e}")
-        
+
     @tenacity_retry
     def run_workflows(
         self, workflows: list[tuple], options: TriggerWorkflowOptions = None
     ) -> list[WorkflowRunRef]:
-      
-    
-        workflow_run_requests : TriggerWorkflowRequest = []
+
+        workflow_run_requests: TriggerWorkflowRequest = []
         try:
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
-    
+
             for workflow in workflows:
 
                 workflow_name = workflow["workflow_name"]
@@ -432,19 +431,18 @@ class AdminClient(AdminClientBase):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(workflow_name, input_data, options)
+                request = self._prepare_workflow_request(
+                    workflow_name, input_data, options
+                )
 
                 workflow_run_requests.append(request)
 
-                request = BulkTriggerWorkflowRequest(
-                    workflows=workflow_run_requests
-                )
+                request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
-            resp: BulkTriggerWorkflowResponse  = self.client.BulkTriggerWorkflow(
-            request,
-            metadata=get_metadata(self.token),
+            resp: BulkTriggerWorkflowResponse = self.client.BulkTriggerWorkflow(
+                request,
+                metadata=get_metadata(self.token),
             )
-            
 
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
@@ -457,9 +455,6 @@ class AdminClient(AdminClientBase):
             )
             for workflow_run_id in resp.workflow_run_ids
         ]
-
-
-
 
     def run(
         self,

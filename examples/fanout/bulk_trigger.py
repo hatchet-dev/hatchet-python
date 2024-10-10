@@ -19,29 +19,27 @@ async def main():
 
     for i in range(100):
         workflowRuns.append(
-            
             {
                 "workflow_name": "Child",
-                "input": {"a": str(i)},                
+                "input": {"a": str(i)},
                 "options": {"additional_metadata": {"hello": "earth"}},
             }
         )
-    
 
     workflowRunRefs = hatchet.admin.run_workflows(
-            workflowRuns,
+        workflowRuns,
     )
 
-    results = await asyncio.gather(*[workflowRunRef.result() for workflowRunRef in workflowRunRefs],return_exceptions=True)
-    
+    results = await asyncio.gather(
+        *[workflowRunRef.result() for workflowRunRef in workflowRunRefs],
+        return_exceptions=True,
+    )
+
     for result in results:
         if isinstance(result, Exception):
             print(f"An error occurred: {result}")  # Handle the exception here
         else:
-            print(result) 
-
-
-
+            print(result)
 
 
 if __name__ == "__main__":
