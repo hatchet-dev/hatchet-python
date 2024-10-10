@@ -22,7 +22,7 @@ async def main():
             {
                 "workflow_name": "Child",
                 "input": {"a": str(i)},
-                "options": {"additional_metadata": {"hello": "earth"}},
+                "options": {"additional_metadata": {"hello": "earth",  "dedupe": "dedupe2"},},
             }
         )
 
