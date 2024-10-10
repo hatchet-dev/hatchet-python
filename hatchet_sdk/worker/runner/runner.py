@@ -35,8 +35,8 @@ from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
+from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
 
-from hatchet_sdk.worker.runner.utils.capture_logs import sr, wr, copy_context_vars
 
 class WorkerStatus(Enum):
     INITIALIZED = 1
@@ -206,7 +206,7 @@ class Runner:
         wr.set(context.workflow_run_id())
         sr.set(context.step_run_id)
 
-        print('srrr',  sr.get())
+        print("srrr", sr.get())
 
         try:
             if (
