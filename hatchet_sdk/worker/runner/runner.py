@@ -59,57 +59,6 @@ class InjectingFilter(logging.Filter):
         return True
 
 
-# Custom log handler to process log lines
-class CustomLogHandler(StreamHandler):
-    def __init__(self, event_client: EventClient, stream=None):
-        super().__init__(stream)
-        self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
-        self.event_client = event_client
-
-    def _log(self, line: str, step_run_id: str | None):
-        try:
-            if not step_run_id:
-                return
-
-            self.event_client.log(message=line, step_run_id=step_run_id)
-        except Exception as e:
-            logger.error(f"Error logging: {e}")
-
-    def emit(self, record):
-        super().emit(record)
-
-        log_entry = self.format(record)
-        self.logger_thread_pool.submit(self._log, log_entry, record.step_run_id)
-
-
-def capture_logs(
-    logger: logging.Logger,
-    event_client: EventClient,
-    func: Coroutine[Any, Any, Any],
-):
-    @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
-        if not logger:
-            raise Exception("No logger configured on client")
-
-        log_stream = StringIO()
-        custom_handler = CustomLogHandler(event_client, log_stream)
-        custom_handler.setLevel(logging.INFO)
-        custom_handler.addFilter(InjectingFilter())
-        logger.addHandler(custom_handler)
-
-        try:
-            result = await func(*args, **kwargs)
-        finally:
-            custom_handler.flush()
-            logger.removeHandler(custom_handler)
-            log_stream.close()
-
-        return result
-
-    return wrapper
-
-
 class WorkerStatus(Enum):
     INITIALIZED = 1
     STARTING = 2
