@@ -36,28 +36,7 @@ from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 
-wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
-    "workflow_run_id", default=None
-)
-sr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
-    "step_run_id", default=None
-)
-
-
-def copy_context_vars(ctx_vars, func, *args, **kwargs):
-    for var, value in ctx_vars:
-        var.set(value)
-    return func(*args, **kwargs)
-
-
-class InjectingFilter(logging.Filter):
-    # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
-    # otherwise we would use emit within the CustomLogHandler
-    def filter(self, record):
-        record.workflow_run_id = wr.get()
-        record.step_run_id = sr.get()
-        return True
-
+from hatchet_sdk.worker.runner.utils.capture_logs import sr, wr, copy_context_vars
 
 class WorkerStatus(Enum):
     INITIALIZED = 1
@@ -226,6 +205,8 @@ class Runner:
     ):
         wr.set(context.workflow_run_id())
         sr.set(context.step_run_id)
+
+        print('srrr',  sr.get())
 
         try:
             if (

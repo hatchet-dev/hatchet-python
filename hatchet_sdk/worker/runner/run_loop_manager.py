@@ -52,6 +52,7 @@ class WorkerActionRunLoopManager:
         logger.info("starting runner...")
         self.loop = asyncio.get_running_loop()
         k = self.loop.create_task(self._start_action_loop())
+        await k
 
     def cleanup(self):
         self.killing = True
