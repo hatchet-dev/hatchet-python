@@ -13,33 +13,28 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from typing import Any, ClassVar, Dict, List, Optional
+from typing import Optional, Set
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.event import Event
-
-
-class BulkCreateEventResponse(BaseModel):
+class WorkflowUpdateRequest(BaseModel):
     """
-    BulkCreateEventResponse
-    """  # noqa: E501
-
-    metadata: APIResourceMeta
-    events: List[Event] = Field(description="The events.")
-    __properties: ClassVar[List[str]] = ["metadata", "events"]
+    WorkflowUpdateRequest
+    """ # noqa: E501
+    is_paused: Optional[StrictBool] = Field(default=None, description="Whether the workflow is paused.", alias="isPaused")
+    __properties: ClassVar[List[str]] = ["isPaused"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -52,7 +47,7 @@ class BulkCreateEventResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of BulkCreateEventResponse from a JSON string"""
+        """Create an instance of WorkflowUpdateRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -65,46 +60,28 @@ class BulkCreateEventResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of metadata
-        if self.metadata:
-            _dict["metadata"] = self.metadata.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each item in events (list)
-        _items = []
-        if self.events:
-            for _item_events in self.events:
-                if _item_events:
-                    _items.append(_item_events.to_dict())
-            _dict["events"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of BulkCreateEventResponse from a dict"""
+        """Create an instance of WorkflowUpdateRequest from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "metadata": (
-                    APIResourceMeta.from_dict(obj["metadata"])
-                    if obj.get("metadata") is not None
-                    else None
-                ),
-                "events": (
-                    [Event.from_dict(_item) for _item in obj["events"]]
-                    if obj.get("events") is not None
-                    else None
-                ),
-            }
-        )
+        _obj = cls.model_validate({
+            "isPaused": obj.get("isPaused")
+        })
         return _obj
+
+

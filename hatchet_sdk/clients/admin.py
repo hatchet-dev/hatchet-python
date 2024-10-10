@@ -5,11 +5,14 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Unio
 import grpc
 from google.protobuf import timestamp_pb2
 
+from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.workflows_pb2 import (
+    BulkTriggerWorkflowRequest,
+    BulkTriggerWorkflowResponse,
     CreateWorkflowVersionOpts,
     PutRateLimitRequest,
     PutWorkflowRequest,
@@ -397,6 +400,66 @@ class AdminClient(AdminClientBase):
                 raise DedupeViolationErr(e.details())
 
             raise ValueError(f"gRPC error: {e}")
+        
+    @tenacity_retry
+    def run_workflows(
+        self, workflows: list[tuple], options: TriggerWorkflowOptions = None
+    ) -> list[WorkflowRunRef]:
+      
+    
+        workflow_run_requests : TriggerWorkflowRequest = []
+        try:
+            if not self.pooled_workflow_listener:
+                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+    
+            for workflow in workflows:
+
+                workflow_name = workflow["workflow_name"]
+                input_data = workflow["input"]
+                options = workflow["options"]
+
+                namespace = self.namespace
+
+                if (
+                    options is not None
+                    and "namespace" in options
+                    and options["namespace"] is not None
+                ):
+                    namespace = options["namespace"]
+                    del options["namespace"]
+
+                if namespace != "" and not workflow_name.startswith(self.namespace):
+                    workflow_name = f"{namespace}{workflow_name}"
+
+                # Prepare and trigger workflow for each workflow name and input
+                request = self._prepare_workflow_request(workflow_name, input_data, options)
+
+                workflow_run_requests.append(request)
+
+                request = BulkTriggerWorkflowRequest(
+                    workflows=workflow_run_requests
+                )
+
+            resp: BulkTriggerWorkflowResponse  = self.client.BulkTriggerWorkflow(
+            request,
+            metadata=get_metadata(self.token),
+            )
+            
+
+        except grpc.RpcError as e:
+            raise ValueError(f"gRPC error: {e}")
+
+        return [
+            WorkflowRunRef(
+                workflow_run_id=workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
+            )
+            for workflow_run_id in resp.workflow_run_ids
+        ]
+
+
+
 
     def run(
         self,
