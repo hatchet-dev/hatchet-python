@@ -19,23 +19,17 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict, StrictInt
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
 
-
-class TenantQueueMetrics(BaseModel):
+class TenantStepRunQueueMetrics(BaseModel):
     """
-    TenantQueueMetrics
+    TenantStepRunQueueMetrics
     """  # noqa: E501
 
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
-    )
-    workflow: Optional[Dict[str, QueueMetrics]] = None
     queues: Optional[Dict[str, StrictInt]] = None
-    __properties: ClassVar[List[str]] = ["total", "workflow", "queues"]
+    __properties: ClassVar[List[str]] = ["queues"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -54,7 +48,7 @@ class TenantQueueMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a JSON string"""
+        """Create an instance of TenantStepRunQueueMetrics from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,43 +68,16 @@ class TenantQueueMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of total
-        if self.total:
-            _dict["total"] = self.total.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each value in workflow (dict)
-        _field_dict = {}
-        if self.workflow:
-            for _key_workflow in self.workflow:
-                if self.workflow[_key_workflow]:
-                    _field_dict[_key_workflow] = self.workflow[_key_workflow].to_dict()
-            _dict["workflow"] = _field_dict
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a dict"""
+        """Create an instance of TenantStepRunQueueMetrics from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
-                    else None
-                ),
-                "workflow": (
-                    dict(
-                        (_k, QueueMetrics.from_dict(_v))
-                        for _k, _v in obj["workflow"].items()
-                    )
-                    if obj.get("workflow") is not None
-                    else None
-                ),
-                "queues": obj.get("queues"),
-            }
-        )
+        _obj = cls.model_validate({"queues": obj.get("queues")})
         return _obj

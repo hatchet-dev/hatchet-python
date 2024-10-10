@@ -24,6 +24,7 @@ from hatchet_sdk.clients.rest.api.github_api import GithubApi
 from hatchet_sdk.clients.rest.api.healthcheck_api import HealthcheckApi
 from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.metadata_api import MetadataApi
+from hatchet_sdk.clients.rest.api.rate_limits_api import RateLimitsApi
 from hatchet_sdk.clients.rest.api.slack_api import SlackApi
 from hatchet_sdk.clients.rest.api.sns_api import SNSApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
@@ -122,6 +123,14 @@ from hatchet_sdk.clients.rest.models.pagination_response import PaginationRespon
 from hatchet_sdk.clients.rest.models.pull_request import PullRequest
 from hatchet_sdk.clients.rest.models.pull_request_state import PullRequestState
 from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
+from hatchet_sdk.clients.rest.models.rate_limit import RateLimit
+from hatchet_sdk.clients.rest.models.rate_limit_list import RateLimitList
+from hatchet_sdk.clients.rest.models.rate_limit_order_by_direction import (
+    RateLimitOrderByDirection,
+)
+from hatchet_sdk.clients.rest.models.rate_limit_order_by_field import (
+    RateLimitOrderByField,
+)
 from hatchet_sdk.clients.rest.models.recent_step_runs import RecentStepRuns
 from hatchet_sdk.clients.rest.models.reject_invite_request import RejectInviteRequest
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
@@ -165,6 +174,9 @@ from hatchet_sdk.clients.rest.models.tenant_queue_metrics import TenantQueueMetr
 from hatchet_sdk.clients.rest.models.tenant_resource import TenantResource
 from hatchet_sdk.clients.rest.models.tenant_resource_limit import TenantResourceLimit
 from hatchet_sdk.clients.rest.models.tenant_resource_policy import TenantResourcePolicy
+from hatchet_sdk.clients.rest.models.tenant_step_run_queue_metrics import (
+    TenantStepRunQueueMetrics,
+)
 from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
     TriggerWorkflowRunRequest,
 )
@@ -240,6 +252,9 @@ from hatchet_sdk.clients.rest.models.workflow_trigger_event_ref import (
     WorkflowTriggerEventRef,
 )
 from hatchet_sdk.clients.rest.models.workflow_triggers import WorkflowTriggers
+from hatchet_sdk.clients.rest.models.workflow_update_request import (
+    WorkflowUpdateRequest,
+)
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
 from hatchet_sdk.clients.rest.models.workflow_version_definition import (
     WorkflowVersionDefinition,
