@@ -206,8 +206,6 @@ class Runner:
         wr.set(context.workflow_run_id())
         sr.set(context.step_run_id)
 
-        print("srrr", sr.get())
-
         try:
             if (
                 hasattr(action_func, "is_coroutine") and action_func.is_coroutine
