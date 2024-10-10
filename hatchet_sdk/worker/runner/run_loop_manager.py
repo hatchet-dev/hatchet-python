@@ -45,13 +45,13 @@ class WorkerActionRunLoopManager:
         await capture_logs(
             self.client.logInterceptor,
             self.client.event,
-            self._start_action_loop,
+            self._async_start,
         )(retry_count=retry_count)
 
     async def _async_start(self, retry_count=1):
         logger.info("starting runner...")
         self.loop = asyncio.get_running_loop()
-        # loop.create_task needed for graceful termination
+        # needed for graceful termination
         k = self.loop.create_task(self._start_action_loop())
         await k
 
