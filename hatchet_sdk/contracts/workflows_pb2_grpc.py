@@ -30,6 +30,11 @@ class WorkflowServiceStub(object):
                 request_serializer=workflows__pb2.TriggerWorkflowRequest.SerializeToString,
                 response_deserializer=workflows__pb2.TriggerWorkflowResponse.FromString,
                 )
+        self.BulkTriggerWorkflow = channel.unary_unary(
+                '/WorkflowService/BulkTriggerWorkflow',
+                request_serializer=workflows__pb2.BulkTriggerWorkflowRequest.SerializeToString,
+                response_deserializer=workflows__pb2.BulkTriggerWorkflowResponse.FromString,
+                )
         self.PutRateLimit = channel.unary_unary(
                 '/WorkflowService/PutRateLimit',
                 request_serializer=workflows__pb2.PutRateLimitRequest.SerializeToString,
@@ -59,6 +64,12 @@ class WorkflowServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def BulkTriggerWorkflow(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def PutRateLimit(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -82,6 +93,11 @@ def add_WorkflowServiceServicer_to_server(servicer, server):
                     servicer.TriggerWorkflow,
                     request_deserializer=workflows__pb2.TriggerWorkflowRequest.FromString,
                     response_serializer=workflows__pb2.TriggerWorkflowResponse.SerializeToString,
+            ),
+            'BulkTriggerWorkflow': grpc.unary_unary_rpc_method_handler(
+                    servicer.BulkTriggerWorkflow,
+                    request_deserializer=workflows__pb2.BulkTriggerWorkflowRequest.FromString,
+                    response_serializer=workflows__pb2.BulkTriggerWorkflowResponse.SerializeToString,
             ),
             'PutRateLimit': grpc.unary_unary_rpc_method_handler(
                     servicer.PutRateLimit,
@@ -147,6 +163,23 @@ class WorkflowService(object):
         return grpc.experimental.unary_unary(request, target, '/WorkflowService/TriggerWorkflow',
             workflows__pb2.TriggerWorkflowRequest.SerializeToString,
             workflows__pb2.TriggerWorkflowResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def BulkTriggerWorkflow(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/WorkflowService/BulkTriggerWorkflow',
+            workflows__pb2.BulkTriggerWorkflowRequest.SerializeToString,
+            workflows__pb2.BulkTriggerWorkflowResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

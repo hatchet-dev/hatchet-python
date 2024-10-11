@@ -22,6 +22,8 @@ DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL = 3  # seconds
 DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT = 5
 DEFAULT_WORKFLOW_LISTENER_INTERRUPT_INTERVAL = 1800  # 30 minutes
 
+DEDUPE_MESSAGE = "DUPLICATE_WORKFLOW_RUN"
+
 
 class _Subscription:
     def __init__(self, id: int, workflow_run_id: str):
@@ -223,6 +225,8 @@ class PooledWorkflowRunListener:
             self.cleanup_subscription(subscription_id)
 
     async def result(self, workflow_run_id: str):
+        from hatchet_sdk.clients.admin import DedupeViolationErr
+
         event = await self.subscribe(workflow_run_id)
 
         errors = []
@@ -231,7 +235,10 @@ class PooledWorkflowRunListener:
             errors = [result.error for result in event.results if result.error]
 
         if errors:
-            raise Exception(f"Workflow Errors: {errors}")
+            if DEDUPE_MESSAGE in errors[0]:
+                raise DedupeViolationErr(errors[0])
+            else:
+                raise Exception(f"Workflow Errors: {errors}")
 
         results = {
             result.stepReadableId: json.loads(result.output)
