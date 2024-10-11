@@ -17,12 +17,13 @@ async def main():
 
     workflowRuns: WorkflowRun = []
 
-    for i in range(100):
+    # we are going to run the BulkParent workflow 20 which will trigger the Child workflows n times for each n in range(20)
+    for i in range(20):
         workflowRuns.append(
             {
-                "workflow_name": "Child",
-                "input": {"a": str(i)},
-                "options": {"additional_metadata": {"hello": "earth",  "dedupe": "dedupe2"},},
+                "workflow_name": "BulkParent",
+                "input": {"n": i},
+                "options": {"additional_metadata": {"bulk-trigger":i,"hello-{i}": "earth-{i}",},},
             }
         )
 
