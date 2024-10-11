@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Coroutine, Generic, Optional, TypeVar, TypedDict
+from typing import Any, Coroutine, Generic, Optional, TypedDict, TypeVar
 
 from hatchet_sdk.clients.run_event_listener import (
     RunEventListener,
@@ -55,5 +55,3 @@ class RunRef(WorkflowRunRef, Generic[T]):
             return list(res.values())[0]
 
         return res
-
-

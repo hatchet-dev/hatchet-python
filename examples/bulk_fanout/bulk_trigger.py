@@ -23,7 +23,12 @@ async def main():
             {
                 "workflow_name": "BulkParent",
                 "input": {"n": i},
-                "options": {"additional_metadata": {"bulk-trigger":i,"hello-{i}": "earth-{i}",},},
+                "options": {
+                    "additional_metadata": {
+                        "bulk-trigger": i,
+                        "hello-{i}": "earth-{i}",
+                    },
+                },
             }
         )
 

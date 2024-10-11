@@ -21,7 +21,7 @@ class Client:
     event: EventClient
     rest: RestApi
     workflow_listener: PooledWorkflowRunListener
-    logger: Logger
+    logInterceptor: Logger
     debug: bool = False
 
     @classmethod
@@ -103,7 +103,7 @@ class Client:
         self.config = config
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
-        self.logger = config.logger
+        self.logInterceptor = config.logInterceptor
         self.debug = debug
 
 

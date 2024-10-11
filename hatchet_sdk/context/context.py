@@ -11,8 +11,11 @@ from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
-from hatchet_sdk.contracts.workflows_pb2 import BulkTriggerWorkflowRequest, TriggerWorkflowRequest
-from hatchet_sdk.workflow_run import  WorkflowRunRef
+from hatchet_sdk.contracts.workflows_pb2 import (
+    BulkTriggerWorkflowRequest,
+    TriggerWorkflowRequest,
+)
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..clients.admin import (
     AdminClient,
@@ -112,13 +115,11 @@ class ContextAioImpl(BaseContext):
         return await self.admin_client.aio.run_workflow(
             workflow_name, input, trigger_options
         )
-    
+
     @tenacity_retry
     async def spawn_workflows(
-        self,
-        child_workflow_runs: List[ChildWorkflowRunDict]
+        self, child_workflow_runs: List[ChildWorkflowRunDict]
     ) -> List[WorkflowRunRef]:
-        
 
         if len(child_workflow_runs) == 0:
             raise Exception("no child workflows to spawn")
@@ -132,20 +133,16 @@ class ContextAioImpl(BaseContext):
 
             key = child_workflow_run.get("key")
             options = child_workflow_run.get("options", {})
-            
 
-            
             trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
-            bulk_trigger_workflow_runs.append(WorkflowRunDict(
-                workflow_name=workflow_name,
-                input=input,
-                options=trigger_options
-            ))               
+            bulk_trigger_workflow_runs.append(
+                WorkflowRunDict(
+                    workflow_name=workflow_name, input=input, options=trigger_options
+                )
+            )
 
-        return await self.admin_client.aio.run_workflows(
-            bulk_trigger_workflow_runs
-        )    
+        return await self.admin_client.aio.run_workflows(bulk_trigger_workflow_runs)
 
 
 class Context(BaseContext):

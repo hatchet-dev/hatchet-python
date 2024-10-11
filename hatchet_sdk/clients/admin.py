@@ -28,7 +28,6 @@ from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 from ..workflow import WorkflowMeta
-from typing import TypedDict, Any, List, Optional
 
 
 def new_admin(config: ClientConfig):
@@ -42,22 +41,24 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     child_key: Optional[str]
     namespace: Optional[str]
 
-   
+
 class ChildTriggerWorkflowOptions(TypedDict):
     additional_metadata: Dict[str, str] | None = None
     sticky: bool | None = None
+
 
 class WorkflowRunDict(TypedDict):
     workflow_name: str
     input: Any
     options: Optional[dict]
 
+
 class ChildWorkflowRunDict(TypedDict):
     workflow_name: str
     input: Any
     options: ChildTriggerWorkflowOptions[dict]
     key: str
-      
+
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
@@ -220,9 +221,9 @@ class AdminClientAioImpl(AdminClientBase):
 
     @tenacity_retry
     async def run_workflows(
-        self, workflows:  List[WorkflowRunDict], options: TriggerWorkflowOptions = None
+        self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> List[WorkflowRunRef]:
-        
+
         if len(workflows) == 0:
             raise ValueError("No workflows to run")
         try:
@@ -258,9 +259,11 @@ class AdminClientAioImpl(AdminClientBase):
 
             request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
-            resp: BulkTriggerWorkflowResponse = await self.aio_client.BulkTriggerWorkflow(
-                request,
-                metadata=get_metadata(self.token),
+            resp: BulkTriggerWorkflowResponse = (
+                await self.aio_client.BulkTriggerWorkflow(
+                    request,
+                    metadata=get_metadata(self.token),
+                )
             )
 
             return [
@@ -271,7 +274,7 @@ class AdminClientAioImpl(AdminClientBase):
                 )
                 for workflow_run_id in resp.workflow_run_ids
             ]
-        
+
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
@@ -472,7 +475,7 @@ class AdminClient(AdminClientBase):
 
     @tenacity_retry
     def run_workflows(
-        self, workflows:  List[WorkflowRunDict], options: TriggerWorkflowOptions = None
+        self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> list[WorkflowRunRef]:
 
         workflow_run_requests: TriggerWorkflowRequest = []

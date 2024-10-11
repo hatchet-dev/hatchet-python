@@ -22,28 +22,29 @@ class BulkParent:
 
         n = context.workflow_input().get("n", 100)
 
-        child_workflow_runs : List[ChildWorkflowRunDict] = []
+        child_workflow_runs: List[ChildWorkflowRunDict] = []
 
         for i in range(n):
-            
-                
-            child_workflow_runs.append({
-                "workflow_name": "BulkChild",
-                "input": {"a": str(i)},
-                "key": f"child{i}",
-                "options": {"additional_metadata": {"hello": "earth"}}
-            })        
+
+            child_workflow_runs.append(
+                {
+                    "workflow_name": "BulkChild",
+                    "input": {"a": str(i)},
+                    "key": f"child{i}",
+                    "options": {"additional_metadata": {"hello": "earth"}},
+                }
+            )
 
         if len(child_workflow_runs) == 0:
             return
-        
+
         spawn_results = await context.aio.spawn_workflows(child_workflow_runs)
 
         results = await asyncio.gather(
             *[workflowRunRef.result() for workflowRunRef in spawn_results],
             return_exceptions=True,
         )
-        
+
         print("finished spawning children")
 
         for result in results:
@@ -81,6 +82,7 @@ def main():
     print("registered child")
     worker.start()
     print("started worker")
+
 
 if __name__ == "__main__":
     main()

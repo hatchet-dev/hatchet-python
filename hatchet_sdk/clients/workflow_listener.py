@@ -24,6 +24,7 @@ DEFAULT_WORKFLOW_LISTENER_INTERRUPT_INTERVAL = 1800  # 30 minutes
 
 DEDUPE_MESSAGE = "DUPLICATE_WORKFLOW_RUN"
 
+
 class _Subscription:
     def __init__(self, id: int, workflow_run_id: str):
         self.id = id

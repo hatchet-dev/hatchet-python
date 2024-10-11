@@ -17,10 +17,10 @@ async def main():
 
     workflowRuns: WorkflowRun = []
 
-    event = hatchet.event.push("parent:create", {"n": 999}, {"additional_metadata": {"no-dedupe": "world"}})
+    event = hatchet.event.push(
+        "parent:create", {"n": 999}, {"additional_metadata": {"no-dedupe": "world"}}
+    )
 
-
-    
 
 if __name__ == "__main__":
     asyncio.run(main())
