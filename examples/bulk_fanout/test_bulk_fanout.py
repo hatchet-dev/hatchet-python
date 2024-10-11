@@ -13,6 +13,7 @@ worker = fixture_bg_worker(["poetry", "run", "bulk_fanout"])
 async def test_run(hatchet: Hatchet):
     run = hatchet.admin.run_workflow("BulkParent", {"n": 12})
     result = await run.result()
+    print(result)
     assert len(result["spawn"]["results"]) == 12
 
 

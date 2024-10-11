@@ -53,7 +53,7 @@ class BulkParent:
             else:
                 print(result)
 
-        return {"results": "done"}
+        return {"results": results}
 
 
 @hatchet.workflow(on_events=["child:create"])
@@ -73,15 +73,12 @@ class BulkChild:
 
 
 def main():
-    print("starting worker")
-    worker = hatchet.worker("fanout-worker", max_runs=40)
-    print("created worker")
-    worker.register_workflow(BulkParent())
-    print("registered parent")
-    worker.register_workflow(BulkChild())
-    print("registered child")
+    
+    worker = hatchet.worker("fanout-worker", max_runs=40)    
+    worker.register_workflow(BulkParent())    
+    worker.register_workflow(BulkChild())    
     worker.start()
-    print("started worker")
+    
 
 
 if __name__ == "__main__":
