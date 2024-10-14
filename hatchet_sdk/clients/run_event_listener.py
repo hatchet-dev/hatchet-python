@@ -100,7 +100,15 @@ class RunEventListener:
         return await self._generator().__anext__()
 
     def __iter__(self):
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as e:
+            if str(e).startswith("There is no current event loop in thread"):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            else:
+                raise e
+
         async_iter = self.__aiter__()
 
         while True:
