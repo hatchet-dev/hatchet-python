@@ -96,6 +96,23 @@ class RunEventListener:
     def __aiter__(self):
         return self._generator()
 
+    async def __anext__(self):
+        return await self._generator().__anext__()
+
+    def __iter__(self):
+        loop = asyncio.get_event_loop()
+        async_iter = self.__aiter__()
+
+        while True:
+            try:
+                future = asyncio.ensure_future(async_iter.__anext__())
+                yield loop.run_until_complete(future)
+            except StopAsyncIteration:
+                break
+            except Exception as e:
+                print(f"Error in synchronous iterator: {e}")
+                break
+
     async def _generator(self) -> AsyncGenerator[StepRunEvent, None]:
         while True:
             if self.stop_signal:
@@ -167,6 +184,7 @@ class RunEventListener:
                     # Unknown error, report and break
                     # logger.error(f"Failed to receive message: {e}")
                     break
+                # Raise StopAsyncIteration to properly end the generator
 
     async def retry_subscribe(self):
         retries = 0
