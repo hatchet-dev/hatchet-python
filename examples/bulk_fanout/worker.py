@@ -73,12 +73,11 @@ class BulkChild:
 
 
 def main():
-    
-    worker = hatchet.worker("fanout-worker", max_runs=40)    
-    worker.register_workflow(BulkParent())    
-    worker.register_workflow(BulkChild())    
+
+    worker = hatchet.worker("fanout-worker", max_runs=40)
+    worker.register_workflow(BulkParent())
+    worker.register_workflow(BulkChild())
     worker.start()
-    
 
 
 if __name__ == "__main__":
