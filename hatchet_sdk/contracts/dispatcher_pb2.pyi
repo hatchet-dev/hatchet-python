@@ -26,6 +26,7 @@ class StepActionEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     STEP_EVENT_TYPE_STARTED: _ClassVar[StepActionEventType]
     STEP_EVENT_TYPE_COMPLETED: _ClassVar[StepActionEventType]
     STEP_EVENT_TYPE_FAILED: _ClassVar[StepActionEventType]
+    STEP_EVENT_TYPE_ACKNOWLEDGED: _ClassVar[StepActionEventType]
 
 class ResourceType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -57,6 +58,7 @@ STEP_EVENT_TYPE_UNKNOWN: StepActionEventType
 STEP_EVENT_TYPE_STARTED: StepActionEventType
 STEP_EVENT_TYPE_COMPLETED: StepActionEventType
 STEP_EVENT_TYPE_FAILED: StepActionEventType
+STEP_EVENT_TYPE_ACKNOWLEDGED: StepActionEventType
 RESOURCE_TYPE_UNKNOWN: ResourceType
 RESOURCE_TYPE_STEP_RUN: ResourceType
 RESOURCE_TYPE_WORKFLOW_RUN: ResourceType
