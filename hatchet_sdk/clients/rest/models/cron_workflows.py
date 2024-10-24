@@ -13,20 +13,23 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+
 
 class CronWorkflows(BaseModel):
     """
     CronWorkflows
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: APIResourceMeta
     tenant_id: StrictStr = Field(alias="tenantId")
     workflow_version_id: StrictStr = Field(alias="workflowVersionId")
@@ -34,15 +37,25 @@ class CronWorkflows(BaseModel):
     workflow_name: StrictStr = Field(alias="workflowName")
     cron: StrictStr
     input: Optional[Dict[str, Any]] = None
-    additional_metadata: Optional[Dict[str, Any]] = Field(default=None, alias="additionalMetadata")
-    __properties: ClassVar[List[str]] = ["metadata", "tenantId", "workflowVersionId", "workflowId", "workflowName", "cron", "input", "additionalMetadata"]
+    additional_metadata: Optional[Dict[str, Any]] = Field(
+        default=None, alias="additionalMetadata"
+    )
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "tenantId",
+        "workflowVersionId",
+        "workflowId",
+        "workflowName",
+        "cron",
+        "input",
+        "additionalMetadata",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,8 +81,7 @@ class CronWorkflows(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -78,7 +90,7 @@ class CronWorkflows(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
@@ -90,16 +102,20 @@ class CronWorkflows(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "tenantId": obj.get("tenantId"),
-            "workflowVersionId": obj.get("workflowVersionId"),
-            "workflowId": obj.get("workflowId"),
-            "workflowName": obj.get("workflowName"),
-            "cron": obj.get("cron"),
-            "input": obj.get("input"),
-            "additionalMetadata": obj.get("additionalMetadata")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    APIResourceMeta.from_dict(obj["metadata"])
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "tenantId": obj.get("tenantId"),
+                "workflowVersionId": obj.get("workflowVersionId"),
+                "workflowId": obj.get("workflowId"),
+                "workflowName": obj.get("workflowName"),
+                "cron": obj.get("cron"),
+                "input": obj.get("input"),
+                "additionalMetadata": obj.get("additionalMetadata"),
+            }
+        )
         return _obj
-
-
