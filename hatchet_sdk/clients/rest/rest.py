@@ -156,6 +156,11 @@ class RESTClientObject:
                     if isinstance(v, tuple) and len(v) == 3:
                         data.add_field(k, value=v[1], filename=v[0], content_type=v[2])
                     else:
+                        # Ensures that dict objects are serialized
+                        if isinstance(v, dict):
+                            v = json.dumps(v)
+                        elif isinstance(v, int):
+                            v = str(v)
                         data.add_field(k, v)
                 args["data"] = data
 
