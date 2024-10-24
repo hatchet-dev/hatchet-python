@@ -1,9 +1,16 @@
+from datetime import datetime, timedelta
+
 from dotenv import load_dotenv
 
-from hatchet_sdk import new_client
+from hatchet_sdk import Hatchet
 
 load_dotenv()
 
-client = new_client()
+hatchet = Hatchet()
 
-client.event.push("printer:schedule", {"message": "test"})
+hatchet.admin.schedule_workflow(
+    "PrintPrinter",
+    [datetime.now() + timedelta(seconds=15)],
+    {"message": "test"},
+    options={"additional_metadata": {"triggeredBy": "script"}},
+)
