@@ -57,7 +57,7 @@ class ChildWorkflowRunDict(TypedDict):
     workflow_name: str
     input: Any
     options: ChildTriggerWorkflowOptions[dict]
-    key: str
+    key: str | None = None
 
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
