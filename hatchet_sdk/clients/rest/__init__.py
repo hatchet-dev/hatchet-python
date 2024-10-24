@@ -84,6 +84,11 @@ from hatchet_sdk.clients.rest.models.create_tenant_invite_request import (
     CreateTenantInviteRequest,
 )
 from hatchet_sdk.clients.rest.models.create_tenant_request import CreateTenantRequest
+from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
+from hatchet_sdk.clients.rest.models.cron_workflows_list import CronWorkflowsList
+from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
+    CronWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.event import Event
 from hatchet_sdk.clients.rest.models.event_data import EventData
 from hatchet_sdk.clients.rest.models.event_key_list import EventKeyList
@@ -141,6 +146,13 @@ from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
     ReplayWorkflowRunsResponse,
 )
 from hatchet_sdk.clients.rest.models.rerun_step_run_request import RerunStepRunRequest
+from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
+from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
+    ScheduledWorkflowsList,
+)
+from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import (
+    ScheduledWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.semaphore_slots import SemaphoreSlots
 from hatchet_sdk.clients.rest.models.slack_webhook import SlackWebhook
 from hatchet_sdk.clients.rest.models.sns_integration import SNSIntegration

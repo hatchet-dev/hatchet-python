@@ -13,35 +13,31 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt
+from pydantic import BaseModel, ConfigDict
+from typing import Any, ClassVar, Dict, List, Optional
+from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
+from hatchet_sdk.clients.rest.models.pagination_response import PaginationResponse
+from typing import Optional, Set
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.queue_metrics import QueueMetrics
-
-
-class TenantQueueMetrics(BaseModel):
+class CronWorkflowsList(BaseModel):
     """
-    TenantQueueMetrics
-    """  # noqa: E501
-
-    total: Optional[QueueMetrics] = Field(
-        default=None, description="The total queue metrics."
-    )
-    workflow: Optional[Dict[str, QueueMetrics]] = None
-    queues: Optional[Dict[str, StrictInt]] = None
-    __properties: ClassVar[List[str]] = ["total", "workflow", "queues"]
+    CronWorkflowsList
+    """ # noqa: E501
+    rows: Optional[List[CronWorkflows]] = None
+    pagination: Optional[PaginationResponse] = None
+    __properties: ClassVar[List[str]] = ["rows", "pagination"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -54,7 +50,7 @@ class TenantQueueMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a JSON string"""
+        """Create an instance of CronWorkflowsList from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -67,34 +63,39 @@ class TenantQueueMetrics(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of total
-        if self.total:
-            _dict["total"] = self.total.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in rows (list)
+        _items = []
+        if self.rows:
+            for _item in self.rows:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict['rows'] = _items
+        # override the default output from pydantic by calling `to_dict()` of pagination
+        if self.pagination:
+            _dict['pagination'] = self.pagination.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TenantQueueMetrics from a dict"""
+        """Create an instance of CronWorkflowsList from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "total": (
-                    QueueMetrics.from_dict(obj["total"])
-                    if obj.get("total") is not None
-                    else None
-                ),
-            }
-        )
+        _obj = cls.model_validate({
+            "rows": [CronWorkflows.from_dict(_item) for _item in obj["rows"]] if obj.get("rows") is not None else None,
+            "pagination": PaginationResponse.from_dict(obj["pagination"]) if obj.get("pagination") is not None else None
+        })
         return _obj
+
+
