@@ -39,6 +39,7 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     parent_step_run_id: Optional[str]
     child_index: Optional[int]
     child_key: Optional[str]
+    additional_metadata: Dict[str, str] | None = None
     namespace: Optional[str]
 
 
@@ -144,6 +145,11 @@ class AdminClientBase:
                 raise ValueError(
                     "Invalid schedule type. Must be datetime or timestamp_pb2.Timestamp."
                 )
+
+        if options is not None and "additional_metadata" in options:
+            options["additional_metadata"] = json.dumps(
+                options["additional_metadata"]
+            ).encode("utf-8")
 
         return ScheduleWorkflowRequest(
             name=name,
