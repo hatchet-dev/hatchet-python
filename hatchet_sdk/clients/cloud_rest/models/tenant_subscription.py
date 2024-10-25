@@ -13,24 +13,38 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.tenant_subscription_status import TenantSubscriptionStatus
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.tenant_subscription_status import (
+    TenantSubscriptionStatus,
+)
+
 
 class TenantSubscription(BaseModel):
     """
     TenantSubscription
-    """ # noqa: E501
-    plan: Optional[StrictStr] = Field(default=None, description="The plan code associated with the tenant subscription.")
-    period: Optional[StrictStr] = Field(default=None, description="The period associated with the tenant subscription.")
-    status: Optional[TenantSubscriptionStatus] = Field(default=None, description="The status of the tenant subscription.")
-    note: Optional[StrictStr] = Field(default=None, description="A note associated with the tenant subscription.")
+    """  # noqa: E501
+
+    plan: Optional[StrictStr] = Field(
+        default=None,
+        description="The plan code associated with the tenant subscription.",
+    )
+    period: Optional[StrictStr] = Field(
+        default=None, description="The period associated with the tenant subscription."
+    )
+    status: Optional[TenantSubscriptionStatus] = Field(
+        default=None, description="The status of the tenant subscription."
+    )
+    note: Optional[StrictStr] = Field(
+        default=None, description="A note associated with the tenant subscription."
+    )
     __properties: ClassVar[List[str]] = ["plan", "period", "status", "note"]
 
     model_config = ConfigDict(
@@ -38,7 +52,6 @@ class TenantSubscription(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -64,8 +77,7 @@ class TenantSubscription(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -83,12 +95,12 @@ class TenantSubscription(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "plan": obj.get("plan"),
-            "period": obj.get("period"),
-            "status": obj.get("status"),
-            "note": obj.get("note")
-        })
+        _obj = cls.model_validate(
+            {
+                "plan": obj.get("plan"),
+                "period": obj.get("period"),
+                "status": obj.get("status"),
+                "note": obj.get("note"),
+            }
+        )
         return _obj
-
-

@@ -13,36 +13,59 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from hatchet_sdk.clients.cloud_rest.models.coupon_frequency import CouponFrequency
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.coupon_frequency import CouponFrequency
+
 
 class Coupon(BaseModel):
     """
     Coupon
-    """ # noqa: E501
+    """  # noqa: E501
+
     name: StrictStr = Field(description="The name of the coupon.")
-    amount_cents: Optional[StrictInt] = Field(default=None, description="The amount off of the coupon.")
-    amount_cents_remaining: Optional[StrictInt] = Field(default=None, description="The amount remaining on the coupon.")
-    amount_currency: Optional[StrictStr] = Field(default=None, description="The currency of the coupon.")
+    amount_cents: Optional[StrictInt] = Field(
+        default=None, description="The amount off of the coupon."
+    )
+    amount_cents_remaining: Optional[StrictInt] = Field(
+        default=None, description="The amount remaining on the coupon."
+    )
+    amount_currency: Optional[StrictStr] = Field(
+        default=None, description="The currency of the coupon."
+    )
     frequency: CouponFrequency = Field(description="The frequency of the coupon.")
-    frequency_duration: Optional[StrictInt] = Field(default=None, description="The frequency duration of the coupon.")
-    frequency_duration_remaining: Optional[StrictInt] = Field(default=None, description="The frequency duration remaining of the coupon.")
-    percent: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="The percentage off of the coupon.")
-    __properties: ClassVar[List[str]] = ["name", "amount_cents", "amount_cents_remaining", "amount_currency", "frequency", "frequency_duration", "frequency_duration_remaining", "percent"]
+    frequency_duration: Optional[StrictInt] = Field(
+        default=None, description="The frequency duration of the coupon."
+    )
+    frequency_duration_remaining: Optional[StrictInt] = Field(
+        default=None, description="The frequency duration remaining of the coupon."
+    )
+    percent: Optional[Union[StrictFloat, StrictInt]] = Field(
+        default=None, description="The percentage off of the coupon."
+    )
+    __properties: ClassVar[List[str]] = [
+        "name",
+        "amount_cents",
+        "amount_cents_remaining",
+        "amount_currency",
+        "frequency",
+        "frequency_duration",
+        "frequency_duration_remaining",
+        "percent",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,8 +91,7 @@ class Coupon(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -87,16 +109,16 @@ class Coupon(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "amount_cents": obj.get("amount_cents"),
-            "amount_cents_remaining": obj.get("amount_cents_remaining"),
-            "amount_currency": obj.get("amount_currency"),
-            "frequency": obj.get("frequency"),
-            "frequency_duration": obj.get("frequency_duration"),
-            "frequency_duration_remaining": obj.get("frequency_duration_remaining"),
-            "percent": obj.get("percent")
-        })
+        _obj = cls.model_validate(
+            {
+                "name": obj.get("name"),
+                "amount_cents": obj.get("amount_cents"),
+                "amount_cents_remaining": obj.get("amount_cents_remaining"),
+                "amount_currency": obj.get("amount_currency"),
+                "frequency": obj.get("frequency"),
+                "frequency_duration": obj.get("frequency_duration"),
+                "frequency_duration_remaining": obj.get("frequency_duration_remaining"),
+                "percent": obj.get("percent"),
+            }
+        )
         return _obj
-
-

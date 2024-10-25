@@ -13,8 +13,10 @@
 
 
 from __future__ import annotations
+
 import json
 from enum import Enum
+
 from typing_extensions import Self
 
 
@@ -26,14 +28,12 @@ class TenantSubscriptionStatus(str, Enum):
     """
     allowed enum values
     """
-    ACTIVE = 'active'
-    PENDING = 'pending'
-    TERMINATED = 'terminated'
-    CANCELED = 'canceled'
+    ACTIVE = "active"
+    PENDING = "pending"
+    TERMINATED = "terminated"
+    CANCELED = "canceled"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of TenantSubscriptionStatus from a JSON string"""
         return cls(json.loads(json_str))
-
-

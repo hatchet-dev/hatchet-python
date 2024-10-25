@@ -13,34 +13,42 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
 from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional, Set
+
 from pydantic import BaseModel, ConfigDict, Field, StrictInt
-from typing import Any, ClassVar, Dict, List
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class WorkflowRunEventsMetric(BaseModel):
     """
     WorkflowRunEventsMetric
-    """ # noqa: E501
+    """  # noqa: E501
+
     time: datetime
     pending: StrictInt = Field(alias="PENDING")
     running: StrictInt = Field(alias="RUNNING")
     succeeded: StrictInt = Field(alias="SUCCEEDED")
     failed: StrictInt = Field(alias="FAILED")
     queued: StrictInt = Field(alias="QUEUED")
-    __properties: ClassVar[List[str]] = ["time", "PENDING", "RUNNING", "SUCCEEDED", "FAILED", "QUEUED"]
+    __properties: ClassVar[List[str]] = [
+        "time",
+        "PENDING",
+        "RUNNING",
+        "SUCCEEDED",
+        "FAILED",
+        "QUEUED",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,8 +74,7 @@ class WorkflowRunEventsMetric(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -85,14 +92,14 @@ class WorkflowRunEventsMetric(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "time": obj.get("time"),
-            "PENDING": obj.get("PENDING"),
-            "RUNNING": obj.get("RUNNING"),
-            "SUCCEEDED": obj.get("SUCCEEDED"),
-            "FAILED": obj.get("FAILED"),
-            "QUEUED": obj.get("QUEUED")
-        })
+        _obj = cls.model_validate(
+            {
+                "time": obj.get("time"),
+                "PENDING": obj.get("PENDING"),
+                "RUNNING": obj.get("RUNNING"),
+                "SUCCEEDED": obj.get("SUCCEEDED"),
+                "FAILED": obj.get("FAILED"),
+                "QUEUED": obj.get("QUEUED"),
+            }
+        )
         return _obj
-
-

@@ -105,14 +105,16 @@ class CreateWorkflowVersionOpts(_message.Message):
     def __init__(self, name: _Optional[str] = ..., description: _Optional[str] = ..., version: _Optional[str] = ..., event_triggers: _Optional[_Iterable[str]] = ..., cron_triggers: _Optional[_Iterable[str]] = ..., scheduled_triggers: _Optional[_Iterable[_Union[_timestamp_pb2.Timestamp, _Mapping]]] = ..., jobs: _Optional[_Iterable[_Union[CreateWorkflowJobOpts, _Mapping]]] = ..., concurrency: _Optional[_Union[WorkflowConcurrencyOpts, _Mapping]] = ..., schedule_timeout: _Optional[str] = ..., cron_input: _Optional[str] = ..., on_failure_job: _Optional[_Union[CreateWorkflowJobOpts, _Mapping]] = ..., sticky: _Optional[_Union[StickyStrategy, str]] = ..., kind: _Optional[_Union[WorkflowKind, str]] = ..., default_priority: _Optional[int] = ...) -> None: ...
 
 class WorkflowConcurrencyOpts(_message.Message):
-    __slots__ = ("action", "max_runs", "limit_strategy")
+    __slots__ = ("action", "max_runs", "limit_strategy", "expression")
     ACTION_FIELD_NUMBER: _ClassVar[int]
     MAX_RUNS_FIELD_NUMBER: _ClassVar[int]
     LIMIT_STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    EXPRESSION_FIELD_NUMBER: _ClassVar[int]
     action: str
     max_runs: int
     limit_strategy: ConcurrencyLimitStrategy
-    def __init__(self, action: _Optional[str] = ..., max_runs: _Optional[int] = ..., limit_strategy: _Optional[_Union[ConcurrencyLimitStrategy, str]] = ...) -> None: ...
+    expression: str
+    def __init__(self, action: _Optional[str] = ..., max_runs: _Optional[int] = ..., limit_strategy: _Optional[_Union[ConcurrencyLimitStrategy, str]] = ..., expression: _Optional[str] = ...) -> None: ...
 
 class CreateWorkflowJobOpts(_message.Message):
     __slots__ = ("name", "description", "steps")
@@ -168,12 +170,20 @@ class CreateWorkflowStepOpts(_message.Message):
     def __init__(self, readable_id: _Optional[str] = ..., action: _Optional[str] = ..., timeout: _Optional[str] = ..., inputs: _Optional[str] = ..., parents: _Optional[_Iterable[str]] = ..., user_data: _Optional[str] = ..., retries: _Optional[int] = ..., rate_limits: _Optional[_Iterable[_Union[CreateStepRateLimit, _Mapping]]] = ..., worker_labels: _Optional[_Mapping[str, DesiredWorkerLabels]] = ...) -> None: ...
 
 class CreateStepRateLimit(_message.Message):
-    __slots__ = ("key", "units")
+    __slots__ = ("key", "units", "key_expr", "units_expr", "limit_values_expr", "duration")
     KEY_FIELD_NUMBER: _ClassVar[int]
     UNITS_FIELD_NUMBER: _ClassVar[int]
+    KEY_EXPR_FIELD_NUMBER: _ClassVar[int]
+    UNITS_EXPR_FIELD_NUMBER: _ClassVar[int]
+    LIMIT_VALUES_EXPR_FIELD_NUMBER: _ClassVar[int]
+    DURATION_FIELD_NUMBER: _ClassVar[int]
     key: str
     units: int
-    def __init__(self, key: _Optional[str] = ..., units: _Optional[int] = ...) -> None: ...
+    key_expr: str
+    units_expr: str
+    limit_values_expr: str
+    duration: RateLimitDuration
+    def __init__(self, key: _Optional[str] = ..., units: _Optional[int] = ..., key_expr: _Optional[str] = ..., units_expr: _Optional[str] = ..., limit_values_expr: _Optional[str] = ..., duration: _Optional[_Union[RateLimitDuration, str]] = ...) -> None: ...
 
 class ListWorkflowsRequest(_message.Message):
     __slots__ = ()
@@ -228,6 +238,18 @@ class WorkflowTriggerCronRef(_message.Message):
     parent_id: str
     cron: str
     def __init__(self, parent_id: _Optional[str] = ..., cron: _Optional[str] = ...) -> None: ...
+
+class BulkTriggerWorkflowRequest(_message.Message):
+    __slots__ = ("workflows",)
+    WORKFLOWS_FIELD_NUMBER: _ClassVar[int]
+    workflows: _containers.RepeatedCompositeFieldContainer[TriggerWorkflowRequest]
+    def __init__(self, workflows: _Optional[_Iterable[_Union[TriggerWorkflowRequest, _Mapping]]] = ...) -> None: ...
+
+class BulkTriggerWorkflowResponse(_message.Message):
+    __slots__ = ("workflow_run_ids",)
+    WORKFLOW_RUN_IDS_FIELD_NUMBER: _ClassVar[int]
+    workflow_run_ids: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, workflow_run_ids: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class TriggerWorkflowRequest(_message.Message):
     __slots__ = ("name", "input", "parent_id", "parent_step_run_id", "child_index", "child_key", "additional_metadata", "desired_worker_id", "priority")

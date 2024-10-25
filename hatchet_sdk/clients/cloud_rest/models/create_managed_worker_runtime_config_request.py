@@ -13,35 +13,55 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from typing_extensions import Annotated
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import ManagedWorkerRegion
-from typing import Optional, Set
-from typing_extensions import Self
+from typing_extensions import Annotated, Self
+
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
+    ManagedWorkerRegion,
+)
+
 
 class CreateManagedWorkerRuntimeConfigRequest(BaseModel):
     """
     CreateManagedWorkerRuntimeConfigRequest
-    """ # noqa: E501
-    num_replicas: Annotated[int, Field(le=1000, strict=True, ge=0)] = Field(alias="numReplicas")
-    region: Optional[ManagedWorkerRegion] = Field(default=None, description="The region to deploy the worker to")
-    cpu_kind: StrictStr = Field(description="The kind of CPU to use for the worker", alias="cpuKind")
-    cpus: Annotated[int, Field(le=64, strict=True, ge=1)] = Field(description="The number of CPUs to use for the worker")
-    memory_mb: Annotated[int, Field(le=65536, strict=True, ge=1024)] = Field(description="The amount of memory in MB to use for the worker", alias="memoryMb")
+    """  # noqa: E501
+
+    num_replicas: Annotated[int, Field(le=1000, strict=True, ge=0)] = Field(
+        alias="numReplicas"
+    )
+    region: Optional[ManagedWorkerRegion] = Field(
+        default=None, description="The region to deploy the worker to"
+    )
+    cpu_kind: StrictStr = Field(
+        description="The kind of CPU to use for the worker", alias="cpuKind"
+    )
+    cpus: Annotated[int, Field(le=64, strict=True, ge=1)] = Field(
+        description="The number of CPUs to use for the worker"
+    )
+    memory_mb: Annotated[int, Field(le=65536, strict=True, ge=1024)] = Field(
+        description="The amount of memory in MB to use for the worker", alias="memoryMb"
+    )
     actions: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["numReplicas", "region", "cpuKind", "cpus", "memoryMb", "actions"]
+    __properties: ClassVar[List[str]] = [
+        "numReplicas",
+        "region",
+        "cpuKind",
+        "cpus",
+        "memoryMb",
+        "actions",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -67,8 +87,7 @@ class CreateManagedWorkerRuntimeConfigRequest(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -86,14 +105,14 @@ class CreateManagedWorkerRuntimeConfigRequest(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "numReplicas": obj.get("numReplicas"),
-            "region": obj.get("region"),
-            "cpuKind": obj.get("cpuKind"),
-            "cpus": obj.get("cpus"),
-            "memoryMb": obj.get("memoryMb"),
-            "actions": obj.get("actions")
-        })
+        _obj = cls.model_validate(
+            {
+                "numReplicas": obj.get("numReplicas"),
+                "region": obj.get("region"),
+                "cpuKind": obj.get("cpuKind"),
+                "cpus": obj.get("cpus"),
+                "memoryMb": obj.get("memoryMb"),
+                "actions": obj.get("actions"),
+            }
+        )
         return _obj
-
-

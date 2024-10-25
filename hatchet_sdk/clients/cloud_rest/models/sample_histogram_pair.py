@@ -13,20 +13,23 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.sample_histogram import SampleHistogram
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.sample_histogram import SampleHistogram
+
 
 class SampleHistogramPair(BaseModel):
     """
     SampleHistogramPair
-    """ # noqa: E501
+    """  # noqa: E501
+
     timestamp: Optional[StrictInt] = None
     histogram: Optional[SampleHistogram] = None
     __properties: ClassVar[List[str]] = ["timestamp", "histogram"]
@@ -36,7 +39,6 @@ class SampleHistogramPair(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,8 +64,7 @@ class SampleHistogramPair(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -72,7 +73,7 @@ class SampleHistogramPair(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of histogram
         if self.histogram:
-            _dict['histogram'] = self.histogram.to_dict()
+            _dict["histogram"] = self.histogram.to_dict()
         return _dict
 
     @classmethod
@@ -84,10 +85,14 @@ class SampleHistogramPair(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "timestamp": obj.get("timestamp"),
-            "histogram": SampleHistogram.from_dict(obj["histogram"]) if obj.get("histogram") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "timestamp": obj.get("timestamp"),
+                "histogram": (
+                    SampleHistogram.from_dict(obj["histogram"])
+                    if obj.get("histogram") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

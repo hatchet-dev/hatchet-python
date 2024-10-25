@@ -13,20 +13,23 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from hatchet_sdk.clients.cloud_rest.models.histogram_bucket import HistogramBucket
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.histogram_bucket import HistogramBucket
+
 
 class SampleHistogram(BaseModel):
     """
     SampleHistogram
-    """ # noqa: E501
+    """  # noqa: E501
+
     count: Optional[Union[StrictFloat, StrictInt]] = None
     sum: Optional[Union[StrictFloat, StrictInt]] = None
     buckets: Optional[List[HistogramBucket]] = None
@@ -37,7 +40,6 @@ class SampleHistogram(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -63,8 +65,7 @@ class SampleHistogram(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -77,7 +78,7 @@ class SampleHistogram(BaseModel):
             for _item in self.buckets:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['buckets'] = _items
+            _dict["buckets"] = _items
         return _dict
 
     @classmethod
@@ -89,11 +90,15 @@ class SampleHistogram(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "count": obj.get("count"),
-            "sum": obj.get("sum"),
-            "buckets": [HistogramBucket.from_dict(_item) for _item in obj["buckets"]] if obj.get("buckets") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "count": obj.get("count"),
+                "sum": obj.get("sum"),
+                "buckets": (
+                    [HistogramBucket.from_dict(_item) for _item in obj["buckets"]]
+                    if obj.get("buckets") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

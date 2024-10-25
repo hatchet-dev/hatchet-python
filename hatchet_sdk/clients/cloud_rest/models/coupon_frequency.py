@@ -13,8 +13,10 @@
 
 
 from __future__ import annotations
+
 import json
 from enum import Enum
+
 from typing_extensions import Self
 
 
@@ -26,12 +28,10 @@ class CouponFrequency(str, Enum):
     """
     allowed enum values
     """
-    ONCE = 'once'
-    RECURRING = 'recurring'
+    ONCE = "once"
+    RECURRING = "recurring"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
         """Create an instance of CouponFrequency from a JSON string"""
         return cls(json.loads(json_str))
-
-

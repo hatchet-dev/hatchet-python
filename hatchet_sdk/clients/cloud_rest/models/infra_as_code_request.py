@@ -13,21 +13,28 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, ClassVar, Dict, List
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import CreateManagedWorkerRuntimeConfigRequest
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import (
+    CreateManagedWorkerRuntimeConfigRequest,
+)
+
 
 class InfraAsCodeRequest(BaseModel):
     """
     InfraAsCodeRequest
-    """ # noqa: E501
-    runtime_configs: List[CreateManagedWorkerRuntimeConfigRequest] = Field(alias="runtimeConfigs")
+    """  # noqa: E501
+
+    runtime_configs: List[CreateManagedWorkerRuntimeConfigRequest] = Field(
+        alias="runtimeConfigs"
+    )
     __properties: ClassVar[List[str]] = ["runtimeConfigs"]
 
     model_config = ConfigDict(
@@ -35,7 +42,6 @@ class InfraAsCodeRequest(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -61,8 +67,7 @@ class InfraAsCodeRequest(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -75,7 +80,7 @@ class InfraAsCodeRequest(BaseModel):
             for _item in self.runtime_configs:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['runtimeConfigs'] = _items
+            _dict["runtimeConfigs"] = _items
         return _dict
 
     @classmethod
@@ -87,9 +92,16 @@ class InfraAsCodeRequest(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "runtimeConfigs": [CreateManagedWorkerRuntimeConfigRequest.from_dict(_item) for _item in obj["runtimeConfigs"]] if obj.get("runtimeConfigs") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "runtimeConfigs": (
+                    [
+                        CreateManagedWorkerRuntimeConfigRequest.from_dict(_item)
+                        for _item in obj["runtimeConfigs"]
+                    ]
+                    if obj.get("runtimeConfigs") is not None
+                    else None
+                )
+            }
+        )
         return _obj
-
-

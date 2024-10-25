@@ -12,24 +12,31 @@
 """  # noqa: E501
 
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
-from typing_extensions import Annotated
 
-from pydantic import Field
-from typing import Optional
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
 from typing_extensions import Annotated
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_request import CreateManagedWorkerRequest
-from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import InfraAsCodeRequest
-from hatchet_sdk.clients.cloud_rest.models.instance_list import InstanceList
-from hatchet_sdk.clients.cloud_rest.models.managed_worker import ManagedWorker
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_event_list import ManagedWorkerEventList
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_list import ManagedWorkerList
-from hatchet_sdk.clients.cloud_rest.models.runtime_config_actions_response import RuntimeConfigActionsResponse
-from hatchet_sdk.clients.cloud_rest.models.update_managed_worker_request import UpdateManagedWorkerRequest
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
+from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_request import (
+    CreateManagedWorkerRequest,
+)
+from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import (
+    InfraAsCodeRequest,
+)
+from hatchet_sdk.clients.cloud_rest.models.instance_list import InstanceList
+from hatchet_sdk.clients.cloud_rest.models.managed_worker import ManagedWorker
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_event_list import (
+    ManagedWorkerEventList,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_list import ManagedWorkerList
+from hatchet_sdk.clients.cloud_rest.models.runtime_config_actions_response import (
+    RuntimeConfigActionsResponse,
+)
+from hatchet_sdk.clients.cloud_rest.models.update_managed_worker_request import (
+    UpdateManagedWorkerRequest,
+)
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
 
@@ -45,19 +52,25 @@ class ManagedWorkerApi:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
-
     @validate_call
     async def infra_as_code_create(
         self,
-        infra_as_code_request: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The infra as code request id")],
+        infra_as_code_request: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The infra as code request id",
+            ),
+        ],
         infra_as_code_request2: Optional[InfraAsCodeRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -92,7 +105,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._infra_as_code_create_serialize(
             infra_as_code_request=infra_as_code_request,
@@ -100,17 +113,16 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': None,
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": None,
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -118,19 +130,25 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def infra_as_code_create_with_http_info(
         self,
-        infra_as_code_request: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The infra as code request id")],
+        infra_as_code_request: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The infra as code request id",
+            ),
+        ],
         infra_as_code_request2: Optional[InfraAsCodeRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -165,7 +183,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._infra_as_code_create_serialize(
             infra_as_code_request=infra_as_code_request,
@@ -173,17 +191,16 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': None,
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": None,
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -191,19 +208,25 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def infra_as_code_create_without_preload_content(
         self,
-        infra_as_code_request: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The infra as code request id")],
+        infra_as_code_request: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The infra as code request id",
+            ),
+        ],
         infra_as_code_request2: Optional[InfraAsCodeRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -238,7 +261,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._infra_as_code_create_serialize(
             infra_as_code_request=infra_as_code_request,
@@ -246,20 +269,18 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': None,
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": None,
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _infra_as_code_create_serialize(
         self,
@@ -273,8 +294,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -285,7 +305,7 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if infra_as_code_request is not None:
-            _path_params['infra-as-code-request'] = infra_as_code_request
+            _path_params["infra-as-code-request"] = infra_as_code_request
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -293,37 +313,27 @@ class ManagedWorkerApi:
         if infra_as_code_request2 is not None:
             _body_params = infra_as_code_request2
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params['Content-Type'] = _content_type
+            _header_params["Content-Type"] = _content_type
         else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
+            _default_content_type = self.api_client.select_header_content_type(
+                ["application/json"]
             )
             if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
+                _header_params["Content-Type"] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/api/v1/cloud/infra-as-code/{infra-as-code-request}',
+            method="POST",
+            resource_path="/api/v1/cloud/infra-as-code/{infra-as-code-request}",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -333,24 +343,25 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_create(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         create_managed_worker_request: Optional[CreateManagedWorkerRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -385,7 +396,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_create_serialize(
             tenant=tenant,
@@ -393,17 +404,16 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -411,19 +421,22 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_create_with_http_info(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         create_managed_worker_request: Optional[CreateManagedWorkerRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -458,7 +471,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_create_serialize(
             tenant=tenant,
@@ -466,17 +479,16 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -484,19 +496,22 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_create_without_preload_content(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         create_managed_worker_request: Optional[CreateManagedWorkerRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -531,7 +546,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_create_serialize(
             tenant=tenant,
@@ -539,20 +554,18 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_create_serialize(
         self,
@@ -566,8 +579,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -578,7 +590,7 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params['tenant'] = tenant
+            _path_params["tenant"] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -586,37 +598,27 @@ class ManagedWorkerApi:
         if create_managed_worker_request is not None:
             _body_params = create_managed_worker_request
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params['Content-Type'] = _content_type
+            _header_params["Content-Type"] = _content_type
         else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
+            _default_content_type = self.api_client.select_header_content_type(
+                ["application/json"]
             )
             if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
+                _header_params["Content-Type"] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/api/v1/cloud/tenants/{tenant}/managed-worker',
+            method="POST",
+            resource_path="/api/v1/cloud/tenants/{tenant}/managed-worker",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -626,23 +628,27 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_delete(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -675,25 +681,24 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_delete_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -701,18 +706,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_delete_with_http_info(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -745,25 +756,24 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_delete_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -771,18 +781,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_delete_without_preload_content(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -815,28 +831,26 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_delete_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_delete_serialize(
         self,
@@ -849,8 +863,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -861,30 +874,23 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if managed_worker is not None:
-            _path_params['managed-worker'] = managed_worker
+            _path_params["managed-worker"] = managed_worker
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='DELETE',
-            resource_path='/api/v1/cloud/managed-worker/{managed-worker}',
+            method="DELETE",
+            resource_path="/api/v1/cloud/managed-worker/{managed-worker}",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -894,23 +900,27 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_events_list(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -943,24 +953,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_events_list_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorkerEventList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorkerEventList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -968,18 +977,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_events_list_with_http_info(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1012,24 +1027,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_events_list_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorkerEventList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorkerEventList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1037,18 +1051,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_events_list_without_preload_content(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1081,27 +1101,25 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_events_list_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorkerEventList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorkerEventList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_events_list_serialize(
         self,
@@ -1114,8 +1132,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1126,30 +1143,23 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if managed_worker is not None:
-            _path_params['managed-worker'] = managed_worker
+            _path_params["managed-worker"] = managed_worker
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/managed-worker/{managed-worker}/events',
+            method="GET",
+            resource_path="/api/v1/cloud/managed-worker/{managed-worker}/events",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1159,23 +1169,27 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_get(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1208,25 +1222,24 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_get_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1234,18 +1247,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_get_with_http_info(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1278,25 +1297,24 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_get_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1304,18 +1322,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_get_without_preload_content(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1348,28 +1372,26 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_get_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_get_serialize(
         self,
@@ -1382,8 +1404,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1394,30 +1415,23 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if managed_worker is not None:
-            _path_params['managed-worker'] = managed_worker
+            _path_params["managed-worker"] = managed_worker
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/managed-worker/{managed-worker}',
+            method="GET",
+            resource_path="/api/v1/cloud/managed-worker/{managed-worker}",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1427,23 +1441,27 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_instances_list(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1476,24 +1494,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_instances_list_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "InstanceList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "InstanceList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1501,18 +1518,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_instances_list_with_http_info(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1545,24 +1568,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_instances_list_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "InstanceList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "InstanceList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1570,18 +1592,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_instances_list_without_preload_content(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1614,27 +1642,25 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_instances_list_serialize(
             managed_worker=managed_worker,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "InstanceList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "InstanceList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_instances_list_serialize(
         self,
@@ -1647,8 +1673,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1659,30 +1684,23 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if managed_worker is not None:
-            _path_params['managed-worker'] = managed_worker
+            _path_params["managed-worker"] = managed_worker
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/managed-worker/{managed-worker}/instances',
+            method="GET",
+            resource_path="/api/v1/cloud/managed-worker/{managed-worker}/instances",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1692,23 +1710,24 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_list(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1741,24 +1760,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_list_serialize(
             tenant=tenant,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorkerList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorkerList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1766,18 +1784,21 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_list_with_http_info(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1810,24 +1831,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_list_serialize(
             tenant=tenant,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorkerList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorkerList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1835,18 +1855,21 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_list_without_preload_content(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1879,27 +1902,25 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_list_serialize(
             tenant=tenant,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorkerList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "ManagedWorkerList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_list_serialize(
         self,
@@ -1912,8 +1933,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1924,30 +1944,23 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params['tenant'] = tenant
+            _path_params["tenant"] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/tenants/{tenant}/managed-worker',
+            method="GET",
+            resource_path="/api/v1/cloud/tenants/{tenant}/managed-worker",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1957,24 +1970,28 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def managed_worker_update(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         update_managed_worker_request: Optional[UpdateManagedWorkerRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2009,7 +2026,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_update_serialize(
             managed_worker=managed_worker,
@@ -2017,18 +2034,17 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2036,19 +2052,25 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def managed_worker_update_with_http_info(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         update_managed_worker_request: Optional[UpdateManagedWorkerRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2083,7 +2105,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_update_serialize(
             managed_worker=managed_worker,
@@ -2091,18 +2113,17 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2110,19 +2131,25 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def managed_worker_update_without_preload_content(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
         update_managed_worker_request: Optional[UpdateManagedWorkerRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2157,7 +2184,7 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._managed_worker_update_serialize(
             managed_worker=managed_worker,
@@ -2165,21 +2192,19 @@ class ManagedWorkerApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ManagedWorker",
-            '400': "APIErrors",
-            '403': "APIErrors",
-            '404': "APIErrors",
+            "200": "ManagedWorker",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _managed_worker_update_serialize(
         self,
@@ -2193,8 +2218,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -2205,7 +2229,7 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if managed_worker is not None:
-            _path_params['managed-worker'] = managed_worker
+            _path_params["managed-worker"] = managed_worker
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -2213,37 +2237,27 @@ class ManagedWorkerApi:
         if update_managed_worker_request is not None:
             _body_params = update_managed_worker_request
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params['Content-Type'] = _content_type
+            _header_params["Content-Type"] = _content_type
         else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
+            _default_content_type = self.api_client.select_header_content_type(
+                ["application/json"]
             )
             if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
+                _header_params["Content-Type"] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/api/v1/cloud/managed-worker/{managed-worker}',
+            method="POST",
+            resource_path="/api/v1/cloud/managed-worker/{managed-worker}",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2253,23 +2267,27 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def runtime_config_list_actions(
         self,
-        runtime_config: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The runtime config id")],
+        runtime_config: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The runtime config id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2302,24 +2320,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._runtime_config_list_actions_serialize(
             runtime_config=runtime_config,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "RuntimeConfigActionsResponse",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "RuntimeConfigActionsResponse",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2327,18 +2344,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def runtime_config_list_actions_with_http_info(
         self,
-        runtime_config: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The runtime config id")],
+        runtime_config: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The runtime config id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2371,24 +2394,23 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._runtime_config_list_actions_serialize(
             runtime_config=runtime_config,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "RuntimeConfigActionsResponse",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "RuntimeConfigActionsResponse",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2396,18 +2418,24 @@ class ManagedWorkerApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def runtime_config_list_actions_without_preload_content(
         self,
-        runtime_config: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The runtime config id")],
+        runtime_config: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The runtime config id",
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2440,27 +2468,25 @@ class ManagedWorkerApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._runtime_config_list_actions_serialize(
             runtime_config=runtime_config,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "RuntimeConfigActionsResponse",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "RuntimeConfigActionsResponse",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _runtime_config_list_actions_serialize(
         self,
@@ -2473,8 +2499,7 @@ class ManagedWorkerApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -2485,30 +2510,23 @@ class ManagedWorkerApi:
 
         # process the path parameters
         if runtime_config is not None:
-            _path_params['runtime-config'] = runtime_config
+            _path_params["runtime-config"] = runtime_config
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/runtime-config/{runtime-config}/actions',
+            method="GET",
+            resource_path="/api/v1/cloud/runtime-config/{runtime-config}/actions",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2518,7 +2536,5 @@ class ManagedWorkerApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-

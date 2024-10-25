@@ -4,6 +4,10 @@ import threading
 from typing import Any
 
 from hatchet_sdk.clients.cloud_rest.api.managed_worker_api import ManagedWorkerApi
+from hatchet_sdk.clients.cloud_rest.api_client import ApiClient as CloudApiClient
+from hatchet_sdk.clients.cloud_rest.configuration import (
+    Configuration as CloudConfiguration,
+)
 from hatchet_sdk.clients.rest.api.event_api import EventApi
 from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
@@ -50,10 +54,6 @@ from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
-
-from hatchet_sdk.clients.cloud_rest.configuration import Configuration as CloudConfiguration
-from hatchet_sdk.clients.cloud_rest.api_client import ApiClient as CloudApiClient
-
 
 
 class AsyncRestApi:

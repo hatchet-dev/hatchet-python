@@ -12,18 +12,17 @@
 """  # noqa: E501
 
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
-from typing import Any, Dict, List, Optional, Tuple, Union
-from typing_extensions import Annotated
-
 from datetime import datetime
-from pydantic import Field
-from typing import Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
 from typing_extensions import Annotated
-from hatchet_sdk.clients.cloud_rest.models.workflow_run_events_metrics_counts import WorkflowRunEventsMetricsCounts
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
+from hatchet_sdk.clients.cloud_rest.models.workflow_run_events_metrics_counts import (
+    WorkflowRunEventsMetricsCounts,
+)
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
 
@@ -39,20 +38,29 @@ class WorkflowApi:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
-
     @validate_call
     async def workflow_run_events_get_metrics(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
-        created_after: Annotated[Optional[datetime], Field(description="The time after the workflow run was created")] = None,
-        finished_before: Annotated[Optional[datetime], Field(description="The time before the workflow run was completed")] = None,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        finished_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was completed"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -89,7 +97,7 @@ class WorkflowApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._workflow_run_events_get_metrics_serialize(
             tenant=tenant,
@@ -98,17 +106,16 @@ class WorkflowApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowRunEventsMetricsCounts",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "WorkflowRunEventsMetricsCounts",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -116,20 +123,29 @@ class WorkflowApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def workflow_run_events_get_metrics_with_http_info(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
-        created_after: Annotated[Optional[datetime], Field(description="The time after the workflow run was created")] = None,
-        finished_before: Annotated[Optional[datetime], Field(description="The time before the workflow run was completed")] = None,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        finished_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was completed"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -166,7 +182,7 @@ class WorkflowApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._workflow_run_events_get_metrics_serialize(
             tenant=tenant,
@@ -175,17 +191,16 @@ class WorkflowApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowRunEventsMetricsCounts",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "WorkflowRunEventsMetricsCounts",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -193,20 +208,29 @@ class WorkflowApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def workflow_run_events_get_metrics_without_preload_content(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
-        created_after: Annotated[Optional[datetime], Field(description="The time after the workflow run was created")] = None,
-        finished_before: Annotated[Optional[datetime], Field(description="The time before the workflow run was completed")] = None,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        created_after: Annotated[
+            Optional[datetime],
+            Field(description="The time after the workflow run was created"),
+        ] = None,
+        finished_before: Annotated[
+            Optional[datetime],
+            Field(description="The time before the workflow run was completed"),
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -243,7 +267,7 @@ class WorkflowApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._workflow_run_events_get_metrics_serialize(
             tenant=tenant,
@@ -252,20 +276,18 @@ class WorkflowApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowRunEventsMetricsCounts",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "WorkflowRunEventsMetricsCounts",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _workflow_run_events_get_metrics_serialize(
         self,
@@ -280,8 +302,7 @@ class WorkflowApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -292,56 +313,49 @@ class WorkflowApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params['tenant'] = tenant
+            _path_params["tenant"] = tenant
         # process the query parameters
         if created_after is not None:
             if isinstance(created_after, datetime):
                 _query_params.append(
                     (
-                        'createdAfter',
+                        "createdAfter",
                         created_after.strftime(
                             self.api_client.configuration.datetime_format
-                        )
+                        ),
                     )
                 )
             else:
-                _query_params.append(('createdAfter', created_after))
-            
+                _query_params.append(("createdAfter", created_after))
+
         if finished_before is not None:
             if isinstance(finished_before, datetime):
                 _query_params.append(
                     (
-                        'finishedBefore',
+                        "finishedBefore",
                         finished_before.strftime(
                             self.api_client.configuration.datetime_format
-                        )
+                        ),
                     )
                 )
             else:
-                _query_params.append(('finishedBefore', finished_before))
-            
+                _query_params.append(("finishedBefore", finished_before))
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/tenants/{tenant}/runs-metrics',
+            method="GET",
+            resource_path="/api/v1/cloud/tenants/{tenant}/runs-metrics",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -351,7 +365,5 @@ class WorkflowApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-

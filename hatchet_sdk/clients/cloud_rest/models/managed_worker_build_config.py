@@ -13,36 +13,45 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from typing_extensions import Annotated
+from typing_extensions import Annotated, Self
+
 from hatchet_sdk.clients.cloud_rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.cloud_rest.models.build_step import BuildStep
 from hatchet_sdk.clients.cloud_rest.models.github_repo import GithubRepo
-from typing import Optional, Set
-from typing_extensions import Self
+
 
 class ManagedWorkerBuildConfig(BaseModel):
     """
     ManagedWorkerBuildConfig
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: APIResourceMeta
-    github_installation_id: Annotated[str, Field(min_length=36, strict=True, max_length=36)] = Field(alias="githubInstallationId")
+    github_installation_id: Annotated[
+        str, Field(min_length=36, strict=True, max_length=36)
+    ] = Field(alias="githubInstallationId")
     github_repository: GithubRepo = Field(alias="githubRepository")
     github_repository_branch: StrictStr = Field(alias="githubRepositoryBranch")
     steps: Optional[List[BuildStep]] = None
-    __properties: ClassVar[List[str]] = ["metadata", "githubInstallationId", "githubRepository", "githubRepositoryBranch", "steps"]
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "githubInstallationId",
+        "githubRepository",
+        "githubRepositoryBranch",
+        "steps",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,8 +77,7 @@ class ManagedWorkerBuildConfig(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -78,17 +86,17 @@ class ManagedWorkerBuildConfig(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         # override the default output from pydantic by calling `to_dict()` of github_repository
         if self.github_repository:
-            _dict['githubRepository'] = self.github_repository.to_dict()
+            _dict["githubRepository"] = self.github_repository.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in steps (list)
         _items = []
         if self.steps:
             for _item in self.steps:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['steps'] = _items
+            _dict["steps"] = _items
         return _dict
 
     @classmethod
@@ -100,13 +108,25 @@ class ManagedWorkerBuildConfig(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "githubInstallationId": obj.get("githubInstallationId"),
-            "githubRepository": GithubRepo.from_dict(obj["githubRepository"]) if obj.get("githubRepository") is not None else None,
-            "githubRepositoryBranch": obj.get("githubRepositoryBranch"),
-            "steps": [BuildStep.from_dict(_item) for _item in obj["steps"]] if obj.get("steps") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    APIResourceMeta.from_dict(obj["metadata"])
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "githubInstallationId": obj.get("githubInstallationId"),
+                "githubRepository": (
+                    GithubRepo.from_dict(obj["githubRepository"])
+                    if obj.get("githubRepository") is not None
+                    else None
+                ),
+                "githubRepositoryBranch": obj.get("githubRepositoryBranch"),
+                "steps": (
+                    [BuildStep.from_dict(_item) for _item in obj["steps"]]
+                    if obj.get("steps") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

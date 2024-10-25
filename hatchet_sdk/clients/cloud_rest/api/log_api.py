@@ -12,19 +12,23 @@
 """  # noqa: E501
 
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
-from typing import Any, Dict, List, Optional, Tuple, Union
-from typing_extensions import Annotated
-
 from datetime import datetime
-from pydantic import Field, StrictStr, field_validator
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+from pydantic import (
+    Field,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    field_validator,
+    validate_call,
+)
 from typing_extensions import Annotated
-from hatchet_sdk.clients.cloud_rest.models.event_object import EventObject
-from hatchet_sdk.clients.cloud_rest.models.log_line_list import LogLineList
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
+from hatchet_sdk.clients.cloud_rest.models.event_object import EventObject
+from hatchet_sdk.clients.cloud_rest.models.log_line_list import LogLineList
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
 
@@ -40,18 +44,21 @@ class LogApi:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
-
     @validate_call
     async def build_logs_list(
         self,
-        build: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The build id")],
+        build: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The build id"
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -84,24 +91,23 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._build_logs_list_serialize(
             build=build,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LogLineList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "LogLineList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -109,18 +115,21 @@ class LogApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def build_logs_list_with_http_info(
         self,
-        build: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The build id")],
+        build: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The build id"
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -153,24 +162,23 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._build_logs_list_serialize(
             build=build,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LogLineList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "LogLineList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -178,18 +186,21 @@ class LogApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def build_logs_list_without_preload_content(
         self,
-        build: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The build id")],
+        build: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The build id"
+            ),
+        ],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -222,27 +233,25 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._build_logs_list_serialize(
             build=build,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LogLineList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "LogLineList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _build_logs_list_serialize(
         self,
@@ -255,8 +264,7 @@ class LogApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -267,30 +275,23 @@ class LogApi:
 
         # process the path parameters
         if build is not None:
-            _path_params['build'] = build
+            _path_params["build"] = build
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/build/{build}/logs',
+            method="GET",
+            resource_path="/api/v1/cloud/build/{build}/logs",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -300,24 +301,25 @@ class LogApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def log_create(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         event_object: Optional[List[EventObject]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -352,7 +354,7 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._log_create_serialize(
             tenant=tenant,
@@ -360,17 +362,16 @@ class LogApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': None,
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": None,
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -378,19 +379,22 @@ class LogApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def log_create_with_http_info(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         event_object: Optional[List[EventObject]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -425,7 +429,7 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._log_create_serialize(
             tenant=tenant,
@@ -433,17 +437,16 @@ class LogApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': None,
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": None,
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -451,19 +454,22 @@ class LogApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def log_create_without_preload_content(
         self,
-        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
         event_object: Optional[List[EventObject]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -498,7 +504,7 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._log_create_serialize(
             tenant=tenant,
@@ -506,20 +512,18 @@ class LogApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': None,
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": None,
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _log_create_serialize(
         self,
@@ -534,7 +538,7 @@ class LogApi:
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            'EventObject': '',
+            "EventObject": "",
         }
 
         _path_params: Dict[str, str] = {}
@@ -546,7 +550,7 @@ class LogApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params['tenant'] = tenant
+            _path_params["tenant"] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -554,36 +558,27 @@ class LogApi:
         if event_object is not None:
             _body_params = event_object
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params['Content-Type'] = _content_type
+            _header_params["Content-Type"] = _content_type
         else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
+            _default_content_type = self.api_client.select_header_content_type(
+                ["application/json"]
             )
             if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
+                _header_params["Content-Type"] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = [
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/api/v1/cloud/tenants/{tenant}/logs',
+            method="POST",
+            resource_path="/api/v1/cloud/tenants/{tenant}/logs",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -593,27 +588,39 @@ class LogApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-
-
 
     @validate_call
     async def log_list(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
-        after: Annotated[Optional[datetime], Field(description="When the logs should start")] = None,
-        before: Annotated[Optional[datetime], Field(description="When the logs should end")] = None,
-        search: Annotated[Optional[StrictStr], Field(description="The search query to filter for")] = None,
-        direction: Annotated[Optional[StrictStr], Field(description="The direction to sort the logs")] = None,
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
+        after: Annotated[
+            Optional[datetime], Field(description="When the logs should start")
+        ] = None,
+        before: Annotated[
+            Optional[datetime], Field(description="When the logs should end")
+        ] = None,
+        search: Annotated[
+            Optional[StrictStr], Field(description="The search query to filter for")
+        ] = None,
+        direction: Annotated[
+            Optional[StrictStr], Field(description="The direction to sort the logs")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -654,7 +661,7 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._log_list_serialize(
             managed_worker=managed_worker,
@@ -665,17 +672,16 @@ class LogApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LogLineList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "LogLineList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -683,22 +689,36 @@ class LogApi:
             response_types_map=_response_types_map,
         ).data
 
-
     @validate_call
     async def log_list_with_http_info(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
-        after: Annotated[Optional[datetime], Field(description="When the logs should start")] = None,
-        before: Annotated[Optional[datetime], Field(description="When the logs should end")] = None,
-        search: Annotated[Optional[StrictStr], Field(description="The search query to filter for")] = None,
-        direction: Annotated[Optional[StrictStr], Field(description="The direction to sort the logs")] = None,
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
+        after: Annotated[
+            Optional[datetime], Field(description="When the logs should start")
+        ] = None,
+        before: Annotated[
+            Optional[datetime], Field(description="When the logs should end")
+        ] = None,
+        search: Annotated[
+            Optional[StrictStr], Field(description="The search query to filter for")
+        ] = None,
+        direction: Annotated[
+            Optional[StrictStr], Field(description="The direction to sort the logs")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -739,7 +759,7 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._log_list_serialize(
             managed_worker=managed_worker,
@@ -750,17 +770,16 @@ class LogApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LogLineList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "LogLineList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -768,22 +787,36 @@ class LogApi:
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
     async def log_list_without_preload_content(
         self,
-        managed_worker: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The managed worker id")],
-        after: Annotated[Optional[datetime], Field(description="When the logs should start")] = None,
-        before: Annotated[Optional[datetime], Field(description="When the logs should end")] = None,
-        search: Annotated[Optional[StrictStr], Field(description="The search query to filter for")] = None,
-        direction: Annotated[Optional[StrictStr], Field(description="The direction to sort the logs")] = None,
+        managed_worker: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The managed worker id",
+            ),
+        ],
+        after: Annotated[
+            Optional[datetime], Field(description="When the logs should start")
+        ] = None,
+        before: Annotated[
+            Optional[datetime], Field(description="When the logs should end")
+        ] = None,
+        search: Annotated[
+            Optional[StrictStr], Field(description="The search query to filter for")
+        ] = None,
+        direction: Annotated[
+            Optional[StrictStr], Field(description="The direction to sort the logs")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -824,7 +857,7 @@ class LogApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """ # noqa: E501
+        """  # noqa: E501
 
         _param = self._log_list_serialize(
             managed_worker=managed_worker,
@@ -835,20 +868,18 @@ class LogApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index
+            _host_index=_host_index,
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LogLineList",
-            '400': "APIErrors",
-            '403': "APIErrors",
+            "200": "LogLineList",
+            "400": "APIErrors",
+            "403": "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
+            *_param, _request_timeout=_request_timeout
         )
         return response_data.response
-
 
     def _log_list_serialize(
         self,
@@ -865,8 +896,7 @@ class LogApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {
-        }
+        _collection_formats: Dict[str, str] = {}
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -877,64 +907,53 @@ class LogApi:
 
         # process the path parameters
         if managed_worker is not None:
-            _path_params['managed-worker'] = managed_worker
+            _path_params["managed-worker"] = managed_worker
         # process the query parameters
         if after is not None:
             if isinstance(after, datetime):
                 _query_params.append(
                     (
-                        'after',
-                        after.strftime(
-                            self.api_client.configuration.datetime_format
-                        )
+                        "after",
+                        after.strftime(self.api_client.configuration.datetime_format),
                     )
                 )
             else:
-                _query_params.append(('after', after))
-            
+                _query_params.append(("after", after))
+
         if before is not None:
             if isinstance(before, datetime):
                 _query_params.append(
                     (
-                        'before',
-                        before.strftime(
-                            self.api_client.configuration.datetime_format
-                        )
+                        "before",
+                        before.strftime(self.api_client.configuration.datetime_format),
                     )
                 )
             else:
-                _query_params.append(('before', before))
-            
+                _query_params.append(("before", before))
+
         if search is not None:
-            
-            _query_params.append(('search', search))
-            
+
+            _query_params.append(("search", search))
+
         if direction is not None:
-            
-            _query_params.append(('direction', direction))
-            
+
+            _query_params.append(("direction", direction))
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
-
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
         )
 
-
         # authentication setting
-        _auth_settings: List[str] = [
-            'cookieAuth', 
-            'bearerAuth'
-        ]
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
 
         return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/api/v1/cloud/managed-worker/{managed-worker}/logs',
+            method="GET",
+            resource_path="/api/v1/cloud/managed-worker/{managed-worker}/logs",
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -944,7 +963,5 @@ class LogApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth
+            _request_auth=_request_auth,
         )
-
-

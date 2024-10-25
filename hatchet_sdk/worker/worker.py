@@ -9,9 +9,15 @@ from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import CreateManagedWorkerRuntimeConfigRequest
-from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import InfraAsCodeRequest
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import ManagedWorkerRegion
+from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import (
+    CreateManagedWorkerRuntimeConfigRequest,
+)
+from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import (
+    InfraAsCodeRequest,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
+    ManagedWorkerRegion,
+)
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
@@ -156,29 +162,31 @@ class Worker:
         # if the environment variable HATCHET_CLOUD_REGISTER_ID is set, use it and exit
         if not os.environ.get("HATCHET_CLOUD_REGISTER_ID"):
             print("REGISTERING WORKER", os.environ.get("HATCHET_CLOUD_REGISTER_ID"))
-            
+
             try:
                 print("1")
                 mw = CreateManagedWorkerRuntimeConfigRequest(
-                    actions = self.action_registry.keys(),
-                    num_replicas = 1,
-                    cpu_kind = "shared",
-                    cpus = 1,
-                    memory_mb = 1024,
-                    region = ManagedWorkerRegion.EWR
+                    actions=self.action_registry.keys(),
+                    num_replicas=1,
+                    cpu_kind="shared",
+                    cpus=1,
+                    memory_mb=1024,
+                    region=ManagedWorkerRegion.EWR,
                 )
                 print("2")
 
-                req = InfraAsCodeRequest(
-                    runtime_configs = [mw]
-                )
+                req = InfraAsCodeRequest(runtime_configs=[mw])
 
                 print("REQ", req.to_dict())
 
-                res = await self.client.rest.aio.managed_worker_api.infra_as_code_create(
-                    infra_as_code_request=os.environ.get("HATCHET_CLOUD_REGISTER_ID"),
-                    infra_as_code_request2=req,
-                    _request_timeout=10,
+                res = (
+                    await self.client.rest.aio.managed_worker_api.infra_as_code_create(
+                        infra_as_code_request=os.environ.get(
+                            "HATCHET_CLOUD_REGISTER_ID"
+                        ),
+                        infra_as_code_request2=req,
+                        _request_timeout=10,
+                    )
                 )
 
                 print("RESPONSE", res)

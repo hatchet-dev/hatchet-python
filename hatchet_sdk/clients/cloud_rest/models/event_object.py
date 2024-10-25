@@ -13,37 +13,46 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
 from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional, Set
+
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Self
+
 from hatchet_sdk.clients.cloud_rest.models.event_object_event import EventObjectEvent
 from hatchet_sdk.clients.cloud_rest.models.event_object_fly import EventObjectFly
 from hatchet_sdk.clients.cloud_rest.models.event_object_log import EventObjectLog
-from typing import Optional, Set
-from typing_extensions import Self
+
 
 class EventObject(BaseModel):
     """
     EventObject
-    """ # noqa: E501
+    """  # noqa: E501
+
     event: Optional[EventObjectEvent] = None
     fly: Optional[EventObjectFly] = None
     host: Optional[StrictStr] = None
     log: Optional[EventObjectLog] = None
     message: Optional[StrictStr] = None
     timestamp: Optional[datetime] = None
-    __properties: ClassVar[List[str]] = ["event", "fly", "host", "log", "message", "timestamp"]
+    __properties: ClassVar[List[str]] = [
+        "event",
+        "fly",
+        "host",
+        "log",
+        "message",
+        "timestamp",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -69,8 +78,7 @@ class EventObject(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -79,13 +87,13 @@ class EventObject(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of event
         if self.event:
-            _dict['event'] = self.event.to_dict()
+            _dict["event"] = self.event.to_dict()
         # override the default output from pydantic by calling `to_dict()` of fly
         if self.fly:
-            _dict['fly'] = self.fly.to_dict()
+            _dict["fly"] = self.fly.to_dict()
         # override the default output from pydantic by calling `to_dict()` of log
         if self.log:
-            _dict['log'] = self.log.to_dict()
+            _dict["log"] = self.log.to_dict()
         return _dict
 
     @classmethod
@@ -97,14 +105,26 @@ class EventObject(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "event": EventObjectEvent.from_dict(obj["event"]) if obj.get("event") is not None else None,
-            "fly": EventObjectFly.from_dict(obj["fly"]) if obj.get("fly") is not None else None,
-            "host": obj.get("host"),
-            "log": EventObjectLog.from_dict(obj["log"]) if obj.get("log") is not None else None,
-            "message": obj.get("message"),
-            "timestamp": obj.get("timestamp")
-        })
+        _obj = cls.model_validate(
+            {
+                "event": (
+                    EventObjectEvent.from_dict(obj["event"])
+                    if obj.get("event") is not None
+                    else None
+                ),
+                "fly": (
+                    EventObjectFly.from_dict(obj["fly"])
+                    if obj.get("fly") is not None
+                    else None
+                ),
+                "host": obj.get("host"),
+                "log": (
+                    EventObjectLog.from_dict(obj["log"])
+                    if obj.get("log") is not None
+                    else None
+                ),
+                "message": obj.get("message"),
+                "timestamp": obj.get("timestamp"),
+            }
+        )
         return _obj
-
-
