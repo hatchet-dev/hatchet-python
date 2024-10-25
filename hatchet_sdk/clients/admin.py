@@ -18,6 +18,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     PutWorkflowRequest,
     RateLimitDuration,
     ScheduleWorkflowRequest,
+    ScheduledWorkflow,
     TriggerWorkflowRequest,
     TriggerWorkflowResponse,
     WorkflowVersion,
@@ -412,7 +413,7 @@ class AdminClient(AdminClientBase):
         schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
         options: ScheduleTriggerWorkflowOptions = None,
-    ) -> WorkflowVersion:
+    ) -> ScheduledWorkflow:
         try:
 
             namespace = self.namespace
@@ -432,10 +433,12 @@ class AdminClient(AdminClientBase):
                 name, schedules, input, options
             )
 
-            return self.client.ScheduleWorkflow(
+            res: WorkflowVersion = self.client.ScheduleWorkflow(
                 request,
                 metadata=get_metadata(self.token),
             )
+
+            return res.scheduled_workflows[0]
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                 raise DedupeViolationErr(e.details())

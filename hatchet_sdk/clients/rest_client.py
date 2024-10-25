@@ -30,6 +30,7 @@ from hatchet_sdk.clients.rest.models.replay_workflow_runs_request import (
 from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
     ReplayWorkflowRunsResponse,
 )
+from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
@@ -206,6 +207,21 @@ class AsyncRestApi:
             ),
         )
 
+    async def scheduled_run_get(self, schedule_id: str) -> ScheduledWorkflows:
+        return await self.workflow_api.workflow_scheduled_get(
+            tenant=self.tenant_id,
+            scheduled_id=schedule_id,
+        )
+
+    async def scheduled_run_delete(self, schedule_id: str) -> None:
+        print(f"Deleting scheduled run {schedule_id}")
+        print(self.tenant_id)
+
+        return await self.workflow_api.workflow_scheduled_delete(
+            tenant=self.tenant_id,
+            scheduled_id=schedule_id,
+        )
+
     async def list_logs(
         self,
         step_run_id: str,
@@ -346,6 +362,12 @@ class RestApi:
         self, workflow_run_ids: list[str]
     ) -> WorkflowRunCancel200Response:
         return self._run_coroutine(self.aio.workflow_run_bulk_cancel(workflow_run_ids))
+
+    def scheduled_run_get(self, schedule_id: str) -> ScheduledWorkflows:
+        return self._run_coroutine(self.aio.scheduled_run_get(schedule_id))
+
+    def scheduled_run_delete(self, schedule_id: str) -> None:
+        return self._run_coroutine(self.aio.scheduled_run_delete(schedule_id))
 
     def workflow_run_create(
         self,
