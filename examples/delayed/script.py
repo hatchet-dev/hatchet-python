@@ -16,7 +16,11 @@ scheduled_run = hatchet.admin.schedule_workflow(
     options={"additional_metadata": {"triggeredBy": "script"}},
 )
 
-print("Scheduled run at: " + scheduled_run.trigger_at.ToDatetime().strftime("%Y-%m-%d %H:%M:%S") + "UTC")
+print(
+    "Scheduled run at: "
+    + scheduled_run.trigger_at.ToDatetime().strftime("%Y-%m-%d %H:%M:%S")
+    + "UTC"
+)
 
 sleep(5)
 
