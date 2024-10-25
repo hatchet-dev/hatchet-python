@@ -5,6 +5,7 @@ from typing import List, Optional
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
+from hatchet_sdk.compute.configs import Compute
 from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
@@ -32,6 +33,23 @@ def workflow(
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
 ):
+    """
+    Decorator to mark a class as a workflow.
+
+    Args:
+        name (str, optional): The name of the workflow. Defaults to an empty string.
+        on_events (list, optional): A list of events that trigger the workflow. Defaults to None.
+        on_crons (list, optional): A list of cron expressions that trigger the workflow. Defaults to None.
+        version (str, optional): The version of the workflow. Defaults to an empty string.
+        timeout (str, optional): The timeout for the workflow. Defaults to "60m".
+        schedule_timeout (str, optional): The schedule timeout for the workflow. Defaults to "5m".
+        sticky (StickyStrategy, optional): The sticky strategy for the workflow. Defaults to None.
+        default_priority (int, optional): The default priority for the workflow. Defaults to None.
+        concurrency (ConcurrencyExpression, optional): The concurrency expression for the workflow. Defaults to None.
+
+    Returns:
+        function: The decorated class with workflow metadata.
+    """
     on_events = on_events or []
     on_crons = on_crons or []
 
@@ -59,7 +77,23 @@ def step(
     retries: int = 0,
     rate_limits: List[RateLimit] | None = None,
     desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
+    compute: Compute | None = None,
 ):
+    """
+    Decorator to mark a function as a step in a workflow.
+
+    Args:
+        name (str, optional): The name of the step. Defaults to the function name.
+        timeout (str, optional): The timeout for the step. Defaults to an empty string.
+        parents (List[str], optional): A list of parent step names. Defaults to an empty list.
+        retries (int, optional): The number of retries for the step. Defaults to 0.
+        rate_limits (List[RateLimit], optional): A list of rate limits for the step. Defaults to None.
+        desired_worker_labels (dict[str:DesiredWorkerLabel], optional): A dictionary of desired worker labels. Defaults to an empty dictionary.
+        compute (Compute, optional): The compute configuration for the step. Hatchet Cloud only. Defaults to None.
+
+    Returns:
+        function: The decorated function with step metadata.
+    """
     parents = parents or []
 
     def inner(func):
@@ -75,6 +109,7 @@ def step(
         func._step_timeout = timeout
         func._step_retries = retries
         func._step_rate_limits = limits
+        func._step_compute = compute
 
         func._step_desired_worker_labels = {}
 

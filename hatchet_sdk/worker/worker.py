@@ -24,6 +24,7 @@ from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
+from hatchet_sdk.compute.managed_compute import ManagedCompute
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 from hatchet_sdk.workflow import WorkflowMeta
 
@@ -108,7 +109,10 @@ class Worker:
             return action_function
 
         for action_name, action_func in workflow.get_actions(namespace):
-            self.action_registry[action_name] = create_action_function(action_func)
+            fn = create_action_function(action_func)
+            # copy the compute from the action func to the action function
+            fn._step_compute = action_func._step_compute
+            self.action_registry[action_name] = fn
 
     def status(self) -> WorkerStatus:
         return self._status
@@ -159,46 +163,12 @@ class Worker:
             )
             return
 
-        # if the environment variable HATCHET_CLOUD_REGISTER_ID is set, use it and exit
-        if not os.environ.get("HATCHET_CLOUD_REGISTER_ID"):
-            print("REGISTERING WORKER", os.environ.get("HATCHET_CLOUD_REGISTER_ID"))
-
-            try:
-                print("1")
-                mw = CreateManagedWorkerRuntimeConfigRequest(
-                    actions=self.action_registry.keys(),
-                    num_replicas=1,
-                    cpu_kind="shared",
-                    cpus=1,
-                    memory_mb=1024,
-                    region=ManagedWorkerRegion.EWR,
-                )
-                print("2")
-
-                req = InfraAsCodeRequest(runtime_configs=[mw])
-
-                print("REQ", req.to_dict())
-
-                res = (
-                    await self.client.rest.aio.managed_worker_api.infra_as_code_create(
-                        infra_as_code_request=os.environ.get(
-                            "HATCHET_CLOUD_REGISTER_ID"
-                        ),
-                        infra_as_code_request2=req,
-                        _request_timeout=10,
-                    )
-                )
-
-                print("RESPONSE", res)
-
-                sys.exit(0)
-            except Exception as e:
-                print("ERROR", e)
-                sys.exit(1)
-
         # non blocking setup
         if not _from_start:
             self.setup_loop(options.loop)
+
+        managed_compute = ManagedCompute(self.action_registry, self.client)
+        await managed_compute.cloud_register()
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()
