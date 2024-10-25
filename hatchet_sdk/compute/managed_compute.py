@@ -13,35 +13,40 @@ class ManagedCompute:
     def __init__(self, actions: Dict[str, Callable[..., Any]], client: Client):
         self.actions = actions
         self.client = client
-        self.action_map = self.get_action_map(self.actions)
-
+        self.configs = self.get_compute_configs(self.actions)
         self.cloud_register_enabled = os.environ.get("HATCHET_CLOUD_REGISTER_ID")
 
+        if len(self.configs) == 0:
+            logger.debug("no compute configs found, skipping cloud registration and running all actions locally.")
+            return
+
         if self.cloud_register_enabled is None:
-            logger.warning("🚫 Local mode detected, skipping cloud registration and running all actions locally.")
-
-            logger.warning("Managed Cloud Compute Plan:")
-            for _, compute in self.action_map.items():
+            logger.warning("managed cloud compute plan:")
+            for compute in self.configs:
                 logger.warning(f"    ----------------------------")
-                logger.warning(f"    Actions: {', '.join(compute.actions)}")
-                logger.warning(f"    Num Replicas: {compute.num_replicas}")
-                logger.warning(f"    CPU Kind: {compute.cpu_kind}")
-                logger.warning(f"    CPUs: {compute.cpus}")
-                logger.warning(f"    Memory MB: {compute.memory_mb}")
-                logger.warning(f"    Region: {compute.region}")
+                logger.warning(f"    actions: {', '.join(compute.actions)}")
+                logger.warning(f"    num replicas: {compute.num_replicas}")
+                logger.warning(f"    cpu kind: {compute.cpu_kind}")
+                logger.warning(f"    cpus: {compute.cpus}")
+                logger.warning(f"    memory mb: {compute.memory_mb}")
+                logger.warning(f"    region: {compute.region}")
 
-            logger.warning("🚫 Local mode detected, skipping cloud registration and running all actions locally.")
+            logger.warning("NOTICE: local mode detected, skipping cloud registration and running all actions locally.")
 
 
-    def get_action_map(self, actions: Dict[str, Callable[..., Any]]) -> Dict[str, CreateManagedWorkerRuntimeConfigRequest]:
+    def get_compute_configs(self, actions: Dict[str, Callable[..., Any]]) -> List[CreateManagedWorkerRuntimeConfigRequest]:
         '''
         Builds a map of compute hashes to compute configs and lists of actions that correspond to each compute hash.
         '''
         map: Dict[str, CreateManagedWorkerRuntimeConfigRequest] = {}
     
-        for action, func in actions.items():
-            try:
+        try:
+            for action, func in actions.items():
                 compute = func._step_compute
+                
+                if compute is None:
+                    continue
+
                 key = compute.hash()
                 if key not in map:
                     map[key] = CreateManagedWorkerRuntimeConfigRequest(
@@ -53,9 +58,11 @@ class ManagedCompute:
                         region = compute.region
                     )
                 map[key].actions.append(action)
-            except Exception as e:
-                logger.error(f"Error getting compute for action {action}: {e}")
-        return map
+
+            return list(map.values())
+        except Exception as e:
+            logger.error(f"Error getting compute configs: {e}")
+            return []
 
     async def cloud_register(self):
         # if the environment variable HATCHET_CLOUD_REGISTER_ID is set, use it and exit
@@ -63,14 +70,12 @@ class ManagedCompute:
             logger.info(f"Registering cloud compute plan with ID: {self.cloud_register_enabled}")
             
             try:
-                configs = list(self.action_map.values())
-
-                if len(configs) == 0:
+                if len(self.configs) == 0:
                     logger.warning("No actions to register, skipping cloud registration.")
                     return
 
                 req = InfraAsCodeRequest(
-                    runtime_configs = configs
+                    runtime_configs = self.configs
                 )
 
                 res = await self.client.rest.aio.managed_worker_api.infra_as_code_create(
