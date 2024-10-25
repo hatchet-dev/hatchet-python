@@ -17,23 +17,57 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing_extensions import Self
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing_extensions import Annotated, Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.event import Event
+from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 
 
-class BulkCreateEventResponse(BaseModel):
+class ScheduledWorkflows(BaseModel):
     """
-    BulkCreateEventResponse
+    ScheduledWorkflows
     """  # noqa: E501
 
     metadata: APIResourceMeta
-    events: List[Event] = Field(description="The events.")
-    __properties: ClassVar[List[str]] = ["metadata", "events"]
+    tenant_id: StrictStr = Field(alias="tenantId")
+    workflow_version_id: StrictStr = Field(alias="workflowVersionId")
+    workflow_id: StrictStr = Field(alias="workflowId")
+    workflow_name: StrictStr = Field(alias="workflowName")
+    trigger_at: datetime = Field(alias="triggerAt")
+    input: Optional[Dict[str, Any]] = None
+    additional_metadata: Optional[Dict[str, Any]] = Field(
+        default=None, alias="additionalMetadata"
+    )
+    workflow_run_created_at: Optional[datetime] = Field(
+        default=None, alias="workflowRunCreatedAt"
+    )
+    workflow_run_name: Optional[StrictStr] = Field(
+        default=None, alias="workflowRunName"
+    )
+    workflow_run_status: Optional[WorkflowRunStatus] = Field(
+        default=None, alias="workflowRunStatus"
+    )
+    workflow_run_id: Optional[
+        Annotated[str, Field(min_length=36, strict=True, max_length=36)]
+    ] = Field(default=None, alias="workflowRunId")
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "tenantId",
+        "workflowVersionId",
+        "workflowId",
+        "workflowName",
+        "triggerAt",
+        "input",
+        "additionalMetadata",
+        "workflowRunCreatedAt",
+        "workflowRunName",
+        "workflowRunStatus",
+        "workflowRunId",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +86,7 @@ class BulkCreateEventResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of BulkCreateEventResponse from a JSON string"""
+        """Create an instance of ScheduledWorkflows from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,18 +109,11 @@ class BulkCreateEventResponse(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
             _dict["metadata"] = self.metadata.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each item in events (list)
-        _items = []
-        if self.events:
-            for _item in self.events:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict["events"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of BulkCreateEventResponse from a dict"""
+        """Create an instance of ScheduledWorkflows from a dict"""
         if obj is None:
             return None
 
@@ -100,11 +127,17 @@ class BulkCreateEventResponse(BaseModel):
                     if obj.get("metadata") is not None
                     else None
                 ),
-                "events": (
-                    [Event.from_dict(_item) for _item in obj["events"]]
-                    if obj.get("events") is not None
-                    else None
-                ),
+                "tenantId": obj.get("tenantId"),
+                "workflowVersionId": obj.get("workflowVersionId"),
+                "workflowId": obj.get("workflowId"),
+                "workflowName": obj.get("workflowName"),
+                "triggerAt": obj.get("triggerAt"),
+                "input": obj.get("input"),
+                "additionalMetadata": obj.get("additionalMetadata"),
+                "workflowRunCreatedAt": obj.get("workflowRunCreatedAt"),
+                "workflowRunName": obj.get("workflowRunName"),
+                "workflowRunStatus": obj.get("workflowRunStatus"),
+                "workflowRunId": obj.get("workflowRunId"),
             }
         )
         return _obj

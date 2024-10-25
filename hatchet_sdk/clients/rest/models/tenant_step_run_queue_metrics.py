@@ -79,5 +79,5 @@ class TenantStepRunQueueMetrics(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({"queues": obj.get("queues")})
+        _obj = cls.model_validate({})
         return _obj

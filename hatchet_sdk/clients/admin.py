@@ -17,6 +17,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     PutRateLimitRequest,
     PutWorkflowRequest,
     RateLimitDuration,
+    ScheduledWorkflow,
     ScheduleWorkflowRequest,
     TriggerWorkflowRequest,
     TriggerWorkflowResponse,
@@ -39,6 +40,7 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     parent_step_run_id: Optional[str]
     child_index: Optional[int]
     child_key: Optional[str]
+    additional_metadata: Dict[str, str] | None = None
     namespace: Optional[str]
 
 
@@ -144,6 +146,11 @@ class AdminClientBase:
                 raise ValueError(
                     "Invalid schedule type. Must be datetime or timestamp_pb2.Timestamp."
                 )
+
+        if options is not None and "additional_metadata" in options:
+            options["additional_metadata"] = json.dumps(
+                options["additional_metadata"]
+            ).encode("utf-8")
 
         return ScheduleWorkflowRequest(
             name=name,
@@ -406,7 +413,7 @@ class AdminClient(AdminClientBase):
         schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
         options: ScheduleTriggerWorkflowOptions = None,
-    ) -> WorkflowVersion:
+    ) -> ScheduledWorkflow:
         try:
 
             namespace = self.namespace
@@ -426,10 +433,12 @@ class AdminClient(AdminClientBase):
                 name, schedules, input, options
             )
 
-            return self.client.ScheduleWorkflow(
+            res: WorkflowVersion = self.client.ScheduleWorkflow(
                 request,
                 metadata=get_metadata(self.token),
             )
+
+            return res.scheduled_workflows[0]
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                 raise DedupeViolationErr(e.details())
