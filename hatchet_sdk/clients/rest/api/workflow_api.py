@@ -24,6 +24,8 @@ from hatchet_sdk.clients.rest.models.cron_workflows_list import CronWorkflowsLis
 from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
     CronWorkflowsOrderByField,
 )
+from hatchet_sdk.clients.rest.models.scheduled_run_status import ScheduledRunStatus
+from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
 from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
     ScheduledWorkflowsList,
 )
@@ -3915,6 +3917,607 @@ class WorkflowApi:
         )
 
     @validate_call
+    async def workflow_scheduled_delete(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        scheduled_id: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The scheduled workflow id",
+            ),
+        ],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Delete tenant alert email group
+
+        Delete a scheduled workflow run for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param scheduled_id: The scheduled workflow id (required)
+        :type scheduled_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_scheduled_delete_serialize(
+            tenant=tenant,
+            scheduled_id=scheduled_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "204": None,
+            "400": "APIErrors",
+            "403": "APIError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+    @validate_call
+    async def workflow_scheduled_delete_with_http_info(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        scheduled_id: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The scheduled workflow id",
+            ),
+        ],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Delete tenant alert email group
+
+        Delete a scheduled workflow run for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param scheduled_id: The scheduled workflow id (required)
+        :type scheduled_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_scheduled_delete_serialize(
+            tenant=tenant,
+            scheduled_id=scheduled_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "204": None,
+            "400": "APIErrors",
+            "403": "APIError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+    @validate_call
+    async def workflow_scheduled_delete_without_preload_content(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        scheduled_id: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The scheduled workflow id",
+            ),
+        ],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Delete tenant alert email group
+
+        Delete a scheduled workflow run for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param scheduled_id: The scheduled workflow id (required)
+        :type scheduled_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_scheduled_delete_serialize(
+            tenant=tenant,
+            scheduled_id=scheduled_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "204": None,
+            "400": "APIErrors",
+            "403": "APIError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+    def _workflow_scheduled_delete_serialize(
+        self,
+        tenant,
+        scheduled_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {}
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if tenant is not None:
+            _path_params["tenant"] = tenant
+        if scheduled_id is not None:
+            _path_params["scheduledId"] = scheduled_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+        # set the HTTP header `Accept`
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
+
+        # authentication setting
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+
+        return self.api_client.param_serialize(
+            method="DELETE",
+            resource_path="/api/v1/tenants/{tenant}/workflows/scheduled/{scheduledId}",
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth,
+        )
+
+    @validate_call
+    async def workflow_scheduled_get(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        scheduled_id: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The scheduled workflow id",
+            ),
+        ],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ScheduledWorkflows:
+        """Get workflow runs
+
+        Get a scheduled workflow run for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param scheduled_id: The scheduled workflow id (required)
+        :type scheduled_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_scheduled_get_serialize(
+            tenant=tenant,
+            scheduled_id=scheduled_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "200": "ScheduledWorkflows",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
+        }
+        response_data = await self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+    @validate_call
+    async def workflow_scheduled_get_with_http_info(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        scheduled_id: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The scheduled workflow id",
+            ),
+        ],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ScheduledWorkflows]:
+        """Get workflow runs
+
+        Get a scheduled workflow run for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param scheduled_id: The scheduled workflow id (required)
+        :type scheduled_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_scheduled_get_serialize(
+            tenant=tenant,
+            scheduled_id=scheduled_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "200": "ScheduledWorkflows",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
+        }
+        response_data = await self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+    @validate_call
+    async def workflow_scheduled_get_without_preload_content(
+        self,
+        tenant: Annotated[
+            str,
+            Field(
+                min_length=36, strict=True, max_length=36, description="The tenant id"
+            ),
+        ],
+        scheduled_id: Annotated[
+            str,
+            Field(
+                min_length=36,
+                strict=True,
+                max_length=36,
+                description="The scheduled workflow id",
+            ),
+        ],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
+            ],
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get workflow runs
+
+        Get a scheduled workflow run for a tenant
+
+        :param tenant: The tenant id (required)
+        :type tenant: str
+        :param scheduled_id: The scheduled workflow id (required)
+        :type scheduled_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """  # noqa: E501
+
+        _param = self._workflow_scheduled_get_serialize(
+            tenant=tenant,
+            scheduled_id=scheduled_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index,
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            "200": "ScheduledWorkflows",
+            "400": "APIErrors",
+            "403": "APIErrors",
+            "404": "APIErrors",
+        }
+        response_data = await self.api_client.call_api(
+            *_param, _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+    def _workflow_scheduled_get_serialize(
+        self,
+        tenant,
+        scheduled_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {}
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, Union[str, bytes]] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if tenant is not None:
+            _path_params["tenant"] = tenant
+        if scheduled_id is not None:
+            _path_params["scheduledId"] = scheduled_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+        # set the HTTP header `Accept`
+        _header_params["Accept"] = self.api_client.select_header_accept(
+            ["application/json"]
+        )
+
+        # authentication setting
+        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+
+        return self.api_client.param_serialize(
+            method="GET",
+            resource_path="/api/v1/tenants/{tenant}/workflows/scheduled/{scheduledId}",
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth,
+        )
+
+    @validate_call
     async def workflow_scheduled_list(
         self,
         tenant: Annotated[
@@ -3929,14 +4532,6 @@ class WorkflowApi:
         limit: Annotated[
             Optional[StrictInt], Field(description="The number to limit by")
         ] = None,
-        workflow_id: Annotated[
-            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
-            Field(description="The workflow id to get runs for."),
-        ] = None,
-        additional_metadata: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of metadata key value pairs to filter by"),
-        ] = None,
         order_by_field: Annotated[
             Optional[ScheduledWorkflowsOrderByField],
             Field(description="The order by field"),
@@ -3944,6 +4539,26 @@ class WorkflowApi:
         order_by_direction: Annotated[
             Optional[WorkflowRunOrderByDirection],
             Field(description="The order by direction"),
+        ] = None,
+        workflow_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The workflow id to get runs for."),
+        ] = None,
+        parent_workflow_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent workflow run id"),
+        ] = None,
+        parent_step_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent step run id"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
+        statuses: Annotated[
+            Optional[List[ScheduledRunStatus]],
+            Field(description="A list of scheduled run statuses to filter by"),
         ] = None,
         _request_timeout: Union[
             None,
@@ -3967,14 +4582,20 @@ class WorkflowApi:
         :type offset: int
         :param limit: The number to limit by
         :type limit: int
-        :param workflow_id: The workflow id to get runs for.
-        :type workflow_id: str
-        :param additional_metadata: A list of metadata key value pairs to filter by
-        :type additional_metadata: List[str]
         :param order_by_field: The order by field
         :type order_by_field: ScheduledWorkflowsOrderByField
         :param order_by_direction: The order by direction
         :type order_by_direction: WorkflowRunOrderByDirection
+        :param workflow_id: The workflow id to get runs for.
+        :type workflow_id: str
+        :param parent_workflow_run_id: The parent workflow run id
+        :type parent_workflow_run_id: str
+        :param parent_step_run_id: The parent step run id
+        :type parent_step_run_id: str
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
+        :param statuses: A list of scheduled run statuses to filter by
+        :type statuses: List[ScheduledRunStatus]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4001,10 +4622,13 @@ class WorkflowApi:
             tenant=tenant,
             offset=offset,
             limit=limit,
-            workflow_id=workflow_id,
-            additional_metadata=additional_metadata,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
+            workflow_id=workflow_id,
+            parent_workflow_run_id=parent_workflow_run_id,
+            parent_step_run_id=parent_step_run_id,
+            additional_metadata=additional_metadata,
+            statuses=statuses,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -4040,14 +4664,6 @@ class WorkflowApi:
         limit: Annotated[
             Optional[StrictInt], Field(description="The number to limit by")
         ] = None,
-        workflow_id: Annotated[
-            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
-            Field(description="The workflow id to get runs for."),
-        ] = None,
-        additional_metadata: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of metadata key value pairs to filter by"),
-        ] = None,
         order_by_field: Annotated[
             Optional[ScheduledWorkflowsOrderByField],
             Field(description="The order by field"),
@@ -4055,6 +4671,26 @@ class WorkflowApi:
         order_by_direction: Annotated[
             Optional[WorkflowRunOrderByDirection],
             Field(description="The order by direction"),
+        ] = None,
+        workflow_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The workflow id to get runs for."),
+        ] = None,
+        parent_workflow_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent workflow run id"),
+        ] = None,
+        parent_step_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent step run id"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
+        statuses: Annotated[
+            Optional[List[ScheduledRunStatus]],
+            Field(description="A list of scheduled run statuses to filter by"),
         ] = None,
         _request_timeout: Union[
             None,
@@ -4078,14 +4714,20 @@ class WorkflowApi:
         :type offset: int
         :param limit: The number to limit by
         :type limit: int
-        :param workflow_id: The workflow id to get runs for.
-        :type workflow_id: str
-        :param additional_metadata: A list of metadata key value pairs to filter by
-        :type additional_metadata: List[str]
         :param order_by_field: The order by field
         :type order_by_field: ScheduledWorkflowsOrderByField
         :param order_by_direction: The order by direction
         :type order_by_direction: WorkflowRunOrderByDirection
+        :param workflow_id: The workflow id to get runs for.
+        :type workflow_id: str
+        :param parent_workflow_run_id: The parent workflow run id
+        :type parent_workflow_run_id: str
+        :param parent_step_run_id: The parent step run id
+        :type parent_step_run_id: str
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
+        :param statuses: A list of scheduled run statuses to filter by
+        :type statuses: List[ScheduledRunStatus]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4112,10 +4754,13 @@ class WorkflowApi:
             tenant=tenant,
             offset=offset,
             limit=limit,
-            workflow_id=workflow_id,
-            additional_metadata=additional_metadata,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
+            workflow_id=workflow_id,
+            parent_workflow_run_id=parent_workflow_run_id,
+            parent_step_run_id=parent_step_run_id,
+            additional_metadata=additional_metadata,
+            statuses=statuses,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -4151,14 +4796,6 @@ class WorkflowApi:
         limit: Annotated[
             Optional[StrictInt], Field(description="The number to limit by")
         ] = None,
-        workflow_id: Annotated[
-            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
-            Field(description="The workflow id to get runs for."),
-        ] = None,
-        additional_metadata: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of metadata key value pairs to filter by"),
-        ] = None,
         order_by_field: Annotated[
             Optional[ScheduledWorkflowsOrderByField],
             Field(description="The order by field"),
@@ -4166,6 +4803,26 @@ class WorkflowApi:
         order_by_direction: Annotated[
             Optional[WorkflowRunOrderByDirection],
             Field(description="The order by direction"),
+        ] = None,
+        workflow_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The workflow id to get runs for."),
+        ] = None,
+        parent_workflow_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent workflow run id"),
+        ] = None,
+        parent_step_run_id: Annotated[
+            Optional[Annotated[str, Field(min_length=36, strict=True, max_length=36)]],
+            Field(description="The parent step run id"),
+        ] = None,
+        additional_metadata: Annotated[
+            Optional[List[StrictStr]],
+            Field(description="A list of metadata key value pairs to filter by"),
+        ] = None,
+        statuses: Annotated[
+            Optional[List[ScheduledRunStatus]],
+            Field(description="A list of scheduled run statuses to filter by"),
         ] = None,
         _request_timeout: Union[
             None,
@@ -4189,14 +4846,20 @@ class WorkflowApi:
         :type offset: int
         :param limit: The number to limit by
         :type limit: int
-        :param workflow_id: The workflow id to get runs for.
-        :type workflow_id: str
-        :param additional_metadata: A list of metadata key value pairs to filter by
-        :type additional_metadata: List[str]
         :param order_by_field: The order by field
         :type order_by_field: ScheduledWorkflowsOrderByField
         :param order_by_direction: The order by direction
         :type order_by_direction: WorkflowRunOrderByDirection
+        :param workflow_id: The workflow id to get runs for.
+        :type workflow_id: str
+        :param parent_workflow_run_id: The parent workflow run id
+        :type parent_workflow_run_id: str
+        :param parent_step_run_id: The parent step run id
+        :type parent_step_run_id: str
+        :param additional_metadata: A list of metadata key value pairs to filter by
+        :type additional_metadata: List[str]
+        :param statuses: A list of scheduled run statuses to filter by
+        :type statuses: List[ScheduledRunStatus]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4223,10 +4886,13 @@ class WorkflowApi:
             tenant=tenant,
             offset=offset,
             limit=limit,
-            workflow_id=workflow_id,
-            additional_metadata=additional_metadata,
             order_by_field=order_by_field,
             order_by_direction=order_by_direction,
+            workflow_id=workflow_id,
+            parent_workflow_run_id=parent_workflow_run_id,
+            parent_step_run_id=parent_step_run_id,
+            additional_metadata=additional_metadata,
+            statuses=statuses,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -4248,10 +4914,13 @@ class WorkflowApi:
         tenant,
         offset,
         limit,
-        workflow_id,
-        additional_metadata,
         order_by_field,
         order_by_direction,
+        workflow_id,
+        parent_workflow_run_id,
+        parent_step_run_id,
+        additional_metadata,
+        statuses,
         _request_auth,
         _content_type,
         _headers,
@@ -4262,6 +4931,7 @@ class WorkflowApi:
 
         _collection_formats: Dict[str, str] = {
             "additionalMetadata": "multi",
+            "statuses": "multi",
         }
 
         _path_params: Dict[str, str] = {}
@@ -4283,14 +4953,6 @@ class WorkflowApi:
 
             _query_params.append(("limit", limit))
 
-        if workflow_id is not None:
-
-            _query_params.append(("workflowId", workflow_id))
-
-        if additional_metadata is not None:
-
-            _query_params.append(("additionalMetadata", additional_metadata))
-
         if order_by_field is not None:
 
             _query_params.append(("orderByField", order_by_field.value))
@@ -4298,6 +4960,26 @@ class WorkflowApi:
         if order_by_direction is not None:
 
             _query_params.append(("orderByDirection", order_by_direction.value))
+
+        if workflow_id is not None:
+
+            _query_params.append(("workflowId", workflow_id))
+
+        if parent_workflow_run_id is not None:
+
+            _query_params.append(("parentWorkflowRunId", parent_workflow_run_id))
+
+        if parent_step_run_id is not None:
+
+            _query_params.append(("parentStepRunId", parent_step_run_id))
+
+        if additional_metadata is not None:
+
+            _query_params.append(("additionalMetadata", additional_metadata))
+
+        if statuses is not None:
+
+            _query_params.append(("statuses", statuses))
 
         # process the header parameters
         # process the form parameters

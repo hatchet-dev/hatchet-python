@@ -21,9 +21,10 @@ from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing_extensions import Self
+from typing_extensions import Annotated, Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 
 
 class ScheduledWorkflows(BaseModel):
@@ -41,6 +42,18 @@ class ScheduledWorkflows(BaseModel):
     additional_metadata: Optional[Dict[str, Any]] = Field(
         default=None, alias="additionalMetadata"
     )
+    workflow_run_created_at: Optional[datetime] = Field(
+        default=None, alias="workflowRunCreatedAt"
+    )
+    workflow_run_name: Optional[StrictStr] = Field(
+        default=None, alias="workflowRunName"
+    )
+    workflow_run_status: Optional[WorkflowRunStatus] = Field(
+        default=None, alias="workflowRunStatus"
+    )
+    workflow_run_id: Optional[
+        Annotated[str, Field(min_length=36, strict=True, max_length=36)]
+    ] = Field(default=None, alias="workflowRunId")
     __properties: ClassVar[List[str]] = [
         "metadata",
         "tenantId",
@@ -50,6 +63,10 @@ class ScheduledWorkflows(BaseModel):
         "triggerAt",
         "input",
         "additionalMetadata",
+        "workflowRunCreatedAt",
+        "workflowRunName",
+        "workflowRunStatus",
+        "workflowRunId",
     ]
 
     model_config = ConfigDict(
@@ -117,6 +134,10 @@ class ScheduledWorkflows(BaseModel):
                 "triggerAt": obj.get("triggerAt"),
                 "input": obj.get("input"),
                 "additionalMetadata": obj.get("additionalMetadata"),
+                "workflowRunCreatedAt": obj.get("workflowRunCreatedAt"),
+                "workflowRunName": obj.get("workflowRunName"),
+                "workflowRunStatus": obj.get("workflowRunStatus"),
+                "workflowRunId": obj.get("workflowRunId"),
             }
         )
         return _obj
