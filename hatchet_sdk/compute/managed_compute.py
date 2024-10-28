@@ -38,7 +38,7 @@ class ManagedCompute:
                 logger.warning(f"    cpu kind: {compute.cpu_kind}")
                 logger.warning(f"    cpus: {compute.cpus}")
                 logger.warning(f"    memory mb: {compute.memory_mb}")
-                logger.warning(f"    region: {compute.region}")
+                logger.warning(f"    regions: {compute.regions}")
 
             logger.warning(
                 "NOTICE: local mode detected, skipping cloud registration and running all actions locally."

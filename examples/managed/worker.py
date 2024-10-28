@@ -3,9 +3,6 @@ import time
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
-    ManagedWorkerRegion,
-)
 from hatchet_sdk.compute.configs import Compute
 
 load_dotenv()
@@ -15,7 +12,7 @@ hatchet = Hatchet()
 # Default compute
 
 default_compute = Compute(
-    cpu_kind="shared", cpus=1, memory_mb=1024, regions=[ManagedWorkerRegion.EWR]
+    cpu_kind="shared", cpus=1, memory_mb=1024, regions=["ewr"]
 )
 
 blocked_compute = Compute(
@@ -23,11 +20,11 @@ blocked_compute = Compute(
     cpu_kind="shared",
     cpus=1,
     memory_mb=1024,
-    regions=[ManagedWorkerRegion.EWR],
+    regions=["ewr"],
 )
 
 gpu_compute = Compute(
-    cpu_kind="gpu", cpus=2, memory_mb=1024, regions=[ManagedWorkerRegion.EWR]
+    cpu_kind="gpu", cpus=2, memory_mb=1024, regions=["ewr"]
 )
 
 
