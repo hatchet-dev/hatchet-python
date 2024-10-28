@@ -77,13 +77,6 @@ class TenantQueueMetrics(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of total
         if self.total:
             _dict["total"] = self.total.to_dict()
-        # override the default output from pydantic by calling `to_dict()` of each value in workflow (dict)
-        _field_dict = {}
-        if self.workflow:
-            for _key_workflow in self.workflow:
-                if self.workflow[_key_workflow]:
-                    _field_dict[_key_workflow] = self.workflow[_key_workflow].to_dict()
-            _dict["workflow"] = _field_dict
         return _dict
 
     @classmethod
@@ -102,15 +95,6 @@ class TenantQueueMetrics(BaseModel):
                     if obj.get("total") is not None
                     else None
                 ),
-                "workflow": (
-                    dict(
-                        (_k, QueueMetrics.from_dict(_v))
-                        for _k, _v in obj["workflow"].items()
-                    )
-                    if obj.get("workflow") is not None
-                    else None
-                ),
-                "queues": obj.get("queues"),
             }
         )
         return _obj

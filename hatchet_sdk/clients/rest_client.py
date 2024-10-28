@@ -3,6 +3,11 @@ import atexit
 import threading
 from typing import Any
 
+from hatchet_sdk.clients.cloud_rest.api.managed_worker_api import ManagedWorkerApi
+from hatchet_sdk.clients.cloud_rest.api_client import ApiClient as CloudApiClient
+from hatchet_sdk.clients.cloud_rest.configuration import (
+    Configuration as CloudConfiguration,
+)
 from hatchet_sdk.clients.rest.api.event_api import EventApi
 from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
@@ -60,7 +65,15 @@ class AsyncRestApi:
             access_token=api_key,
         )
 
+        self.cloud_config = CloudConfiguration(
+            host=host,
+            access_token=api_key,
+        )
+
         self._api_client = None
+        self._cloud_api_client = None
+        self._managed_worker_api = None
+
         self._workflow_api = None
         self._workflow_run_api = None
         self._step_run_api = None
@@ -71,7 +84,14 @@ class AsyncRestApi:
     def api_client(self):
         if self._api_client is None:
             self._api_client = ApiClient(configuration=self.config)
+            self._cloud_api_client = CloudApiClient(configuration=self.cloud_config)
         return self._api_client
+
+    @property
+    def managed_worker_api(self):
+        if self._managed_worker_api is None:
+            self._managed_worker_api = ManagedWorkerApi(self.api_client)
+        return self._managed_worker_api
 
     @property
     def workflow_api(self):

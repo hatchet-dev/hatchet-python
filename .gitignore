@@ -162,3 +162,6 @@ cython_debug/
 #.idea/
 
 openapitools.json
+
+hatchet-cloud/
+hatchet/

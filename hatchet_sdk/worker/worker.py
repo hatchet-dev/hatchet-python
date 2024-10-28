@@ -9,6 +9,7 @@ from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.compute.managed_compute import ManagedCompute
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
@@ -99,7 +100,17 @@ class Worker:
             return action_function
 
         for action_name, action_func in workflow.get_actions(namespace):
-            self.action_registry[action_name] = create_action_function(action_func)
+            if (
+                self.client.config.runnable_actions
+                and action_name not in self.client.config.runnable_actions
+            ):
+                logger.debug(f"skipping action: {action_name} not in runnable actions")
+                continue
+
+            fn = create_action_function(action_func)
+            # copy the compute from the action func to the action function
+            fn._step_compute = action_func._step_compute
+            self.action_registry[action_name] = fn
 
     def status(self) -> WorkerStatus:
         return self._status
@@ -153,6 +164,11 @@ class Worker:
         # non blocking setup
         if not _from_start:
             self.setup_loop(options.loop)
+
+        managed_compute = ManagedCompute(
+            self.action_registry, self.client, self.max_runs
+        )
+        await managed_compute.cloud_register()
 
         self.action_listener_process = self._start_listener()
         self.action_runner = self._run_action_runner()

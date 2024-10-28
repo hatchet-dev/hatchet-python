@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.39.0a1"
+version = "0.40.0a7"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -64,6 +64,7 @@ on_failure = "examples.on_failure.worker:main"
 programatic_replay = "examples.programatic_replay.worker:main"
 rate_limit = "examples.rate_limit.worker:main"
 simple = "examples.simple.worker:main"
+managed = "examples.managed.worker:main"
 timeout = "examples.timeout.worker:main"
 blocked = "examples.blocked_async.worker:main"
 existing_loop = "examples.worker_existing_loop.worker:main"
