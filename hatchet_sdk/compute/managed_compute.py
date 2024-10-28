@@ -17,7 +17,9 @@ from hatchet_sdk.logger import logger
 
 
 class ManagedCompute:
-    def __init__(self, actions: Dict[str, Callable[..., Any]], client: Client, max_runs: int = 1):
+    def __init__(
+        self, actions: Dict[str, Callable[..., Any]], client: Client, max_runs: int = 1
+    ):
         self.actions = actions
         self.client = client
         self.max_runs = max_runs
