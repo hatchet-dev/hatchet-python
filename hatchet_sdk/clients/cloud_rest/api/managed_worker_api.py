@@ -19,23 +19,29 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_request import (
-    CreateManagedWorkerRequest,
+from hatchet_sdk.clients.cloud_rest.models.infra_as_code_create_request import (
+    InfraAsCodeCreateRequest,
 )
-from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import (
-    InfraAsCodeRequest,
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request import (
+    ManagedWorkerCreateRequest,
 )
-from hatchet_sdk.clients.cloud_rest.models.instance_list import InstanceList
-from hatchet_sdk.clients.cloud_rest.models.managed_worker import ManagedWorker
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_event_list import (
-    ManagedWorkerEventList,
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_events_list200_response import (
+    ManagedWorkerEventsList200Response,
 )
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_list import ManagedWorkerList
-from hatchet_sdk.clients.cloud_rest.models.runtime_config_actions_response import (
-    RuntimeConfigActionsResponse,
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_instances_list200_response import (
+    ManagedWorkerInstancesList200Response,
 )
-from hatchet_sdk.clients.cloud_rest.models.update_managed_worker_request import (
-    UpdateManagedWorkerRequest,
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response import (
+    ManagedWorkerList200Response,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner import (
+    ManagedWorkerList200ResponseRowsInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_update_request import (
+    ManagedWorkerUpdateRequest,
+)
+from hatchet_sdk.clients.cloud_rest.models.runtime_config_list_actions200_response import (
+    RuntimeConfigListActions200Response,
 )
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
@@ -64,7 +70,7 @@ class ManagedWorkerApi:
                 description="The infra as code request id",
             ),
         ],
-        infra_as_code_request2: Optional[InfraAsCodeRequest] = None,
+        infra_as_code_create_request: Optional[InfraAsCodeCreateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -83,8 +89,8 @@ class ManagedWorkerApi:
 
         :param infra_as_code_request: The infra as code request id (required)
         :type infra_as_code_request: str
-        :param infra_as_code_request2:
-        :type infra_as_code_request2: InfraAsCodeRequest
+        :param infra_as_code_create_request:
+        :type infra_as_code_create_request: InfraAsCodeCreateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -109,7 +115,7 @@ class ManagedWorkerApi:
 
         _param = self._infra_as_code_create_serialize(
             infra_as_code_request=infra_as_code_request,
-            infra_as_code_request2=infra_as_code_request2,
+            infra_as_code_create_request=infra_as_code_create_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -118,8 +124,8 @@ class ManagedWorkerApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -142,7 +148,7 @@ class ManagedWorkerApi:
                 description="The infra as code request id",
             ),
         ],
-        infra_as_code_request2: Optional[InfraAsCodeRequest] = None,
+        infra_as_code_create_request: Optional[InfraAsCodeCreateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -161,8 +167,8 @@ class ManagedWorkerApi:
 
         :param infra_as_code_request: The infra as code request id (required)
         :type infra_as_code_request: str
-        :param infra_as_code_request2:
-        :type infra_as_code_request2: InfraAsCodeRequest
+        :param infra_as_code_create_request:
+        :type infra_as_code_create_request: InfraAsCodeCreateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -187,7 +193,7 @@ class ManagedWorkerApi:
 
         _param = self._infra_as_code_create_serialize(
             infra_as_code_request=infra_as_code_request,
-            infra_as_code_request2=infra_as_code_request2,
+            infra_as_code_create_request=infra_as_code_create_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -196,8 +202,8 @@ class ManagedWorkerApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -220,7 +226,7 @@ class ManagedWorkerApi:
                 description="The infra as code request id",
             ),
         ],
-        infra_as_code_request2: Optional[InfraAsCodeRequest] = None,
+        infra_as_code_create_request: Optional[InfraAsCodeCreateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -239,8 +245,8 @@ class ManagedWorkerApi:
 
         :param infra_as_code_request: The infra as code request id (required)
         :type infra_as_code_request: str
-        :param infra_as_code_request2:
-        :type infra_as_code_request2: InfraAsCodeRequest
+        :param infra_as_code_create_request:
+        :type infra_as_code_create_request: InfraAsCodeCreateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -265,7 +271,7 @@ class ManagedWorkerApi:
 
         _param = self._infra_as_code_create_serialize(
             infra_as_code_request=infra_as_code_request,
-            infra_as_code_request2=infra_as_code_request2,
+            infra_as_code_create_request=infra_as_code_create_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -274,8 +280,8 @@ class ManagedWorkerApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -285,7 +291,7 @@ class ManagedWorkerApi:
     def _infra_as_code_create_serialize(
         self,
         infra_as_code_request,
-        infra_as_code_request2,
+        infra_as_code_create_request,
         _request_auth,
         _content_type,
         _headers,
@@ -310,8 +316,8 @@ class ManagedWorkerApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if infra_as_code_request2 is not None:
-            _body_params = infra_as_code_request2
+        if infra_as_code_create_request is not None:
+            _body_params = infra_as_code_create_request
 
         # set the HTTP header `Accept`
         _header_params["Accept"] = self.api_client.select_header_accept(
@@ -355,7 +361,7 @@ class ManagedWorkerApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        create_managed_worker_request: Optional[CreateManagedWorkerRequest] = None,
+        managed_worker_create_request: Optional[ManagedWorkerCreateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -367,15 +373,15 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ManagedWorker:
+    ) -> ManagedWorkerList200ResponseRowsInner:
         """Create Managed Worker
 
         Create a managed worker for the tenant
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param create_managed_worker_request:
-        :type create_managed_worker_request: CreateManagedWorkerRequest
+        :param managed_worker_create_request:
+        :type managed_worker_create_request: ManagedWorkerCreateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -400,7 +406,7 @@ class ManagedWorkerApi:
 
         _param = self._managed_worker_create_serialize(
             tenant=tenant,
-            create_managed_worker_request=create_managed_worker_request,
+            managed_worker_create_request=managed_worker_create_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -408,9 +414,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -430,7 +436,7 @@ class ManagedWorkerApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        create_managed_worker_request: Optional[CreateManagedWorkerRequest] = None,
+        managed_worker_create_request: Optional[ManagedWorkerCreateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -442,15 +448,15 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ManagedWorker]:
+    ) -> ApiResponse[ManagedWorkerList200ResponseRowsInner]:
         """Create Managed Worker
 
         Create a managed worker for the tenant
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param create_managed_worker_request:
-        :type create_managed_worker_request: CreateManagedWorkerRequest
+        :param managed_worker_create_request:
+        :type managed_worker_create_request: ManagedWorkerCreateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -475,7 +481,7 @@ class ManagedWorkerApi:
 
         _param = self._managed_worker_create_serialize(
             tenant=tenant,
-            create_managed_worker_request=create_managed_worker_request,
+            managed_worker_create_request=managed_worker_create_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -483,9 +489,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -505,7 +511,7 @@ class ManagedWorkerApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        create_managed_worker_request: Optional[CreateManagedWorkerRequest] = None,
+        managed_worker_create_request: Optional[ManagedWorkerCreateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -524,8 +530,8 @@ class ManagedWorkerApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param create_managed_worker_request:
-        :type create_managed_worker_request: CreateManagedWorkerRequest
+        :param managed_worker_create_request:
+        :type managed_worker_create_request: ManagedWorkerCreateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -550,7 +556,7 @@ class ManagedWorkerApi:
 
         _param = self._managed_worker_create_serialize(
             tenant=tenant,
-            create_managed_worker_request=create_managed_worker_request,
+            managed_worker_create_request=managed_worker_create_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -558,9 +564,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -570,7 +576,7 @@ class ManagedWorkerApi:
     def _managed_worker_create_serialize(
         self,
         tenant,
-        create_managed_worker_request,
+        managed_worker_create_request,
         _request_auth,
         _content_type,
         _headers,
@@ -595,8 +601,8 @@ class ManagedWorkerApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if create_managed_worker_request is not None:
-            _body_params = create_managed_worker_request
+        if managed_worker_create_request is not None:
+            _body_params = managed_worker_create_request
 
         # set the HTTP header `Accept`
         _header_params["Accept"] = self.api_client.select_header_accept(
@@ -654,7 +660,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ManagedWorker:
+    ) -> ManagedWorkerList200ResponseRowsInner:
         """Delete Managed Worker
 
         Delete a managed worker for the tenant
@@ -692,10 +698,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -729,7 +735,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ManagedWorker]:
+    ) -> ApiResponse[ManagedWorkerList200ResponseRowsInner]:
         """Delete Managed Worker
 
         Delete a managed worker for the tenant
@@ -767,10 +773,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -842,10 +848,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -926,7 +932,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ManagedWorkerEventList:
+    ) -> ManagedWorkerEventsList200Response:
         """Get Managed Worker Events
 
         Get events for a managed worker
@@ -964,9 +970,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorkerEventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerEventsList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1000,7 +1006,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ManagedWorkerEventList]:
+    ) -> ApiResponse[ManagedWorkerEventsList200Response]:
         """Get Managed Worker Events
 
         Get events for a managed worker
@@ -1038,9 +1044,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorkerEventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerEventsList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1112,9 +1118,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorkerEventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerEventsList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1195,7 +1201,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ManagedWorker:
+    ) -> ManagedWorkerList200ResponseRowsInner:
         """Get Managed Worker
 
         Get a managed worker for the tenant
@@ -1233,10 +1239,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1270,7 +1276,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ManagedWorker]:
+    ) -> ApiResponse[ManagedWorkerList200ResponseRowsInner]:
         """Get Managed Worker
 
         Get a managed worker for the tenant
@@ -1308,10 +1314,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1383,10 +1389,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1467,7 +1473,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> InstanceList:
+    ) -> ManagedWorkerInstancesList200Response:
         """List Instances
 
         Get all instances for a managed worker
@@ -1505,9 +1511,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "InstanceList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerInstancesList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1541,7 +1547,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[InstanceList]:
+    ) -> ApiResponse[ManagedWorkerInstancesList200Response]:
         """List Instances
 
         Get all instances for a managed worker
@@ -1579,9 +1585,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "InstanceList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerInstancesList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1653,9 +1659,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "InstanceList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerInstancesList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1733,7 +1739,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ManagedWorkerList:
+    ) -> ManagedWorkerList200Response:
         """List Managed Workers
 
         Get all managed workers for the tenant
@@ -1771,9 +1777,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorkerList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1804,7 +1810,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ManagedWorkerList]:
+    ) -> ApiResponse[ManagedWorkerList200Response]:
         """List Managed Workers
 
         Get all managed workers for the tenant
@@ -1842,9 +1848,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorkerList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1913,9 +1919,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorkerList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "ManagedWorkerList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1985,7 +1991,7 @@ class ManagedWorkerApi:
                 description="The managed worker id",
             ),
         ],
-        update_managed_worker_request: Optional[UpdateManagedWorkerRequest] = None,
+        managed_worker_update_request: Optional[ManagedWorkerUpdateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1997,15 +2003,15 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ManagedWorker:
+    ) -> ManagedWorkerList200ResponseRowsInner:
         """Update Managed Worker
 
         Update a managed worker for the tenant
 
         :param managed_worker: The managed worker id (required)
         :type managed_worker: str
-        :param update_managed_worker_request:
-        :type update_managed_worker_request: UpdateManagedWorkerRequest
+        :param managed_worker_update_request:
+        :type managed_worker_update_request: ManagedWorkerUpdateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2030,7 +2036,7 @@ class ManagedWorkerApi:
 
         _param = self._managed_worker_update_serialize(
             managed_worker=managed_worker,
-            update_managed_worker_request=update_managed_worker_request,
+            managed_worker_update_request=managed_worker_update_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2038,10 +2044,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -2064,7 +2070,7 @@ class ManagedWorkerApi:
                 description="The managed worker id",
             ),
         ],
-        update_managed_worker_request: Optional[UpdateManagedWorkerRequest] = None,
+        managed_worker_update_request: Optional[ManagedWorkerUpdateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2076,15 +2082,15 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ManagedWorker]:
+    ) -> ApiResponse[ManagedWorkerList200ResponseRowsInner]:
         """Update Managed Worker
 
         Update a managed worker for the tenant
 
         :param managed_worker: The managed worker id (required)
         :type managed_worker: str
-        :param update_managed_worker_request:
-        :type update_managed_worker_request: UpdateManagedWorkerRequest
+        :param managed_worker_update_request:
+        :type managed_worker_update_request: ManagedWorkerUpdateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2109,7 +2115,7 @@ class ManagedWorkerApi:
 
         _param = self._managed_worker_update_serialize(
             managed_worker=managed_worker,
-            update_managed_worker_request=update_managed_worker_request,
+            managed_worker_update_request=managed_worker_update_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2117,10 +2123,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -2143,7 +2149,7 @@ class ManagedWorkerApi:
                 description="The managed worker id",
             ),
         ],
-        update_managed_worker_request: Optional[UpdateManagedWorkerRequest] = None,
+        managed_worker_update_request: Optional[ManagedWorkerUpdateRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2162,8 +2168,8 @@ class ManagedWorkerApi:
 
         :param managed_worker: The managed worker id (required)
         :type managed_worker: str
-        :param update_managed_worker_request:
-        :type update_managed_worker_request: UpdateManagedWorkerRequest
+        :param managed_worker_update_request:
+        :type managed_worker_update_request: ManagedWorkerUpdateRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2188,7 +2194,7 @@ class ManagedWorkerApi:
 
         _param = self._managed_worker_update_serialize(
             managed_worker=managed_worker,
-            update_managed_worker_request=update_managed_worker_request,
+            managed_worker_update_request=managed_worker_update_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2196,10 +2202,10 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ManagedWorker",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "404": "APIErrors",
+            "200": "ManagedWorkerList200ResponseRowsInner",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
+            "404": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -2209,7 +2215,7 @@ class ManagedWorkerApi:
     def _managed_worker_update_serialize(
         self,
         managed_worker,
-        update_managed_worker_request,
+        managed_worker_update_request,
         _request_auth,
         _content_type,
         _headers,
@@ -2234,8 +2240,8 @@ class ManagedWorkerApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if update_managed_worker_request is not None:
-            _body_params = update_managed_worker_request
+        if managed_worker_update_request is not None:
+            _body_params = managed_worker_update_request
 
         # set the HTTP header `Accept`
         _header_params["Accept"] = self.api_client.select_header_accept(
@@ -2293,7 +2299,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RuntimeConfigActionsResponse:
+    ) -> RuntimeConfigListActions200Response:
         """Get Runtime Config Actions
 
         Get a list of runtime config actions for a managed worker
@@ -2331,9 +2337,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "RuntimeConfigActionsResponse",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "RuntimeConfigListActions200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -2367,7 +2373,7 @@ class ManagedWorkerApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[RuntimeConfigActionsResponse]:
+    ) -> ApiResponse[RuntimeConfigListActions200Response]:
         """Get Runtime Config Actions
 
         Get a list of runtime config actions for a managed worker
@@ -2405,9 +2411,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "RuntimeConfigActionsResponse",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "RuntimeConfigListActions200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -2479,9 +2485,9 @@ class ManagedWorkerApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "RuntimeConfigActionsResponse",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "RuntimeConfigListActions200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

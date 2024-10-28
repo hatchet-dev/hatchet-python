@@ -20,7 +20,9 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.sample_stream import SampleStream
+from hatchet_sdk.clients.cloud_rest.models.metrics_cpu_get200_response_inner import (
+    MetricsCpuGet200ResponseInner,
+)
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
 
@@ -65,7 +67,7 @@ class MetricsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[SampleStream]:
+    ) -> List[MetricsCpuGet200ResponseInner]:
         """Get CPU Metrics
 
         Get CPU metrics for a managed worker
@@ -109,9 +111,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -151,7 +153,7 @@ class MetricsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[SampleStream]]:
+    ) -> ApiResponse[List[MetricsCpuGet200ResponseInner]]:
         """Get CPU Metrics
 
         Get CPU metrics for a managed worker
@@ -195,9 +197,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -281,9 +283,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -394,7 +396,7 @@ class MetricsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[SampleStream]:
+    ) -> List[MetricsCpuGet200ResponseInner]:
         """Get Disk Metrics
 
         Get disk metrics for a managed worker
@@ -438,9 +440,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -480,7 +482,7 @@ class MetricsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[SampleStream]]:
+    ) -> ApiResponse[List[MetricsCpuGet200ResponseInner]]:
         """Get Disk Metrics
 
         Get disk metrics for a managed worker
@@ -524,9 +526,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -610,9 +612,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -723,7 +725,7 @@ class MetricsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[SampleStream]:
+    ) -> List[MetricsCpuGet200ResponseInner]:
         """Get Memory Metrics
 
         Get memory metrics for a managed worker
@@ -767,9 +769,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -809,7 +811,7 @@ class MetricsApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[SampleStream]]:
+    ) -> ApiResponse[List[MetricsCpuGet200ResponseInner]]:
         """Get Memory Metrics
 
         Get memory metrics for a managed worker
@@ -853,9 +855,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -939,9 +941,9 @@ class MetricsApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[SampleStream]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "List[MetricsCpuGet200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

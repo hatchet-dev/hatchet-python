@@ -22,9 +22,11 @@ from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
 from hatchet_sdk.clients.cloud_rest.models.billing_portal_link_get200_response import (
     BillingPortalLinkGet200Response,
 )
-from hatchet_sdk.clients.cloud_rest.models.tenant_subscription import TenantSubscription
-from hatchet_sdk.clients.cloud_rest.models.update_tenant_subscription import (
-    UpdateTenantSubscription,
+from hatchet_sdk.clients.cloud_rest.models.subscription_upsert200_response import (
+    SubscriptionUpsert200Response,
+)
+from hatchet_sdk.clients.cloud_rest.models.subscription_upsert_request import (
+    SubscriptionUpsertRequest,
 )
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
@@ -100,8 +102,8 @@ class BillingApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": "BillingPortalLinkGet200Response",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -171,8 +173,8 @@ class BillingApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": "BillingPortalLinkGet200Response",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -242,8 +244,8 @@ class BillingApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": "BillingPortalLinkGet200Response",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -351,8 +353,8 @@ class BillingApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -413,8 +415,8 @@ class BillingApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -475,8 +477,8 @@ class BillingApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -540,7 +542,7 @@ class BillingApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        update_tenant_subscription: Optional[UpdateTenantSubscription] = None,
+        subscription_upsert_request: Optional[SubscriptionUpsertRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -552,15 +554,15 @@ class BillingApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> TenantSubscription:
+    ) -> SubscriptionUpsert200Response:
         """Create a new subscription
 
         Update a subscription
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param update_tenant_subscription:
-        :type update_tenant_subscription: UpdateTenantSubscription
+        :param subscription_upsert_request:
+        :type subscription_upsert_request: SubscriptionUpsertRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -585,7 +587,7 @@ class BillingApi:
 
         _param = self._subscription_upsert_serialize(
             tenant=tenant,
-            update_tenant_subscription=update_tenant_subscription,
+            subscription_upsert_request=subscription_upsert_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -593,9 +595,9 @@ class BillingApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TenantSubscription",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "SubscriptionUpsert200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -615,7 +617,7 @@ class BillingApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        update_tenant_subscription: Optional[UpdateTenantSubscription] = None,
+        subscription_upsert_request: Optional[SubscriptionUpsertRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -627,15 +629,15 @@ class BillingApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[TenantSubscription]:
+    ) -> ApiResponse[SubscriptionUpsert200Response]:
         """Create a new subscription
 
         Update a subscription
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param update_tenant_subscription:
-        :type update_tenant_subscription: UpdateTenantSubscription
+        :param subscription_upsert_request:
+        :type subscription_upsert_request: SubscriptionUpsertRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -660,7 +662,7 @@ class BillingApi:
 
         _param = self._subscription_upsert_serialize(
             tenant=tenant,
-            update_tenant_subscription=update_tenant_subscription,
+            subscription_upsert_request=subscription_upsert_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -668,9 +670,9 @@ class BillingApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TenantSubscription",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "SubscriptionUpsert200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -690,7 +692,7 @@ class BillingApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        update_tenant_subscription: Optional[UpdateTenantSubscription] = None,
+        subscription_upsert_request: Optional[SubscriptionUpsertRequest] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -709,8 +711,8 @@ class BillingApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param update_tenant_subscription:
-        :type update_tenant_subscription: UpdateTenantSubscription
+        :param subscription_upsert_request:
+        :type subscription_upsert_request: SubscriptionUpsertRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -735,7 +737,7 @@ class BillingApi:
 
         _param = self._subscription_upsert_serialize(
             tenant=tenant,
-            update_tenant_subscription=update_tenant_subscription,
+            subscription_upsert_request=subscription_upsert_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -743,9 +745,9 @@ class BillingApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TenantSubscription",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "SubscriptionUpsert200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -755,7 +757,7 @@ class BillingApi:
     def _subscription_upsert_serialize(
         self,
         tenant,
-        update_tenant_subscription,
+        subscription_upsert_request,
         _request_auth,
         _content_type,
         _headers,
@@ -780,8 +782,8 @@ class BillingApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if update_tenant_subscription is not None:
-            _body_params = update_tenant_subscription
+        if subscription_upsert_request is not None:
+            _body_params = subscription_upsert_request
 
         # set the HTTP header `Accept`
         _header_params["Accept"] = self.api_client.select_header_accept(

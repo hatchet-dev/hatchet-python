@@ -27,8 +27,12 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.event_object import EventObject
-from hatchet_sdk.clients.cloud_rest.models.log_line_list import LogLineList
+from hatchet_sdk.clients.cloud_rest.models.log_create_request_inner import (
+    LogCreateRequestInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.log_list200_response import (
+    LogList200Response,
+)
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
 
@@ -64,7 +68,7 @@ class LogApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> LogLineList:
+    ) -> LogList200Response:
         """Get Build Logs
 
         Get the build logs for a specific build of a managed worker
@@ -102,9 +106,9 @@ class LogApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "LogLineList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "LogList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -135,7 +139,7 @@ class LogApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[LogLineList]:
+    ) -> ApiResponse[LogList200Response]:
         """Get Build Logs
 
         Get the build logs for a specific build of a managed worker
@@ -173,9 +177,9 @@ class LogApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "LogLineList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "LogList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -244,9 +248,9 @@ class LogApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "LogLineList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "LogList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -313,7 +317,7 @@ class LogApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        event_object: Optional[List[EventObject]] = None,
+        log_create_request_inner: Optional[List[LogCreateRequestInner]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -332,8 +336,8 @@ class LogApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param event_object:
-        :type event_object: List[EventObject]
+        :param log_create_request_inner:
+        :type log_create_request_inner: List[LogCreateRequestInner]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -358,7 +362,7 @@ class LogApi:
 
         _param = self._log_create_serialize(
             tenant=tenant,
-            event_object=event_object,
+            log_create_request_inner=log_create_request_inner,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -367,8 +371,8 @@ class LogApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -388,7 +392,7 @@ class LogApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        event_object: Optional[List[EventObject]] = None,
+        log_create_request_inner: Optional[List[LogCreateRequestInner]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -407,8 +411,8 @@ class LogApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param event_object:
-        :type event_object: List[EventObject]
+        :param log_create_request_inner:
+        :type log_create_request_inner: List[LogCreateRequestInner]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -433,7 +437,7 @@ class LogApi:
 
         _param = self._log_create_serialize(
             tenant=tenant,
-            event_object=event_object,
+            log_create_request_inner=log_create_request_inner,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -442,8 +446,8 @@ class LogApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -463,7 +467,7 @@ class LogApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
-        event_object: Optional[List[EventObject]] = None,
+        log_create_request_inner: Optional[List[LogCreateRequestInner]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -482,8 +486,8 @@ class LogApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
-        :param event_object:
-        :type event_object: List[EventObject]
+        :param log_create_request_inner:
+        :type log_create_request_inner: List[LogCreateRequestInner]
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -508,7 +512,7 @@ class LogApi:
 
         _param = self._log_create_serialize(
             tenant=tenant,
-            event_object=event_object,
+            log_create_request_inner=log_create_request_inner,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -517,8 +521,8 @@ class LogApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -528,7 +532,7 @@ class LogApi:
     def _log_create_serialize(
         self,
         tenant,
-        event_object,
+        log_create_request_inner,
         _request_auth,
         _content_type,
         _headers,
@@ -538,7 +542,7 @@ class LogApi:
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            "EventObject": "",
+            "LogCreateRequestInner": "",
         }
 
         _path_params: Dict[str, str] = {}
@@ -555,8 +559,8 @@ class LogApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if event_object is not None:
-            _body_params = event_object
+        if log_create_request_inner is not None:
+            _body_params = log_create_request_inner
 
         # set the HTTP header `Accept`
         _header_params["Accept"] = self.api_client.select_header_accept(
@@ -626,7 +630,7 @@ class LogApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> LogLineList:
+    ) -> LogList200Response:
         """List Logs
 
         Lists logs for a managed worker
@@ -676,9 +680,9 @@ class LogApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "LogLineList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "LogList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -724,7 +728,7 @@ class LogApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[LogLineList]:
+    ) -> ApiResponse[LogList200Response]:
         """List Logs
 
         Lists logs for a managed worker
@@ -774,9 +778,9 @@ class LogApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "LogLineList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "LogList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -872,9 +876,9 @@ class LogApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "LogLineList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "LogList200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

@@ -3,15 +3,15 @@ import sys
 from typing import Any, Callable, Dict, List
 
 from hatchet_sdk.client import Client
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import (
-    CreateManagedWorkerRuntimeConfigRequest,
+
+from hatchet_sdk.clients.cloud_rest.models.infra_as_code_create_request import InfraAsCodeCreateRequest
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_runtime_config import (
+    ManagedWorkerCreateRequestRuntimeConfig,
 )
-from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import (
-    InfraAsCodeRequest,
-)
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
-    ManagedWorkerRegion,
-)
+
+
+# from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request import ManagedWorkerRegion
+
 from hatchet_sdk.compute.configs import Compute
 from hatchet_sdk.logger import logger
 
@@ -46,11 +46,11 @@ class ManagedCompute:
 
     def get_compute_configs(
         self, actions: Dict[str, Callable[..., Any]]
-    ) -> List[CreateManagedWorkerRuntimeConfigRequest]:
+    ) -> List[ManagedWorkerCreateRequestRuntimeConfig]:
         """
         Builds a map of compute hashes to compute configs and lists of actions that correspond to each compute hash.
         """
-        map: Dict[str, CreateManagedWorkerRuntimeConfigRequest] = {}
+        map: Dict[str, ManagedWorkerCreateRequestRuntimeConfig] = {}
 
         try:
             for action, func in actions.items():
@@ -61,7 +61,7 @@ class ManagedCompute:
 
                 key = compute.hash()
                 if key not in map:
-                    map[key] = CreateManagedWorkerRuntimeConfigRequest(
+                    map[key] = ManagedWorkerCreateRequestRuntimeConfig(
                         actions=[],
                         num_replicas=1,
                         cpu_kind=compute.cpu_kind,
@@ -90,7 +90,7 @@ class ManagedCompute:
                     )
                     return
 
-                req = InfraAsCodeRequest(runtime_configs=self.configs)
+                req = InfraAsCodeCreateRequest(runtime_configs=self.configs)
 
                 res = (
                     await self.client.rest.aio.managed_worker_api.infra_as_code_create(

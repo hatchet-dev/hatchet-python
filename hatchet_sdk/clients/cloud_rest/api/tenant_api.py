@@ -19,8 +19,8 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state import (
-    TenantBillingState,
+from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response import (
+    TenantBillingStateGet200Response,
 )
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
@@ -57,7 +57,7 @@ class TenantApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> TenantBillingState:
+    ) -> TenantBillingStateGet200Response:
         """Get the billing state for a tenant
 
         Gets the billing state for a tenant
@@ -95,10 +95,10 @@ class TenantApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TenantBillingState",
-            "400": "APIErrors",
-            "403": "APIError",
-            "405": "APIErrors",
+            "200": "TenantBillingStateGet200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400ResponseErrorsInner",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -129,7 +129,7 @@ class TenantApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[TenantBillingState]:
+    ) -> ApiResponse[TenantBillingStateGet200Response]:
         """Get the billing state for a tenant
 
         Gets the billing state for a tenant
@@ -167,10 +167,10 @@ class TenantApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TenantBillingState",
-            "400": "APIErrors",
-            "403": "APIError",
-            "405": "APIErrors",
+            "200": "TenantBillingStateGet200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400ResponseErrorsInner",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -239,10 +239,10 @@ class TenantApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "TenantBillingState",
-            "400": "APIErrors",
-            "403": "APIError",
-            "405": "APIErrors",
+            "200": "TenantBillingStateGet200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400ResponseErrorsInner",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

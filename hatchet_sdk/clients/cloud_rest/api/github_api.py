@@ -19,10 +19,14 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.github_branch import GithubBranch
-from hatchet_sdk.clients.cloud_rest.models.github_repo import GithubRepo
-from hatchet_sdk.clients.cloud_rest.models.list_github_app_installations_response import (
-    ListGithubAppInstallationsResponse,
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_branches200_response_inner import (
+    GithubAppListBranches200ResponseInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response import (
+    GithubAppListInstallations200Response,
+)
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_repos200_response_inner import (
+    GithubAppListRepos200ResponseInner,
 )
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
@@ -64,7 +68,7 @@ class GithubApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[GithubBranch]:
+    ) -> List[GithubAppListBranches200ResponseInner]:
         """List Github App branches
 
         List Github App branches
@@ -108,10 +112,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[GithubBranch]",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "List[GithubAppListBranches200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -147,7 +151,7 @@ class GithubApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[GithubBranch]]:
+    ) -> ApiResponse[List[GithubAppListBranches200ResponseInner]]:
         """List Github App branches
 
         List Github App branches
@@ -191,10 +195,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[GithubBranch]",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "List[GithubAppListBranches200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -274,10 +278,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[GithubBranch]",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "List[GithubAppListBranches200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -355,7 +359,7 @@ class GithubApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ListGithubAppInstallationsResponse:
+    ) -> GithubAppListInstallations200Response:
         """List Github App installations
 
         List Github App installations
@@ -390,10 +394,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ListGithubAppInstallationsResponse",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "GithubAppListInstallations200Response",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -418,7 +422,7 @@ class GithubApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ListGithubAppInstallationsResponse]:
+    ) -> ApiResponse[GithubAppListInstallations200Response]:
         """List Github App installations
 
         List Github App installations
@@ -453,10 +457,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ListGithubAppInstallationsResponse",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "GithubAppListInstallations200Response",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -516,10 +520,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "ListGithubAppInstallationsResponse",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "GithubAppListInstallations200Response",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -597,7 +601,7 @@ class GithubApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[GithubRepo]:
+    ) -> List[GithubAppListRepos200ResponseInner]:
         """List Github App repositories
 
         List Github App repositories
@@ -635,10 +639,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[GithubRepo]",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "List[GithubAppListRepos200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -672,7 +676,7 @@ class GithubApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[GithubRepo]]:
+    ) -> ApiResponse[List[GithubAppListRepos200ResponseInner]]:
         """List Github App repositories
 
         List Github App repositories
@@ -710,10 +714,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[GithubRepo]",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "List[GithubAppListRepos200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -785,10 +789,10 @@ class GithubApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "List[GithubRepo]",
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "200": "List[GithubAppListRepos200ResponseInner]",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -896,9 +900,9 @@ class GithubApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -959,9 +963,9 @@ class GithubApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1022,9 +1026,9 @@ class GithubApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1138,9 +1142,9 @@ class GithubApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1210,9 +1214,9 @@ class GithubApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -1282,9 +1286,9 @@ class GithubApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": None,
-            "400": "APIErrors",
-            "401": "APIErrors",
-            "405": "APIErrors",
+            "400": "MetadataGet400Response",
+            "401": "MetadataGet400Response",
+            "405": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

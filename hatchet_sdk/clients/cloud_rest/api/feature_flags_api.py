@@ -93,8 +93,8 @@ class FeatureFlagsApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": "Dict[str, str]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -164,8 +164,8 @@ class FeatureFlagsApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": "Dict[str, str]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -235,8 +235,8 @@ class FeatureFlagsApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             "200": "Dict[str, str]",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

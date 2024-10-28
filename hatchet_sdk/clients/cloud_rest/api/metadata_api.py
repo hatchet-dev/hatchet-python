@@ -19,7 +19,9 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.api_cloud_metadata import APICloudMetadata
+from hatchet_sdk.clients.cloud_rest.models.metadata_get200_response import (
+    MetadataGet200Response,
+)
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
 
@@ -49,7 +51,7 @@ class MetadataApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> APICloudMetadata:
+    ) -> MetadataGet200Response:
         """Get metadata
 
         Gets metadata for the Hatchet instance
@@ -84,8 +86,8 @@ class MetadataApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "APICloudMetadata",
-            "400": "APIErrors",
+            "200": "MetadataGet200Response",
+            "400": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -110,7 +112,7 @@ class MetadataApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[APICloudMetadata]:
+    ) -> ApiResponse[MetadataGet200Response]:
         """Get metadata
 
         Gets metadata for the Hatchet instance
@@ -145,8 +147,8 @@ class MetadataApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "APICloudMetadata",
-            "400": "APIErrors",
+            "200": "MetadataGet200Response",
+            "400": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -206,8 +208,8 @@ class MetadataApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "APICloudMetadata",
-            "400": "APIErrors",
+            "200": "MetadataGet200Response",
+            "400": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

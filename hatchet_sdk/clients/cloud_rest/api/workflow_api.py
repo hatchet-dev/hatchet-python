@@ -20,8 +20,8 @@ from typing_extensions import Annotated
 
 from hatchet_sdk.clients.cloud_rest.api_client import ApiClient, RequestSerialized
 from hatchet_sdk.clients.cloud_rest.api_response import ApiResponse
-from hatchet_sdk.clients.cloud_rest.models.workflow_run_events_metrics_counts import (
-    WorkflowRunEventsMetricsCounts,
+from hatchet_sdk.clients.cloud_rest.models.workflow_run_events_get_metrics200_response import (
+    WorkflowRunEventsGetMetrics200Response,
 )
 from hatchet_sdk.clients.cloud_rest.rest import RESTResponseType
 
@@ -66,7 +66,7 @@ class WorkflowApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowRunEventsMetricsCounts:
+    ) -> WorkflowRunEventsGetMetrics200Response:
         """Get workflow runs
 
         Get a minute by minute breakdown of workflow run metrics for a tenant
@@ -110,9 +110,9 @@ class WorkflowApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "WorkflowRunEventsMetricsCounts",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "WorkflowRunEventsGetMetrics200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -151,7 +151,7 @@ class WorkflowApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowRunEventsMetricsCounts]:
+    ) -> ApiResponse[WorkflowRunEventsGetMetrics200Response]:
         """Get workflow runs
 
         Get a minute by minute breakdown of workflow run metrics for a tenant
@@ -195,9 +195,9 @@ class WorkflowApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "WorkflowRunEventsMetricsCounts",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "WorkflowRunEventsGetMetrics200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout
@@ -280,9 +280,9 @@ class WorkflowApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "WorkflowRunEventsMetricsCounts",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            "200": "WorkflowRunEventsGetMetrics200Response",
+            "400": "MetadataGet400Response",
+            "403": "MetadataGet400Response",
         }
         response_data = await self.api_client.call_api(
             *_param, _request_timeout=_request_timeout

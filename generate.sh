@@ -101,7 +101,7 @@ if [ "$CLOUD_MODE" = true ]; then
     mkdir -p $cloud_dst_dir
 
     # generate into cloud tmp folder
-    openapi-generator-cli generate -i ./hatchet-cloud/bin/oas/openapi.yaml -g python -o ./cloud_tmp --skip-validate-spec \
+    openapi-generator-cli generate -i ./hatchet-cloud/api-contracts/openapi/openapi.yaml -g python -o ./cloud_tmp --skip-validate-spec \
         --library asyncio \
         --global-property=apiTests=false \
         --global-property=apiDocs=true \
@@ -116,7 +116,7 @@ if [ "$CLOUD_MODE" = true ]; then
     mv $cloud_tmp_dir/hatchet_sdk/clients/cloud_rest/__init__.py $cloud_dst_dir/__init__.py
     mv $cloud_tmp_dir/hatchet_sdk/clients/cloud_rest/rest.py $cloud_dst_dir/rest.py
 
-    openapi-generator-cli generate -i ./hatchet-cloud/bin/oas/openapi.yaml -g python -o . --skip-validate-spec \
+    openapi-generator-cli generate -i ./hatchet-cloud/api-contracts/openapi/openapi.yaml -g python -o . --skip-validate-spec \
         --library asyncio \
         --global-property=apis,models \
         --global-property=apiTests=false \
