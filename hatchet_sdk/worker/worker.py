@@ -18,13 +18,13 @@ from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import (
 from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
     ManagedWorkerRegion,
 )
+from hatchet_sdk.compute.managed_compute import ManagedCompute
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
-from hatchet_sdk.compute.managed_compute import ManagedCompute
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 from hatchet_sdk.workflow import WorkflowMeta
 
