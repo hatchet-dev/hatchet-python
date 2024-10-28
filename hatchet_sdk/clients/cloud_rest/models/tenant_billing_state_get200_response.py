@@ -13,35 +13,56 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_coupons_inner import TenantBillingStateGet200ResponseCouponsInner
-from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_payment_methods_inner import TenantBillingStateGet200ResponsePaymentMethodsInner
-from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_plans_inner import TenantBillingStateGet200ResponsePlansInner
-from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_subscription import TenantBillingStateGet200ResponseSubscription
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_coupons_inner import (
+    TenantBillingStateGet200ResponseCouponsInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_payment_methods_inner import (
+    TenantBillingStateGet200ResponsePaymentMethodsInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_plans_inner import (
+    TenantBillingStateGet200ResponsePlansInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.tenant_billing_state_get200_response_subscription import (
+    TenantBillingStateGet200ResponseSubscription,
+)
+
 
 class TenantBillingStateGet200Response(BaseModel):
     """
     TenantBillingStateGet200Response
-    """ # noqa: E501
-    payment_methods: Optional[List[TenantBillingStateGet200ResponsePaymentMethodsInner]] = Field(default=None, alias="paymentMethods")
+    """  # noqa: E501
+
+    payment_methods: Optional[
+        List[TenantBillingStateGet200ResponsePaymentMethodsInner]
+    ] = Field(default=None, alias="paymentMethods")
     subscription: TenantBillingStateGet200ResponseSubscription
-    plans: Optional[List[TenantBillingStateGet200ResponsePlansInner]] = Field(default=None, description="A list of plans available for the tenant.")
-    coupons: Optional[List[TenantBillingStateGet200ResponseCouponsInner]] = Field(default=None, description="A list of coupons applied to the tenant.")
-    __properties: ClassVar[List[str]] = ["paymentMethods", "subscription", "plans", "coupons"]
+    plans: Optional[List[TenantBillingStateGet200ResponsePlansInner]] = Field(
+        default=None, description="A list of plans available for the tenant."
+    )
+    coupons: Optional[List[TenantBillingStateGet200ResponseCouponsInner]] = Field(
+        default=None, description="A list of coupons applied to the tenant."
+    )
+    __properties: ClassVar[List[str]] = [
+        "paymentMethods",
+        "subscription",
+        "plans",
+        "coupons",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -67,8 +88,7 @@ class TenantBillingStateGet200Response(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -81,24 +101,24 @@ class TenantBillingStateGet200Response(BaseModel):
             for _item in self.payment_methods:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['paymentMethods'] = _items
+            _dict["paymentMethods"] = _items
         # override the default output from pydantic by calling `to_dict()` of subscription
         if self.subscription:
-            _dict['subscription'] = self.subscription.to_dict()
+            _dict["subscription"] = self.subscription.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in plans (list)
         _items = []
         if self.plans:
             for _item in self.plans:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['plans'] = _items
+            _dict["plans"] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in coupons (list)
         _items = []
         if self.coupons:
             for _item in self.coupons:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['coupons'] = _items
+            _dict["coupons"] = _items
         return _dict
 
     @classmethod
@@ -110,12 +130,41 @@ class TenantBillingStateGet200Response(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "paymentMethods": [TenantBillingStateGet200ResponsePaymentMethodsInner.from_dict(_item) for _item in obj["paymentMethods"]] if obj.get("paymentMethods") is not None else None,
-            "subscription": TenantBillingStateGet200ResponseSubscription.from_dict(obj["subscription"]) if obj.get("subscription") is not None else None,
-            "plans": [TenantBillingStateGet200ResponsePlansInner.from_dict(_item) for _item in obj["plans"]] if obj.get("plans") is not None else None,
-            "coupons": [TenantBillingStateGet200ResponseCouponsInner.from_dict(_item) for _item in obj["coupons"]] if obj.get("coupons") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "paymentMethods": (
+                    [
+                        TenantBillingStateGet200ResponsePaymentMethodsInner.from_dict(
+                            _item
+                        )
+                        for _item in obj["paymentMethods"]
+                    ]
+                    if obj.get("paymentMethods") is not None
+                    else None
+                ),
+                "subscription": (
+                    TenantBillingStateGet200ResponseSubscription.from_dict(
+                        obj["subscription"]
+                    )
+                    if obj.get("subscription") is not None
+                    else None
+                ),
+                "plans": (
+                    [
+                        TenantBillingStateGet200ResponsePlansInner.from_dict(_item)
+                        for _item in obj["plans"]
+                    ]
+                    if obj.get("plans") is not None
+                    else None
+                ),
+                "coupons": (
+                    [
+                        TenantBillingStateGet200ResponseCouponsInner.from_dict(_item)
+                        for _item in obj["coupons"]
+                    ]
+                    if obj.get("coupons") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

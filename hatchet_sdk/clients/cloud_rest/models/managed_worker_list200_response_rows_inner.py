@@ -13,36 +13,58 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import GithubAppListInstallations200ResponseRowsInnerMetadata
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner_build_config import ManagedWorkerList200ResponseRowsInnerBuildConfig
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner_runtime_configs_inner import ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import (
+    GithubAppListInstallations200ResponseRowsInnerMetadata,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner_build_config import (
+    ManagedWorkerList200ResponseRowsInnerBuildConfig,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner_runtime_configs_inner import (
+    ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner,
+)
+
 
 class ManagedWorkerList200ResponseRowsInner(BaseModel):
     """
     ManagedWorkerList200ResponseRowsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: GithubAppListInstallations200ResponseRowsInnerMetadata
     name: StrictStr
-    build_config: ManagedWorkerList200ResponseRowsInnerBuildConfig = Field(alias="buildConfig")
+    build_config: ManagedWorkerList200ResponseRowsInnerBuildConfig = Field(
+        alias="buildConfig"
+    )
     is_iac: StrictBool = Field(alias="isIac")
-    env_vars: Dict[str, StrictStr] = Field(description="A map of environment variables to set for the worker", alias="envVars")
-    runtime_configs: Optional[List[ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner]] = Field(default=None, alias="runtimeConfigs")
-    __properties: ClassVar[List[str]] = ["metadata", "name", "buildConfig", "isIac", "envVars", "runtimeConfigs"]
+    env_vars: Dict[str, StrictStr] = Field(
+        description="A map of environment variables to set for the worker",
+        alias="envVars",
+    )
+    runtime_configs: Optional[
+        List[ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner]
+    ] = Field(default=None, alias="runtimeConfigs")
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "name",
+        "buildConfig",
+        "isIac",
+        "envVars",
+        "runtimeConfigs",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,8 +90,7 @@ class ManagedWorkerList200ResponseRowsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -78,17 +99,17 @@ class ManagedWorkerList200ResponseRowsInner(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         # override the default output from pydantic by calling `to_dict()` of build_config
         if self.build_config:
-            _dict['buildConfig'] = self.build_config.to_dict()
+            _dict["buildConfig"] = self.build_config.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in runtime_configs (list)
         _items = []
         if self.runtime_configs:
             for _item in self.runtime_configs:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['runtimeConfigs'] = _items
+            _dict["runtimeConfigs"] = _items
         return _dict
 
     @classmethod
@@ -100,13 +121,34 @@ class ManagedWorkerList200ResponseRowsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "name": obj.get("name"),
-            "buildConfig": ManagedWorkerList200ResponseRowsInnerBuildConfig.from_dict(obj["buildConfig"]) if obj.get("buildConfig") is not None else None,
-            "isIac": obj.get("isIac"),
-            "runtimeConfigs": [ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner.from_dict(_item) for _item in obj["runtimeConfigs"]] if obj.get("runtimeConfigs") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(
+                        obj["metadata"]
+                    )
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "name": obj.get("name"),
+                "buildConfig": (
+                    ManagedWorkerList200ResponseRowsInnerBuildConfig.from_dict(
+                        obj["buildConfig"]
+                    )
+                    if obj.get("buildConfig") is not None
+                    else None
+                ),
+                "isIac": obj.get("isIac"),
+                "runtimeConfigs": (
+                    [
+                        ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner.from_dict(
+                            _item
+                        )
+                        for _item in obj["runtimeConfigs"]
+                    ]
+                    if obj.get("runtimeConfigs") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

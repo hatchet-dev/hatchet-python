@@ -13,34 +13,45 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
-from typing_extensions import Annotated
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_build_config_steps_inner import ManagedWorkerCreateRequestBuildConfigStepsInner
-from typing import Optional, Set
-from typing_extensions import Self
+from typing_extensions import Annotated, Self
+
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_build_config_steps_inner import (
+    ManagedWorkerCreateRequestBuildConfigStepsInner,
+)
+
 
 class ManagedWorkerCreateRequestBuildConfig(BaseModel):
     """
     ManagedWorkerCreateRequestBuildConfig
-    """ # noqa: E501
-    github_installation_id: Annotated[str, Field(min_length=36, strict=True, max_length=36)] = Field(alias="githubInstallationId")
+    """  # noqa: E501
+
+    github_installation_id: Annotated[
+        str, Field(min_length=36, strict=True, max_length=36)
+    ] = Field(alias="githubInstallationId")
     github_repository_owner: StrictStr = Field(alias="githubRepositoryOwner")
     github_repository_name: StrictStr = Field(alias="githubRepositoryName")
     github_repository_branch: StrictStr = Field(alias="githubRepositoryBranch")
     steps: List[ManagedWorkerCreateRequestBuildConfigStepsInner]
-    __properties: ClassVar[List[str]] = ["githubInstallationId", "githubRepositoryOwner", "githubRepositoryName", "githubRepositoryBranch", "steps"]
+    __properties: ClassVar[List[str]] = [
+        "githubInstallationId",
+        "githubRepositoryOwner",
+        "githubRepositoryName",
+        "githubRepositoryBranch",
+        "steps",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,8 +77,7 @@ class ManagedWorkerCreateRequestBuildConfig(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -80,7 +90,7 @@ class ManagedWorkerCreateRequestBuildConfig(BaseModel):
             for _item in self.steps:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['steps'] = _items
+            _dict["steps"] = _items
         return _dict
 
     @classmethod
@@ -92,13 +102,20 @@ class ManagedWorkerCreateRequestBuildConfig(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "githubInstallationId": obj.get("githubInstallationId"),
-            "githubRepositoryOwner": obj.get("githubRepositoryOwner"),
-            "githubRepositoryName": obj.get("githubRepositoryName"),
-            "githubRepositoryBranch": obj.get("githubRepositoryBranch"),
-            "steps": [ManagedWorkerCreateRequestBuildConfigStepsInner.from_dict(_item) for _item in obj["steps"]] if obj.get("steps") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "githubInstallationId": obj.get("githubInstallationId"),
+                "githubRepositoryOwner": obj.get("githubRepositoryOwner"),
+                "githubRepositoryName": obj.get("githubRepositoryName"),
+                "githubRepositoryBranch": obj.get("githubRepositoryBranch"),
+                "steps": (
+                    [
+                        ManagedWorkerCreateRequestBuildConfigStepsInner.from_dict(_item)
+                        for _item in obj["steps"]
+                    ]
+                    if obj.get("steps") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

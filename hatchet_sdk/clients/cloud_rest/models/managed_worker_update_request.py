@@ -13,34 +13,54 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_build_config import ManagedWorkerCreateRequestBuildConfig
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_runtime_config import ManagedWorkerCreateRequestRuntimeConfig
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_build_config import (
+    ManagedWorkerCreateRequestBuildConfig,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_runtime_config import (
+    ManagedWorkerCreateRequestRuntimeConfig,
+)
+
 
 class ManagedWorkerUpdateRequest(BaseModel):
     """
     ManagedWorkerUpdateRequest
-    """ # noqa: E501
+    """  # noqa: E501
+
     name: Optional[StrictStr] = None
-    build_config: Optional[ManagedWorkerCreateRequestBuildConfig] = Field(default=None, alias="buildConfig")
-    env_vars: Optional[Dict[str, StrictStr]] = Field(default=None, description="A map of environment variables to set for the worker", alias="envVars")
+    build_config: Optional[ManagedWorkerCreateRequestBuildConfig] = Field(
+        default=None, alias="buildConfig"
+    )
+    env_vars: Optional[Dict[str, StrictStr]] = Field(
+        default=None,
+        description="A map of environment variables to set for the worker",
+        alias="envVars",
+    )
     is_iac: Optional[StrictBool] = Field(default=None, alias="isIac")
-    runtime_config: Optional[ManagedWorkerCreateRequestRuntimeConfig] = Field(default=None, alias="runtimeConfig")
-    __properties: ClassVar[List[str]] = ["name", "buildConfig", "envVars", "isIac", "runtimeConfig"]
+    runtime_config: Optional[ManagedWorkerCreateRequestRuntimeConfig] = Field(
+        default=None, alias="runtimeConfig"
+    )
+    __properties: ClassVar[List[str]] = [
+        "name",
+        "buildConfig",
+        "envVars",
+        "isIac",
+        "runtimeConfig",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,8 +86,7 @@ class ManagedWorkerUpdateRequest(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -76,10 +95,10 @@ class ManagedWorkerUpdateRequest(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of build_config
         if self.build_config:
-            _dict['buildConfig'] = self.build_config.to_dict()
+            _dict["buildConfig"] = self.build_config.to_dict()
         # override the default output from pydantic by calling `to_dict()` of runtime_config
         if self.runtime_config:
-            _dict['runtimeConfig'] = self.runtime_config.to_dict()
+            _dict["runtimeConfig"] = self.runtime_config.to_dict()
         return _dict
 
     @classmethod
@@ -91,12 +110,22 @@ class ManagedWorkerUpdateRequest(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "buildConfig": ManagedWorkerCreateRequestBuildConfig.from_dict(obj["buildConfig"]) if obj.get("buildConfig") is not None else None,
-            "isIac": obj.get("isIac"),
-            "runtimeConfig": ManagedWorkerCreateRequestRuntimeConfig.from_dict(obj["runtimeConfig"]) if obj.get("runtimeConfig") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "name": obj.get("name"),
+                "buildConfig": (
+                    ManagedWorkerCreateRequestBuildConfig.from_dict(obj["buildConfig"])
+                    if obj.get("buildConfig") is not None
+                    else None
+                ),
+                "isIac": obj.get("isIac"),
+                "runtimeConfig": (
+                    ManagedWorkerCreateRequestRuntimeConfig.from_dict(
+                        obj["runtimeConfig"]
+                    )
+                    if obj.get("runtimeConfig") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

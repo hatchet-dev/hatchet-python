@@ -13,32 +13,41 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class TenantBillingStateGet200ResponsePlansInner(BaseModel):
     """
     TenantBillingStateGet200ResponsePlansInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     plan_code: StrictStr = Field(description="The code of the plan.")
     name: StrictStr = Field(description="The name of the plan.")
     description: StrictStr = Field(description="The description of the plan.")
     amount_cents: StrictInt = Field(description="The price of the plan.")
-    period: Optional[StrictStr] = Field(default=None, description="The period of the plan.")
-    __properties: ClassVar[List[str]] = ["plan_code", "name", "description", "amount_cents", "period"]
+    period: Optional[StrictStr] = Field(
+        default=None, description="The period of the plan."
+    )
+    __properties: ClassVar[List[str]] = [
+        "plan_code",
+        "name",
+        "description",
+        "amount_cents",
+        "period",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -64,8 +73,7 @@ class TenantBillingStateGet200ResponsePlansInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -83,13 +91,13 @@ class TenantBillingStateGet200ResponsePlansInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "plan_code": obj.get("plan_code"),
-            "name": obj.get("name"),
-            "description": obj.get("description"),
-            "amount_cents": obj.get("amount_cents"),
-            "period": obj.get("period")
-        })
+        _obj = cls.model_validate(
+            {
+                "plan_code": obj.get("plan_code"),
+                "name": obj.get("name"),
+                "description": obj.get("description"),
+                "amount_cents": obj.get("amount_cents"),
+                "period": obj.get("period"),
+            }
+        )
         return _obj
-
-

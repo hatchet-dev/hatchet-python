@@ -13,20 +13,25 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.metrics_cpu_get200_response_inner_histograms_inner_histogram import MetricsCpuGet200ResponseInnerHistogramsInnerHistogram
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.metrics_cpu_get200_response_inner_histograms_inner_histogram import (
+    MetricsCpuGet200ResponseInnerHistogramsInnerHistogram,
+)
+
 
 class MetricsCpuGet200ResponseInnerHistogramsInner(BaseModel):
     """
     MetricsCpuGet200ResponseInnerHistogramsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     timestamp: Optional[StrictInt] = None
     histogram: Optional[MetricsCpuGet200ResponseInnerHistogramsInnerHistogram] = None
     __properties: ClassVar[List[str]] = ["timestamp", "histogram"]
@@ -36,7 +41,6 @@ class MetricsCpuGet200ResponseInnerHistogramsInner(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,8 +66,7 @@ class MetricsCpuGet200ResponseInnerHistogramsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -72,7 +75,7 @@ class MetricsCpuGet200ResponseInnerHistogramsInner(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of histogram
         if self.histogram:
-            _dict['histogram'] = self.histogram.to_dict()
+            _dict["histogram"] = self.histogram.to_dict()
         return _dict
 
     @classmethod
@@ -84,10 +87,16 @@ class MetricsCpuGet200ResponseInnerHistogramsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "timestamp": obj.get("timestamp"),
-            "histogram": MetricsCpuGet200ResponseInnerHistogramsInnerHistogram.from_dict(obj["histogram"]) if obj.get("histogram") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "timestamp": obj.get("timestamp"),
+                "histogram": (
+                    MetricsCpuGet200ResponseInnerHistogramsInnerHistogram.from_dict(
+                        obj["histogram"]
+                    )
+                    if obj.get("histogram") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

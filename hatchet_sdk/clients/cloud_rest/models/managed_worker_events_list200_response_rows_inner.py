@@ -13,20 +13,22 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
 from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional, Set
+
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class ManagedWorkerEventsList200ResponseRowsInner(BaseModel):
     """
     ManagedWorkerEventsList200ResponseRowsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     id: StrictInt
     time_first_seen: datetime = Field(alias="timeFirstSeen")
     time_last_seen: datetime = Field(alias="timeLastSeen")
@@ -34,13 +36,23 @@ class ManagedWorkerEventsList200ResponseRowsInner(BaseModel):
     status: StrictStr
     message: StrictStr
     data: Dict[str, Any]
-    __properties: ClassVar[List[str]] = ["id", "timeFirstSeen", "timeLastSeen", "managedWorkerId", "status", "message", "data"]
+    __properties: ClassVar[List[str]] = [
+        "id",
+        "timeFirstSeen",
+        "timeLastSeen",
+        "managedWorkerId",
+        "status",
+        "message",
+        "data",
+    ]
 
-    @field_validator('status')
+    @field_validator("status")
     def status_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['IN_PROGRESS', 'SUCCEEDED', 'FAILED', 'CANCELLED']):
-            raise ValueError("must be one of enum values ('IN_PROGRESS', 'SUCCEEDED', 'FAILED', 'CANCELLED')")
+        if value not in set(["IN_PROGRESS", "SUCCEEDED", "FAILED", "CANCELLED"]):
+            raise ValueError(
+                "must be one of enum values ('IN_PROGRESS', 'SUCCEEDED', 'FAILED', 'CANCELLED')"
+            )
         return value
 
     model_config = ConfigDict(
@@ -48,7 +60,6 @@ class ManagedWorkerEventsList200ResponseRowsInner(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -74,8 +85,7 @@ class ManagedWorkerEventsList200ResponseRowsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -93,15 +103,15 @@ class ManagedWorkerEventsList200ResponseRowsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "id": obj.get("id"),
-            "timeFirstSeen": obj.get("timeFirstSeen"),
-            "timeLastSeen": obj.get("timeLastSeen"),
-            "managedWorkerId": obj.get("managedWorkerId"),
-            "status": obj.get("status"),
-            "message": obj.get("message"),
-            "data": obj.get("data")
-        })
+        _obj = cls.model_validate(
+            {
+                "id": obj.get("id"),
+                "timeFirstSeen": obj.get("timeFirstSeen"),
+                "timeLastSeen": obj.get("timeLastSeen"),
+                "managedWorkerId": obj.get("managedWorkerId"),
+                "status": obj.get("status"),
+                "message": obj.get("message"),
+                "data": obj.get("data"),
+            }
+        )
         return _obj
-
-

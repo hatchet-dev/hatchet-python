@@ -13,20 +13,25 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
-from hatchet_sdk.clients.cloud_rest.models.metadata_get400_response_errors_inner import MetadataGet400ResponseErrorsInner
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.metadata_get400_response_errors_inner import (
+    MetadataGet400ResponseErrorsInner,
+)
+
 
 class MetadataGet400Response(BaseModel):
     """
     MetadataGet400Response
-    """ # noqa: E501
+    """  # noqa: E501
+
     errors: List[MetadataGet400ResponseErrorsInner]
     __properties: ClassVar[List[str]] = ["errors"]
 
@@ -35,7 +40,6 @@ class MetadataGet400Response(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -61,8 +65,7 @@ class MetadataGet400Response(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -75,7 +78,7 @@ class MetadataGet400Response(BaseModel):
             for _item in self.errors:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['errors'] = _items
+            _dict["errors"] = _items
         return _dict
 
     @classmethod
@@ -87,9 +90,16 @@ class MetadataGet400Response(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "errors": [MetadataGet400ResponseErrorsInner.from_dict(_item) for _item in obj["errors"]] if obj.get("errors") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "errors": (
+                    [
+                        MetadataGet400ResponseErrorsInner.from_dict(_item)
+                        for _item in obj["errors"]
+                    ]
+                    if obj.get("errors") is not None
+                    else None
+                )
+            }
+        )
         return _obj
-
-

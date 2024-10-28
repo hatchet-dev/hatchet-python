@@ -13,33 +13,46 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class TenantBillingStateGet200ResponseSubscription(BaseModel):
     """
     The subscription associated with this policy.
-    """ # noqa: E501
-    plan: Optional[StrictStr] = Field(default=None, description="The plan code associated with the tenant subscription.")
-    period: Optional[StrictStr] = Field(default=None, description="The period associated with the tenant subscription.")
-    status: Optional[StrictStr] = Field(default=None, description="The status of the tenant subscription.")
-    note: Optional[StrictStr] = Field(default=None, description="A note associated with the tenant subscription.")
+    """  # noqa: E501
+
+    plan: Optional[StrictStr] = Field(
+        default=None,
+        description="The plan code associated with the tenant subscription.",
+    )
+    period: Optional[StrictStr] = Field(
+        default=None, description="The period associated with the tenant subscription."
+    )
+    status: Optional[StrictStr] = Field(
+        default=None, description="The status of the tenant subscription."
+    )
+    note: Optional[StrictStr] = Field(
+        default=None, description="A note associated with the tenant subscription."
+    )
     __properties: ClassVar[List[str]] = ["plan", "period", "status", "note"]
 
-    @field_validator('status')
+    @field_validator("status")
     def status_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in set(['active', 'pending', 'terminated', 'canceled']):
-            raise ValueError("must be one of enum values ('active', 'pending', 'terminated', 'canceled')")
+        if value not in set(["active", "pending", "terminated", "canceled"]):
+            raise ValueError(
+                "must be one of enum values ('active', 'pending', 'terminated', 'canceled')"
+            )
         return value
 
     model_config = ConfigDict(
@@ -47,7 +60,6 @@ class TenantBillingStateGet200ResponseSubscription(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -73,8 +85,7 @@ class TenantBillingStateGet200ResponseSubscription(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -92,12 +103,12 @@ class TenantBillingStateGet200ResponseSubscription(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "plan": obj.get("plan"),
-            "period": obj.get("period"),
-            "status": obj.get("status"),
-            "note": obj.get("note")
-        })
+        _obj = cls.model_validate(
+            {
+                "plan": obj.get("plan"),
+                "period": obj.get("period"),
+                "status": obj.get("status"),
+                "note": obj.get("note"),
+            }
+        )
         return _obj
-
-

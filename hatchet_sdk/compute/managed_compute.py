@@ -3,17 +3,17 @@ import sys
 from typing import Any, Callable, Dict, List
 
 from hatchet_sdk.client import Client
-
-from hatchet_sdk.clients.cloud_rest.models.infra_as_code_create_request import InfraAsCodeCreateRequest
+from hatchet_sdk.clients.cloud_rest.models.infra_as_code_create_request import (
+    InfraAsCodeCreateRequest,
+)
 from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_runtime_config import (
     ManagedWorkerCreateRequestRuntimeConfig,
 )
+from hatchet_sdk.compute.configs import Compute
+from hatchet_sdk.logger import logger
 
 # TODO why is this not generating
 # from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request import ManagedWorkerRegion
-
-from hatchet_sdk.compute.configs import Compute
-from hatchet_sdk.logger import logger
 
 
 class ManagedCompute:

@@ -11,9 +11,7 @@ hatchet = Hatchet()
 
 # Default compute
 
-default_compute = Compute(
-    cpu_kind="shared", cpus=1, memory_mb=1024, regions=["ewr"]
-)
+default_compute = Compute(cpu_kind="shared", cpus=1, memory_mb=1024, regions=["ewr"])
 
 blocked_compute = Compute(
     pool="blocked-pool",
@@ -23,9 +21,7 @@ blocked_compute = Compute(
     regions=["ewr"],
 )
 
-gpu_compute = Compute(
-    cpu_kind="gpu", cpus=2, memory_mb=1024, regions=["ewr"]
-)
+gpu_compute = Compute(cpu_kind="gpu", cpus=2, memory_mb=1024, regions=["ewr"])
 
 
 @hatchet.workflow(on_events=["user:create"])

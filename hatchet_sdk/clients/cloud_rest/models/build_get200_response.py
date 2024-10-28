@@ -13,21 +13,26 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
-
 from datetime import datetime
+from typing import Any, ClassVar, Dict, List, Optional, Set
+
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import GithubAppListInstallations200ResponseRowsInnerMetadata
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import (
+    GithubAppListInstallations200ResponseRowsInnerMetadata,
+)
+
 
 class BuildGet200Response(BaseModel):
     """
     BuildGet200Response
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: Optional[GithubAppListInstallations200ResponseRowsInnerMetadata] = None
     status: StrictStr
     status_detail: Optional[StrictStr] = Field(default=None, alias="statusDetail")
@@ -35,14 +40,21 @@ class BuildGet200Response(BaseModel):
     start_time: Optional[datetime] = Field(default=None, alias="startTime")
     finish_time: Optional[datetime] = Field(default=None, alias="finishTime")
     build_config_id: StrictStr = Field(alias="buildConfigId")
-    __properties: ClassVar[List[str]] = ["metadata", "status", "statusDetail", "createTime", "startTime", "finishTime", "buildConfigId"]
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "status",
+        "statusDetail",
+        "createTime",
+        "startTime",
+        "finishTime",
+        "buildConfigId",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,8 +80,7 @@ class BuildGet200Response(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -78,7 +89,7 @@ class BuildGet200Response(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
@@ -90,15 +101,21 @@ class BuildGet200Response(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "status": obj.get("status"),
-            "statusDetail": obj.get("statusDetail"),
-            "createTime": obj.get("createTime"),
-            "startTime": obj.get("startTime"),
-            "finishTime": obj.get("finishTime"),
-            "buildConfigId": obj.get("buildConfigId")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(
+                        obj["metadata"]
+                    )
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "status": obj.get("status"),
+                "statusDetail": obj.get("statusDetail"),
+                "createTime": obj.get("createTime"),
+                "startTime": obj.get("startTime"),
+                "finishTime": obj.get("finishTime"),
+                "buildConfigId": obj.get("buildConfigId"),
+            }
+        )
         return _obj
-
-

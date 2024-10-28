@@ -13,23 +13,33 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import GithubAppListInstallations200ResponseRowsInnerMetadata
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import (
+    GithubAppListInstallations200ResponseRowsInnerMetadata,
+)
+
 
 class ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner(BaseModel):
     """
     ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: GithubAppListInstallations200ResponseRowsInnerMetadata
-    build_dir: StrictStr = Field(description="The relative path to the build directory", alias="buildDir")
-    dockerfile_path: StrictStr = Field(description="The relative path from the build dir to the Dockerfile", alias="dockerfilePath")
+    build_dir: StrictStr = Field(
+        description="The relative path to the build directory", alias="buildDir"
+    )
+    dockerfile_path: StrictStr = Field(
+        description="The relative path from the build dir to the Dockerfile",
+        alias="dockerfilePath",
+    )
     __properties: ClassVar[List[str]] = ["metadata", "buildDir", "dockerfilePath"]
 
     model_config = ConfigDict(
@@ -37,7 +47,6 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -63,8 +72,7 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -73,7 +81,7 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
@@ -85,11 +93,17 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "buildDir": obj.get("buildDir"),
-            "dockerfilePath": obj.get("dockerfilePath")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(
+                        obj["metadata"]
+                    )
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "buildDir": obj.get("buildDir"),
+                "dockerfilePath": obj.get("dockerfilePath"),
+            }
+        )
         return _obj
-
-

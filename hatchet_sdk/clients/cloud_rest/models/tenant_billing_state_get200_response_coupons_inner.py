@@ -13,33 +13,64 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
-from pydantic import BaseModel, ConfigDict, Field, StrictFloat, StrictInt, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from typing import Optional, Set
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    field_validator,
+)
 from typing_extensions import Self
+
 
 class TenantBillingStateGet200ResponseCouponsInner(BaseModel):
     """
     TenantBillingStateGet200ResponseCouponsInner
-    """ # noqa: E501
-    name: StrictStr = Field(description="The name of the coupon.")
-    amount_cents: Optional[StrictInt] = Field(default=None, description="The amount off of the coupon.")
-    amount_cents_remaining: Optional[StrictInt] = Field(default=None, description="The amount remaining on the coupon.")
-    amount_currency: Optional[StrictStr] = Field(default=None, description="The currency of the coupon.")
-    frequency: StrictStr = Field(description="The frequency of the coupon.")
-    frequency_duration: Optional[StrictInt] = Field(default=None, description="The frequency duration of the coupon.")
-    frequency_duration_remaining: Optional[StrictInt] = Field(default=None, description="The frequency duration remaining of the coupon.")
-    percent: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="The percentage off of the coupon.")
-    __properties: ClassVar[List[str]] = ["name", "amount_cents", "amount_cents_remaining", "amount_currency", "frequency", "frequency_duration", "frequency_duration_remaining", "percent"]
+    """  # noqa: E501
 
-    @field_validator('frequency')
+    name: StrictStr = Field(description="The name of the coupon.")
+    amount_cents: Optional[StrictInt] = Field(
+        default=None, description="The amount off of the coupon."
+    )
+    amount_cents_remaining: Optional[StrictInt] = Field(
+        default=None, description="The amount remaining on the coupon."
+    )
+    amount_currency: Optional[StrictStr] = Field(
+        default=None, description="The currency of the coupon."
+    )
+    frequency: StrictStr = Field(description="The frequency of the coupon.")
+    frequency_duration: Optional[StrictInt] = Field(
+        default=None, description="The frequency duration of the coupon."
+    )
+    frequency_duration_remaining: Optional[StrictInt] = Field(
+        default=None, description="The frequency duration remaining of the coupon."
+    )
+    percent: Optional[Union[StrictFloat, StrictInt]] = Field(
+        default=None, description="The percentage off of the coupon."
+    )
+    __properties: ClassVar[List[str]] = [
+        "name",
+        "amount_cents",
+        "amount_cents_remaining",
+        "amount_currency",
+        "frequency",
+        "frequency_duration",
+        "frequency_duration_remaining",
+        "percent",
+    ]
+
+    @field_validator("frequency")
     def frequency_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['once', 'recurring']):
+        if value not in set(["once", "recurring"]):
             raise ValueError("must be one of enum values ('once', 'recurring')")
         return value
 
@@ -48,7 +79,6 @@ class TenantBillingStateGet200ResponseCouponsInner(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -74,8 +104,7 @@ class TenantBillingStateGet200ResponseCouponsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -93,16 +122,16 @@ class TenantBillingStateGet200ResponseCouponsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "amount_cents": obj.get("amount_cents"),
-            "amount_cents_remaining": obj.get("amount_cents_remaining"),
-            "amount_currency": obj.get("amount_currency"),
-            "frequency": obj.get("frequency"),
-            "frequency_duration": obj.get("frequency_duration"),
-            "frequency_duration_remaining": obj.get("frequency_duration_remaining"),
-            "percent": obj.get("percent")
-        })
+        _obj = cls.model_validate(
+            {
+                "name": obj.get("name"),
+                "amount_cents": obj.get("amount_cents"),
+                "amount_cents_remaining": obj.get("amount_cents_remaining"),
+                "amount_currency": obj.get("amount_currency"),
+                "frequency": obj.get("frequency"),
+                "frequency_duration": obj.get("frequency_duration"),
+                "frequency_duration_remaining": obj.get("frequency_duration_remaining"),
+                "percent": obj.get("percent"),
+            }
+        )
         return _obj
-
-

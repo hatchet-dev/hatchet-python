@@ -13,21 +13,28 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class ManagedWorkerCreateRequestBuildConfigStepsInner(BaseModel):
     """
     ManagedWorkerCreateRequestBuildConfigStepsInner
-    """ # noqa: E501
-    build_dir: StrictStr = Field(description="The relative path to the build directory", alias="buildDir")
-    dockerfile_path: StrictStr = Field(description="The relative path from the build dir to the Dockerfile", alias="dockerfilePath")
+    """  # noqa: E501
+
+    build_dir: StrictStr = Field(
+        description="The relative path to the build directory", alias="buildDir"
+    )
+    dockerfile_path: StrictStr = Field(
+        description="The relative path from the build dir to the Dockerfile",
+        alias="dockerfilePath",
+    )
     __properties: ClassVar[List[str]] = ["buildDir", "dockerfilePath"]
 
     model_config = ConfigDict(
@@ -35,7 +42,6 @@ class ManagedWorkerCreateRequestBuildConfigStepsInner(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -61,8 +67,7 @@ class ManagedWorkerCreateRequestBuildConfigStepsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -80,10 +85,10 @@ class ManagedWorkerCreateRequestBuildConfigStepsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "buildDir": obj.get("buildDir"),
-            "dockerfilePath": obj.get("dockerfilePath")
-        })
+        _obj = cls.model_validate(
+            {
+                "buildDir": obj.get("buildDir"),
+                "dockerfilePath": obj.get("dockerfilePath"),
+            }
+        )
         return _obj
-
-

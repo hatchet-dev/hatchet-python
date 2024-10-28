@@ -13,32 +13,41 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import GithubAppListInstallations200ResponseRowsInnerMetadata
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import (
+    GithubAppListInstallations200ResponseRowsInnerMetadata,
+)
+
 
 class GithubAppListInstallations200ResponseRowsInner(BaseModel):
     """
     GithubAppListInstallations200ResponseRowsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: GithubAppListInstallations200ResponseRowsInnerMetadata
     installation_settings_url: StrictStr
     account_name: StrictStr
     account_avatar_url: StrictStr
-    __properties: ClassVar[List[str]] = ["metadata", "installation_settings_url", "account_name", "account_avatar_url"]
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "installation_settings_url",
+        "account_name",
+        "account_avatar_url",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -64,8 +73,7 @@ class GithubAppListInstallations200ResponseRowsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -74,7 +82,7 @@ class GithubAppListInstallations200ResponseRowsInner(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
@@ -86,12 +94,18 @@ class GithubAppListInstallations200ResponseRowsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "installation_settings_url": obj.get("installation_settings_url"),
-            "account_name": obj.get("account_name"),
-            "account_avatar_url": obj.get("account_avatar_url")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(
+                        obj["metadata"]
+                    )
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "installation_settings_url": obj.get("installation_settings_url"),
+                "account_name": obj.get("account_name"),
+                "account_avatar_url": obj.get("account_avatar_url"),
+            }
+        )
         return _obj
-
-

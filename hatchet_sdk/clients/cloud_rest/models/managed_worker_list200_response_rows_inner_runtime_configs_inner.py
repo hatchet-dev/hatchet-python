@@ -13,34 +13,91 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import GithubAppListInstallations200ResponseRowsInnerMetadata
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import (
+    GithubAppListInstallations200ResponseRowsInnerMetadata,
+)
+
 
 class ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner(BaseModel):
     """
     ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: GithubAppListInstallations200ResponseRowsInnerMetadata
     num_replicas: StrictInt = Field(alias="numReplicas")
-    cpu_kind: StrictStr = Field(description="The kind of CPU to use for the worker", alias="cpuKind")
+    cpu_kind: StrictStr = Field(
+        description="The kind of CPU to use for the worker", alias="cpuKind"
+    )
     cpus: StrictInt = Field(description="The number of CPUs to use for the worker")
-    memory_mb: StrictInt = Field(description="The amount of memory in MB to use for the worker", alias="memoryMb")
+    memory_mb: StrictInt = Field(
+        description="The amount of memory in MB to use for the worker", alias="memoryMb"
+    )
     region: StrictStr = Field(description="The region that the worker is deployed to")
-    actions: Optional[List[StrictStr]] = Field(default=None, description="A list of actions this runtime config corresponds to")
-    __properties: ClassVar[List[str]] = ["metadata", "numReplicas", "cpuKind", "cpus", "memoryMb", "region", "actions"]
+    actions: Optional[List[StrictStr]] = Field(
+        default=None, description="A list of actions this runtime config corresponds to"
+    )
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "numReplicas",
+        "cpuKind",
+        "cpus",
+        "memoryMb",
+        "region",
+        "actions",
+    ]
 
-    @field_validator('region')
+    @field_validator("region")
     def region_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['ams', 'arn', 'atl', 'bog', 'bos', 'cdg', 'den', 'dfw', 'ewr', 'eze', 'gdl', 'gig', 'gru', 'hkg', 'iad', 'jnb', 'lax', 'lhr', 'mad', 'mia', 'nrt', 'ord', 'otp', 'phx', 'qro', 'scl', 'sea', 'sin', 'sjc', 'syd', 'waw', 'yul', 'yyz']):
-            raise ValueError("must be one of enum values ('ams', 'arn', 'atl', 'bog', 'bos', 'cdg', 'den', 'dfw', 'ewr', 'eze', 'gdl', 'gig', 'gru', 'hkg', 'iad', 'jnb', 'lax', 'lhr', 'mad', 'mia', 'nrt', 'ord', 'otp', 'phx', 'qro', 'scl', 'sea', 'sin', 'sjc', 'syd', 'waw', 'yul', 'yyz')")
+        if value not in set(
+            [
+                "ams",
+                "arn",
+                "atl",
+                "bog",
+                "bos",
+                "cdg",
+                "den",
+                "dfw",
+                "ewr",
+                "eze",
+                "gdl",
+                "gig",
+                "gru",
+                "hkg",
+                "iad",
+                "jnb",
+                "lax",
+                "lhr",
+                "mad",
+                "mia",
+                "nrt",
+                "ord",
+                "otp",
+                "phx",
+                "qro",
+                "scl",
+                "sea",
+                "sin",
+                "sjc",
+                "syd",
+                "waw",
+                "yul",
+                "yyz",
+            ]
+        ):
+            raise ValueError(
+                "must be one of enum values ('ams', 'arn', 'atl', 'bog', 'bos', 'cdg', 'den', 'dfw', 'ewr', 'eze', 'gdl', 'gig', 'gru', 'hkg', 'iad', 'jnb', 'lax', 'lhr', 'mad', 'mia', 'nrt', 'ord', 'otp', 'phx', 'qro', 'scl', 'sea', 'sin', 'sjc', 'syd', 'waw', 'yul', 'yyz')"
+            )
         return value
 
     model_config = ConfigDict(
@@ -48,7 +105,6 @@ class ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -74,8 +130,7 @@ class ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -84,7 +139,7 @@ class ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
@@ -96,15 +151,21 @@ class ManagedWorkerList200ResponseRowsInnerRuntimeConfigsInner(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "numReplicas": obj.get("numReplicas"),
-            "cpuKind": obj.get("cpuKind"),
-            "cpus": obj.get("cpus"),
-            "memoryMb": obj.get("memoryMb"),
-            "region": obj.get("region"),
-            "actions": obj.get("actions")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(
+                        obj["metadata"]
+                    )
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "numReplicas": obj.get("numReplicas"),
+                "cpuKind": obj.get("cpuKind"),
+                "cpus": obj.get("cpus"),
+                "memoryMb": obj.get("memoryMb"),
+                "region": obj.get("region"),
+                "actions": obj.get("actions"),
+            }
+        )
         return _obj
-
-

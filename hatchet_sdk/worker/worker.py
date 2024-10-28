@@ -9,7 +9,6 @@ from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.client import Client, new_client_raw
-
 from hatchet_sdk.compute.managed_compute import ManagedCompute
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
@@ -101,7 +100,10 @@ class Worker:
             return action_function
 
         for action_name, action_func in workflow.get_actions(namespace):
-            if self.client.config.runnable_actions and action_name not in self.client.config.runnable_actions:
+            if (
+                self.client.config.runnable_actions
+                and action_name not in self.client.config.runnable_actions
+            ):
                 logger.debug(f"skipping action: {action_name} not in runnable actions")
                 continue
 

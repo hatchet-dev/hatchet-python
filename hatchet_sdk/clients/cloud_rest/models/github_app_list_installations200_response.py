@@ -13,21 +13,28 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_pagination import GithubAppListInstallations200ResponsePagination
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner import GithubAppListInstallations200ResponseRowsInner
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_pagination import (
+    GithubAppListInstallations200ResponsePagination,
+)
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner import (
+    GithubAppListInstallations200ResponseRowsInner,
+)
+
 
 class GithubAppListInstallations200Response(BaseModel):
     """
     GithubAppListInstallations200Response
-    """ # noqa: E501
+    """  # noqa: E501
+
     pagination: GithubAppListInstallations200ResponsePagination
     rows: List[GithubAppListInstallations200ResponseRowsInner]
     __properties: ClassVar[List[str]] = ["pagination", "rows"]
@@ -37,7 +44,6 @@ class GithubAppListInstallations200Response(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -63,8 +69,7 @@ class GithubAppListInstallations200Response(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -73,14 +78,14 @@ class GithubAppListInstallations200Response(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of pagination
         if self.pagination:
-            _dict['pagination'] = self.pagination.to_dict()
+            _dict["pagination"] = self.pagination.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in rows (list)
         _items = []
         if self.rows:
             for _item in self.rows:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['rows'] = _items
+            _dict["rows"] = _items
         return _dict
 
     @classmethod
@@ -92,10 +97,23 @@ class GithubAppListInstallations200Response(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "pagination": GithubAppListInstallations200ResponsePagination.from_dict(obj["pagination"]) if obj.get("pagination") is not None else None,
-            "rows": [GithubAppListInstallations200ResponseRowsInner.from_dict(_item) for _item in obj["rows"]] if obj.get("rows") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "pagination": (
+                    GithubAppListInstallations200ResponsePagination.from_dict(
+                        obj["pagination"]
+                    )
+                    if obj.get("pagination") is not None
+                    else None
+                ),
+                "rows": (
+                    [
+                        GithubAppListInstallations200ResponseRowsInner.from_dict(_item)
+                        for _item in obj["rows"]
+                    ]
+                    if obj.get("rows") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

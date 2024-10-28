@@ -13,36 +13,55 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from typing_extensions import Annotated
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import GithubAppListInstallations200ResponseRowsInnerMetadata
-from hatchet_sdk.clients.cloud_rest.models.github_app_list_repos200_response_inner import GithubAppListRepos200ResponseInner
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner_build_config_steps_inner import ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner
-from typing import Optional, Set
-from typing_extensions import Self
+from typing_extensions import Annotated, Self
+
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_installations200_response_rows_inner_metadata import (
+    GithubAppListInstallations200ResponseRowsInnerMetadata,
+)
+from hatchet_sdk.clients.cloud_rest.models.github_app_list_repos200_response_inner import (
+    GithubAppListRepos200ResponseInner,
+)
+from hatchet_sdk.clients.cloud_rest.models.managed_worker_list200_response_rows_inner_build_config_steps_inner import (
+    ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner,
+)
+
 
 class ManagedWorkerList200ResponseRowsInnerBuildConfig(BaseModel):
     """
     ManagedWorkerList200ResponseRowsInnerBuildConfig
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: GithubAppListInstallations200ResponseRowsInnerMetadata
-    github_installation_id: Annotated[str, Field(min_length=36, strict=True, max_length=36)] = Field(alias="githubInstallationId")
-    github_repository: GithubAppListRepos200ResponseInner = Field(alias="githubRepository")
+    github_installation_id: Annotated[
+        str, Field(min_length=36, strict=True, max_length=36)
+    ] = Field(alias="githubInstallationId")
+    github_repository: GithubAppListRepos200ResponseInner = Field(
+        alias="githubRepository"
+    )
     github_repository_branch: StrictStr = Field(alias="githubRepositoryBranch")
-    steps: Optional[List[ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner]] = None
-    __properties: ClassVar[List[str]] = ["metadata", "githubInstallationId", "githubRepository", "githubRepositoryBranch", "steps"]
+    steps: Optional[
+        List[ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner]
+    ] = None
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "githubInstallationId",
+        "githubRepository",
+        "githubRepositoryBranch",
+        "steps",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -68,8 +87,7 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfig(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -78,17 +96,17 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfig(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         # override the default output from pydantic by calling `to_dict()` of github_repository
         if self.github_repository:
-            _dict['githubRepository'] = self.github_repository.to_dict()
+            _dict["githubRepository"] = self.github_repository.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in steps (list)
         _items = []
         if self.steps:
             for _item in self.steps:
                 if _item:
                     _items.append(_item.to_dict())
-            _dict['steps'] = _items
+            _dict["steps"] = _items
         return _dict
 
     @classmethod
@@ -100,13 +118,34 @@ class ManagedWorkerList200ResponseRowsInnerBuildConfig(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "githubInstallationId": obj.get("githubInstallationId"),
-            "githubRepository": GithubAppListRepos200ResponseInner.from_dict(obj["githubRepository"]) if obj.get("githubRepository") is not None else None,
-            "githubRepositoryBranch": obj.get("githubRepositoryBranch"),
-            "steps": [ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner.from_dict(_item) for _item in obj["steps"]] if obj.get("steps") is not None else None
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    GithubAppListInstallations200ResponseRowsInnerMetadata.from_dict(
+                        obj["metadata"]
+                    )
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "githubInstallationId": obj.get("githubInstallationId"),
+                "githubRepository": (
+                    GithubAppListRepos200ResponseInner.from_dict(
+                        obj["githubRepository"]
+                    )
+                    if obj.get("githubRepository") is not None
+                    else None
+                ),
+                "githubRepositoryBranch": obj.get("githubRepositoryBranch"),
+                "steps": (
+                    [
+                        ManagedWorkerList200ResponseRowsInnerBuildConfigStepsInner.from_dict(
+                            _item
+                        )
+                        for _item in obj["steps"]
+                    ]
+                    if obj.get("steps") is not None
+                    else None
+                ),
+            }
+        )
         return _obj
-
-

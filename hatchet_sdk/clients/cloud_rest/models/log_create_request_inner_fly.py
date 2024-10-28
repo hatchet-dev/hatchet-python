@@ -13,20 +13,25 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.cloud_rest.models.log_create_request_inner_fly_app import LogCreateRequestInnerFlyApp
-from typing import Optional, Set
 from typing_extensions import Self
+
+from hatchet_sdk.clients.cloud_rest.models.log_create_request_inner_fly_app import (
+    LogCreateRequestInnerFlyApp,
+)
+
 
 class LogCreateRequestInnerFly(BaseModel):
     """
     LogCreateRequestInnerFly
-    """ # noqa: E501
+    """  # noqa: E501
+
     app: Optional[LogCreateRequestInnerFlyApp] = None
     region: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["app", "region"]
@@ -36,7 +41,6 @@ class LogCreateRequestInnerFly(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,8 +66,7 @@ class LogCreateRequestInnerFly(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -72,7 +75,7 @@ class LogCreateRequestInnerFly(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of app
         if self.app:
-            _dict['app'] = self.app.to_dict()
+            _dict["app"] = self.app.to_dict()
         return _dict
 
     @classmethod
@@ -84,10 +87,14 @@ class LogCreateRequestInnerFly(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "app": LogCreateRequestInnerFlyApp.from_dict(obj["app"]) if obj.get("app") is not None else None,
-            "region": obj.get("region")
-        })
+        _obj = cls.model_validate(
+            {
+                "app": (
+                    LogCreateRequestInnerFlyApp.from_dict(obj["app"])
+                    if obj.get("app") is not None
+                    else None
+                ),
+                "region": obj.get("region"),
+            }
+        )
         return _obj
-
-

@@ -13,19 +13,21 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class MetricsCpuGet200ResponseInnerHistogramsInnerHistogramBucketsInner(BaseModel):
     """
     MetricsCpuGet200ResponseInnerHistogramsInnerHistogramBucketsInner
-    """ # noqa: E501
+    """  # noqa: E501
+
     boundaries: Optional[StrictInt] = None
     lower: Optional[Union[StrictFloat, StrictInt]] = None
     upper: Optional[Union[StrictFloat, StrictInt]] = None
@@ -37,7 +39,6 @@ class MetricsCpuGet200ResponseInnerHistogramsInnerHistogramBucketsInner(BaseMode
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -63,8 +64,7 @@ class MetricsCpuGet200ResponseInnerHistogramsInnerHistogramBucketsInner(BaseMode
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -82,12 +82,12 @@ class MetricsCpuGet200ResponseInnerHistogramsInnerHistogramBucketsInner(BaseMode
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "boundaries": obj.get("boundaries"),
-            "lower": obj.get("lower"),
-            "upper": obj.get("upper"),
-            "count": obj.get("count")
-        })
+        _obj = cls.model_validate(
+            {
+                "boundaries": obj.get("boundaries"),
+                "lower": obj.get("lower"),
+                "upper": obj.get("upper"),
+                "count": obj.get("count"),
+            }
+        )
         return _obj
-
-

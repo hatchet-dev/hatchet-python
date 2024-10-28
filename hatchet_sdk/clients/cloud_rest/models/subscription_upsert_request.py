@@ -13,21 +13,25 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class SubscriptionUpsertRequest(BaseModel):
     """
     SubscriptionUpsertRequest
-    """ # noqa: E501
+    """  # noqa: E501
+
     plan: Optional[StrictStr] = Field(default=None, description="The code of the plan.")
-    period: Optional[StrictStr] = Field(default=None, description="The period of the plan.")
+    period: Optional[StrictStr] = Field(
+        default=None, description="The period of the plan."
+    )
     __properties: ClassVar[List[str]] = ["plan", "period"]
 
     model_config = ConfigDict(
@@ -35,7 +39,6 @@ class SubscriptionUpsertRequest(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -61,8 +64,7 @@ class SubscriptionUpsertRequest(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -80,10 +82,7 @@ class SubscriptionUpsertRequest(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "plan": obj.get("plan"),
-            "period": obj.get("period")
-        })
+        _obj = cls.model_validate(
+            {"plan": obj.get("plan"), "period": obj.get("period")}
+        )
         return _obj
-
-

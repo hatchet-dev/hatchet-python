@@ -13,22 +13,34 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
-from typing import Any, ClassVar, Dict, List, Optional
-from typing import Optional, Set
 from typing_extensions import Self
+
 
 class MetadataGet200Response(BaseModel):
     """
     MetadataGet200Response
-    """ # noqa: E501
-    can_bill: Optional[StrictBool] = Field(default=None, description="whether the tenant can be billed", alias="canBill")
-    can_link_github: Optional[StrictBool] = Field(default=None, description="whether the tenant can link to GitHub", alias="canLinkGithub")
-    metrics_enabled: Optional[StrictBool] = Field(default=None, description="whether metrics are enabled for the tenant", alias="metricsEnabled")
+    """  # noqa: E501
+
+    can_bill: Optional[StrictBool] = Field(
+        default=None, description="whether the tenant can be billed", alias="canBill"
+    )
+    can_link_github: Optional[StrictBool] = Field(
+        default=None,
+        description="whether the tenant can link to GitHub",
+        alias="canLinkGithub",
+    )
+    metrics_enabled: Optional[StrictBool] = Field(
+        default=None,
+        description="whether metrics are enabled for the tenant",
+        alias="metricsEnabled",
+    )
     __properties: ClassVar[List[str]] = ["canBill", "canLinkGithub", "metricsEnabled"]
 
     model_config = ConfigDict(
@@ -36,7 +48,6 @@ class MetadataGet200Response(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,8 +73,7 @@ class MetadataGet200Response(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -81,11 +91,11 @@ class MetadataGet200Response(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "canBill": obj.get("canBill"),
-            "canLinkGithub": obj.get("canLinkGithub"),
-            "metricsEnabled": obj.get("metricsEnabled")
-        })
+        _obj = cls.model_validate(
+            {
+                "canBill": obj.get("canBill"),
+                "canLinkGithub": obj.get("canLinkGithub"),
+                "metricsEnabled": obj.get("metricsEnabled"),
+            }
+        )
         return _obj
-
-
