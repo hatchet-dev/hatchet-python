@@ -15,7 +15,7 @@ hatchet = Hatchet()
 # Default compute
 
 default_compute = Compute(
-    cpu_kind="shared", cpus=1, memory_mb=1024, region=ManagedWorkerRegion.EWR
+    cpu_kind="shared", cpus=1, memory_mb=1024, regions=[ManagedWorkerRegion.EWR]
 )
 
 blocked_compute = Compute(
@@ -23,11 +23,11 @@ blocked_compute = Compute(
     cpu_kind="shared",
     cpus=1,
     memory_mb=1024,
-    region=ManagedWorkerRegion.EWR,
+    regions=[ManagedWorkerRegion.EWR],
 )
 
 gpu_compute = Compute(
-    cpu_kind="gpu", cpus=2, memory_mb=1024, region=ManagedWorkerRegion.EWR
+    cpu_kind="gpu", cpus=2, memory_mb=1024, regions=[ManagedWorkerRegion.EWR]
 )
 
 
@@ -69,7 +69,7 @@ class ManagedWorkflow:
 
 
 def main():
-    workflow = MyWorkflow()
+    workflow = ManagedWorkflow()
     worker = hatchet.worker("test-worker", max_runs=1)
     worker.register_workflow(workflow)
     worker.start()

@@ -67,7 +67,7 @@ class ManagedCompute:
                         cpu_kind=compute.cpu_kind,
                         cpus=compute.cpus,
                         memory_mb=compute.memory_mb,
-                        region=compute.region,
+                        regions=compute.regions,
                     )
                 map[key].actions.append(action)
 

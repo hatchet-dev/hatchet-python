@@ -19,8 +19,8 @@ class Compute(BaseModel):
     num_replicas: Annotated[int, Field(le=1000, strict=True, ge=0)] = Field(
         default=1, alias="num_replicas"
     )
-    region: Optional[ManagedWorkerRegion] = Field(
-        default=None, description="The region to deploy the worker to"
+    regions: Optional[list[ManagedWorkerRegion]] = Field(
+        default=None, description="The regions to deploy the worker to"
     )
     cpu_kind: StrictStr = Field(
         description="The kind of CPU to use for the worker", alias="cpu_kind"
