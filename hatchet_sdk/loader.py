@@ -38,6 +38,7 @@ class ClientConfig:
         logger: Logger = None,
         grpc_max_recv_message_length: int = 4 * 1024 * 1024,  # 4MB
         grpc_max_send_message_length: int = 4 * 1024 * 1024,  # 4MB
+        runnable_actions: list[str] = None, # list of action names that are runnable, defaults to all actions
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -62,6 +63,7 @@ class ClientConfig:
 
         self.listener_v2_timeout = listener_v2_timeout
 
+        self.runnable_actions: list[str] | None = [ self.namespace + action for action in runnable_actions] if runnable_actions else None
 
 class ConfigLoader:
     def __init__(self, directory: str):
@@ -127,6 +129,9 @@ class ConfigLoader:
 
         tls_config = self._load_tls_config(config_data["tls"], host_port)
 
+        raw_runnable_actions = get_config_value("runnable_actions", "HATCHET_CLOUD_ACTIONS")
+        runnable_actions = raw_runnable_actions.split(",") if raw_runnable_actions else None
+
         return ClientConfig(
             tenant_id=tenant_id,
             tls_config=tls_config,
@@ -138,6 +143,7 @@ class ConfigLoader:
             logger=defaults.logger,
             grpc_max_recv_message_length=grpc_max_recv_message_length,
             grpc_max_send_message_length=grpc_max_send_message_length,
+            runnable_actions=runnable_actions,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:

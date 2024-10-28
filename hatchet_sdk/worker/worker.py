@@ -9,15 +9,7 @@ from multiprocessing import Process, Queue
 from typing import Any, Callable, Dict, Optional
 
 from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import (
-    CreateManagedWorkerRuntimeConfigRequest,
-)
-from hatchet_sdk.clients.cloud_rest.models.infra_as_code_request import (
-    InfraAsCodeRequest,
-)
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
-    ManagedWorkerRegion,
-)
+
 from hatchet_sdk.compute.managed_compute import ManagedCompute
 from hatchet_sdk.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
@@ -109,6 +101,10 @@ class Worker:
             return action_function
 
         for action_name, action_func in workflow.get_actions(namespace):
+            if self.client.config.runnable_actions and action_name not in self.client.config.runnable_actions:
+                logger.debug(f"skipping action: {action_name} not in runnable actions")
+                continue
+
             fn = create_action_function(action_func)
             # copy the compute from the action func to the action function
             fn._step_compute = action_func._step_compute

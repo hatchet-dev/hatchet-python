@@ -3,13 +3,6 @@ from typing import Annotated, Optional
 
 from pydantic import BaseModel, Field, StrictStr
 
-from hatchet_sdk.clients.cloud_rest.models.create_managed_worker_runtime_config_request import (
-    CreateManagedWorkerRuntimeConfigRequest,
-)
-from hatchet_sdk.clients.cloud_rest.models.managed_worker_region import (
-    ManagedWorkerRegion,
-)
-
 
 class Compute(BaseModel):
     pool: Optional[str] = Field(
@@ -19,7 +12,8 @@ class Compute(BaseModel):
     num_replicas: Annotated[int, Field(le=1000, strict=True, ge=0)] = Field(
         default=1, alias="num_replicas"
     )
-    regions: Optional[list[ManagedWorkerRegion]] = Field(
+    # TODO: change to ManagedWorkerRegion
+    regions: Optional[list[str]] = Field(
         default=None, description="The regions to deploy the worker to"
     )
     cpu_kind: StrictStr = Field(

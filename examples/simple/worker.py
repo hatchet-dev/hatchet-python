@@ -19,6 +19,14 @@ class MyWorkflow:
         return {
             "step1": "step1",
         }
+    
+    @hatchet.step(timeout="11s", retries=3)
+    def step2(self, context: Context):
+        print("executed step2")
+        time.sleep(10)
+        return {
+            "step2": "step2",
+        }
 
 
 def main():

@@ -9,7 +9,7 @@ from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request_runtime
     ManagedWorkerCreateRequestRuntimeConfig,
 )
 
-
+# TODO why is this not generating
 # from hatchet_sdk.clients.cloud_rest.models.managed_worker_create_request import ManagedWorkerRegion
 
 from hatchet_sdk.compute.configs import Compute
