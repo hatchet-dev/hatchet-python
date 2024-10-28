@@ -83,7 +83,7 @@ class ManagedCompute:
     async def cloud_register(self):
 
         # if the environment variable HATCHET_CLOUD_REGISTER_ID is set, use it and exit
-        if self.cloud_register_enabled is not None:
+        if self.cloud_register_enabled is None:
             logger.info(
                 f"Registering cloud compute plan with ID: {self.cloud_register_enabled}"
             )
@@ -99,7 +99,8 @@ class ManagedCompute:
 
                 res = (
                     await self.client.rest.aio.managed_worker_api.infra_as_code_create(
-                        infra_as_code_request=req,
+                        infra_as_code_request=self.cloud_register_enabled,
+                        infra_as_code_create_request=req,
                         _request_timeout=10,
                     )
                 )
