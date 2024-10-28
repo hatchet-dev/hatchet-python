@@ -95,18 +95,6 @@ class TenantQueueMetrics(BaseModel):
                     if obj.get("total") is not None
                     else None
                 ),
-<<<<<<< HEAD
-=======
-                "workflow": (
-                    dict(
-                        (_k, QueueMetrics.from_dict(_v))
-                        for _k, _v in obj["workflow"].items()
-                    )
-                    if obj.get("workflow") is not None
-                    else None
-                ),
-                "queues": obj.get("queues"),
->>>>>>> main
             }
         )
         return _obj

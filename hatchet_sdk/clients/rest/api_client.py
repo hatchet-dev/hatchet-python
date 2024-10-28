@@ -390,27 +390,9 @@ class ApiClient:
         """
 
         # fetch data from response object
-<<<<<<< HEAD
         try:
             data = json.loads(response_text)
         except ValueError:
-=======
-        if content_type is None:
-            try:
-                data = json.loads(response_text)
-            except ValueError:
-                data = response_text
-        elif re.match(
-            r"^application/(json|[\w!#$&.+-^_]+\+json)\s*(;|$)",
-            content_type,
-            re.IGNORECASE,
-        ):
-            if response_text == "":
-                data = ""
-            else:
-                data = json.loads(response_text)
-        elif re.match(r"^text\/[a-z.+-]+\s*(;|$)", content_type, re.IGNORECASE):
->>>>>>> main
             data = response_text
 
         return self.__deserialize(data, response_type)
