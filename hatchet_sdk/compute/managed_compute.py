@@ -99,6 +99,7 @@ class ManagedCompute:
 
                 res = (
                     await self.client.rest.aio.managed_worker_api.infra_as_code_create(
+                        infra_as_code_request=self.cloud_register_enabled,
                         infra_as_code_create_request=req,
                         _request_timeout=10,
                     )
