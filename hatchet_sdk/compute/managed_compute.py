@@ -32,7 +32,7 @@ class ManagedCompute:
             )
             return
 
-        if self.cloud_register_enabled is not None:
+        if self.cloud_register_enabled is None:
             logger.warning("managed cloud compute plan:")
             for compute in self.configs:
                 logger.warning(f"    ----------------------------")
@@ -83,7 +83,7 @@ class ManagedCompute:
     async def cloud_register(self):
 
         # if the environment variable HATCHET_CLOUD_REGISTER_ID is set, use it and exit
-        if self.cloud_register_enabled is None:
+        if self.cloud_register_enabled is not None:
             logger.info(
                 f"Registering cloud compute plan with ID: {self.cloud_register_enabled}"
             )
