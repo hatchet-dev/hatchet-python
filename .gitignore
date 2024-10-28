@@ -163,5 +163,5 @@ cython_debug/
 
 openapitools.json
 
-# hatchet-cloud/
-# hatchet/
+hatchet-cloud/
+hatchet/
