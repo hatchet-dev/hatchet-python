@@ -17,9 +17,10 @@ from hatchet_sdk.logger import logger
 
 
 class ManagedCompute:
-    def __init__(self, actions: Dict[str, Callable[..., Any]], client: Client):
+    def __init__(self, actions: Dict[str, Callable[..., Any]], client: Client, max_runs: int = 1):
         self.actions = actions
         self.client = client
+        self.max_runs = max_runs
         self.configs = self.get_compute_configs(self.actions)
         self.cloud_register_enabled = os.environ.get("HATCHET_CLOUD_REGISTER_ID")
 
@@ -68,6 +69,7 @@ class ManagedCompute:
                         cpus=compute.cpus,
                         memory_mb=compute.memory_mb,
                         regions=compute.regions,
+                        slots=self.max_runs,
                     )
                 map[key].actions.append(action)
 
@@ -77,6 +79,7 @@ class ManagedCompute:
             return []
 
     async def cloud_register(self):
+
         # if the environment variable HATCHET_CLOUD_REGISTER_ID is set, use it and exit
         if self.cloud_register_enabled is not None:
             logger.info(

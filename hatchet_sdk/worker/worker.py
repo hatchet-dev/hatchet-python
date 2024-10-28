@@ -165,7 +165,7 @@ class Worker:
         if not _from_start:
             self.setup_loop(options.loop)
 
-        managed_compute = ManagedCompute(self.action_registry, self.client)
+        managed_compute = ManagedCompute(self.action_registry, self.client, self.max_runs)
         await managed_compute.cloud_register()
 
         self.action_listener_process = self._start_listener()
