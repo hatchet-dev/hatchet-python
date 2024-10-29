@@ -66,7 +66,7 @@ class ManagedCompute:
                 if key not in map:
                     map[key] = ManagedWorkerCreateRequestRuntimeConfig(
                         actions=[],
-                        num_replicas=1,
+                        num_replicas=compute.num_replicas,
                         cpu_kind=compute.cpu_kind,
                         cpus=compute.cpus,
                         memory_mb=compute.memory_mb,
