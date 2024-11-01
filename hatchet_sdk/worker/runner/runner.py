@@ -109,6 +109,9 @@ class Runner:
             if self.worker_context.id() is None:
                 self.worker_context._worker_id = action.worker_id
 
+            span.set_attribute("worker_context.worker_id", self.worker_context._worker_id)
+            span.set_attribute("action_type", action.action_type)
+
             match action.action_type:
                 case ActionType.START_STEP_RUN:
                     logger.info(
