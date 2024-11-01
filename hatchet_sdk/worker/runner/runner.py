@@ -106,12 +106,6 @@ class Runner:
 
     def run(self, action: Action):
         with self.otel_tracer.start_as_current_span("hatchet.run") as span:
-            print()
-            print(span)
-            print(self.contexts)
-            print()
-            print(self.worker_context)
-
             if self.worker_context.id() is None:
                 self.worker_context._worker_id = action.worker_id
 
@@ -132,6 +126,7 @@ class Runner:
                     )
                     asyncio.create_task(self.handle_start_group_key_run(action))
                 case _:
+                    logger.error(f"unknown action type: {action.action_type}")
 
     def step_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
