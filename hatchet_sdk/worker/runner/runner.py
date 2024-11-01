@@ -326,11 +326,16 @@ class Runner:
             task.add_done_callback(self.step_run_callback(action))
             self.tasks[action.step_run_id] = task
 
-            try:
-                await task
-            except Exception:
-                # do nothing, this should be caught in the callback
-                pass
+            with self.otel_tracer.start_as_current_span("worker.runner.runner.handle_start_step_run") as span:
+                span.set_attribute("step_run_id", action.step_run_id)
+
+                try:
+                    await task
+                    span.set_attribute("status", "success")
+                except Exception as e:
+                    # do nothing, this should be caught in the callback
+                    span.set_attribute("status", "failure")
+                    span.record_exception(e)
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
