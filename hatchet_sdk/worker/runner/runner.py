@@ -3,21 +3,27 @@ import contextvars
 import ctypes
 import functools
 import json
-import logging
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from io import StringIO
-from logging import StreamHandler
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import Any, Callable, Coroutine, Dict
+from typing import Any, Callable, Dict
+import os
+
+from opentelemetry import trace
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+)
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
-from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context import Context
@@ -43,6 +49,17 @@ class WorkerStatus(Enum):
     STARTING = 2
     HEALTHY = 3
     UNHEALTHY = 4
+
+
+resource = Resource(attributes={SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME")})
+processor = BatchSpanProcessor(
+    OTLPSpanExporter(endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") + "/v1/traces")
+)
+
+trace_provider = TracerProvider(resource=resource)
+trace_provider.add_span_processor(processor)
+
+trace.set_tracer_provider(trace_provider)
 
 
 class Runner:
@@ -85,26 +102,36 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
-    def run(self, action: Action):
-        if self.worker_context.id() is None:
-            self.worker_context._worker_id = action.worker_id
+        self.otel_tracer = trace.get_tracer(__name__)
 
-        match action.action_type:
-            case ActionType.START_STEP_RUN:
-                logger.info(f"run: start step: {action.action_id}/{action.step_run_id}")
-                asyncio.create_task(self.handle_start_step_run(action))
-            case ActionType.CANCEL_STEP_RUN:
-                logger.info(
-                    f"cancel: step run:  {action.action_id}/{action.step_run_id}"
-                )
-                asyncio.create_task(self.handle_cancel_action(action.step_run_id))
-            case ActionType.START_GET_GROUP_KEY:
-                logger.info(
-                    f"run: get group key:  {action.action_id}/{action.get_group_key_run_id}"
-                )
-                asyncio.create_task(self.handle_start_group_key_run(action))
-            case _:
-                logger.error(f"unknown action type: {action.action_type}")
+    def run(self, action: Action):
+        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+            print()
+            print(span)
+            print(self.contexts)
+            print()
+            print(self.worker_context)
+
+            if self.worker_context.id() is None:
+                self.worker_context._worker_id = action.worker_id
+
+            match action.action_type:
+                case ActionType.START_STEP_RUN:
+                    logger.info(
+                        f"run: start step: {action.action_id}/{action.step_run_id}"
+                    )
+                    asyncio.create_task(self.handle_start_step_run(action))
+                case ActionType.CANCEL_STEP_RUN:
+                    logger.info(
+                        f"cancel: step run:  {action.action_id}/{action.step_run_id}"
+                    )
+                    asyncio.create_task(self.handle_cancel_action(action.step_run_id))
+                case ActionType.START_GET_GROUP_KEY:
+                    logger.info(
+                        f"run: get group key:  {action.action_id}/{action.get_group_key_run_id}"
+                    )
+                    asyncio.create_task(self.handle_start_group_key_run(action))
+                case _:
 
     def step_run_callback(self, action: Action):
         def inner_callback(task: asyncio.Task):
