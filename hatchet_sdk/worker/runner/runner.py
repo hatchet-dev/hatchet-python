@@ -10,16 +10,12 @@ from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
 import os
+from uuid import uuid4, UUID
+import random
 
-from opentelemetry import trace
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.trace import StatusCode
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-)
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
+from opentelemetry import trace, baggage
+from opentelemetry.trace import SpanContext, TraceFlags, StatusCode, Span
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
@@ -44,6 +40,7 @@ from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
 from hatchet_sdk.utils.serialization import flatten
+from hatchet_sdk.utils.tracing import OTelTracingFactory
 
 
 class WorkerStatus(Enum):
@@ -93,24 +90,18 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
-        ## TODO: Figure out how to specify protocol here
-        resource = Resource(attributes={SERVICE_NAME: config.otel_service_name})
-        processor = BatchSpanProcessor(
-            OTLPSpanExporter(
-                endpoint=config.otel_exporter_oltp_endpoint + "/v1/traces",
-                headers=config.otel_exporter_oltp_headers
-            )
+        self.otel_tracer = OTelTracingFactory.create_tracer(
+            name=__name__, config=config
         )
 
-        trace_provider = TracerProvider(resource=resource)
-        trace_provider.add_span_processor(processor)
-
-        trace.set_tracer_provider(trace_provider)
-
-        self.otel_tracer = trace.get_tracer(__name__)
-
     def run(self, action: Action):
-        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+        ctx = TraceContextTextMapPropagator().extract(
+            carrier=action.additional_metadata.get("__otel_context")
+        )
+
+        with self.otel_tracer.start_as_current_span(
+            "hatchet.worker.runner.runner.Runner.run", context=ctx
+        ) as span:
             if self.worker_context.id() is None:
                 self.worker_context._worker_id = action.worker_id
 
