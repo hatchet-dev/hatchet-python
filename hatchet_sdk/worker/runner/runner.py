@@ -14,6 +14,7 @@ import os
 from opentelemetry import trace
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.trace import StatusCode
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
 )
@@ -42,6 +43,7 @@ from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
+from hatchet_sdk.utils.serialization import flatten
 
 
 class WorkerStatus(Enum):
@@ -109,8 +111,7 @@ class Runner:
             if self.worker_context.id() is None:
                 self.worker_context._worker_id = action.worker_id
 
-            span.set_attribute("worker_context.worker_id", self.worker_context._worker_id)
-            span.set_attribute("action_type", action.action_type)
+            span.set_attributes(flatten(action.model_dump(), parent_key="", separator="."))
 
             match action.action_type:
                 case ActionType.START_STEP_RUN:
@@ -274,68 +275,69 @@ class Runner:
             del self.contexts[run_id]
 
     async def handle_start_step_run(self, action: Action):
-        action_name = action.action_id
+        with self.otel_tracer.start_as_current_span("hatchet.worker.runner.runner.Runner.handle_start_step_run") as span:
+            span.add_event("Starting step run")
+            action_name = action.action_id
 
-        # Find the corresponding action function from the registry
-        action_func = self.action_registry.get(action_name)
+            # Find the corresponding action function from the registry
+            action_func = self.action_registry.get(action_name)
 
-        context: Context | DurableContext
+            context: Context | DurableContext
 
-        if hasattr(action_func, "durable") and action_func.durable:
-            context = DurableContext(
-                action,
-                self.dispatcher_client,
-                self.admin_client,
-                self.client.event,
-                self.client.rest,
-                self.client.workflow_listener,
-                self.workflow_run_event_listener,
-                self.worker_context,
-                self.client.config.namespace,
-            )
-        else:
-            context = Context(
-                action,
-                self.dispatcher_client,
-                self.admin_client,
-                self.client.event,
-                self.client.rest,
-                self.client.workflow_listener,
-                self.workflow_run_event_listener,
-                self.worker_context,
-                self.client.config.namespace,
-            )
-
-        self.contexts[action.step_run_id] = context
-
-        if action_func:
-            self.event_queue.put(
-                ActionEvent(
-                    action=action,
-                    type=STEP_EVENT_TYPE_STARTED,
+            if hasattr(action_func, "durable") and action_func.durable:
+                context = DurableContext(
+                    action,
+                    self.dispatcher_client,
+                    self.admin_client,
+                    self.client.event,
+                    self.client.rest,
+                    self.client.workflow_listener,
+                    self.workflow_run_event_listener,
+                    self.worker_context,
+                    self.client.config.namespace,
                 )
-            )
-
-            loop = asyncio.get_event_loop()
-            task = loop.create_task(
-                self.async_wrapped_action_func(
-                    context, action_func, action, action.step_run_id
+            else:
+                context = Context(
+                    action,
+                    self.dispatcher_client,
+                    self.admin_client,
+                    self.client.event,
+                    self.client.rest,
+                    self.client.workflow_listener,
+                    self.workflow_run_event_listener,
+                    self.worker_context,
+                    self.client.config.namespace,
                 )
-            )
 
-            task.add_done_callback(self.step_run_callback(action))
-            self.tasks[action.step_run_id] = task
+            self.contexts[action.step_run_id] = context
 
-            with self.otel_tracer.start_as_current_span("worker.runner.runner.handle_start_step_run") as span:
-                span.set_attribute("step_run_id", action.step_run_id)
+            if action_func:
+                self.event_queue.put(
+                    ActionEvent(
+                        action=action,
+                        type=STEP_EVENT_TYPE_STARTED,
+                    )
+                )
+
+                loop = asyncio.get_event_loop()
+                task = loop.create_task(
+                    self.async_wrapped_action_func(
+                        context, action_func, action, action.step_run_id
+                    )
+                )
+
+                task.add_done_callback(self.step_run_callback(action))
+                self.tasks[action.step_run_id] = task
 
                 try:
                     await task
-                    span.set_attribute("status", "success")
+                    span.set_status(StatusCode.OK)
                 except Exception as e:
                     # do nothing, this should be caught in the callback
-                    span.set_attribute("status", "failure")
+                    span.set_status(StatusCode.ERROR)
                     span.record_exception(e)
+
+            span.add_event("Finished step run")
 
     async def handle_start_group_key_run(self, action: Action):
         action_name = action.action_id
