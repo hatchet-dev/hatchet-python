@@ -2,7 +2,8 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import AsyncGenerator, List, Optional
+from pydantic import BaseModel, field_validator, ConfigDict
+from typing import AsyncGenerator, List, Optional, Any
 
 import grpc
 from grpc._cython import cygrpc
@@ -55,8 +56,9 @@ class GetActionListenerRequest:
                 self.labels[key] = WorkerLabels(strValue=str(value))
 
 
-@dataclass
-class Action:
+class Action(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     worker_id: str
     tenant_id: str
     workflow_run_id: str
@@ -67,26 +69,25 @@ class Action:
     step_id: str
     step_run_id: str
     action_id: str
-    action_payload: str
+    action_payload: dict[str, Any]
     action_type: ActionType
     retry_count: int
-    additional_metadata: dict[str, str] | None = None
+    additional_metadata: dict[str, str]
 
-    child_workflow_index: int | None = None
-    child_workflow_key: str | None = None
-    parent_workflow_run_id: str | None = None
 
-    def __post_init__(self):
-        if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
-            try:
-                self.additional_metadata = json.loads(self.additional_metadata)
-            except json.JSONDecodeError:
-                # If JSON decoding fails, keep the original string
-                pass
-
-        # Ensure additional_metadata is always a dictionary
-        if not isinstance(self.additional_metadata, dict):
-            self.additional_metadata = {}
+    @field_validator("additional_metadata", "action_payload", mode="before")
+    @classmethod
+    def validate_additional_metadata(cls, v: str | dict[str, str] | None) -> dict[str, str] | None:
+        match v:
+            case dict():
+                return v
+            case str():
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    return {}
+            case _:
+                return {}
 
 
 START_STEP_RUN = 0
