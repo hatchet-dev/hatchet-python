@@ -93,6 +93,7 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
+        ## TODO: Figure out how to specify protocol here
         resource = Resource(attributes={SERVICE_NAME: config.otel_service_name})
         processor = BatchSpanProcessor(
             OTLPSpanExporter(
