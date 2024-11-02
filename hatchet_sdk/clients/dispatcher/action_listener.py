@@ -72,8 +72,12 @@ class Action(BaseModel):
     action_payload: dict[str, Any]
     action_type: ActionType
     retry_count: int
+
     additional_metadata: dict[str, str]
 
+    child_workflow_index: int | None = None
+    child_workflow_key: str | None = None
+    parent_workflow_run_id: str | None = None
 
     @field_validator("additional_metadata", "action_payload", mode="before")
     @classmethod
