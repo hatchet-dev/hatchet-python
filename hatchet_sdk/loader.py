@@ -38,6 +38,10 @@ class ClientConfig:
         logger: Logger = None,
         grpc_max_recv_message_length: int = 4 * 1024 * 1024,  # 4MB
         grpc_max_send_message_length: int = 4 * 1024 * 1024,  # 4MB
+        otel_exporter_oltp_endpoint: str | None = None,
+        otel_service_name: str | None = None,
+        otel_exporter_oltp_headers: dict[str, str] | None = None,
+        otel_exporter_oltp_protocol: str | None = None,
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -48,6 +52,10 @@ class ClientConfig:
         self.logInterceptor = logger
         self.grpc_max_recv_message_length = grpc_max_recv_message_length
         self.grpc_max_send_message_length = grpc_max_send_message_length
+        self.otel_exporter_oltp_endpoint = otel_exporter_oltp_endpoint
+        self.otel_service_name = otel_service_name
+        self.otel_exporter_oltp_headers = otel_exporter_oltp_headers
+        self.otel_exporter_oltp_protocol = otel_exporter_oltp_protocol
 
         if not self.logInterceptor:
             self.logInterceptor = getLogger()
@@ -127,6 +135,22 @@ class ConfigLoader:
 
         tls_config = self._load_tls_config(config_data["tls"], host_port)
 
+        otel_exporter_oltp_endpoint = get_config_value(
+            "otel_exporter_oltp_endpoint", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_ENDPOINT"
+        )
+
+        otel_service_name = get_config_value(
+            "otel_service_name", "HATCHET_CLIENT_OTEL_SERVICE_NAME"
+        )
+
+        otel_exporter_oltp_headers = get_config_value(
+            "otel_exporter_oltp_headers", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS"
+        )
+
+        otel_exporter_oltp_protocol = get_config_value(
+            "otel_exporter_oltp_protocol", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_PROTOCOL"
+        )
+
         return ClientConfig(
             tenant_id=tenant_id,
             tls_config=tls_config,
@@ -138,6 +162,10 @@ class ConfigLoader:
             logger=defaults.logInterceptor,
             grpc_max_recv_message_length=grpc_max_recv_message_length,
             grpc_max_send_message_length=grpc_max_send_message_length,
+            otel_exporter_oltp_endpoint=otel_exporter_oltp_endpoint,
+            otel_service_name=otel_service_name,
+            otel_exporter_oltp_headers=otel_exporter_oltp_headers,
+            otel_exporter_oltp_protocol=otel_exporter_oltp_protocol,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
