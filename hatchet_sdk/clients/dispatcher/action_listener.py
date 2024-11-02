@@ -73,7 +73,7 @@ class Action(BaseModel):
     action_type: ActionType
     retry_count: int
 
-    additional_metadata: dict[str, str]
+    additional_metadata: dict[str, str | int | dict[str, Any]]
 
     child_workflow_index: int | None = None
     child_workflow_key: str | None = None
