@@ -1,6 +1,7 @@
 import os
 from logging import Logger, getLogger
 from typing import Dict, Optional
+import json
 
 import yaml
 
@@ -143,9 +144,15 @@ class ConfigLoader:
             "otel_service_name", "HATCHET_CLIENT_OTEL_SERVICE_NAME"
         )
 
-        otel_exporter_oltp_headers = get_config_value(
+        _oltp_headers = get_config_value(
             "otel_exporter_oltp_headers", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS"
         )
+
+        try:
+            otel_exporter_oltp_headers = json.loads(_oltp_headers) if isinstance(_oltp_headers, str) else _oltp_headers
+        except json.JSONDecodeError:
+            otel_exporter_oltp_headers = None
+
 
         otel_exporter_oltp_protocol = get_config_value(
             "otel_exporter_oltp_protocol", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_PROTOCOL"

@@ -53,17 +53,6 @@ class WorkerStatus(Enum):
     UNHEALTHY = 4
 
 
-resource = Resource(attributes={SERVICE_NAME: os.getenv("OTEL_SERVICE_NAME")})
-processor = BatchSpanProcessor(
-    OTLPSpanExporter(endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") + "/v1/traces")
-)
-
-trace_provider = TracerProvider(resource=resource)
-trace_provider.add_span_processor(processor)
-
-trace.set_tracer_provider(trace_provider)
-
-
 class Runner:
     def __init__(
         self,
@@ -103,6 +92,19 @@ class Runner:
         self.worker_context = WorkerContext(
             labels=labels, client=new_client_raw(config).dispatcher
         )
+
+        resource = Resource(attributes={SERVICE_NAME: config.otel_service_name})
+        processor = BatchSpanProcessor(
+            OTLPSpanExporter(
+                endpoint=config.otel_exporter_oltp_endpoint + "/v1/traces",
+                headers=config.otel_exporter_oltp_headers
+            )
+        )
+
+        trace_provider = TracerProvider(resource=resource)
+        trace_provider.add_span_processor(processor)
+
+        trace.set_tracer_provider(trace_provider)
 
         self.otel_tracer = trace.get_tracer(__name__)
 
