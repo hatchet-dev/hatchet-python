@@ -15,6 +15,9 @@ from hatchet_sdk.contracts.events_pb2 import (
     PutStreamEventRequest,
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
+from hatchet_sdk.utils.tracing import OTelTracingFactory
+
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -56,6 +59,8 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
+        self.otel_tracer = OTelTracingFactory.create_tracer(name=__name__, config=config)
+
     async def async_push(
         self, event_key, payload, options: Optional[PushEventOptions] = None
     ) -> Event:
@@ -72,40 +77,47 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        namespace = self.namespace
+        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+            carrier = {}
+            TraceContextTextMapPropagator().inject(carrier)
 
-        if (
-            options is not None
-            and "namespace" in options
-            and options["namespace"] is not None
-        ):
-            namespace = options["namespace"]
-            del options["namespace"]
+            namespace = self.namespace
 
-        namespaced_event_key = namespace + event_key
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
+                namespace = options["namespace"]
+                del options["namespace"]
 
-        try:
-            meta = None if options is None else options["additional_metadata"]
-            meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
-        except Exception as e:
-            raise ValueError(f"Error encoding meta: {e}")
+            namespaced_event_key = namespace + event_key
 
-        try:
-            payload_bytes = json.dumps(payload).encode("utf-8")
-        except json.UnicodeEncodeError as e:
-            raise ValueError(f"Error encoding payload: {e}")
+            try:
+                meta = dict() if options is None else options["additional_metadata"]
 
-        request = PushEventRequest(
-            key=namespaced_event_key,
-            payload=payload_bytes,
-            eventTimestamp=proto_timestamp_now(),
-            additionalMetadata=meta_bytes,
-        )
+                meta["__otel_context"] = carrier
 
-        try:
-            return self.client.Push(request, metadata=get_metadata(self.token))
-        except grpc.RpcError as e:
-            raise ValueError(f"gRPC error: {e}")
+                meta_bytes = None if meta is None else json.dumps(meta, default=str).encode("utf-8")
+            except Exception as e:
+                raise ValueError(f"Error encoding meta: {e}")
+
+            try:
+                payload_bytes = json.dumps(payload).encode("utf-8")
+            except json.UnicodeEncodeError as e:
+                raise ValueError(f"Error encoding payload: {e}")
+
+            request = PushEventRequest(
+                key=namespaced_event_key,
+                payload=payload_bytes,
+                eventTimestamp=proto_timestamp_now(),
+                additionalMetadata=meta_bytes,
+            )
+
+            try:
+                return self.client.Push(request, metadata=get_metadata(self.token))
+            except grpc.RpcError as e:
+                raise ValueError(f"gRPC error: {e}")
 
     @tenacity_retry
     def bulk_push(
