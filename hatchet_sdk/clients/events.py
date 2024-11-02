@@ -96,7 +96,7 @@ class EventClient:
             try:
                 meta = dict() if options is None else options["additional_metadata"]
                 meta["__otel_context"] = carrier
-                meta_bytes = None if meta is None else json.dumps(meta, default=str).encode("utf-8")
+                meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
             except Exception as e:
                 raise ValueError(f"Error encoding meta: {e}")
 
