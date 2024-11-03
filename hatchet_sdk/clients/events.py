@@ -16,7 +16,8 @@ from hatchet_sdk.contracts.events_pb2 import (
     PutStreamEventRequest,
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
-from hatchet_sdk.utils.tracing import create_tracer, munge_metadata
+from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata
+from hatchet_sdk.utils.serialization import flatten
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -75,7 +76,8 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        with self.otel_tracer.start_as_current_span("hatchet.run"):
+        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+            carrier = create_carrier()
             namespace = self.namespace
 
             if (
@@ -83,19 +85,20 @@ class EventClient:
                 and "namespace" in options
                 and options["namespace"] is not None
             ):
-                namespace = options["namespace"]
-                del options["namespace"]
+                namespace = options.pop("namespace")
 
             namespaced_event_key = namespace + event_key
 
             try:
-                ## TODO: Split the munging and the logging?
-                ## TODO: Better error handling?
-                meta_bytes = munge_metadata(
-                    meta=dict() if options is None else options["additional_metadata"],
+                meta = inject_carrier_into_metadata(
+                    dict() if options is None else options["additional_metadata"],
+                    carrier
                 )
+                meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
             except Exception as e:
                 raise ValueError(f"Error encoding meta: {e}")
+
+            span.set_attributes(flatten(meta, parent_key="", separator="."))
 
             try:
                 payload_bytes = json.dumps(payload).encode("utf-8")
@@ -128,21 +131,23 @@ class EventClient:
             and "namespace" in options
             and options["namespace"] is not None
         ):
-            namespace = options["namespace"]
-            del options["namespace"]
+            namespace = options.pop("namespace")
 
         bulk_events = []
         for event in events:
             with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+                carrier = create_carrier()
                 span.set_attribute("bulk_push_correlation_id", str(bulk_push_correlation_id))
 
                 event_key = namespace + event["key"]
                 payload = event["payload"]
 
                 try:
-                    ## TODO: Split the munging and the logging?
-                    ## TODO: Better error handling?
-                    meta_bytes = munge_metadata(event.get("additional_metadata"))
+                    meta = inject_carrier_into_metadata(
+                        event.get("additional_metadata", {}),
+                        carrier
+                    )
+                    meta_bytes = json.dumps(meta).encode("utf-8") if meta else None
                 except Exception as e:
                     raise ValueError(f"Error encoding meta: {e}")
 

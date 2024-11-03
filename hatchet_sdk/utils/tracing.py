@@ -14,7 +14,8 @@ from typing import Any
 
 from hatchet_sdk.loader import ClientConfig
 from functools import cache
-from hatchet_sdk.utils.serialization import flatten
+
+OTEL_CARRIER_KEY = "__otel_carrier"
 
 @cache
 def create_tracer(name: str, config: ClientConfig) -> Tracer:
@@ -36,23 +37,21 @@ def create_tracer(name: str, config: ClientConfig) -> Tracer:
 
     return trace.get_tracer(name)
 
-def munge_metadata(meta: dict[str, Any] | None) -> bytes | None:
-    span = trace.get_current_span()
-    span.set_attributes(flatten(meta, parent_key="", separator="."))
-
+def create_carrier() -> dict[str, str]:
     carrier = {}
     TraceContextTextMapPropagator().inject(carrier)
 
-    meta["__otel_carrier"] = carrier
+    return carrier
 
-    return None if meta is None else json.dumps(meta).encode("utf-8")
+def inject_carrier_into_metadata(metadata: dict[Any, Any], carrier: dict[str, str]) -> dict[Any, Any]:
+    metadata[OTEL_CARRIER_KEY] = carrier
 
-def parse_carrier_from_metadata(metadata: dict[str, Any] | None) -> Context:
-    metadata |= {}
+    return metadata
 
+def parse_carrier_from_metadata(metadata: dict[str, Any]) -> Context:
     return (
         TraceContextTextMapPropagator().extract(_ctx)
-        if (_ctx := metadata.get("__otel_carrier"))
+        if (_ctx := metadata.get(OTEL_CARRIER_KEY))
         else None
     )
 
