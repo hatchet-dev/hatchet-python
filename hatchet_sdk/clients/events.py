@@ -151,6 +151,8 @@ class EventClient:
                 except Exception as e:
                     raise ValueError(f"Error encoding meta: {e}")
 
+                span.set_attributes(flatten(meta, parent_key="", separator="."))
+
                 try:
                     payload_bytes = json.dumps(payload).encode("utf-8")
                 except json.UnicodeEncodeError as e:
