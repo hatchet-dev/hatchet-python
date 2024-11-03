@@ -84,7 +84,7 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
-        self.otel_tracer = create_tracer(name=__name__, config=config)
+        self.otel_tracer = create_tracer(config=config)
 
     def create_workflow_run_url(self, action: Action) -> str:
         return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"

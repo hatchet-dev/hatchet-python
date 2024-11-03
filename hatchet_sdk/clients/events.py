@@ -58,7 +58,7 @@ class EventClient:
         self.client = client
         self.token = config.token
         self.namespace = config.namespace
-        self.otel_tracer = create_tracer(name=__name__, config=config)
+        self.otel_tracer = create_tracer(config=config)
 
     async def async_push(
         self, event_key, payload, options: Optional[PushEventOptions] = None

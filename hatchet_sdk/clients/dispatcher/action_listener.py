@@ -2,8 +2,8 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from pydantic import BaseModel, field_validator, ConfigDict
-from typing import AsyncGenerator, List, Optional, Any
+from pydantic import BaseModel, field_validator, ConfigDict, SkipValidation
+from typing import Annotated, AsyncGenerator, List, Optional, Any
 
 import grpc
 from grpc._cython import cygrpc
@@ -76,7 +76,9 @@ class Action(BaseModel):
 
     action_id: str
     action_payload: dict[str, Any]
-    action_type: ActionType
+
+    ## TODO: SkipValidation doesn't seem to be working here - need to investigate
+    action_type: Annotated[ActionType, SkipValidation]
 
     additional_metadata: dict[str, str | int | dict[str, Any]]
 

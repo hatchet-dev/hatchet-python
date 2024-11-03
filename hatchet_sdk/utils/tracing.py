@@ -18,7 +18,7 @@ from functools import cache
 OTEL_CARRIER_KEY = "__otel_carrier"
 
 @cache
-def create_tracer(name: str, config: ClientConfig) -> Tracer:
+def create_tracer(config: ClientConfig) -> Tracer:
     ## TODO: Figure out how to specify protocol here
     resource = Resource(
         attributes={SERVICE_NAME: config.otel_service_name or "hatchet.run"}
@@ -35,7 +35,7 @@ def create_tracer(name: str, config: ClientConfig) -> Tracer:
 
     trace.set_tracer_provider(trace_provider)
 
-    return trace.get_tracer(name)
+    return trace.get_tracer(__name__)
 
 def create_carrier() -> dict[str, str]:
     carrier = {}
