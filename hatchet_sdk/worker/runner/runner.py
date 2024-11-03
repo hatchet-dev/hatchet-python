@@ -15,7 +15,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.dispatcher.action_listener import Action, UserFacingAction
+from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
@@ -90,6 +90,9 @@ class Runner:
             name=__name__, config=config
         )
 
+    def create_workflow_run_url(self, action: Action) -> str:
+        return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"
+
     def run(self, action: Action):
         ctx = (
             TraceContextTextMapPropagator().extract(_ctx)
@@ -103,15 +106,8 @@ class Runner:
             if self.worker_context.id() is None:
                 self.worker_context._worker_id = action.worker_id
 
-            span.set_attributes(
-                flatten(
-                    UserFacingAction.model_validate(
-                        action.model_dump()
-                    ).model_dump(),
-                    parent_key="",
-                    separator=".",
-                )
-            )
+            span.set_attributes(action.otel_attributes)
+            span.set_attribute("workflow_run_url", self.create_workflow_run_url(action))
 
             match action.action_type:
                 case ActionType.START_STEP_RUN:
@@ -276,6 +272,32 @@ class Runner:
         if run_id in self.contexts:
             del self.contexts[run_id]
 
+    def create_context(self, action: Action, action_func: Callable[..., Any] | None) -> Context | DurableContext:
+        if hasattr(action_func, "durable") and action_func.durable:
+            return DurableContext(
+                    action,
+                    self.dispatcher_client,
+                    self.admin_client,
+                    self.client.event,
+                    self.client.rest,
+                    self.client.workflow_listener,
+                    self.workflow_run_event_listener,
+                    self.worker_context,
+                    self.client.config.namespace,
+                )
+
+        return Context(
+            action,
+            self.dispatcher_client,
+            self.admin_client,
+            self.client.event,
+            self.client.rest,
+            self.client.workflow_listener,
+            self.workflow_run_event_listener,
+            self.worker_context,
+            self.client.config.namespace,
+        )
+
     async def handle_start_step_run(self, action: Action):
         with self.otel_tracer.start_as_current_span(
             "hatchet.worker.runner.runner.Runner.handle_start_step_run"
@@ -286,36 +308,7 @@ class Runner:
             # Find the corresponding action function from the registry
             action_func = self.action_registry.get(action_name)
 
-            context: Context | DurableContext
-
-            is_durable_context = hasattr(action_func, "durable") and action_func.durable
-
-            span.set_attribute("is_durable_context", is_durable_context)
-
-            if is_durable_context:
-                context = DurableContext(
-                    action,
-                    self.dispatcher_client,
-                    self.admin_client,
-                    self.client.event,
-                    self.client.rest,
-                    self.client.workflow_listener,
-                    self.workflow_run_event_listener,
-                    self.worker_context,
-                    self.client.config.namespace,
-                )
-            else:
-                context = Context(
-                    action,
-                    self.dispatcher_client,
-                    self.admin_client,
-                    self.client.event,
-                    self.client.rest,
-                    self.client.workflow_listener,
-                    self.workflow_run_event_listener,
-                    self.worker_context,
-                    self.client.config.namespace,
-                )
+            context = self.create_context(action, action_func)
 
             self.contexts[action.step_run_id] = context
 
