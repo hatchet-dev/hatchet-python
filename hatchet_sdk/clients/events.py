@@ -16,8 +16,7 @@ from hatchet_sdk.contracts.events_pb2 import (
     PutStreamEventRequest,
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
-from hatchet_sdk.utils.tracing import TracingService
-from hatchet_sdk.utils.serialization import flatten
+from hatchet_sdk.utils.tracing import create_tracer, munge_metadata
 
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
@@ -60,8 +59,7 @@ class EventClient:
         self.client = client
         self.token = config.token
         self.namespace = config.namespace
-
-        self.tracing_service = TracingService(name=__name__, config=config)
+        self.otel_tracer = create_tracer(name=__name__, config=config)
 
     async def async_push(
         self, event_key, payload, options: Optional[PushEventOptions] = None
@@ -79,7 +77,7 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        with self.tracing_service.tracer.start_as_current_span("hatchet.run"):
+        with self.otel_tracer.start_as_current_span("hatchet.run"):
             namespace = self.namespace
 
             if (
@@ -95,7 +93,7 @@ class EventClient:
             try:
                 ## TODO: Split the munging and the logging?
                 ## TODO: Better error handling?
-                meta_bytes = self.tracing_service.munge_metadata(
+                meta_bytes = munge_metadata(
                     meta=dict() if options is None else options["additional_metadata"],
                 )
             except Exception as e:
@@ -137,7 +135,7 @@ class EventClient:
 
         bulk_events = []
         for event in events:
-            with self.tracing_service.tracer.start_as_current_span("hatchet.run") as span:
+            with self.otel_tracer.start_as_current_span("hatchet.run") as span:
                 span.set_attribute("bulk_push_correlation_id", str(bulk_push_correlation_id))
 
                 event_key = namespace + event["key"]
@@ -146,7 +144,7 @@ class EventClient:
                 try:
                     ## TODO: Split the munging and the logging?
                     ## TODO: Better error handling?
-                    meta_bytes = self.tracing_service.munge_metadata(event.get("additional_metadata"))
+                    meta_bytes = munge_metadata(event.get("additional_metadata"))
                 except Exception as e:
                     raise ValueError(f"Error encoding meta: {e}")
 

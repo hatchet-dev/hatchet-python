@@ -10,8 +10,7 @@ from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
 
-from opentelemetry.trace import SpanContext, TraceFlags, StatusCode, Span
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.trace import StatusCode
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
@@ -35,8 +34,7 @@ from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
-from hatchet_sdk.utils.serialization import flatten
-from hatchet_sdk.utils.tracing import OTelTracingFactory
+from hatchet_sdk.utils.tracing import parse_carrier_from_metadata, create_tracer
 
 
 class WorkerStatus(Enum):
@@ -86,19 +84,13 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
-        self.otel_tracer = OTelTracingFactory.create_tracer(
-            name=__name__, config=config
-        )
+        self.otel_tracer = create_tracer(name=__name__, config=config)
 
     def create_workflow_run_url(self, action: Action) -> str:
         return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"
 
     def run(self, action: Action):
-        ctx = (
-            TraceContextTextMapPropagator().extract(_ctx)
-            if (_ctx := action.additional_metadata.get("__otel_context"))
-            else None
-        )
+        ctx = parse_carrier_from_metadata(action.additional_metadata)
 
         with self.otel_tracer.start_as_current_span(
             "hatchet.worker.runner.runner.Runner.run", context=ctx
