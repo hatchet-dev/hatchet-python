@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import json
+from uuid import uuid4
 from typing import Any, Dict, List, Optional, TypedDict
 
 import grpc
@@ -15,7 +16,7 @@ from hatchet_sdk.contracts.events_pb2 import (
     PutStreamEventRequest,
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
-from hatchet_sdk.utils.tracing import OTelTracingFactory
+from hatchet_sdk.utils.tracing import TracingService
 from hatchet_sdk.utils.serialization import flatten
 
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
@@ -60,9 +61,7 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
-        self.otel_tracer = OTelTracingFactory.create_tracer(
-            name=__name__, config=config
-        )
+        self.tracing_service = TracingService(name=__name__, config=config)
 
     async def async_push(
         self, event_key, payload, options: Optional[PushEventOptions] = None
@@ -80,10 +79,7 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
-            carrier = {}
-            TraceContextTextMapPropagator().inject(carrier)
-
+        with self.tracing_service.tracer.start_as_current_span("hatchet.run"):
             namespace = self.namespace
 
             if (
@@ -97,12 +93,11 @@ class EventClient:
             namespaced_event_key = namespace + event_key
 
             try:
-                meta = dict() if options is None else options["additional_metadata"]
-
-                span.set_attributes(flatten(meta, parent_key="", separator="."))
-
-                meta["__otel_context"] = carrier
-                meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
+                ## TODO: Split the munging and the logging?
+                ## TODO: Better error handling?
+                meta_bytes = self.tracing_service.munge_metadata(
+                    meta=dict() if options is None else options["additional_metadata"],
+                )
             except Exception as e:
                 raise ValueError(f"Error encoding meta: {e}")
 
@@ -130,6 +125,7 @@ class EventClient:
         options: BulkPushEventOptions = None,
     ) -> List[Event]:
         namespace = self.namespace
+        bulk_push_correlation_id = uuid4()
 
         if (
             options is not None
@@ -141,27 +137,31 @@ class EventClient:
 
         bulk_events = []
         for event in events:
-            event_key = namespace + event["key"]
-            payload = event["payload"]
+            with self.tracing_service.tracer.start_as_current_span("hatchet.run") as span:
+                span.set_attribute("bulk_push_correlation_id", str(bulk_push_correlation_id))
 
-            try:
-                meta = event.get("additional_metadata")
-                meta_bytes = json.dumps(meta).encode("utf-8") if meta else None
-            except Exception as e:
-                raise ValueError(f"Error encoding meta: {e}")
+                event_key = namespace + event["key"]
+                payload = event["payload"]
 
-            try:
-                payload_bytes = json.dumps(payload).encode("utf-8")
-            except json.UnicodeEncodeError as e:
-                raise ValueError(f"Error encoding payload: {e}")
+                try:
+                    ## TODO: Split the munging and the logging?
+                    ## TODO: Better error handling?
+                    meta_bytes = self.tracing_service.munge_metadata(event.get("additional_metadata"))
+                except Exception as e:
+                    raise ValueError(f"Error encoding meta: {e}")
 
-            request = PushEventRequest(
-                key=event_key,
-                payload=payload_bytes,
-                eventTimestamp=proto_timestamp_now(),
-                additionalMetadata=meta_bytes,
-            )
-            bulk_events.append(request)
+                try:
+                    payload_bytes = json.dumps(payload).encode("utf-8")
+                except json.UnicodeEncodeError as e:
+                    raise ValueError(f"Error encoding payload: {e}")
+
+                request = PushEventRequest(
+                    key=event_key,
+                    payload=payload_bytes,
+                    eventTimestamp=proto_timestamp_now(),
+                    additionalMetadata=meta_bytes,
+                )
+                bulk_events.append(request)
 
         bulk_request = BulkPushEventRequest(events=bulk_events)
 
