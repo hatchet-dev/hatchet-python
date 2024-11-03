@@ -19,9 +19,9 @@ class OTelTracingFactory:
         resource = Resource(attributes={SERVICE_NAME: config.otel_service_name})
         processor = BatchSpanProcessor(
             OTLPSpanExporter(
-                endpoint=config.otel_exporter_oltp_endpoint + "/v1/traces",
+                endpoint=config.otel_exporter_oltp_endpoint,
                 headers=config.otel_exporter_oltp_headers
-            )
+            ),
         )
 
         trace_provider = TracerProvider(resource=resource)
