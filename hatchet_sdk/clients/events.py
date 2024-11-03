@@ -18,8 +18,6 @@ from hatchet_sdk.contracts.events_pb2 import (
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
 from hatchet_sdk.utils.tracing import create_tracer, munge_metadata
 
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-
 from ..loader import ClientConfig
 from ..metadata import get_metadata
 
