@@ -24,6 +24,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
+from hatchet_sdk.utils.serialization import flatten
 
 from ...loader import ClientConfig
 from ...metadata import get_metadata
@@ -55,8 +56,7 @@ class GetActionListenerRequest:
             else:
                 self.labels[key] = WorkerLabels(strValue=str(value))
 
-
-class UserFacingAction(BaseModel):
+class Action(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     worker_id: str
@@ -74,7 +74,6 @@ class UserFacingAction(BaseModel):
     child_workflow_key: str | None = None
     parent_workflow_run_id: str | None = None
 
-class Action(UserFacingAction):
     action_id: str
     action_payload: dict[str, Any]
     action_type: ActionType
@@ -94,6 +93,26 @@ class Action(UserFacingAction):
                     return {}
             case _:
                 return {}
+
+    @property
+    def otel_attributes(self) -> dict[str, Any]:
+        return flatten({
+            "worker_id": self.worker_id,
+            "tenant_id": self.tenant_id,
+            "workflow_run_id": self.workflow_run_id,
+            "get_group_key_run_id": self.get_group_key_run_id,
+            "job_id": self.job_id,
+            "job_name": self.job_name,
+            "job_run_id": self.job_run_id,
+            "step_id": self.step_id,
+            "step_run_id": self.step_run_id,
+            "retry_count": self.retry_count,
+            "child_workflow_index": self.child_workflow_index,
+            "child_workflow_key": self.child_workflow_key,
+            "parent_workflow_run_id": self.parent_workflow_run_id,
+            "action_payload": self.action_payload,
+            "additional_metadata": self.additional_metadata,
+        })
 
 
 START_STEP_RUN = 0
