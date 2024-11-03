@@ -16,6 +16,7 @@ from hatchet_sdk.contracts.events_pb2 import (
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
 from hatchet_sdk.utils.tracing import OTelTracingFactory
+from hatchet_sdk.utils.serialization import flatten
 
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
@@ -96,7 +97,7 @@ class EventClient:
             try:
                 meta = dict() if options is None else options["additional_metadata"]
 
-                span.set_attributes(meta)
+                span.set_attributes(flatten(meta))
 
                 meta["__otel_context"] = carrier
                 meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")

@@ -9,17 +9,13 @@ from enum import Enum
 from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict
-import os
-from uuid import uuid4, UUID
-import random
 
-from opentelemetry import trace, baggage
 from opentelemetry.trace import SpanContext, TraceFlags, StatusCode, Span
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
-from hatchet_sdk.clients.dispatcher.action_listener import Action
+from hatchet_sdk.clients.dispatcher.action_listener import Action, UserFacingAction
 from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
@@ -108,7 +104,11 @@ class Runner:
                 self.worker_context._worker_id = action.worker_id
 
             span.set_attributes(
-                flatten(action.model_dump(), parent_key="", separator=".")
+                flatten(
+                    UserFacingAction.model_validate(**action.model_dump()),
+                    parent_key="",
+                    separator=".",
+                )
             )
 
             match action.action_type:

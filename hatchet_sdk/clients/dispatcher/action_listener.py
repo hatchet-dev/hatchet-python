@@ -56,7 +56,7 @@ class GetActionListenerRequest:
                 self.labels[key] = WorkerLabels(strValue=str(value))
 
 
-class Action(BaseModel):
+class UserFacingAction(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     worker_id: str
@@ -68,16 +68,18 @@ class Action(BaseModel):
     job_run_id: str
     step_id: str
     step_run_id: str
-    action_id: str
-    action_payload: dict[str, Any]
-    action_type: ActionType
     retry_count: int
-
-    additional_metadata: dict[str, str | int | dict[str, Any]]
 
     child_workflow_index: int | None = None
     child_workflow_key: str | None = None
     parent_workflow_run_id: str | None = None
+
+class Action(UserFacingAction):
+    action_id: str
+    action_payload: dict[str, Any]
+    action_type: ActionType
+
+    additional_metadata: dict[str, str | int | dict[str, Any]]
 
     @field_validator("additional_metadata", "action_payload", mode="before")
     @classmethod
