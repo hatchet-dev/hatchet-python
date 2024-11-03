@@ -95,8 +95,10 @@ class Runner:
         )
 
     def run(self, action: Action):
-        ctx = TraceContextTextMapPropagator().extract(
-            carrier=action.additional_metadata.get("__otel_context")
+        ctx = (
+            TraceContextTextMapPropagator().extract(_ctx)
+            if (_ctx := action.additional_metadata.get("__otel_context"))
+            else None
         )
 
         with self.otel_tracer.start_as_current_span(
