@@ -96,23 +96,27 @@ class Action(BaseModel):
 
     @property
     def otel_attributes(self) -> dict[str, Any]:
-        return flatten({
-            "worker_id": self.worker_id,
-            "tenant_id": self.tenant_id,
-            "workflow_run_id": self.workflow_run_id,
-            "get_group_key_run_id": self.get_group_key_run_id,
-            "job_id": self.job_id,
-            "job_name": self.job_name,
-            "job_run_id": self.job_run_id,
-            "step_id": self.step_id,
-            "step_run_id": self.step_run_id,
-            "retry_count": self.retry_count,
-            "child_workflow_index": self.child_workflow_index,
-            "child_workflow_key": self.child_workflow_key,
-            "parent_workflow_run_id": self.parent_workflow_run_id,
-            "action_payload": self.action_payload,
-            "additional_metadata": self.additional_metadata,
-        })
+        return flatten(
+            xs={
+                "worker_id": self.worker_id,
+                "tenant_id": self.tenant_id,
+                "workflow_run_id": self.workflow_run_id,
+                "get_group_key_run_id": self.get_group_key_run_id,
+                "job_id": self.job_id,
+                "job_name": self.job_name,
+                "job_run_id": self.job_run_id,
+                "step_id": self.step_id,
+                "step_run_id": self.step_run_id,
+                "retry_count": self.retry_count,
+                "child_workflow_index": self.child_workflow_index,
+                "child_workflow_key": self.child_workflow_key,
+                "parent_workflow_run_id": self.parent_workflow_run_id,
+                "action_payload": self.action_payload,
+                "additional_metadata": self.additional_metadata,
+            },
+            parent_key="",
+            separator="."
+        )
 
 
 START_STEP_RUN = 0
