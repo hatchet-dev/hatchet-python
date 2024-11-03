@@ -54,4 +54,3 @@ def parse_carrier_from_metadata(metadata: dict[str, Any]) -> Context:
         if (_ctx := metadata.get(OTEL_CARRIER_KEY))
         else None
     )
-

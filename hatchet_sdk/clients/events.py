@@ -16,7 +16,7 @@ from hatchet_sdk.contracts.events_pb2 import (
     PutStreamEventRequest,
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
-from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata
+from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata, parse_carrier_from_metadata
 from hatchet_sdk.utils.serialization import flatten
 
 from ..loader import ClientConfig
@@ -76,7 +76,9 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+        ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
+
+        with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
             carrier = create_carrier()
             namespace = self.namespace
 
