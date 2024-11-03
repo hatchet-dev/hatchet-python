@@ -95,6 +95,9 @@ class EventClient:
 
             try:
                 meta = dict() if options is None else options["additional_metadata"]
+
+                span.set_attributes(meta)
+
                 meta["__otel_context"] = carrier
                 meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
             except Exception as e:
