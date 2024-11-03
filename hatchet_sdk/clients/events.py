@@ -60,7 +60,9 @@ class EventClient:
         self.token = config.token
         self.namespace = config.namespace
 
-        self.otel_tracer = OTelTracingFactory.create_tracer(name=__name__, config=config)
+        self.otel_tracer = OTelTracingFactory.create_tracer(
+            name=__name__, config=config
+        )
 
     async def async_push(
         self, event_key, payload, options: Optional[PushEventOptions] = None
@@ -97,9 +99,7 @@ class EventClient:
             try:
                 meta = dict() if options is None else options["additional_metadata"]
 
-                span.set_attributes(
-                    flatten(meta, parent_key="", separator=".")
-                )
+                span.set_attributes(flatten(meta, parent_key="", separator="."))
 
                 meta["__otel_context"] = carrier
                 meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
