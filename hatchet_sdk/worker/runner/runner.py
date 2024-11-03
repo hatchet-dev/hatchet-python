@@ -272,19 +272,21 @@ class Runner:
         if run_id in self.contexts:
             del self.contexts[run_id]
 
-    def create_context(self, action: Action, action_func: Callable[..., Any] | None) -> Context | DurableContext:
+    def create_context(
+        self, action: Action, action_func: Callable[..., Any] | None
+    ) -> Context | DurableContext:
         if hasattr(action_func, "durable") and action_func.durable:
             return DurableContext(
-                    action,
-                    self.dispatcher_client,
-                    self.admin_client,
-                    self.client.event,
-                    self.client.rest,
-                    self.client.workflow_listener,
-                    self.workflow_run_event_listener,
-                    self.worker_context,
-                    self.client.config.namespace,
-                )
+                action,
+                self.dispatcher_client,
+                self.admin_client,
+                self.client.event,
+                self.client.rest,
+                self.client.workflow_listener,
+                self.workflow_run_event_listener,
+                self.worker_context,
+                self.client.config.namespace,
+            )
 
         return Context(
             action,
