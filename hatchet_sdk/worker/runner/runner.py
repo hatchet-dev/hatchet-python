@@ -105,7 +105,9 @@ class Runner:
 
             span.set_attributes(
                 flatten(
-                    UserFacingAction.model_validate(**action.model_dump()),
+                    UserFacingAction.model_validate(
+                        action.model_dump()
+                    ).model_dump(),
                     parent_key="",
                     separator=".",
                 )
