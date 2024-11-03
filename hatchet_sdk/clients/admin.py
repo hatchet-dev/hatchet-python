@@ -24,7 +24,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 )
 from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
 from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
-from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata
+from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata, parse_carrier_from_metadata
 from hatchet_sdk.utils.serialization import flatten
 
 from ..loader import ClientConfig
@@ -445,7 +445,9 @@ class AdminClient(AdminClientBase):
     def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ) -> WorkflowRunRef:
-        with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+        ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
+
+        with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
             carrier = create_carrier()
 
             try:

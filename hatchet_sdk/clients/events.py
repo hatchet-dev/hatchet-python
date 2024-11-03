@@ -127,6 +127,7 @@ class EventClient:
     ) -> List[Event]:
         namespace = self.namespace
         bulk_push_correlation_id = uuid4()
+        ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
         if (
             options is not None
@@ -137,7 +138,7 @@ class EventClient:
 
         bulk_events = []
         for event in events:
-            with self.otel_tracer.start_as_current_span("hatchet.run") as span:
+            with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
                 carrier = create_carrier()
                 span.set_attribute("bulk_push_correlation_id", str(bulk_push_correlation_id))
 
