@@ -16,48 +16,43 @@ from hatchet_sdk.loader import ClientConfig
 from functools import cache
 from hatchet_sdk.utils.serialization import flatten
 
-class TracingService:
-    @cache
-    def create_tracer(cls, name: str, config: ClientConfig) -> Tracer:
-        ## TODO: Figure out how to specify protocol here
-        resource = Resource(
-            attributes={SERVICE_NAME: config.otel_service_name or "hatchet.run"}
-        )
-        processor = BatchSpanProcessor(
-            OTLPSpanExporter(
-                endpoint=config.otel_exporter_oltp_endpoint,
-                headers=config.otel_exporter_oltp_headers,
-            ),
-        )
+@cache
+def create_tracer(name: str, config: ClientConfig) -> Tracer:
+    ## TODO: Figure out how to specify protocol here
+    resource = Resource(
+        attributes={SERVICE_NAME: config.otel_service_name or "hatchet.run"}
+    )
+    processor = BatchSpanProcessor(
+        OTLPSpanExporter(
+            endpoint=config.otel_exporter_oltp_endpoint,
+            headers=config.otel_exporter_oltp_headers,
+        ),
+    )
 
-        trace_provider = TracerProvider(resource=resource)
-        trace_provider.add_span_processor(processor)
+    trace_provider = TracerProvider(resource=resource)
+    trace_provider.add_span_processor(processor)
 
-        trace.set_tracer_provider(trace_provider)
+    trace.set_tracer_provider(trace_provider)
 
-        return trace.get_tracer(name)
+    return trace.get_tracer(name)
 
+def munge_metadata(meta: dict[str, Any] | None) -> bytes | None:
+    span = trace.get_current_span()
+    span.set_attributes(flatten(meta, parent_key="", separator="."))
 
-    def __init__(self, name: str, config: ClientConfig):
-        self.tracer = self.create_tracer(name, config)
+    carrier = {}
+    TraceContextTextMapPropagator().inject(carrier)
 
-    def munge_metadata(self, meta: dict[str, Any] | None) -> bytes | None:
-        span = trace.get_current_span()
-        span.set_attributes(flatten(meta, parent_key="", separator="."))
+    meta["__otel_carrier"] = carrier
 
-        carrier = {}
-        TraceContextTextMapPropagator().inject(carrier)
+    return None if meta is None else json.dumps(meta).encode("utf-8")
 
-        meta["__otel_carrier"] = carrier
+def parse_carrier_from_metadata(metadata: dict[str, Any] | None) -> Context:
+    metadata |= {}
 
-        return None if meta is None else json.dumps(meta).encode("utf-8")
-
-    def parse_carrier_from_metadata(self, metadata: dict[str, Any] | None) -> Context:
-        metadata |= {}
-
-        return (
-            TraceContextTextMapPropagator().extract(_ctx)
-            if (_ctx := metadata.get("__otel_carrier"))
-            else None
-        )
+    return (
+        TraceContextTextMapPropagator().extract(_ctx)
+        if (_ctx := metadata.get("__otel_carrier"))
+        else None
+    )
 
