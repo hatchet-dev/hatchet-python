@@ -114,7 +114,6 @@ class Action(BaseModel):
                 "child_workflow_key": self.child_workflow_key,
                 "parent_workflow_run_id": self.parent_workflow_run_id,
                 "action_payload": self.action_payload,
-                "additional_metadata": self.additional_metadata,
             },
             parent_key="",
             separator="."
