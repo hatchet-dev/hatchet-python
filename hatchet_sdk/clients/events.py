@@ -78,7 +78,7 @@ class EventClient:
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
-        with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
+        with self.otel_tracer.start_as_current_span("hatchet.push", context=ctx) as span:
             carrier = create_carrier()
             namespace = self.namespace
 
@@ -114,6 +114,8 @@ class EventClient:
                 additionalMetadata=meta_bytes,
             )
 
+            span.add_event("Pushing event", attributes={"key": namespaced_event_key})
+
             try:
                 return self.client.Push(request, metadata=get_metadata(self.token))
             except grpc.RpcError as e:
@@ -138,7 +140,7 @@ class EventClient:
 
         bulk_events = []
         for event in events:
-            with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
+            with self.otel_tracer.start_as_current_span("hatchet.bulk_push", context=ctx) as span:
                 carrier = create_carrier()
                 span.set_attribute("bulk_push_correlation_id", str(bulk_push_correlation_id))
 
@@ -171,6 +173,7 @@ class EventClient:
 
         bulk_request = BulkPushEventRequest(events=bulk_events)
 
+        span.add_event("Pushing bulk events")
         try:
             response = self.client.BulkPush(
                 bulk_request, metadata=get_metadata(self.token)

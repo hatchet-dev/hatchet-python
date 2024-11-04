@@ -191,7 +191,7 @@ class AdminClientAioImpl(AdminClientBase):
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
-        with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
+        with self.otel_tracer.start_as_current_span("hatchet.async_run_workflow", context=ctx) as span:
             carrier = create_carrier()
 
             try:
@@ -212,6 +212,7 @@ class AdminClientAioImpl(AdminClientBase):
 
                 options["additional_metadata"] = inject_carrier_into_metadata(options["additional_metadata"], carrier)
                 span.set_attributes(flatten(options["additional_metadata"], parent_key="", separator="."))
+                span.add_event("Triggering workflow", attributes={"namespace": namespace})
 
                 request = self._prepare_workflow_request(workflow_name, input, options)
                 resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
@@ -455,7 +456,7 @@ class AdminClient(AdminClientBase):
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
-        with self.otel_tracer.start_as_current_span("hatchet.run", context=ctx) as span:
+        with self.otel_tracer.start_as_current_span("hatchet.run_workflow", context=ctx) as span:
             carrier = create_carrier()
 
             try:
@@ -479,6 +480,9 @@ class AdminClient(AdminClientBase):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 request = self._prepare_workflow_request(workflow_name, input, options)
+
+                span.add_event("Triggering workflow", attributes={"namespace": namespace})
+
                 resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
                     request,
                     metadata=get_metadata(self.token),
