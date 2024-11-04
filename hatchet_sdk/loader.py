@@ -6,7 +6,6 @@ import yaml
 
 from .token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
-
 class ClientTLSConfig:
     def __init__(
         self,
@@ -28,14 +27,14 @@ class ClientConfig:
 
     def __init__(
         self,
-        tenant_id: str = None,
-        tls_config: ClientTLSConfig = None,
-        token: str = None,
-        host_port: str = "localhost:7070",
+        tenant_id: str | None = None,
+        tls_config: ClientTLSConfig | None = None,
+        token: str | None = None,
+        host_port: str | None = None,
         server_url: str = "https://app.dev.hatchet-tools.com",
         namespace: str = None,
-        listener_v2_timeout: int = None,
-        logger: Logger = None,
+        listener_v2_timeout: int | None = None,
+        logger: Logger | None = None,
         grpc_max_recv_message_length: int = 4 * 1024 * 1024,  # 4MB
         grpc_max_send_message_length: int = 4 * 1024 * 1024,  # 4MB
     ):
@@ -87,6 +86,8 @@ class ConfigLoader:
 
         namespace = get_config_value("namespace", "HATCHET_CLIENT_NAMESPACE")
 
+        ## TODO: `tenantId` is not an attribute of `ClientConfig`, so `get_config_value` will always return `None`
+        ## if it's not set in the config file or as an environment variable. This should probably be changed to `tenant_id`.
         tenant_id = get_config_value("tenantId", "HATCHET_CLIENT_TENANT_ID")
         token = get_config_value("token", "HATCHET_CLIENT_TOKEN")
         listener_v2_timeout = get_config_value(
@@ -99,7 +100,7 @@ class ConfigLoader:
                 "Token must be set via HATCHET_CLIENT_TOKEN environment variable"
             )
 
-        host_port = get_config_value("hostPort", "HATCHET_CLIENT_HOST_PORT")
+        host_port = get_config_value("host_port", "HATCHET_CLIENT_HOST_PORT")
         server_url: str | None = None
 
         grpc_max_recv_message_length = get_config_value(
@@ -117,7 +118,10 @@ class ConfigLoader:
         if grpc_max_send_message_length:
             grpc_max_send_message_length = int(grpc_max_send_message_length)
 
-        if not host_port:
+        if host_port:
+            # if host_port is set, use it to override the server_url
+            server_url = host_port
+        else:
             # extract host and port from token
             server_url, grpc_broadcast_address = get_addresses_from_jwt(token)
             host_port = grpc_broadcast_address
