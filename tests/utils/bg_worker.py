@@ -7,7 +7,7 @@ import pytest
 
 
 def fixture_bg_worker(command, startup_time=5):
-    @pytest.fixture(scope="session", autouse=True)
+    @pytest.fixture(scope="function", autouse=True)
     def fixture_background_hatchet_worker(request):
         logging.info(f"Starting background worker: {' '.join(command)}")
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
