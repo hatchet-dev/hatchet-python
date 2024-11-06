@@ -59,27 +59,18 @@ class GetActionListenerRequest:
 @dataclass
 class Action:
     worker_id: str
-    tenant_id: str
-    workflow_run_id: str
-    get_group_key_run_id: Optional[str]
-    job_id: str
-    job_name: str
     job_run_id: str
     step_id: str
     step_run_id: str
+    action_id: str
+    action_payload: str
+    action_type: ActionType
     retry_count: int
+    additional_metadata: dict[str, str] | None = None
 
     child_workflow_index: int | None = None
     child_workflow_key: str | None = None
     parent_workflow_run_id: str | None = None
-
-    action_id: str
-    action_payload: dict[str, Any]
-
-    ## TODO: SkipValidation doesn't seem to be working here - need to investigate
-    action_type: Annotated[ActionType, SkipValidation]
-
-    additional_metadata: dict[str, str | int | dict[str, Any]]
 
     def __post_init__(self):
         if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
