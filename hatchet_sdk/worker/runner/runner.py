@@ -297,6 +297,8 @@ class Runner:
             "hatchet.worker.runner.runner.Runner.handle_start_step_run"
         ) as span:
             span.add_event("Starting step run")
+            span.set_attributes(action.otel_attributes)
+
             action_name = action.action_id
 
             # Find the corresponding action function from the registry
