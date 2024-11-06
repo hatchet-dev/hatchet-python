@@ -196,12 +196,16 @@ class AdminClientAioImpl(AdminClientBase):
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
-        with self.otel_tracer.start_as_current_span("hatchet.async_run_workflow", context=ctx) as span:
+        with self.otel_tracer.start_as_current_span(
+            "hatchet.async_run_workflow", context=ctx
+        ) as span:
             carrier = create_carrier()
 
             try:
                 if not self.pooled_workflow_listener:
-                    self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+                    self.pooled_workflow_listener = PooledWorkflowRunListener(
+                        self.config
+                    )
 
                 namespace = self.namespace
 
@@ -215,9 +219,17 @@ class AdminClientAioImpl(AdminClientBase):
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
 
-                options["additional_metadata"] = inject_carrier_into_metadata(options["additional_metadata"], carrier)
-                span.set_attributes(flatten(options["additional_metadata"], parent_key="", separator="."))
-                span.add_event("Triggering workflow", attributes={"namespace": namespace})
+                options["additional_metadata"] = inject_carrier_into_metadata(
+                    options["additional_metadata"], carrier
+                )
+                span.set_attributes(
+                    flatten(
+                        options["additional_metadata"], parent_key="", separator="."
+                    )
+                )
+                span.add_event(
+                    "Triggering workflow", attributes={"namespace": namespace}
+                )
 
                 request = self._prepare_workflow_request(workflow_name, input, options)
                 resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
@@ -239,7 +251,6 @@ class AdminClientAioImpl(AdminClientBase):
     async def run_workflows(
         self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> List[WorkflowRunRef]:
-
         if len(workflows) == 0:
             raise ValueError("No workflows to run")
         try:
@@ -259,7 +270,6 @@ class AdminClientAioImpl(AdminClientBase):
             workflow_run_requests: TriggerWorkflowRequest = []
 
             for workflow in workflows:
-
                 workflow_name = workflow["workflow_name"]
                 input_data = workflow["input"]
                 options = workflow["options"]
@@ -425,7 +435,6 @@ class AdminClient(AdminClientBase):
         options: ScheduleTriggerWorkflowOptions = None,
     ) -> WorkflowVersion:
         try:
-
             namespace = self.namespace
 
             if (
@@ -461,12 +470,16 @@ class AdminClient(AdminClientBase):
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
-        with self.otel_tracer.start_as_current_span("hatchet.run_workflow", context=ctx) as span:
+        with self.otel_tracer.start_as_current_span(
+            "hatchet.run_workflow", context=ctx
+        ) as span:
             carrier = create_carrier()
 
             try:
                 if not self.pooled_workflow_listener:
-                    self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+                    self.pooled_workflow_listener = PooledWorkflowRunListener(
+                        self.config
+                    )
 
                 namespace = self.namespace
 
@@ -478,15 +491,23 @@ class AdminClient(AdminClientBase):
                 ):
                     namespace = options.pop("namespace")
 
-                options["additional_metadata"] = inject_carrier_into_metadata(options["additional_metadata"], carrier)
-                span.set_attributes(flatten(options["additional_metadata"], parent_key="", separator="."))
+                options["additional_metadata"] = inject_carrier_into_metadata(
+                    options["additional_metadata"], carrier
+                )
+                span.set_attributes(
+                    flatten(
+                        options["additional_metadata"], parent_key="", separator="."
+                    )
+                )
 
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 request = self._prepare_workflow_request(workflow_name, input, options)
 
-                span.add_event("Triggering workflow", attributes={"namespace": namespace})
+                span.add_event(
+                    "Triggering workflow", attributes={"namespace": namespace}
+                )
 
                 resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
                     request,
@@ -507,7 +528,6 @@ class AdminClient(AdminClientBase):
     def run_workflows(
         self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> list[WorkflowRunRef]:
-
         workflow_run_requests: TriggerWorkflowRequest = []
         try:
             if not self.pooled_workflow_listener:

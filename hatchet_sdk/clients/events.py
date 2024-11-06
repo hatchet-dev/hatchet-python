@@ -83,7 +83,9 @@ class EventClient:
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
-        with self.otel_tracer.start_as_current_span("hatchet.push", context=ctx) as span:
+        with self.otel_tracer.start_as_current_span(
+            "hatchet.push", context=ctx
+        ) as span:
             carrier = create_carrier()
             namespace = self.namespace
 
@@ -99,7 +101,7 @@ class EventClient:
             try:
                 meta = inject_carrier_into_metadata(
                     dict() if options is None else options["additional_metadata"],
-                    carrier
+                    carrier,
                 )
                 meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
             except Exception as e:
@@ -145,17 +147,20 @@ class EventClient:
 
         bulk_events = []
         for event in events:
-            with self.otel_tracer.start_as_current_span("hatchet.bulk_push", context=ctx) as span:
+            with self.otel_tracer.start_as_current_span(
+                "hatchet.bulk_push", context=ctx
+            ) as span:
                 carrier = create_carrier()
-                span.set_attribute("bulk_push_correlation_id", str(bulk_push_correlation_id))
+                span.set_attribute(
+                    "bulk_push_correlation_id", str(bulk_push_correlation_id)
+                )
 
                 event_key = namespace + event["key"]
                 payload = event["payload"]
 
                 try:
                     meta = inject_carrier_into_metadata(
-                        event.get("additional_metadata", {}),
-                        carrier
+                        event.get("additional_metadata", {}), carrier
                     )
                     meta_bytes = json.dumps(meta).encode("utf-8") if meta else None
                 except Exception as e:

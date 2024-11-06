@@ -56,6 +56,7 @@ class GetActionListenerRequest:
             else:
                 self.labels[key] = WorkerLabels(strValue=str(value))
 
+
 @dataclass
 class Action:
     worker_id: str
@@ -109,7 +110,7 @@ class Action:
                 "action_payload": self.action_payload,
             },
             parent_key="",
-            separator="."
+            separator=".",
         )
 
 
@@ -226,7 +227,6 @@ class ActionListener:
         listener = None
 
         while not self.stop_signal:
-
             if listener is not None:
                 listener.cancel()
 

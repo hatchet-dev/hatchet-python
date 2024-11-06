@@ -14,6 +14,7 @@ from hatchet_sdk.loader import ClientConfig
 
 OTEL_CARRIER_KEY = "__otel_carrier"
 
+
 @cache
 def create_tracer(config: ClientConfig) -> Tracer:
     ## TODO: Figure out how to specify protocol here
@@ -34,16 +35,21 @@ def create_tracer(config: ClientConfig) -> Tracer:
 
     return trace.get_tracer(__name__)
 
+
 def create_carrier() -> dict[str, str]:
     carrier = {}
     TraceContextTextMapPropagator().inject(carrier)
 
     return carrier
 
-def inject_carrier_into_metadata(metadata: dict[Any, Any], carrier: dict[str, str]) -> dict[Any, Any]:
+
+def inject_carrier_into_metadata(
+    metadata: dict[Any, Any], carrier: dict[str, str]
+) -> dict[Any, Any]:
     metadata[OTEL_CARRIER_KEY] = carrier
 
     return metadata
+
 
 def parse_carrier_from_metadata(metadata: dict[str, Any]) -> Context:
     return (
