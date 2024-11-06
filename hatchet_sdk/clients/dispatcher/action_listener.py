@@ -56,9 +56,8 @@ class GetActionListenerRequest:
             else:
                 self.labels[key] = WorkerLabels(strValue=str(value))
 
-class Action(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+@dataclass
+class Action:
     worker_id: str
     tenant_id: str
     workflow_run_id: str
@@ -82,19 +81,17 @@ class Action(BaseModel):
 
     additional_metadata: dict[str, str | int | dict[str, Any]]
 
-    @field_validator("additional_metadata", "action_payload", mode="before")
-    @classmethod
-    def validate_additional_metadata(cls, v: str | dict[str, str] | None) -> dict[str, str] | None:
-        match v:
-            case dict():
-                return v
-            case str():
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    return {}
-            case _:
-                return {}
+    def __post_init__(self):
+        if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
+            try:
+                self.additional_metadata = json.loads(self.additional_metadata)
+            except json.JSONDecodeError:
+                # If JSON decoding fails, keep the original string
+                pass
+
+        # Ensure additional_metadata is always a dictionary
+        if not isinstance(self.additional_metadata, dict):
+            self.additional_metadata = {}
 
     @property
     def otel_attributes(self) -> dict[str, Any]:
