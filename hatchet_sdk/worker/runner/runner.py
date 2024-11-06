@@ -31,10 +31,10 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.tracing import create_tracer, parse_carrier_from_metadata
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
-from hatchet_sdk.utils.tracing import parse_carrier_from_metadata, create_tracer
 
 
 class WorkerStatus(Enum):

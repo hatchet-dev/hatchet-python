@@ -1,7 +1,7 @@
+import json
 import os
 from logging import Logger, getLogger
 from typing import Dict, Optional
-import json
 
 import yaml
 

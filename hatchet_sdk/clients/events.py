@@ -1,8 +1,8 @@
 import asyncio
 import datetime
 import json
-from uuid import uuid4
 from typing import Any, Dict, List, Optional, TypedDict
+from uuid import uuid4
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -16,8 +16,13 @@ from hatchet_sdk.contracts.events_pb2 import (
     PutStreamEventRequest,
 )
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
-from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata, parse_carrier_from_metadata
 from hatchet_sdk.utils.serialization import flatten
+from hatchet_sdk.utils.tracing import (
+    create_carrier,
+    create_tracer,
+    inject_carrier_into_metadata,
+    parse_carrier_from_metadata,
+)
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata

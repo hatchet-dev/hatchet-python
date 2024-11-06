@@ -23,9 +23,14 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowVersion,
 )
 from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
-from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
-from hatchet_sdk.utils.tracing import create_tracer, create_carrier, inject_carrier_into_metadata, parse_carrier_from_metadata
 from hatchet_sdk.utils.serialization import flatten
+from hatchet_sdk.utils.tracing import (
+    create_carrier,
+    create_tracer,
+    inject_carrier_into_metadata,
+    parse_carrier_from_metadata,
+)
+from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata

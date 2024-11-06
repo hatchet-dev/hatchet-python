@@ -2,11 +2,11 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from pydantic import BaseModel, field_validator, ConfigDict, SkipValidation
-from typing import Annotated, AsyncGenerator, List, Optional, Any
+from typing import Annotated, Any, AsyncGenerator, List, Optional
 
 import grpc
 from grpc._cython import cygrpc
+from pydantic import BaseModel, ConfigDict, SkipValidation, field_validator
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.clients.run_event_listener import (
