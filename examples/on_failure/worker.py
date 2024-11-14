@@ -11,6 +11,8 @@ hatchet = Hatchet(debug=True)
 # ❓ OnFailure Step
 # This workflow will fail because the step will throw an error
 # we define an onFailure step to handle this case
+
+
 @hatchet.workflow(on_events=["user:create"])
 class OnFailureWorkflow:
     @hatchet.step(timeout="1s")
@@ -24,7 +26,10 @@ class OnFailureWorkflow:
         # 👀 we can do things like perform cleanup logic
         # or notify a user here
         return {"status": "success"}
+
+
 # ‼️
+
 
 # ❓ OnFailure With Details
 # We can access the failure details in the onFailure step
@@ -47,6 +52,8 @@ class OnFailureWorkflowWithDetails:
             return {"status": "success"}
 
         raise Exception("unexpected failure")
+
+
 # ‼️
 
 
