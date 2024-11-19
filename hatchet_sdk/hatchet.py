@@ -1,13 +1,14 @@
 import asyncio
 import logging
-from typing import Any, Optional, Callable, ParamSpec, Protocol, TypeVar, Type
+from typing import Any, Callable, Optional, ParamSpec, TypeVar
 
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
+
 ## TODO: These type stubs need to be updated to mass MyPy, and then we can remove this ignore
 ## There are file-level type ignore lines in the corresponding .pyi files.
-from hatchet_sdk.contracts.workflows_pb2 import ( # type: ignore
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
     DesiredWorkerLabels,
@@ -18,19 +19,20 @@ from hatchet_sdk.loader import ClientConfig, ConfigLoader
 from hatchet_sdk.rate_limit import RateLimit
 
 from .client import Client, new_client, new_client_raw
-from .logger import logger
-from .worker.worker import Worker
 from .clients.admin import AdminClient
 from .clients.dispatcher.dispatcher import DispatcherClient
 from .clients.events import EventClient
 from .clients.run_event_listener import RunEventListenerClient
+from .logger import logger
+from .worker.worker import Worker
 from .workflow import ConcurrencyExpression, WorkflowMeta
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
+
 ## TODO: Fix return type here to properly type hint the metaclass
-def workflow( # type: ignore[no-untyped-def]
+def workflow(  # type: ignore[no-untyped-def]
     name: str = "",
     on_events: list[str] | None = None,
     on_crons: list[str] | None = None,
@@ -58,7 +60,7 @@ def workflow( # type: ignore[no-untyped-def]
         # with WorkflowMeta as its metaclass
 
         ## TODO: Figure out how to type this metaclass correctly
-        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__)) # type: ignore[no-untyped-call]
+        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))  # type: ignore[no-untyped-call]
 
     return inner
 
@@ -82,17 +84,17 @@ def step(
             ]
 
         ## TODO: Use Protocol here to help with MyPy errors
-        func._step_name = name.lower() or str(func.__name__).lower() # type: ignore[attr-defined]
-        func._step_parents = parents # type: ignore[attr-defined]
-        func._step_timeout = timeout # type: ignore[attr-defined]
-        func._step_retries = retries # type: ignore[attr-defined]
-        func._step_rate_limits = limits # type: ignore[attr-defined]
+        func._step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._step_parents = parents  # type: ignore[attr-defined]
+        func._step_timeout = timeout  # type: ignore[attr-defined]
+        func._step_retries = retries  # type: ignore[attr-defined]
+        func._step_rate_limits = limits  # type: ignore[attr-defined]
 
-        func._step_desired_worker_labels = {} # type: ignore[attr-defined]
+        func._step_desired_worker_labels = {}  # type: ignore[attr-defined]
 
         for key, d in desired_worker_labels.items():
             value = d["value"] if "value" in d else None
-            func._step_desired_worker_labels[key] = DesiredWorkerLabels( # type: ignore[attr-defined]
+            func._step_desired_worker_labels[key] = DesiredWorkerLabels(  # type: ignore[attr-defined]
                 strValue=str(value) if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
                 required=d["required"] if "required" in d else None,
@@ -120,10 +122,10 @@ def on_failure_step(
             ]
 
         ## TODO: Use Protocol here to help with MyPy errors
-        func._on_failure_step_name = name.lower() or str(func.__name__).lower() # type: ignore[attr-defined]
-        func._on_failure_step_timeout = timeout # type: ignore[attr-defined]
-        func._on_failure_step_retries = retries # type: ignore[attr-defined]
-        func._on_failure_step_rate_limits = limits # type: ignore[attr-defined]
+        func._on_failure_step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._on_failure_step_timeout = timeout  # type: ignore[attr-defined]
+        func._on_failure_step_retries = retries  # type: ignore[attr-defined]
+        func._on_failure_step_rate_limits = limits  # type: ignore[attr-defined]
         return func
 
     return inner
@@ -136,9 +138,9 @@ def concurrency(
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def inner(func: Callable[P, R]) -> Callable[P, R]:
         ## TODO: Use Protocol here to help with MyPy errors
-        func._concurrency_fn_name = name.lower() or str(func.__name__).lower() # type: ignore[attr-defined]
-        func._concurrency_max_runs = max_runs # type: ignore[attr-defined]
-        func._concurrency_limit_strategy = limit_strategy # type: ignore[attr-defined]
+        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._concurrency_max_runs = max_runs  # type: ignore[attr-defined]
+        func._concurrency_limit_strategy = limit_strategy  # type: ignore[attr-defined]
 
         return func
 
@@ -180,7 +182,9 @@ class Hatchet:
     _client: Client
 
     @classmethod
-    def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs: Any) -> "Hatchet":
+    def from_environment(
+        cls, defaults: ClientConfig = ClientConfig(), **kwargs: Any
+    ) -> "Hatchet":
         return cls(client=new_client(defaults), **kwargs)
 
     @classmethod
