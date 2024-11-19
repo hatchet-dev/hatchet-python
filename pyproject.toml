@@ -27,6 +27,7 @@ pytest = "^8.2.2"
 pytest-asyncio = "^0.23.8"
 psutil = "^6.0.0"
 mypy = "^1.13.0"
+types-protobuf = "^5.28.3.20241030"
 
 [build-system]
 requires = ["poetry-core"]
@@ -48,6 +49,11 @@ known_third_party = [
   "pyyaml",
   "urllib3",
 ]
+
+[tool.mypy]
+strict = true
+files = ["hatchet_sdk/hatchet.py"]
+follow_imports = "silent"
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"

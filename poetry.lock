@@ -1046,6 +1046,17 @@ files = [
 ]
 
 [[package]]
+name = "types-protobuf"
+version = "5.28.3.20241030"
+description = "Typing stubs for protobuf"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-protobuf-5.28.3.20241030.tar.gz", hash = "sha256:f7e6b45845d75393fb41c0b3ce82c46d775f9771fae2097414a1dbfe5b51a988"},
+    {file = "types_protobuf-5.28.3.20241030-py3-none-any.whl", hash = "sha256:f3dae16adf342d4fb5bb3673cabb22549a6252e5dd66fc52d8310b1a39c64ba9"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1195,4 +1206,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "b17afa010012f3fdcd6fdcb4e269b7f6b4a18d5493485b642ce5cfde3354dc99"
+content-hash = "680035e62b0ee1ed09f5e8cd4cf114fc8a50603359c8f1d0393a9f7786d755f9"
