@@ -6,8 +6,7 @@ from . import workflows_pb2 as workflows__pb2
 
 
 class WorkflowServiceStub(object):
-    """WorkflowService represents a set of RPCs for managing workflows.
-    """
+    """WorkflowService represents a set of RPCs for managing workflows."""
 
     def __init__(self, channel):
         """Constructor.
@@ -16,186 +15,245 @@ class WorkflowServiceStub(object):
             channel: A grpc.Channel.
         """
         self.PutWorkflow = channel.unary_unary(
-                '/WorkflowService/PutWorkflow',
-                request_serializer=workflows__pb2.PutWorkflowRequest.SerializeToString,
-                response_deserializer=workflows__pb2.WorkflowVersion.FromString,
-                )
+            "/WorkflowService/PutWorkflow",
+            request_serializer=workflows__pb2.PutWorkflowRequest.SerializeToString,
+            response_deserializer=workflows__pb2.WorkflowVersion.FromString,
+        )
         self.ScheduleWorkflow = channel.unary_unary(
-                '/WorkflowService/ScheduleWorkflow',
-                request_serializer=workflows__pb2.ScheduleWorkflowRequest.SerializeToString,
-                response_deserializer=workflows__pb2.WorkflowVersion.FromString,
-                )
+            "/WorkflowService/ScheduleWorkflow",
+            request_serializer=workflows__pb2.ScheduleWorkflowRequest.SerializeToString,
+            response_deserializer=workflows__pb2.WorkflowVersion.FromString,
+        )
         self.TriggerWorkflow = channel.unary_unary(
-                '/WorkflowService/TriggerWorkflow',
-                request_serializer=workflows__pb2.TriggerWorkflowRequest.SerializeToString,
-                response_deserializer=workflows__pb2.TriggerWorkflowResponse.FromString,
-                )
+            "/WorkflowService/TriggerWorkflow",
+            request_serializer=workflows__pb2.TriggerWorkflowRequest.SerializeToString,
+            response_deserializer=workflows__pb2.TriggerWorkflowResponse.FromString,
+        )
         self.BulkTriggerWorkflow = channel.unary_unary(
-                '/WorkflowService/BulkTriggerWorkflow',
-                request_serializer=workflows__pb2.BulkTriggerWorkflowRequest.SerializeToString,
-                response_deserializer=workflows__pb2.BulkTriggerWorkflowResponse.FromString,
-                )
+            "/WorkflowService/BulkTriggerWorkflow",
+            request_serializer=workflows__pb2.BulkTriggerWorkflowRequest.SerializeToString,
+            response_deserializer=workflows__pb2.BulkTriggerWorkflowResponse.FromString,
+        )
         self.PutRateLimit = channel.unary_unary(
-                '/WorkflowService/PutRateLimit',
-                request_serializer=workflows__pb2.PutRateLimitRequest.SerializeToString,
-                response_deserializer=workflows__pb2.PutRateLimitResponse.FromString,
-                )
+            "/WorkflowService/PutRateLimit",
+            request_serializer=workflows__pb2.PutRateLimitRequest.SerializeToString,
+            response_deserializer=workflows__pb2.PutRateLimitResponse.FromString,
+        )
 
 
 class WorkflowServiceServicer(object):
-    """WorkflowService represents a set of RPCs for managing workflows.
-    """
+    """WorkflowService represents a set of RPCs for managing workflows."""
 
     def PutWorkflow(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def ScheduleWorkflow(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def TriggerWorkflow(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def BulkTriggerWorkflow(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def PutRateLimit(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_WorkflowServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'PutWorkflow': grpc.unary_unary_rpc_method_handler(
-                    servicer.PutWorkflow,
-                    request_deserializer=workflows__pb2.PutWorkflowRequest.FromString,
-                    response_serializer=workflows__pb2.WorkflowVersion.SerializeToString,
-            ),
-            'ScheduleWorkflow': grpc.unary_unary_rpc_method_handler(
-                    servicer.ScheduleWorkflow,
-                    request_deserializer=workflows__pb2.ScheduleWorkflowRequest.FromString,
-                    response_serializer=workflows__pb2.WorkflowVersion.SerializeToString,
-            ),
-            'TriggerWorkflow': grpc.unary_unary_rpc_method_handler(
-                    servicer.TriggerWorkflow,
-                    request_deserializer=workflows__pb2.TriggerWorkflowRequest.FromString,
-                    response_serializer=workflows__pb2.TriggerWorkflowResponse.SerializeToString,
-            ),
-            'BulkTriggerWorkflow': grpc.unary_unary_rpc_method_handler(
-                    servicer.BulkTriggerWorkflow,
-                    request_deserializer=workflows__pb2.BulkTriggerWorkflowRequest.FromString,
-                    response_serializer=workflows__pb2.BulkTriggerWorkflowResponse.SerializeToString,
-            ),
-            'PutRateLimit': grpc.unary_unary_rpc_method_handler(
-                    servicer.PutRateLimit,
-                    request_deserializer=workflows__pb2.PutRateLimitRequest.FromString,
-                    response_serializer=workflows__pb2.PutRateLimitResponse.SerializeToString,
-            ),
+        "PutWorkflow": grpc.unary_unary_rpc_method_handler(
+            servicer.PutWorkflow,
+            request_deserializer=workflows__pb2.PutWorkflowRequest.FromString,
+            response_serializer=workflows__pb2.WorkflowVersion.SerializeToString,
+        ),
+        "ScheduleWorkflow": grpc.unary_unary_rpc_method_handler(
+            servicer.ScheduleWorkflow,
+            request_deserializer=workflows__pb2.ScheduleWorkflowRequest.FromString,
+            response_serializer=workflows__pb2.WorkflowVersion.SerializeToString,
+        ),
+        "TriggerWorkflow": grpc.unary_unary_rpc_method_handler(
+            servicer.TriggerWorkflow,
+            request_deserializer=workflows__pb2.TriggerWorkflowRequest.FromString,
+            response_serializer=workflows__pb2.TriggerWorkflowResponse.SerializeToString,
+        ),
+        "BulkTriggerWorkflow": grpc.unary_unary_rpc_method_handler(
+            servicer.BulkTriggerWorkflow,
+            request_deserializer=workflows__pb2.BulkTriggerWorkflowRequest.FromString,
+            response_serializer=workflows__pb2.BulkTriggerWorkflowResponse.SerializeToString,
+        ),
+        "PutRateLimit": grpc.unary_unary_rpc_method_handler(
+            servicer.PutRateLimit,
+            request_deserializer=workflows__pb2.PutRateLimitRequest.FromString,
+            response_serializer=workflows__pb2.PutRateLimitResponse.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'WorkflowService', rpc_method_handlers)
+        "WorkflowService", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
 
 
- # This class is part of an EXPERIMENTAL API.
+# This class is part of an EXPERIMENTAL API.
 class WorkflowService(object):
-    """WorkflowService represents a set of RPCs for managing workflows.
-    """
+    """WorkflowService represents a set of RPCs for managing workflows."""
 
     @staticmethod
-    def PutWorkflow(request,
+    def PutWorkflow(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/WorkflowService/PutWorkflow',
+            "/WorkflowService/PutWorkflow",
             workflows__pb2.PutWorkflowRequest.SerializeToString,
             workflows__pb2.WorkflowVersion.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def ScheduleWorkflow(request,
+    def ScheduleWorkflow(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/WorkflowService/ScheduleWorkflow',
+            "/WorkflowService/ScheduleWorkflow",
             workflows__pb2.ScheduleWorkflowRequest.SerializeToString,
             workflows__pb2.WorkflowVersion.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def TriggerWorkflow(request,
+    def TriggerWorkflow(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/WorkflowService/TriggerWorkflow',
+            "/WorkflowService/TriggerWorkflow",
             workflows__pb2.TriggerWorkflowRequest.SerializeToString,
             workflows__pb2.TriggerWorkflowResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def BulkTriggerWorkflow(request,
+    def BulkTriggerWorkflow(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/WorkflowService/BulkTriggerWorkflow',
+            "/WorkflowService/BulkTriggerWorkflow",
             workflows__pb2.BulkTriggerWorkflowRequest.SerializeToString,
             workflows__pb2.BulkTriggerWorkflowResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def PutRateLimit(request,
+    def PutRateLimit(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/WorkflowService/PutRateLimit',
+            "/WorkflowService/PutRateLimit",
             workflows__pb2.PutRateLimitRequest.SerializeToString,
             workflows__pb2.PutRateLimitResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
