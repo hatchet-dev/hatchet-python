@@ -24,3 +24,7 @@ repos:
         exclude: _pb2(_grpc)?\.py
         types:
           - python
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 1.13.0
+    hooks:
+      - id: mypy
