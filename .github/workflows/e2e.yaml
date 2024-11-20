@@ -4,7 +4,6 @@ on: [pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -36,4 +35,4 @@ jobs:
           HATCHET_CLIENT_TOKEN: ${{ secrets.HATCHET_CLIENT_TOKEN }}
         run: |
           echo "Using HATCHET_CLIENT_NAMESPACE: $HATCHET_CLIENT_NAMESPACE"
-          poetry run pytest -s -vvv --maxfail=5 --timeout=600 --capture=no
+          poetry run pytest -s -vvv --maxfail=5 --timeout=120 --capture=no
