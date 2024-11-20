@@ -5,6 +5,7 @@ import pytest
 from hatchet_sdk.clients.events import BulkPushEventOptions, BulkPushEventWithMetadata
 from hatchet_sdk.hatchet import Hatchet
 
+
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
 async def test_event_push(hatchet: Hatchet):

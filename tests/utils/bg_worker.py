@@ -49,5 +49,4 @@ def fixture_bg_worker(command, startup_time=5):
             logging.warning(f"Force killing process {p.pid}")
             p.kill()
 
-
     return fixture_background_hatchet_worker
