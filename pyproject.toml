@@ -54,6 +54,9 @@ known_third_party = [
   "urllib3",
 ]
 
+[tool.black]
+extend_exclude = "hatchet_sdk/contracts/"
+
 [tool.mypy]
 strict = true
 files = ["hatchet_sdk/hatchet.py"]
