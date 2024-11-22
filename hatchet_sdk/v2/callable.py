@@ -182,10 +182,11 @@ class DurableContext(Context):
     ) -> "RunRef[T]":
         worker_id = self.worker.id()
 
-        workflow_name = function
+        ## TODO: Remove `noqa` flags here
+        workflow_name = function # noqa: F841
 
         if not isinstance(function, str):
-            workflow_name = function.function_name
+            workflow_name = function.function_name # noqa: F841
 
         # if (
         #     options is not None

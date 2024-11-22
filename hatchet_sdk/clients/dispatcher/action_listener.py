@@ -31,7 +31,6 @@ from ..events import proto_timestamp_now
 DEFAULT_ACTION_TIMEOUT = 600  # seconds
 
 
-DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
 DEFAULT_ACTION_LISTENER_RETRY_COUNT = 15
 
 

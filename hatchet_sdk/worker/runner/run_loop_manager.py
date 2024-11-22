@@ -39,7 +39,7 @@ class WorkerActionRunLoopManager:
         self.start()
 
     def start(self, retry_count=1):
-        k = self.loop.create_task(self.async_start(retry_count))
+        self.loop.create_task(self.async_start(retry_count))
 
     async def async_start(self, retry_count=1):
         await capture_logs(

@@ -11,10 +11,6 @@ from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
-from hatchet_sdk.contracts.workflows_pb2 import (
-    BulkTriggerWorkflowRequest,
-    TriggerWorkflowRequest,
-)
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..clients.admin import (
@@ -47,7 +43,7 @@ class BaseContext:
         step_run_id = self.action.step_run_id
 
         desired_worker_id = None
-        if options is not None and "sticky" in options and options["sticky"] == True:
+        if options is not None and "sticky" in options and options["sticky"] is True:
             desired_worker_id = worker_id
 
         meta = None

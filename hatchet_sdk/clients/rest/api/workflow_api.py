@@ -11,7 +11,6 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-import warnings
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 

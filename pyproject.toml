@@ -67,6 +67,38 @@ strict = true
 files = ["hatchet_sdk/hatchet.py"]
 follow_imports = "silent"
 
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "*.pyi",
+    "hatchet_sdk/contracts/*"
+]
+
 [tool.poetry.scripts]
 api = "examples.api.api:main"
 async = "examples.async.worker:main"
