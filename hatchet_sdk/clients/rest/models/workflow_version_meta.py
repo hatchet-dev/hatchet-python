@@ -23,7 +23,6 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.workflow import Workflow
 
 
 class WorkflowVersionMeta(BaseModel):
@@ -117,6 +116,8 @@ class WorkflowVersionMeta(BaseModel):
         )
         return _obj
 
+
+from hatchet_sdk.clients.rest.models.workflow import Workflow  # noqa: E402
 
 # TODO: Rewrite to not use raise_errors
 WorkflowVersionMeta.model_rebuild(raise_errors=False)

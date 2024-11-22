@@ -24,7 +24,6 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing_extensions import Annotated, Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.job_run import JobRun
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 from hatchet_sdk.clients.rest.models.workflow_run_triggered_by import (
     WorkflowRunTriggeredBy,
@@ -182,6 +181,8 @@ class WorkflowRun(BaseModel):
         )
         return _obj
 
+
+from hatchet_sdk.clients.rest.models.job_run import JobRun  # noqa: E402
 
 # TODO: Rewrite to not use raise_errors
 WorkflowRun.model_rebuild(raise_errors=False)
