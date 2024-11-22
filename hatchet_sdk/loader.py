@@ -148,8 +148,8 @@ class ConfigLoader:
             "otel_exporter_oltp_headers", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS"
         )
 
-        otel_header_key, api_key = _oltp_headers.split("=")
-        otel_exporter_oltp_headers = {otel_header_key: api_key}
+        otel_header_key, api_key = _oltp_headers.split("=") if _oltp_headers and isinstance(_oltp_headers, str) else None, None
+        otel_exporter_oltp_headers = {otel_header_key: api_key} if otel_header_key and api_key else None
 
         otel_exporter_oltp_protocol = get_config_value(
             "otel_exporter_oltp_protocol", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_PROTOCOL"

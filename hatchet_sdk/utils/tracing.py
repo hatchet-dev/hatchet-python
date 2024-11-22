@@ -51,7 +51,8 @@ def create_carrier() -> dict[str, str]:
 def inject_carrier_into_metadata(
     metadata: dict[Any, Any], carrier: dict[str, str]
 ) -> dict[Any, Any]:
-    metadata[OTEL_CARRIER_KEY] = carrier
+    if carrier:
+        metadata[OTEL_CARRIER_KEY] = carrier
 
     return metadata
 
