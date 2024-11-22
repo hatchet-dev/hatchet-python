@@ -37,6 +37,7 @@ def fixture_bg_worker(command, startup_time=5):
 
         yield proc
 
+        logging.info("Cleaning up background worker")
         parent = psutil.Process(proc.pid)
         children = parent.children(recursive=True)
         for child in children:
