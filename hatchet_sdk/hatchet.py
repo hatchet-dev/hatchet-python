@@ -1,11 +1,14 @@
 import asyncio
 import logging
-from typing import List, Optional
+from typing import Any, Callable, Optional, ParamSpec, TypeVar
 
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
-from hatchet_sdk.contracts.workflows_pb2 import (
+
+## TODO: These type stubs need to be updated to mass MyPy, and then we can remove this ignore
+## There are file-level type ignore lines in the corresponding .pyi files.
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
     DesiredWorkerLabels,
@@ -16,15 +19,23 @@ from hatchet_sdk.loader import ClientConfig, ConfigLoader
 from hatchet_sdk.rate_limit import RateLimit
 
 from .client import Client, new_client, new_client_raw
+from .clients.admin import AdminClient
+from .clients.dispatcher.dispatcher import DispatcherClient
+from .clients.events import EventClient
+from .clients.run_event_listener import RunEventListenerClient
 from .logger import logger
-from .worker import Worker
+from .worker.worker import Worker
 from .workflow import ConcurrencyExpression, WorkflowMeta
 
+P = ParamSpec("P")
+R = TypeVar("R")
 
-def workflow(
+
+## TODO: Fix return type here to properly type hint the metaclass
+def workflow(  # type: ignore[no-untyped-def]
     name: str = "",
-    on_events: list | None = None,
-    on_crons: list | None = None,
+    on_events: list[str] | None = None,
+    on_crons: list[str] | None = None,
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
@@ -35,7 +46,7 @@ def workflow(
     on_events = on_events or []
     on_crons = on_crons or []
 
-    def inner(cls) -> WorkflowMeta:
+    def inner(cls: Any) -> WorkflowMeta:
         cls.on_events = on_events
         cls.on_crons = on_crons
         cls.name = name or str(cls.__name__)
@@ -47,7 +58,9 @@ def workflow(
         cls.concurrency_expression = concurrency
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
-        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
+
+        ## TODO: Figure out how to type this metaclass correctly
+        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))  # type: ignore[no-untyped-call]
 
     return inner
 
@@ -55,14 +68,14 @@ def workflow(
 def step(
     name: str = "",
     timeout: str = "",
-    parents: List[str] | None = None,
+    parents: list[str] | None = None,
     retries: int = 0,
-    rate_limits: List[RateLimit] | None = None,
-    desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
-):
+    rate_limits: list[RateLimit] | None = None,
+    desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     parents = parents or []
 
-    def inner(func):
+    def inner(func: Callable[P, R]) -> Callable[P, R]:
         limits = None
         if rate_limits:
             limits = [
@@ -70,17 +83,18 @@ def step(
                 for rate_limit in rate_limits or []
             ]
 
-        func._step_name = name.lower() or str(func.__name__).lower()
-        func._step_parents = parents
-        func._step_timeout = timeout
-        func._step_retries = retries
-        func._step_rate_limits = limits
+        ## TODO: Use Protocol here to help with MyPy errors
+        func._step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._step_parents = parents  # type: ignore[attr-defined]
+        func._step_timeout = timeout  # type: ignore[attr-defined]
+        func._step_retries = retries  # type: ignore[attr-defined]
+        func._step_rate_limits = limits  # type: ignore[attr-defined]
 
-        func._step_desired_worker_labels = {}
+        func._step_desired_worker_labels = {}  # type: ignore[attr-defined]
 
         for key, d in desired_worker_labels.items():
             value = d["value"] if "value" in d else None
-            func._step_desired_worker_labels[key] = DesiredWorkerLabels(
+            func._step_desired_worker_labels[key] = DesiredWorkerLabels(  # type: ignore[attr-defined]
                 strValue=str(value) if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
                 required=d["required"] if "required" in d else None,
@@ -97,9 +111,9 @@ def on_failure_step(
     name: str = "",
     timeout: str = "",
     retries: int = 0,
-    rate_limits: List[RateLimit] | None = None,
-):
-    def inner(func):
+    rate_limits: list[RateLimit] | None = None,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def inner(func: Callable[P, R]) -> Callable[P, R]:
         limits = None
         if rate_limits:
             limits = [
@@ -107,10 +121,11 @@ def on_failure_step(
                 for rate_limit in rate_limits or []
             ]
 
-        func._on_failure_step_name = name.lower() or str(func.__name__).lower()
-        func._on_failure_step_timeout = timeout
-        func._on_failure_step_retries = retries
-        func._on_failure_step_rate_limits = limits
+        ## TODO: Use Protocol here to help with MyPy errors
+        func._on_failure_step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._on_failure_step_timeout = timeout  # type: ignore[attr-defined]
+        func._on_failure_step_retries = retries  # type: ignore[attr-defined]
+        func._on_failure_step_rate_limits = limits  # type: ignore[attr-defined]
         return func
 
     return inner
@@ -120,11 +135,12 @@ def concurrency(
     name: str = "",
     max_runs: int = 1,
     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-):
-    def inner(func):
-        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
-        func._concurrency_max_runs = max_runs
-        func._concurrency_limit_strategy = limit_strategy
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    def inner(func: Callable[P, R]) -> Callable[P, R]:
+        ## TODO: Use Protocol here to help with MyPy errors
+        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._concurrency_max_runs = max_runs  # type: ignore[attr-defined]
+        func._concurrency_limit_strategy = limit_strategy  # type: ignore[attr-defined]
 
         return func
 
@@ -145,8 +161,8 @@ class HatchetRest:
     rest: RestApi
 
     def __init__(self, config: ClientConfig = ClientConfig()):
-        config: ClientConfig = ConfigLoader(".").load_client_config(config)
-        self.rest = RestApi(config.server_url, config.token, config.tenant_id)
+        _config: ClientConfig = ConfigLoader(".").load_client_config(config)
+        self.rest = RestApi(_config.server_url, _config.token, _config.tenant_id)
 
 
 class Hatchet:
@@ -166,11 +182,13 @@ class Hatchet:
     _client: Client
 
     @classmethod
-    def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs):
+    def from_environment(
+        cls, defaults: ClientConfig = ClientConfig(), **kwargs: Any
+    ) -> "Hatchet":
         return cls(client=new_client(defaults), **kwargs)
 
     @classmethod
-    def from_config(cls, config: ClientConfig, **kwargs):
+    def from_config(cls, config: ClientConfig, **kwargs: Any) -> "Hatchet":
         return cls(client=new_client_raw(config), **kwargs)
 
     def __init__(
@@ -203,31 +221,31 @@ class Hatchet:
         return self._client
 
     @property
-    def admin(self):
+    def admin(self) -> AdminClient:
         return self._client.admin
 
     @property
-    def dispatcher(self):
+    def dispatcher(self) -> DispatcherClient:
         return self._client.dispatcher
 
     @property
-    def event(self):
+    def event(self) -> EventClient:
         return self._client.event
 
     @property
-    def rest(self):
+    def rest(self) -> RestApi:
         return self._client.rest
 
     @property
-    def listener(self):
+    def listener(self) -> RunEventListenerClient:
         return self._client.listener
 
     @property
-    def config(self):
+    def config(self) -> ClientConfig:
         return self._client.config
 
     @property
-    def tenant_id(self):
+    def tenant_id(self) -> str:
         return self._client.config.tenant_id
 
     concurrency = staticmethod(concurrency)
@@ -240,7 +258,7 @@ class Hatchet:
 
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    ):
+    ) -> Worker:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
