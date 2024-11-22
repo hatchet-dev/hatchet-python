@@ -7,11 +7,9 @@ import pytest
 
 
 def fixture_bg_worker(command, startup_time=5):
-    print("Loading bg worker fixture")
     @pytest.fixture(scope="function", autouse=True)
     def fixture_background_hatchet_worker(request):
         logging.info(f"Starting background worker: {' '.join(command)}")
-        print(f"Starting background worker: {' '.join(command)}")
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Check if the process is still running
@@ -37,11 +35,8 @@ def fixture_bg_worker(command, startup_time=5):
             target=log_output, args=(proc.stderr, logging.error), daemon=True
         ).start()
 
-        print("Yielding proc")
-
         yield proc
 
-        print("Cleaning up background worker")
         parent = psutil.Process(proc.pid)
         children = parent.children(recursive=True)
         for child in children:
