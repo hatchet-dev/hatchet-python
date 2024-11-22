@@ -3,7 +3,7 @@ import pytest
 from hatchet_sdk import Hatchet
 from tests.utils import fixture_bg_worker
 
-# worker = fixture_bg_worker(["poetry", "run", "async"])
+worker = fixture_bg_worker(["poetry", "run", "async"])
 
 
 # requires scope module or higher for shared event loop
