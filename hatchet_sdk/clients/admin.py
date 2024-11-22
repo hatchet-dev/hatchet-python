@@ -221,14 +221,15 @@ class AdminClientAioImpl(AdminClientBase):
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
 
-                options["additional_metadata"] = inject_carrier_into_metadata(
-                    options["additional_metadata"], carrier
-                )
-                span.set_attributes(
-                    flatten(
-                        options["additional_metadata"], parent_key="", separator="."
+                if options is not None and "additional_metadata" in options:
+                    options["additional_metadata"] = inject_carrier_into_metadata(
+                        options["additional_metadata"], carrier
                     )
-                )
+                    span.set_attributes(
+                        flatten(
+                            options["additional_metadata"], parent_key="", separator="."
+                        )
+                    )
 
                 request = self._prepare_workflow_request(workflow_name, input, options)
 
@@ -503,14 +504,16 @@ class AdminClient(AdminClientBase):
                 ):
                     namespace = options.pop("namespace")
 
-                options["additional_metadata"] = inject_carrier_into_metadata(
-                    options["additional_metadata"], carrier
-                )
-                span.set_attributes(
-                    flatten(
-                        options["additional_metadata"], parent_key="", separator="."
+                if options is not None and "additional_metadata" in options:
+                    options["additional_metadata"] = inject_carrier_into_metadata(
+                        options["additional_metadata"], carrier
                     )
-                )
+
+                    span.set_attributes(
+                        flatten(
+                            options["additional_metadata"], parent_key="", separator="."
+                        )
+                    )
 
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
