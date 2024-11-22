@@ -197,7 +197,7 @@ class AdminClientAioImpl(AdminClientBase):
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
         with self.otel_tracer.start_as_current_span(
-            "hatchet.async_run_workflow", context=ctx
+            f"hatchet.async_run_workflow.{workflow_name}", context=ctx
         ) as span:
             carrier = create_carrier()
 
@@ -227,15 +227,23 @@ class AdminClientAioImpl(AdminClientBase):
                         options["additional_metadata"], parent_key="", separator="."
                     )
                 )
-                span.add_event(
-                    "Triggering workflow", attributes={"namespace": namespace}
-                )
 
                 request = self._prepare_workflow_request(workflow_name, input, options)
+
+                span.add_event(
+                    "Triggering workflow", attributes={"workflow_name": workflow_name}
+                )
+
                 resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
                     request,
                     metadata=get_metadata(self.token),
                 )
+
+                span.add_event(
+                    "Received workflow response",
+                    attributes={"workflow_name": workflow_name},
+                )
+
                 return WorkflowRunRef(
                     workflow_run_id=resp.workflow_run_id,
                     workflow_listener=self.pooled_workflow_listener,
@@ -471,7 +479,7 @@ class AdminClient(AdminClientBase):
         ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
 
         with self.otel_tracer.start_as_current_span(
-            "hatchet.run_workflow", context=ctx
+            f"hatchet.run_workflow.{workflow_name}", context=ctx
         ) as span:
             carrier = create_carrier()
 
@@ -506,13 +514,19 @@ class AdminClient(AdminClientBase):
                 request = self._prepare_workflow_request(workflow_name, input, options)
 
                 span.add_event(
-                    "Triggering workflow", attributes={"namespace": namespace}
+                    "Triggering workflow", attributes={"workflow_name": workflow_name}
                 )
 
                 resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
                     request,
                     metadata=get_metadata(self.token),
                 )
+
+                span.add_event(
+                    "Received workflow response",
+                    attributes={"workflow_name": workflow_name},
+                )
+
                 return WorkflowRunRef(
                     workflow_run_id=resp.workflow_run_id,
                     workflow_listener=self.pooled_workflow_listener,

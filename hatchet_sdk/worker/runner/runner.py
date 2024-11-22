@@ -93,7 +93,7 @@ class Runner:
         ctx = parse_carrier_from_metadata(action.additional_metadata)
 
         with self.otel_tracer.start_as_current_span(
-            "hatchet.worker.runner.runner.Runner.run", context=ctx
+            f"hatchet.worker.run.{action.step_id}", context=ctx
         ) as span:
             if self.worker_context.id() is None:
                 self.worker_context._worker_id = action.worker_id
@@ -294,7 +294,7 @@ class Runner:
 
     async def handle_start_step_run(self, action: Action):
         with self.otel_tracer.start_as_current_span(
-            "hatchet.worker.runner.runner.Runner.handle_start_step_run"
+            f"hatchet.worker.handle_start_step_run.{action.step_id}",
         ) as span:
             span.add_event("Starting step run")
             span.set_attributes(action.otel_attributes)
@@ -338,7 +338,7 @@ class Runner:
 
     async def handle_start_group_key_run(self, action: Action):
         with self.otel_tracer.start_as_current_span(
-            "hatchet.worker.runner.runner.Runner.handle_start_step_run"
+            f"hatchet.worker.handle_start_step_run.{action.step_id}"
         ) as span:
             span.add_event("Starting group key run")
             action_name = action.action_id
@@ -418,7 +418,7 @@ class Runner:
 
     async def handle_cancel_action(self, run_id: str):
         with self.otel_tracer.start_as_current_span(
-            "hatchet.worker.runner.runner.Runner.handle_cancel_action"
+            "hatchet.worker.handle_cancel_action"
         ) as span:
             span.add_event(f"Cancelling run id: {run_id}")
             span.set_attribute("run_id", run_id)
