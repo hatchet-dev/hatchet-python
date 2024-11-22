@@ -81,7 +81,9 @@ class EventClient:
 
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        ctx = parse_carrier_from_metadata((options or {}).get("additional_metadata", {}))
+        ctx = parse_carrier_from_metadata(
+            (options or {}).get("additional_metadata", {})
+        )
 
         with self.otel_tracer.start_as_current_span(
             "hatchet.push", context=ctx
@@ -136,7 +138,9 @@ class EventClient:
     ) -> List[Event]:
         namespace = self.namespace
         bulk_push_correlation_id = uuid4()
-        ctx = parse_carrier_from_metadata((options or {}).get("additional_metadata", {}))
+        ctx = parse_carrier_from_metadata(
+            (options or {}).get("additional_metadata", {})
+        )
 
         if (
             options is not None

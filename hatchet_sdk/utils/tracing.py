@@ -8,8 +8,8 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry.trace import NoOpTracerProvider
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from hatchet_sdk.loader import ClientConfig
 
