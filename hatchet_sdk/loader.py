@@ -149,7 +149,7 @@ class ConfigLoader:
         )
 
         if _oltp_headers:
-            otel_header_key, api_key = _oltp_headers.split("=")
+            otel_header_key, api_key = _oltp_headers.split("=", maxsplit=1)
             otel_exporter_oltp_headers = {otel_header_key: api_key}
         else:
             otel_exporter_oltp_headers = None
