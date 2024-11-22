@@ -30,10 +30,6 @@ jobs:
           PYTHON_VERSION=$(python -c "import sys; print(f'py{sys.version_info.major}{sys.version_info.minor}')")
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "HATCHET_CLIENT_NAMESPACE=${PYTHON_VERSION}-${SHORT_SHA}" >> $GITHUB_ENV
-
-      - name: Collect Workflow Telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
-
       - name: Run pytest
         env:
           HATCHET_CLIENT_TOKEN: ${{ secrets.HATCHET_CLIENT_TOKEN }}
