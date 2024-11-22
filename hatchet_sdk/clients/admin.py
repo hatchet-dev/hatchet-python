@@ -194,7 +194,7 @@ class AdminClientAioImpl(AdminClientBase):
     async def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ) -> WorkflowRunRef:
-        ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
+        ctx = parse_carrier_from_metadata((options or {}).get("additional_metadata", {}))
 
         with self.otel_tracer.start_as_current_span(
             f"hatchet.async_run_workflow.{workflow_name}", context=ctx
@@ -476,7 +476,7 @@ class AdminClient(AdminClientBase):
     def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ) -> WorkflowRunRef:
-        ctx = parse_carrier_from_metadata(options.get("additional_metadata", {}))
+        ctx = parse_carrier_from_metadata((options or {}).get("additional_metadata", {}))
 
         with self.otel_tracer.start_as_current_span(
             f"hatchet.run_workflow.{workflow_name}", context=ctx

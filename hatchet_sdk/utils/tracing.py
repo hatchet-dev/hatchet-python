@@ -9,6 +9,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.trace import NoOpTracerProvider
 
 from hatchet_sdk.loader import ClientConfig
 
@@ -21,15 +22,19 @@ def create_tracer(config: ClientConfig) -> Tracer:
     resource = Resource(
         attributes={SERVICE_NAME: config.otel_service_name or "hatchet.run"}
     )
-    processor = BatchSpanProcessor(
-        OTLPSpanExporter(
-            endpoint=config.otel_exporter_oltp_endpoint,
-            headers=config.otel_exporter_oltp_headers,
-        ),
-    )
 
-    trace_provider = TracerProvider(resource=resource)
-    trace_provider.add_span_processor(processor)
+    if config.otel_exporter_oltp_endpoint and config.otel_exporter_oltp_headers:
+        processor = BatchSpanProcessor(
+            OTLPSpanExporter(
+                endpoint=config.otel_exporter_oltp_endpoint,
+                headers=config.otel_exporter_oltp_headers,
+            ),
+        )
+
+        trace_provider = TracerProvider(resource=resource)
+        trace_provider.add_span_processor(processor)
+    else:
+        trace_provider = NoOpTracerProvider()
 
     trace.set_tracer_provider(trace_provider)
 
