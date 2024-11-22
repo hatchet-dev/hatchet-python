@@ -12,34 +12,29 @@
 """  # noqa: E501
 
 import warnings
+from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
-
-from pydantic import Field, StrictFloat, StrictInt, StrictStr, validate_call
 from typing_extensions import Annotated
 
-from hatchet_sdk.clients.rest.api_client import ApiClient, RequestSerialized
-from hatchet_sdk.clients.rest.api_response import ApiResponse
-from hatchet_sdk.clients.rest.models.bulk_create_event_request import (
-    BulkCreateEventRequest,
-)
-from hatchet_sdk.clients.rest.models.bulk_create_event_response import (
-    BulkCreateEventResponse,
-)
+from pydantic import Field, StrictInt, StrictStr
+from typing import List, Optional
+from typing_extensions import Annotated
+from hatchet_sdk.clients.rest.models.bulk_create_event_request import BulkCreateEventRequest
+from hatchet_sdk.clients.rest.models.bulk_create_event_response import BulkCreateEventResponse
 from hatchet_sdk.clients.rest.models.cancel_event_request import CancelEventRequest
 from hatchet_sdk.clients.rest.models.create_event_request import CreateEventRequest
 from hatchet_sdk.clients.rest.models.event import Event
 from hatchet_sdk.clients.rest.models.event_data import EventData
 from hatchet_sdk.clients.rest.models.event_key_list import EventKeyList
 from hatchet_sdk.clients.rest.models.event_list import EventList
-from hatchet_sdk.clients.rest.models.event_order_by_direction import (
-    EventOrderByDirection,
-)
+from hatchet_sdk.clients.rest.models.event_order_by_direction import EventOrderByDirection
 from hatchet_sdk.clients.rest.models.event_order_by_field import EventOrderByField
-from hatchet_sdk.clients.rest.models.event_update_cancel200_response import (
-    EventUpdateCancel200Response,
-)
+from hatchet_sdk.clients.rest.models.event_update_cancel200_response import EventUpdateCancel200Response
 from hatchet_sdk.clients.rest.models.replay_event_request import ReplayEventRequest
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
+
+from hatchet_sdk.clients.rest.api_client import ApiClient, RequestSerialized
+from hatchet_sdk.clients.rest.api_response import ApiResponse
 from hatchet_sdk.clients.rest.rest import RESTResponseType
 
 
@@ -55,24 +50,19 @@ class EventApi:
             api_client = ApiClient.get_default()
         self.api_client = api_client
 
+
     @validate_call
     async def event_create(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        create_event_request: Annotated[
-            CreateEventRequest, Field(description="The event to create")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        create_event_request: Annotated[CreateEventRequest, Field(description="The event to create")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -107,7 +97,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_create_serialize(
             tenant=tenant,
@@ -115,17 +105,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Event",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "Event",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -133,24 +124,19 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_create_with_http_info(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        create_event_request: Annotated[
-            CreateEventRequest, Field(description="The event to create")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        create_event_request: Annotated[CreateEventRequest, Field(description="The event to create")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -185,7 +171,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_create_serialize(
             tenant=tenant,
@@ -193,17 +179,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Event",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "Event",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -211,24 +198,19 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_create_without_preload_content(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        create_event_request: Annotated[
-            CreateEventRequest, Field(description="The event to create")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        create_event_request: Annotated[CreateEventRequest, Field(description="The event to create")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -263,7 +245,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_create_serialize(
             tenant=tenant,
@@ -271,19 +253,21 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Event",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "Event",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_create_serialize(
         self,
@@ -297,7 +281,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -310,7 +295,7 @@ class EventApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params["tenant"] = tenant
+            _path_params['tenant'] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -318,28 +303,38 @@ class EventApi:
         if create_event_request is not None:
             _body_params = create_event_request
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params["Content-Type"] = _content_type
+            _header_params['Content-Type'] = _content_type
         else:
-            _default_content_type = self.api_client.select_header_content_type(
-                ["application/json"]
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
             )
             if _default_content_type is not None:
-                _header_params["Content-Type"] = _default_content_type
+                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="POST",
-            resource_path="/api/v1/tenants/{tenant}/events",
+            method='POST',
+            resource_path='/api/v1/tenants/{tenant}/events',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -349,27 +344,24 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_create_bulk(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        bulk_create_event_request: Annotated[
-            BulkCreateEventRequest, Field(description="The events to create")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        bulk_create_event_request: Annotated[BulkCreateEventRequest, Field(description="The events to create")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -404,7 +396,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_create_bulk_serialize(
             tenant=tenant,
@@ -412,17 +404,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "BulkCreateEventResponse",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "BulkCreateEventResponse",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -430,24 +423,19 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_create_bulk_with_http_info(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        bulk_create_event_request: Annotated[
-            BulkCreateEventRequest, Field(description="The events to create")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        bulk_create_event_request: Annotated[BulkCreateEventRequest, Field(description="The events to create")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -482,7 +470,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_create_bulk_serialize(
             tenant=tenant,
@@ -490,17 +478,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "BulkCreateEventResponse",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "BulkCreateEventResponse",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -508,24 +497,19 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_create_bulk_without_preload_content(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        bulk_create_event_request: Annotated[
-            BulkCreateEventRequest, Field(description="The events to create")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        bulk_create_event_request: Annotated[BulkCreateEventRequest, Field(description="The events to create")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -560,7 +544,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_create_bulk_serialize(
             tenant=tenant,
@@ -568,19 +552,21 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "BulkCreateEventResponse",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "BulkCreateEventResponse",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_create_bulk_serialize(
         self,
@@ -594,7 +580,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -607,7 +594,7 @@ class EventApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params["tenant"] = tenant
+            _path_params['tenant'] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -615,28 +602,38 @@ class EventApi:
         if bulk_create_event_request is not None:
             _body_params = bulk_create_event_request
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params["Content-Type"] = _content_type
+            _header_params['Content-Type'] = _content_type
         else:
-            _default_content_type = self.api_client.select_header_content_type(
-                ["application/json"]
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
             )
             if _default_content_type is not None:
-                _header_params["Content-Type"] = _default_content_type
+                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="POST",
-            resource_path="/api/v1/tenants/{tenant}/events/bulk",
+            method='POST',
+            resource_path='/api/v1/tenants/{tenant}/events/bulk',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -646,24 +643,23 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_data_get(
         self,
-        event: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The event id"
-            ),
-        ],
+        event: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The event id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -696,23 +692,24 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_data_get_serialize(
             event=event,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventData",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventData",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -720,21 +717,18 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_data_get_with_http_info(
         self,
-        event: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The event id"
-            ),
-        ],
+        event: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The event id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -767,23 +761,24 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_data_get_serialize(
             event=event,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventData",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventData",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -791,21 +786,18 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_data_get_without_preload_content(
         self,
-        event: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The event id"
-            ),
-        ],
+        event: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The event id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -838,25 +830,27 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_data_get_serialize(
             event=event,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventData",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventData",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_data_get_serialize(
         self,
@@ -869,7 +863,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -882,24 +877,31 @@ class EventApi:
 
         # process the path parameters
         if event is not None:
-            _path_params["event"] = event
+            _path_params['event'] = event
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="GET",
-            resource_path="/api/v1/events/{event}/data",
+            method='GET',
+            resource_path='/api/v1/events/{event}/data',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -909,24 +911,23 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_get(
         self,
-        event: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The event id"
-            ),
-        ],
+        event: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The event id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -959,23 +960,24 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_get_serialize(
             event=event,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Event",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "Event",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -983,21 +985,18 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_get_with_http_info(
         self,
-        event: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The event id"
-            ),
-        ],
+        event: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The event id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1030,23 +1029,24 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_get_serialize(
             event=event,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Event",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "Event",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1054,21 +1054,18 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_get_without_preload_content(
         self,
-        event: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The event id"
-            ),
-        ],
+        event: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The event id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1101,25 +1098,27 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_get_serialize(
             event=event,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "Event",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "Event",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_get_serialize(
         self,
@@ -1132,7 +1131,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1145,24 +1145,31 @@ class EventApi:
 
         # process the path parameters
         if event is not None:
-            _path_params["event"] = event
+            _path_params['event'] = event
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="GET",
-            resource_path="/api/v1/events/{event}",
+            method='GET',
+            resource_path='/api/v1/events/{event}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1172,24 +1179,23 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_key_list(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1222,23 +1228,24 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_key_list_serialize(
             tenant=tenant,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventKeyList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventKeyList",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1246,21 +1253,18 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_key_list_with_http_info(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1293,23 +1297,24 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_key_list_serialize(
             tenant=tenant,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventKeyList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventKeyList",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1317,21 +1322,18 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_key_list_without_preload_content(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1364,25 +1366,27 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_key_list_serialize(
             tenant=tenant,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventKeyList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventKeyList",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_key_list_serialize(
         self,
@@ -1395,7 +1399,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -1408,24 +1413,31 @@ class EventApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params["tenant"] = tenant
+            _path_params['tenant'] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="GET",
-            resource_path="/api/v1/tenants/{tenant}/events/keys",
+            method='GET',
+            resource_path='/api/v1/tenants/{tenant}/events/keys',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1435,60 +1447,33 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_list(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        offset: Annotated[
-            Optional[StrictInt], Field(description="The number to skip")
-        ] = None,
-        limit: Annotated[
-            Optional[StrictInt], Field(description="The number to limit by")
-        ] = None,
-        keys: Annotated[
-            Optional[List[StrictStr]], Field(description="A list of keys to filter by")
-        ] = None,
-        workflows: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of workflow IDs to filter by"),
-        ] = None,
-        statuses: Annotated[
-            Optional[List[WorkflowRunStatus]],
-            Field(description="A list of workflow run statuses to filter by"),
-        ] = None,
-        search: Annotated[
-            Optional[StrictStr], Field(description="The search query to filter for")
-        ] = None,
-        order_by_field: Annotated[
-            Optional[EventOrderByField], Field(description="What to order by")
-        ] = None,
-        order_by_direction: Annotated[
-            Optional[EventOrderByDirection], Field(description="The order direction")
-        ] = None,
-        additional_metadata: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of metadata key value pairs to filter by"),
-        ] = None,
-        event_ids: Annotated[
-            Optional[
-                List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]
-            ],
-            Field(description="A list of event ids to filter by"),
-        ] = None,
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        offset: Annotated[Optional[StrictInt], Field(description="The number to skip")] = None,
+        limit: Annotated[Optional[StrictInt], Field(description="The number to limit by")] = None,
+        keys: Annotated[Optional[List[StrictStr]], Field(description="A list of keys to filter by")] = None,
+        workflows: Annotated[Optional[List[StrictStr]], Field(description="A list of workflow IDs to filter by")] = None,
+        statuses: Annotated[Optional[List[WorkflowRunStatus]], Field(description="A list of workflow run statuses to filter by")] = None,
+        search: Annotated[Optional[StrictStr], Field(description="The search query to filter for")] = None,
+        order_by_field: Annotated[Optional[EventOrderByField], Field(description="What to order by")] = None,
+        order_by_direction: Annotated[Optional[EventOrderByDirection], Field(description="The order direction")] = None,
+        additional_metadata: Annotated[Optional[List[StrictStr]], Field(description="A list of metadata key value pairs to filter by")] = None,
+        event_ids: Annotated[Optional[List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]], Field(description="A list of event ids to filter by")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1541,7 +1526,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_list_serialize(
             tenant=tenant,
@@ -1558,16 +1543,17 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventList",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1575,57 +1561,28 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_list_with_http_info(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        offset: Annotated[
-            Optional[StrictInt], Field(description="The number to skip")
-        ] = None,
-        limit: Annotated[
-            Optional[StrictInt], Field(description="The number to limit by")
-        ] = None,
-        keys: Annotated[
-            Optional[List[StrictStr]], Field(description="A list of keys to filter by")
-        ] = None,
-        workflows: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of workflow IDs to filter by"),
-        ] = None,
-        statuses: Annotated[
-            Optional[List[WorkflowRunStatus]],
-            Field(description="A list of workflow run statuses to filter by"),
-        ] = None,
-        search: Annotated[
-            Optional[StrictStr], Field(description="The search query to filter for")
-        ] = None,
-        order_by_field: Annotated[
-            Optional[EventOrderByField], Field(description="What to order by")
-        ] = None,
-        order_by_direction: Annotated[
-            Optional[EventOrderByDirection], Field(description="The order direction")
-        ] = None,
-        additional_metadata: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of metadata key value pairs to filter by"),
-        ] = None,
-        event_ids: Annotated[
-            Optional[
-                List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]
-            ],
-            Field(description="A list of event ids to filter by"),
-        ] = None,
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        offset: Annotated[Optional[StrictInt], Field(description="The number to skip")] = None,
+        limit: Annotated[Optional[StrictInt], Field(description="The number to limit by")] = None,
+        keys: Annotated[Optional[List[StrictStr]], Field(description="A list of keys to filter by")] = None,
+        workflows: Annotated[Optional[List[StrictStr]], Field(description="A list of workflow IDs to filter by")] = None,
+        statuses: Annotated[Optional[List[WorkflowRunStatus]], Field(description="A list of workflow run statuses to filter by")] = None,
+        search: Annotated[Optional[StrictStr], Field(description="The search query to filter for")] = None,
+        order_by_field: Annotated[Optional[EventOrderByField], Field(description="What to order by")] = None,
+        order_by_direction: Annotated[Optional[EventOrderByDirection], Field(description="The order direction")] = None,
+        additional_metadata: Annotated[Optional[List[StrictStr]], Field(description="A list of metadata key value pairs to filter by")] = None,
+        event_ids: Annotated[Optional[List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]], Field(description="A list of event ids to filter by")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1678,7 +1635,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_list_serialize(
             tenant=tenant,
@@ -1695,16 +1652,17 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventList",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -1712,57 +1670,28 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_list_without_preload_content(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        offset: Annotated[
-            Optional[StrictInt], Field(description="The number to skip")
-        ] = None,
-        limit: Annotated[
-            Optional[StrictInt], Field(description="The number to limit by")
-        ] = None,
-        keys: Annotated[
-            Optional[List[StrictStr]], Field(description="A list of keys to filter by")
-        ] = None,
-        workflows: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of workflow IDs to filter by"),
-        ] = None,
-        statuses: Annotated[
-            Optional[List[WorkflowRunStatus]],
-            Field(description="A list of workflow run statuses to filter by"),
-        ] = None,
-        search: Annotated[
-            Optional[StrictStr], Field(description="The search query to filter for")
-        ] = None,
-        order_by_field: Annotated[
-            Optional[EventOrderByField], Field(description="What to order by")
-        ] = None,
-        order_by_direction: Annotated[
-            Optional[EventOrderByDirection], Field(description="The order direction")
-        ] = None,
-        additional_metadata: Annotated[
-            Optional[List[StrictStr]],
-            Field(description="A list of metadata key value pairs to filter by"),
-        ] = None,
-        event_ids: Annotated[
-            Optional[
-                List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]
-            ],
-            Field(description="A list of event ids to filter by"),
-        ] = None,
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        offset: Annotated[Optional[StrictInt], Field(description="The number to skip")] = None,
+        limit: Annotated[Optional[StrictInt], Field(description="The number to limit by")] = None,
+        keys: Annotated[Optional[List[StrictStr]], Field(description="A list of keys to filter by")] = None,
+        workflows: Annotated[Optional[List[StrictStr]], Field(description="A list of workflow IDs to filter by")] = None,
+        statuses: Annotated[Optional[List[WorkflowRunStatus]], Field(description="A list of workflow run statuses to filter by")] = None,
+        search: Annotated[Optional[StrictStr], Field(description="The search query to filter for")] = None,
+        order_by_field: Annotated[Optional[EventOrderByField], Field(description="What to order by")] = None,
+        order_by_direction: Annotated[Optional[EventOrderByDirection], Field(description="The order direction")] = None,
+        additional_metadata: Annotated[Optional[List[StrictStr]], Field(description="A list of metadata key value pairs to filter by")] = None,
+        event_ids: Annotated[Optional[List[Annotated[str, Field(min_length=36, strict=True, max_length=36)]]], Field(description="A list of event ids to filter by")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -1815,7 +1744,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_list_serialize(
             tenant=tenant,
@@ -1832,18 +1761,20 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
+            '200': "EventList",
+            '400': "APIErrors",
+            '403': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_list_serialize(
         self,
@@ -1867,11 +1798,11 @@ class EventApi:
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            "keys": "multi",
-            "workflows": "multi",
-            "statuses": "multi",
-            "additionalMetadata": "multi",
-            "eventIds": "multi",
+            'keys': 'multi',
+            'workflows': 'multi',
+            'statuses': 'multi',
+            'additionalMetadata': 'multi',
+            'eventIds': 'multi',
         }
 
         _path_params: Dict[str, str] = {}
@@ -1885,64 +1816,71 @@ class EventApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params["tenant"] = tenant
+            _path_params['tenant'] = tenant
         # process the query parameters
         if offset is not None:
-
-            _query_params.append(("offset", offset))
-
+            
+            _query_params.append(('offset', offset))
+            
         if limit is not None:
-
-            _query_params.append(("limit", limit))
-
+            
+            _query_params.append(('limit', limit))
+            
         if keys is not None:
-
-            _query_params.append(("keys", keys))
-
+            
+            _query_params.append(('keys', keys))
+            
         if workflows is not None:
-
-            _query_params.append(("workflows", workflows))
-
+            
+            _query_params.append(('workflows', workflows))
+            
         if statuses is not None:
-
-            _query_params.append(("statuses", statuses))
-
+            
+            _query_params.append(('statuses', statuses))
+            
         if search is not None:
-
-            _query_params.append(("search", search))
-
+            
+            _query_params.append(('search', search))
+            
         if order_by_field is not None:
-
-            _query_params.append(("orderByField", order_by_field.value))
-
+            
+            _query_params.append(('orderByField', order_by_field.value))
+            
         if order_by_direction is not None:
-
-            _query_params.append(("orderByDirection", order_by_direction.value))
-
+            
+            _query_params.append(('orderByDirection', order_by_direction.value))
+            
         if additional_metadata is not None:
-
-            _query_params.append(("additionalMetadata", additional_metadata))
-
+            
+            _query_params.append(('additionalMetadata', additional_metadata))
+            
         if event_ids is not None:
-
-            _query_params.append(("eventIds", event_ids))
-
+            
+            _query_params.append(('eventIds', event_ids))
+            
         # process the header parameters
         # process the form parameters
         # process the body parameter
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
+
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="GET",
-            resource_path="/api/v1/tenants/{tenant}/events",
+            method='GET',
+            resource_path='/api/v1/tenants/{tenant}/events',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -1952,27 +1890,24 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_update_cancel(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        cancel_event_request: Annotated[
-            CancelEventRequest, Field(description="The event ids to replay")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        cancel_event_request: Annotated[CancelEventRequest, Field(description="The event ids to replay")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2007,7 +1942,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_update_cancel_serialize(
             tenant=tenant,
@@ -2015,17 +1950,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventUpdateCancel200Response",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "EventUpdateCancel200Response",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2033,24 +1969,19 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_update_cancel_with_http_info(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        cancel_event_request: Annotated[
-            CancelEventRequest, Field(description="The event ids to replay")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        cancel_event_request: Annotated[CancelEventRequest, Field(description="The event ids to replay")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2085,7 +2016,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_update_cancel_serialize(
             tenant=tenant,
@@ -2093,17 +2024,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventUpdateCancel200Response",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "EventUpdateCancel200Response",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2111,24 +2043,19 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_update_cancel_without_preload_content(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        cancel_event_request: Annotated[
-            CancelEventRequest, Field(description="The event ids to replay")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        cancel_event_request: Annotated[CancelEventRequest, Field(description="The event ids to replay")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2163,7 +2090,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_update_cancel_serialize(
             tenant=tenant,
@@ -2171,19 +2098,21 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventUpdateCancel200Response",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "EventUpdateCancel200Response",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_update_cancel_serialize(
         self,
@@ -2197,7 +2126,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -2210,7 +2140,7 @@ class EventApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params["tenant"] = tenant
+            _path_params['tenant'] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -2218,28 +2148,38 @@ class EventApi:
         if cancel_event_request is not None:
             _body_params = cancel_event_request
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params["Content-Type"] = _content_type
+            _header_params['Content-Type'] = _content_type
         else:
-            _default_content_type = self.api_client.select_header_content_type(
-                ["application/json"]
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
             )
             if _default_content_type is not None:
-                _header_params["Content-Type"] = _default_content_type
+                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="POST",
-            resource_path="/api/v1/tenants/{tenant}/events/cancel",
+            method='POST',
+            resource_path='/api/v1/tenants/{tenant}/events/cancel',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2249,27 +2189,24 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
+
 
     @validate_call
     async def event_update_replay(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        replay_event_request: Annotated[
-            ReplayEventRequest, Field(description="The event ids to replay")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        replay_event_request: Annotated[ReplayEventRequest, Field(description="The event ids to replay")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2304,7 +2241,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_update_replay_serialize(
             tenant=tenant,
@@ -2312,17 +2249,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "EventList",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2330,24 +2268,19 @@ class EventApi:
             response_types_map=_response_types_map,
         ).data
 
+
     @validate_call
     async def event_update_replay_with_http_info(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        replay_event_request: Annotated[
-            ReplayEventRequest, Field(description="The event ids to replay")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        replay_event_request: Annotated[ReplayEventRequest, Field(description="The event ids to replay")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2382,7 +2315,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_update_replay_serialize(
             tenant=tenant,
@@ -2390,17 +2323,18 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "EventList",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         await response_data.read()
         return self.api_client.response_deserialize(
@@ -2408,24 +2342,19 @@ class EventApi:
             response_types_map=_response_types_map,
         )
 
+
     @validate_call
     async def event_update_replay_without_preload_content(
         self,
-        tenant: Annotated[
-            str,
-            Field(
-                min_length=36, strict=True, max_length=36, description="The tenant id"
-            ),
-        ],
-        replay_event_request: Annotated[
-            ReplayEventRequest, Field(description="The event ids to replay")
-        ],
+        tenant: Annotated[str, Field(min_length=36, strict=True, max_length=36, description="The tenant id")],
+        replay_event_request: Annotated[ReplayEventRequest, Field(description="The event ids to replay")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
             Tuple[
-                Annotated[StrictFloat, Field(gt=0)], Annotated[StrictFloat, Field(gt=0)]
-            ],
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
         ] = None,
         _request_auth: Optional[Dict[StrictStr, Any]] = None,
         _content_type: Optional[StrictStr] = None,
@@ -2460,7 +2389,7 @@ class EventApi:
                             in the spec for a single request.
         :type _host_index: int, optional
         :return: Returns the result object.
-        """  # noqa: E501
+        """ # noqa: E501
 
         _param = self._event_update_replay_serialize(
             tenant=tenant,
@@ -2468,19 +2397,21 @@ class EventApi:
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
-            _host_index=_host_index,
+            _host_index=_host_index
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "EventList",
-            "400": "APIErrors",
-            "403": "APIErrors",
-            "429": "APIErrors",
+            '200': "EventList",
+            '400': "APIErrors",
+            '403': "APIErrors",
+            '429': "APIErrors",
         }
         response_data = await self.api_client.call_api(
-            *_param, _request_timeout=_request_timeout
+            *_param,
+            _request_timeout=_request_timeout
         )
         return response_data.response
+
 
     def _event_update_replay_serialize(
         self,
@@ -2494,7 +2425,8 @@ class EventApi:
 
         _host = None
 
-        _collection_formats: Dict[str, str] = {}
+        _collection_formats: Dict[str, str] = {
+        }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
@@ -2507,7 +2439,7 @@ class EventApi:
 
         # process the path parameters
         if tenant is not None:
-            _path_params["tenant"] = tenant
+            _path_params['tenant'] = tenant
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -2515,28 +2447,38 @@ class EventApi:
         if replay_event_request is not None:
             _body_params = replay_event_request
 
+
         # set the HTTP header `Accept`
-        if "Accept" not in _header_params:
-            _header_params["Accept"] = self.api_client.select_header_accept(
-                ["application/json"]
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
             )
 
         # set the HTTP header `Content-Type`
         if _content_type:
-            _header_params["Content-Type"] = _content_type
+            _header_params['Content-Type'] = _content_type
         else:
-            _default_content_type = self.api_client.select_header_content_type(
-                ["application/json"]
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
             )
             if _default_content_type is not None:
-                _header_params["Content-Type"] = _default_content_type
+                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
-        _auth_settings: List[str] = ["cookieAuth", "bearerAuth"]
+        _auth_settings: List[str] = [
+            'cookieAuth', 
+            'bearerAuth'
+        ]
 
         return self.api_client.param_serialize(
-            method="POST",
-            resource_path="/api/v1/tenants/{tenant}/events/replay",
+            method='POST',
+            resource_path='/api/v1/tenants/{tenant}/events/replay',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2546,5 +2488,7 @@ class EventApi:
             auth_settings=_auth_settings,
             collection_formats=_collection_formats,
             _host=_host,
-            _request_auth=_request_auth,
+            _request_auth=_request_auth
         )
+
+
