@@ -160,6 +160,5 @@ class Workflow(BaseModel):
         return _obj
 
 
-
 # TODO: Rewrite to not use raise_errors
 Workflow.model_rebuild(raise_errors=False)

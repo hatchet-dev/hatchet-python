@@ -171,6 +171,5 @@ class JobRun(BaseModel):
         return _obj
 
 
-
 # TODO: Rewrite to not use raise_errors
 JobRun.model_rebuild(raise_errors=False)

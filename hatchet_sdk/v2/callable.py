@@ -183,10 +183,10 @@ class DurableContext(Context):
         worker_id = self.worker.id()
 
         ## TODO: Remove `noqa` flags here
-        workflow_name = function # noqa: F841
+        workflow_name = function  # noqa: F841
 
         if not isinstance(function, str):
-            workflow_name = function.function_name # noqa: F841
+            workflow_name = function.function_name  # noqa: F841
 
         # if (
         #     options is not None
