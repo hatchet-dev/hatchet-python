@@ -15,9 +15,13 @@ from hatchet_sdk.clients.rest.api.workflow_runs_api import WorkflowRunsApi
 from hatchet_sdk.clients.rest.api_client import ApiClient
 from hatchet_sdk.clients.rest.configuration import Configuration
 from hatchet_sdk.clients.rest.models import TriggerWorkflowRunRequest
-from hatchet_sdk.clients.rest.models.create_cron_workflow_trigger_request import CreateCronWorkflowTriggerRequest
+from hatchet_sdk.clients.rest.models.create_cron_workflow_trigger_request import (
+    CreateCronWorkflowTriggerRequest,
+)
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
-from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import CronWorkflowsOrderByField
+from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
+    CronWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.event_list import EventList
 from hatchet_sdk.clients.rest.models.event_order_by_direction import (
     EventOrderByDirection,
@@ -36,9 +40,13 @@ from hatchet_sdk.clients.rest.models.replay_workflow_runs_request import (
 from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
     ReplayWorkflowRunsResponse,
 )
-from hatchet_sdk.clients.rest.models.schedule_workflow_run_request import ScheduleWorkflowRunRequest
+from hatchet_sdk.clients.rest.models.schedule_workflow_run_request import (
+    ScheduleWorkflowRunRequest,
+)
 from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
-from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import ScheduledWorkflowsOrderByField
+from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import (
+    ScheduledWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind
 from hatchet_sdk.clients.rest.models.workflow_list import WorkflowList
@@ -217,12 +225,12 @@ class AsyncRestApi:
         )
 
     async def cron_create(
-        self, 
+        self,
         workflow_name: str,
-        cron_name: str, 
-        expression: str, 
-        input: dict[str, Any], 
-        additional_metadata: dict[str, str]
+        cron_name: str,
+        expression: str,
+        input: dict[str, Any],
+        additional_metadata: dict[str, str],
     ):
         return await self.workflow_run_api.cron_workflow_trigger_create(
             tenant=self.tenant_id,
@@ -240,7 +248,6 @@ class AsyncRestApi:
             tenant=self.tenant_id,
             cron_workflow=cron_trigger_id,
         )
-
 
     async def cron_list(
         self,
@@ -268,11 +275,11 @@ class AsyncRestApi:
         )
 
     async def schedule_create(
-        self, 
-        name: str, 
-        trigger_at: datetime.datetime, 
-        input: dict[str, Any], 
-        additional_metadata: dict[str, str]
+        self,
+        name: str,
+        trigger_at: datetime.datetime,
+        input: dict[str, Any],
+        additional_metadata: dict[str, str],
     ):
         return await self.workflow_run_api.scheduled_workflow_run_create(
             tenant=self.tenant_id,
@@ -473,26 +480,81 @@ class RestApi:
             )
         )
 
-    def cron_create(self, workflow_name: str, cron_name: str, expression: str, input: dict[str, Any], additional_metadata: dict[str, str]) -> CronWorkflows:
-        return self._run_coroutine(self.aio.cron_create(workflow_name, cron_name, expression, input, additional_metadata))
+    def cron_create(
+        self,
+        workflow_name: str,
+        cron_name: str,
+        expression: str,
+        input: dict[str, Any],
+        additional_metadata: dict[str, str],
+    ) -> CronWorkflows:
+        return self._run_coroutine(
+            self.aio.cron_create(
+                workflow_name, cron_name, expression, input, additional_metadata
+            )
+        )
 
     def cron_delete(self, cron_trigger_id: str):
         return self._run_coroutine(self.aio.cron_delete(cron_trigger_id))
 
-    def cron_list(self, offset: int | None = None, limit: int | None = None, workflow_id: str | None = None, additional_metadata: list[str] | None = None, order_by_field: CronWorkflowsOrderByField | None = None, order_by_direction: WorkflowRunOrderByDirection | None = None):
-        return self._run_coroutine(self.aio.cron_list(offset, limit, workflow_id, additional_metadata, order_by_field, order_by_direction))
+    def cron_list(
+        self,
+        offset: int | None = None,
+        limit: int | None = None,
+        workflow_id: str | None = None,
+        additional_metadata: list[str] | None = None,
+        order_by_field: CronWorkflowsOrderByField | None = None,
+        order_by_direction: WorkflowRunOrderByDirection | None = None,
+    ):
+        return self._run_coroutine(
+            self.aio.cron_list(
+                offset,
+                limit,
+                workflow_id,
+                additional_metadata,
+                order_by_field,
+                order_by_direction,
+            )
+        )
 
     def cron_get(self, cron_trigger_id: str):
         return self._run_coroutine(self.aio.cron_get(cron_trigger_id))
 
-    def schedule_create(self, workflow_name: str, trigger_at: datetime.datetime, input: dict[str, Any], additional_metadata: dict[str, str]):
-        return self._run_coroutine(self.aio.schedule_create(workflow_name, trigger_at, input, additional_metadata))
+    def schedule_create(
+        self,
+        workflow_name: str,
+        trigger_at: datetime.datetime,
+        input: dict[str, Any],
+        additional_metadata: dict[str, str],
+    ):
+        return self._run_coroutine(
+            self.aio.schedule_create(
+                workflow_name, trigger_at, input, additional_metadata
+            )
+        )
 
     def schedule_delete(self, scheduled_trigger_id: str):
         return self._run_coroutine(self.aio.schedule_delete(scheduled_trigger_id))
 
-    def schedule_list(self, offset: int | None = None, limit: int | None = None, workflow_id: str | None = None, additional_metadata: list[str] | None = None, order_by_field: CronWorkflowsOrderByField | None = None, order_by_direction: WorkflowRunOrderByDirection | None = None):
-        return self._run_coroutine(self.aio.schedule_list(offset, limit, workflow_id, additional_metadata, order_by_field, order_by_direction))
+    def schedule_list(
+        self,
+        offset: int | None = None,
+        limit: int | None = None,
+        workflow_id: str | None = None,
+        additional_metadata: list[str] | None = None,
+        order_by_field: CronWorkflowsOrderByField | None = None,
+        order_by_direction: WorkflowRunOrderByDirection | None = None,
+    ):
+        return self._run_coroutine(
+            self.aio.schedule_list(
+                offset,
+                limit,
+                workflow_id,
+                additional_metadata,
+                order_by_field,
+                order_by_direction,
+            )
+        )
 
     def schedule_get(self, scheduled_trigger_id: str):
         return self._run_coroutine(self.aio.schedule_get(scheduled_trigger_id))

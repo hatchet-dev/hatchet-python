@@ -1,12 +1,20 @@
 import datetime
 from typing import Any, Coroutine, Dict, List, Optional, Union
+
 from pydantic import BaseModel
+
 from hatchet_sdk.client import Client
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
-from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import CronWorkflowsOrderByField
+from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
+    CronWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
-from hatchet_sdk.clients.rest.models.scheduled_workflows_list import ScheduledWorkflowsList
-from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import WorkflowRunOrderByDirection
+from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
+    ScheduledWorkflowsList,
+)
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
+    WorkflowRunOrderByDirection,
+)
 
 
 class CreateScheduledTriggerInput(BaseModel):
@@ -18,6 +26,7 @@ class CreateScheduledTriggerInput(BaseModel):
         additional_metadata (Dict[str, str]): Additional metadata associated with the future run (e.g. ["key1:value1", "key2:value2"]).
         trigger_at (Optional[datetime.datetime]): The datetime when the run should be triggered.
     """
+
     input: Dict[str, Any] = {}
     additional_metadata: Dict[str, str] = {}
     trigger_at: Optional[datetime.datetime] = None
@@ -31,6 +40,7 @@ class ScheduledClient:
         _client (Client): The underlying client used to interact with the REST API.
         aio (ScheduledClientAsync): Asynchronous counterpart of ScheduledClient.
     """
+
     _client: Client
 
     def __init__(self, _client: Client) -> None:
@@ -41,14 +51,14 @@ class ScheduledClient:
             _client (Client): The client instance to be used for REST interactions.
         """
         self._client = _client
-        self.aio: 'ScheduledClientAsync' = ScheduledClientAsync(_client)
+        self.aio: "ScheduledClientAsync" = ScheduledClientAsync(_client)
 
     def create(
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
         input: Dict[str, Any],
-        additional_metadata: Dict[str, str]
+        additional_metadata: Dict[str, str],
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.
@@ -62,18 +72,16 @@ class ScheduledClient:
         Returns:
             ScheduledWorkflows: The created scheduled workflow instance.
         """
-        
+
         validated_input = CreateScheduledTriggerInput(
-            trigger_at=trigger_at,
-            input=input,
-            additional_metadata=additional_metadata
+            trigger_at=trigger_at, input=input, additional_metadata=additional_metadata
         )
 
         return self._client.rest.schedule_create(
             workflow_name,
             validated_input.trigger_at,
             validated_input.input,
-            validated_input.additional_metadata
+            validated_input.additional_metadata,
         )
 
     def delete(self, scheduled: Union[str, ScheduledWorkflows]) -> None:
@@ -95,7 +103,7 @@ class ScheduledClient:
         workflow_id: Optional[str] = None,
         additional_metadata: Optional[List[str]] = None,
         order_by_field: Optional[CronWorkflowsOrderByField] = None,
-        order_by_direction: Optional[WorkflowRunOrderByDirection] = None
+        order_by_direction: Optional[WorkflowRunOrderByDirection] = None,
     ) -> ScheduledWorkflowsList:
         """
         Retrieves a list of scheduled workflows based on provided filters.
@@ -117,7 +125,7 @@ class ScheduledClient:
             workflow_id=workflow_id,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
-            order_by_direction=order_by_direction
+            order_by_direction=order_by_direction,
         )
 
     def get(self, scheduled: Union[str, ScheduledWorkflows]) -> ScheduledWorkflows:
@@ -160,7 +168,7 @@ class ScheduledClientAsync:
         workflow_name: str,
         trigger_at: datetime.datetime,
         input: Dict[str, Any],
-        additional_metadata: Dict[str, str]
+        additional_metadata: Dict[str, str],
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.
@@ -174,7 +182,9 @@ class ScheduledClientAsync:
         Returns:
             ScheduledWorkflows: The created scheduled workflow instance.
         """
-        return await self._client.rest.aio.schedule_create(workflow_name, trigger_at, input, additional_metadata)
+        return await self._client.rest.aio.schedule_create(
+            workflow_name, trigger_at, input, additional_metadata
+        )
 
     async def delete(self, scheduled: Union[str, ScheduledWorkflows]) -> None:
         """
@@ -195,7 +205,7 @@ class ScheduledClientAsync:
         workflow_id: Optional[str] = None,
         additional_metadata: Optional[List[str]] = None,
         order_by_field: Optional[CronWorkflowsOrderByField] = None,
-        order_by_direction: Optional[WorkflowRunOrderByDirection] = None
+        order_by_direction: Optional[WorkflowRunOrderByDirection] = None,
     ) -> ScheduledWorkflowsList:
         """
         Retrieves a list of scheduled workflows based on provided filters asynchronously.
@@ -217,10 +227,12 @@ class ScheduledClientAsync:
             workflow_id=workflow_id,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
-            order_by_direction=order_by_direction
+            order_by_direction=order_by_direction,
         )
 
-    async def get(self, scheduled: Union[str, ScheduledWorkflows]) -> ScheduledWorkflows:
+    async def get(
+        self, scheduled: Union[str, ScheduledWorkflows]
+    ) -> ScheduledWorkflows:
         """
         Retrieves a specific scheduled workflow by scheduled run trigger ID asynchronously.
 

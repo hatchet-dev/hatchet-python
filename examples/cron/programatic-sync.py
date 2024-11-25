@@ -19,7 +19,7 @@ cron_trigger = hatchet.cron.create(
     },
 )
 
-id = cron_trigger.metadata.id # the id of the cron trigger
+id = cron_trigger.metadata.id  # the id of the cron trigger
 # !!
 
 # ❓ Delete

@@ -6,6 +6,7 @@ load_dotenv()
 
 hatchet = Hatchet()
 
+
 async def create_cron():
     # ❓ Create
     cron_trigger = await hatchet.cron.aio.create(
@@ -20,7 +21,7 @@ async def create_cron():
         },
     )
 
-    id = cron_trigger.metadata.id # the id of the cron trigger
+    id = cron_trigger.metadata.id  # the id of the cron trigger
     # !!
 
     # ❓ Delete

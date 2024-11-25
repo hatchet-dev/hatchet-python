@@ -13,20 +13,30 @@
 
 
 from __future__ import annotations
+
+import json
 import pprint
 import re  # noqa: F401
-import json
+from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
-from typing import Any, ClassVar, Dict, List, Optional
-from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from typing import Optional, Set
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictStr,
+    field_validator,
+)
 from typing_extensions import Self
+
+from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+
 
 class CronWorkflows(BaseModel):
     """
     CronWorkflows
-    """ # noqa: E501
+    """  # noqa: E501
+
     metadata: APIResourceMeta
     tenant_id: StrictStr = Field(alias="tenantId")
     workflow_version_id: StrictStr = Field(alias="workflowVersionId")
@@ -35,15 +45,29 @@ class CronWorkflows(BaseModel):
     cron: StrictStr
     name: Optional[StrictStr] = None
     input: Optional[Dict[str, Any]] = None
-    additional_metadata: Optional[Dict[str, Any]] = Field(default=None, alias="additionalMetadata")
+    additional_metadata: Optional[Dict[str, Any]] = Field(
+        default=None, alias="additionalMetadata"
+    )
     enabled: StrictBool
     method: StrictStr
-    __properties: ClassVar[List[str]] = ["metadata", "tenantId", "workflowVersionId", "workflowId", "workflowName", "cron", "name", "input", "additionalMetadata", "enabled", "method"]
+    __properties: ClassVar[List[str]] = [
+        "metadata",
+        "tenantId",
+        "workflowVersionId",
+        "workflowId",
+        "workflowName",
+        "cron",
+        "name",
+        "input",
+        "additionalMetadata",
+        "enabled",
+        "method",
+    ]
 
-    @field_validator('method')
+    @field_validator("method")
     def method_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in set(['DEFAULT', 'API']):
+        if value not in set(["DEFAULT", "API"]):
             raise ValueError("must be one of enum values ('DEFAULT', 'API')")
         return value
 
@@ -52,7 +76,6 @@ class CronWorkflows(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
-
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -78,8 +101,7 @@ class CronWorkflows(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([
-        ])
+        excluded_fields: Set[str] = set([])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -88,7 +110,7 @@ class CronWorkflows(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
-            _dict['metadata'] = self.metadata.to_dict()
+            _dict["metadata"] = self.metadata.to_dict()
         return _dict
 
     @classmethod
@@ -100,19 +122,23 @@ class CronWorkflows(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({
-            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
-            "tenantId": obj.get("tenantId"),
-            "workflowVersionId": obj.get("workflowVersionId"),
-            "workflowId": obj.get("workflowId"),
-            "workflowName": obj.get("workflowName"),
-            "cron": obj.get("cron"),
-            "name": obj.get("name"),
-            "input": obj.get("input"),
-            "additionalMetadata": obj.get("additionalMetadata"),
-            "enabled": obj.get("enabled"),
-            "method": obj.get("method")
-        })
+        _obj = cls.model_validate(
+            {
+                "metadata": (
+                    APIResourceMeta.from_dict(obj["metadata"])
+                    if obj.get("metadata") is not None
+                    else None
+                ),
+                "tenantId": obj.get("tenantId"),
+                "workflowVersionId": obj.get("workflowVersionId"),
+                "workflowId": obj.get("workflowId"),
+                "workflowName": obj.get("workflowName"),
+                "cron": obj.get("cron"),
+                "name": obj.get("name"),
+                "input": obj.get("input"),
+                "additionalMetadata": obj.get("additionalMetadata"),
+                "enabled": obj.get("enabled"),
+                "method": obj.get("method"),
+            }
+        )
         return _obj
-
-

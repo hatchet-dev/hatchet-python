@@ -1,10 +1,16 @@
-from pydantic import BaseModel, field_validator
 from typing import Union
+
+from pydantic import BaseModel, field_validator
+
 from hatchet_sdk.client import Client
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
 from hatchet_sdk.clients.rest.models.cron_workflows_list import CronWorkflowsList
-from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import CronWorkflowsOrderByField
-from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import WorkflowRunOrderByDirection
+from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
+    CronWorkflowsOrderByField,
+)
+from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
+    WorkflowRunOrderByDirection,
+)
 
 
 class CreateCronTriggerInput(BaseModel):
@@ -16,11 +22,12 @@ class CreateCronTriggerInput(BaseModel):
         input (dict): The input data for the cron workflow.
         additional_metadata (dict[str, str]): Additional metadata associated with the cron trigger (e.g. {"key1": "value1", "key2": "value2"}).
     """
+
     expression: str = None
     input: dict = {}
     additional_metadata: dict[str, str] = {}
 
-    @field_validator('expression')
+    @field_validator("expression")
     def validate_cron_expression(cls, v):
         """
         Validates the cron expression to ensure it adheres to the expected format.
@@ -36,15 +43,20 @@ class CreateCronTriggerInput(BaseModel):
         """
         if not v:
             raise ValueError("Cron expression is required")
-        
+
         parts = v.split()
         if len(parts) != 5:
-            raise ValueError("Cron expression must have 5 parts: minute hour day month weekday")
-            
+            raise ValueError(
+                "Cron expression must have 5 parts: minute hour day month weekday"
+            )
+
         for part in parts:
-            if not (part == '*' or part.replace('*/','').replace('-','').replace(',','').isdigit()):
+            if not (
+                part == "*"
+                or part.replace("*/", "").replace("-", "").replace(",", "").isdigit()
+            ):
                 raise ValueError(f"Invalid cron expression part: {part}")
-                
+
         return v
 
 
@@ -56,6 +68,7 @@ class CronClient:
         _client (Client): The underlying client used to interact with the REST API.
         aio (CronClientAsync): Asynchronous counterpart of CronClient.
     """
+
     _client: Client
 
     def __init__(self, _client: Client):
@@ -69,12 +82,12 @@ class CronClient:
         self.aio = CronClientAsync(_client)
 
     def create(
-        self, 
-        workflow_name: str, 
-        cron_name: str, 
-        expression: str, 
-        input: dict, 
-        additional_metadata: dict[str, str]
+        self,
+        workflow_name: str,
+        cron_name: str,
+        expression: str,
+        input: dict,
+        additional_metadata: dict[str, str],
     ) -> CronWorkflows:
         """
         Creates a new workflow cron trigger.
@@ -90,9 +103,7 @@ class CronClient:
             CronWorkflows: The created cron workflow instance.
         """
         validated_input = CreateCronTriggerInput(
-            expression=expression,
-            input=input,
-            additional_metadata=additional_metadata
+            expression=expression, input=input, additional_metadata=additional_metadata
         )
 
         return self._client.rest.cron_create(
@@ -100,7 +111,7 @@ class CronClient:
             cron_name,
             validated_input.expression,
             validated_input.input,
-            validated_input.additional_metadata
+            validated_input.additional_metadata,
         )
 
     def delete(self, cron_trigger: Union[str, CronWorkflows]) -> None:
@@ -113,10 +124,10 @@ class CronClient:
         id_ = cron_trigger
         if isinstance(cron_trigger, CronWorkflows):
             id_ = cron_trigger.metadata.id
-        self._client.rest.cron_delete(id_) 
+        self._client.rest.cron_delete(id_)
 
     def list(
-        self, 
+        self,
         offset: int | None = None,
         limit: int | None = None,
         workflow_id: str | None = None,
@@ -144,7 +155,7 @@ class CronClient:
             workflow_id=workflow_id,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
-            order_by_direction=order_by_direction
+            order_by_direction=order_by_direction,
         )
 
     def get(self, cron_trigger: Union[str, CronWorkflows]) -> CronWorkflows:
@@ -170,6 +181,7 @@ class CronClientAsync:
     Attributes:
         _client (Client): The underlying client used to interact with the REST API asynchronously.
     """
+
     _client: Client
 
     def __init__(self, _client: Client):
@@ -182,12 +194,12 @@ class CronClientAsync:
         self._client = _client
 
     async def create(
-        self, 
-        workflow_name: str, 
-        cron_name: str, 
-        expression: str, 
-        input: dict, 
-        additional_metadata: dict[str, str]
+        self,
+        workflow_name: str,
+        cron_name: str,
+        expression: str,
+        input: dict,
+        additional_metadata: dict[str, str],
     ) -> CronWorkflows:
         """
         Asynchronously creates a new workflow cron trigger.
@@ -203,9 +215,7 @@ class CronClientAsync:
             CronWorkflows: The created cron workflow instance.
         """
         validated_input = CreateCronTriggerInput(
-            expression=expression,
-            input=input,
-            additional_metadata=additional_metadata
+            expression=expression, input=input, additional_metadata=additional_metadata
         )
 
         return await self._client.rest.aio.cron_create(
@@ -213,7 +223,7 @@ class CronClientAsync:
             cron_name=cron_name,
             expression=validated_input.expression,
             input=validated_input.input,
-            additional_metadata=validated_input.additional_metadata
+            additional_metadata=validated_input.additional_metadata,
         )
 
     async def delete(self, cron_trigger: Union[str, CronWorkflows]) -> None:
@@ -257,7 +267,7 @@ class CronClientAsync:
             workflow_id=workflow_id,
             additional_metadata=additional_metadata,
             order_by_field=order_by_field,
-            order_by_direction=order_by_direction
+            order_by_direction=order_by_direction,
         )
 
     async def get(self, cron_trigger: Union[str, CronWorkflows]) -> CronWorkflows:
