@@ -4,9 +4,6 @@ import pytest
 
 from hatchet_sdk.clients.events import BulkPushEventOptions, BulkPushEventWithMetadata
 from hatchet_sdk.hatchet import Hatchet
-from tests.utils import hatchet_client_fixture
-
-hatchet = hatchet_client_fixture()
 
 
 # requires scope module or higher for shared event loop
@@ -18,14 +15,14 @@ async def test_event_push(hatchet: Hatchet):
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_async_event_push(hatchet: Hatchet):
-    e = await hatchet.event.async_push("user:create", {"test": "test"})
+async def test_async_event_push(aiohatchet: Hatchet):
+    e = await aiohatchet.event.async_push("user:create", {"test": "test"})
 
     assert e.eventId is not None
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_async_event_bulk_push(hatchet: Hatchet):
+async def test_async_event_bulk_push(aiohatchet: Hatchet):
 
     events: List[BulkPushEventWithMetadata] = [
         {
@@ -46,7 +43,7 @@ async def test_async_event_bulk_push(hatchet: Hatchet):
     ]
     opts: BulkPushEventOptions = {"namespace": "bulk-test"}
 
-    e = await hatchet.event.async_bulk_push(events, opts)
+    e = await aiohatchet.event.async_bulk_push(events, opts)
 
     assert len(e) == 3
 

@@ -5,9 +5,7 @@ import pytest
 from hatchet_sdk import Hatchet
 from hatchet_sdk.clients.rest.models.job_run_status import JobRunStatus
 from tests.utils import fixture_bg_worker
-from tests.utils.hatchet_client import hatchet_client_fixture
 
-hatchet = hatchet_client_fixture()
 worker = fixture_bg_worker(["poetry", "run", "on_failure"])
 
 
