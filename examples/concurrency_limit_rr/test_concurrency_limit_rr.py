@@ -12,7 +12,7 @@ worker = fixture_bg_worker(["poetry", "run", "concurrency_limit_rr"])
 
 # requires scope module or higher for shared event loop
 @pytest.mark.skip(reason="The timing for this test is not reliable")
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio()
 async def test_run(hatchet: Hatchet):
     num_groups = 2
     runs: list[WorkflowRunRef] = []

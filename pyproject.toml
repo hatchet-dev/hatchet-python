@@ -49,6 +49,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 log_cli = true
+asyncio_mode = "auto"
 
 [tool.isort]
 profile = "black"

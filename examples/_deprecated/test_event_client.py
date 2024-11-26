@@ -7,7 +7,7 @@ from hatchet_sdk.hatchet import Hatchet
 load_dotenv()
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio()
 async def test_direct_client_event():
     client = new_client()
     e = client.event.push("user:create", {"test": "test"})
@@ -18,7 +18,7 @@ async def test_direct_client_event():
 @pytest.mark.filterwarnings(
     "ignore:Direct access to client is deprecated:DeprecationWarning"
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio()
 async def test_hatchet_client_event():
     hatchet = Hatchet()
     e = hatchet.client.event.push("user:create", {"test": "test"})

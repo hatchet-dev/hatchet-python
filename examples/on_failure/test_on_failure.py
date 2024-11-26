@@ -10,7 +10,7 @@ worker = fixture_bg_worker(["poetry", "run", "on_failure"])
 
 
 # requires scope module or higher for shared event loop
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio()
 async def test_run_timeout(hatchet: Hatchet):
     run = hatchet.admin.run_workflow("OnFailureWorkflow", {})
     try:
