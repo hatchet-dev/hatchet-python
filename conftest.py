@@ -26,6 +26,8 @@ def worker() -> Generator[DockerContainer, None, None]:
     with DockerImage(path=".", tag="test-container:latest") as image:
         with DockerContainer(str(image)).with_env(
             "HATCHET_CLIENT_TOKEN", os.getenv("HATCHET_CLIENT_TOKEN")
+        ).with_env(
+            "HATCHET_CLIENT_NAMESPACE", os.getenv("HATCHET_CLIENT_NAMESPACE")
         ) as container:
             wait_for_logs(container, "sending heartbeat", timeout=30)
 
