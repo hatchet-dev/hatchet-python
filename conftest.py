@@ -22,7 +22,6 @@ def hatchet() -> Hatchet:
 
 @pytest.fixture(scope="session")
 def worker() -> Generator[DockerContainer, None, None]:
-    print("\n\nToken is not None", os.getenv("HATCHET_CLIENT_TOKEN") is not None)
     with DockerImage(path=".", tag="test-container:latest") as image:
         with DockerContainer(str(image)).with_env(
             "HATCHET_CLIENT_TOKEN", os.getenv("HATCHET_CLIENT_TOKEN")

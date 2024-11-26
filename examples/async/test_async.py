@@ -11,9 +11,8 @@ async def test_run(hatchet: Hatchet, worker):
     assert result["step1"]["test"] == "test"
 
 
-@pytest.mark.skip(reason="Skipping this test until we can dedicate more time to debug")
 @pytest.mark.asyncio(scope="session")
-async def test_run_async(aiohatchet: Hatchet):
+async def test_run_async(aiohatchet: Hatchet, worker):
     run = await aiohatchet.admin.aio.run_workflow("AsyncWorkflow", {})
     result = await run.result()
     assert result["step1"]["test"] == "test"
