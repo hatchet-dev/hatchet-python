@@ -9,6 +9,3 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=1
 COPY . .
 
 RUN poetry install
-
-
-CMD ["poetry", "run", "python", "examples/async/worker.py"]

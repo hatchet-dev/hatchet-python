@@ -1,5 +1,5 @@
 import os
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Generator, cast
 
 import pytest
 import pytest_asyncio
@@ -21,12 +21,16 @@ def hatchet() -> Hatchet:
 
 
 @pytest.fixture(scope="session")
-def worker() -> Generator[DockerContainer, None, None]:
+def worker(request: pytest.FixtureRequest) -> Generator[DockerContainer, None, None]:
+    command = cast(str, request.param)
+
     with DockerImage(path=".", tag="test-container:latest") as image:
         with DockerContainer(str(image)).with_env(
             "HATCHET_CLIENT_TOKEN", os.getenv("HATCHET_CLIENT_TOKEN")
         ).with_env(
             "HATCHET_CLIENT_NAMESPACE", os.getenv("HATCHET_CLIENT_NAMESPACE")
+        ).with_command(
+            command
         ) as container:
             wait_for_logs(container, "sending heartbeat", timeout=30)
 
