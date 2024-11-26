@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from hatchet_sdk import PushEventOptions, new_client
+from hatchet_sdk import new_client
 
 load_dotenv()
 

@@ -1,7 +1,3 @@
-from logging import getLogger
-
-from dotenv import load_dotenv
-
 from examples.logger.client import hatchet
 from examples.logger.workflow import LoggingWorkflow
 

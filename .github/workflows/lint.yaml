@@ -34,5 +34,8 @@ jobs:
       - name: Run Isort
         run: poetry run isort . --check-only --diff
 
+      - name: Run Ruff
+        run: poetry run ruff check --output-format=github .
+
       - name: Run MyPy
         run: poetry run mypy --config-file=pyproject.toml

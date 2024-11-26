@@ -1,14 +1,8 @@
 import asyncio
-import base64
-import json
-import os
 import random
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import new_client
-from hatchet_sdk.clients.admin import TriggerWorkflowOptions
-from hatchet_sdk.clients.run_event_listener import StepRunEventType
 from hatchet_sdk.v2.hatchet import Hatchet
 
 
@@ -28,7 +22,7 @@ async def main():
     # This key gets propagated to all child workflows
     # and can have an arbitrary property name.
 
-    workflowRun = hatchet.admin.run_workflow(
+    hatchet.admin.run_workflow(
         "Parent",
         {"n": 2},
         options={"additional_metadata": {streamKey: streamVal}},

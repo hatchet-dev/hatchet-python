@@ -10,7 +10,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
     RESOURCE_TYPE_WORKFLOW_RUN,
     ResourceEventType,
     SubscribeToWorkflowEventsRequest,
-    WorkflowEvent,
 )
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 
@@ -146,7 +145,7 @@ class RunEventListener:
                         try:
                             if workflow_event.eventPayload:
                                 payload = json.loads(workflow_event.eventPayload)
-                        except Exception as e:
+                        except Exception:
                             payload = workflow_event.eventPayload
                             pass
 
@@ -166,7 +165,7 @@ class RunEventListener:
                         try:
                             if workflow_event.eventPayload:
                                 payload = json.loads(workflow_event.eventPayload)
-                        except Exception as e:
+                        except Exception:
                             pass
 
                         yield StepRunEvent(type=eventType, payload=payload)

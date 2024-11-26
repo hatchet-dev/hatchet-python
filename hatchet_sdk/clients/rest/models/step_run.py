@@ -196,7 +196,7 @@ class StepRun(BaseModel):
         return _obj
 
 
-from hatchet_sdk.clients.rest.models.job_run import JobRun
+from hatchet_sdk.clients.rest.models.job_run import JobRun  # noqa: E402
 
 # TODO: Rewrite to not use raise_errors
 StepRun.model_rebuild(raise_errors=False)

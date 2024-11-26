@@ -3,21 +3,17 @@ import contextvars
 import ctypes
 import functools
 import json
-import logging
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from io import StringIO
-from logging import StreamHandler
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import Any, Callable, Coroutine, Dict
+from typing import Any, Callable, Dict
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
-from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context import Context

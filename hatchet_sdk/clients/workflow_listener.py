@@ -188,7 +188,6 @@ class PooledWorkflowRunListener:
         del self.events[subscription_id]
 
     async def subscribe(self, workflow_run_id: str):
-        init_producer: asyncio.Task = None
         try:
             # create a new subscription id, place a mutex on the counter
             await self.subscription_counter_lock.acquire()

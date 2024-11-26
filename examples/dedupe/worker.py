@@ -1,11 +1,9 @@
 import asyncio
-import random
 
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
 from hatchet_sdk.clients.admin import DedupeViolationErr
-from hatchet_sdk.loader import ClientConfig
 
 load_dotenv()
 
@@ -48,7 +46,7 @@ class DedupeChild:
     async def process(self, context: Context):
         await asyncio.sleep(3)
 
-        print(f"child process")
+        print("child process")
         return {"status": "success"}
 
     @hatchet.step()

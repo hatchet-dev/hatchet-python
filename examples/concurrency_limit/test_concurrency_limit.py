@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 
 from hatchet_sdk import Hatchet

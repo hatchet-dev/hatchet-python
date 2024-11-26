@@ -32,6 +32,7 @@ mypy = "^1.13.0"
 types-protobuf = "^5.28.3.20241030"
 black = "^24.10.0"
 isort = "^5.13.2"
+ruff = "^0.8.0"
 
 [tool.poetry.group.test.dependencies]
 pytest-timeout = "^2.3.1"
@@ -65,6 +66,38 @@ extend_exclude = "hatchet_sdk/contracts/"
 strict = true
 files = ["hatchet_sdk/hatchet.py"]
 follow_imports = "silent"
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "*.pyi",
+    "hatchet_sdk/contracts/*"
+]
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"
