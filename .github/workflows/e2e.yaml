@@ -30,6 +30,11 @@ jobs:
           PYTHON_VERSION=$(python -c "import sys; print(f'py{sys.version_info.major}{sys.version_info.minor}')")
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "HATCHET_CLIENT_NAMESPACE=${PYTHON_VERSION}-${SHORT_SHA}" >> $GITHUB_ENV
+
+      - uses: hoverkraft-tech/compose-action@v1.5.1
+        with:
+          compose-file: "./hatchet/docker-compose.yml"
+
       - name: Run pytest
         env:
           HATCHET_CLIENT_TOKEN: ${{ secrets.HATCHET_CLIENT_TOKEN }}
