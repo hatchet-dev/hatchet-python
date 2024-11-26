@@ -7,7 +7,7 @@ worker = fixture_bg_worker(["poetry", "run", "fanout"])
 
 
 # requires scope module or higher for shared event loop
-@pytest.mark.asyncio()
+@pytest.mark.asyncio(scope="session")
 async def test_run(hatchet: Hatchet):
     run = hatchet.admin.run_workflow("Parent", {"n": 2})
     result = await run.result()
@@ -15,7 +15,7 @@ async def test_run(hatchet: Hatchet):
 
 
 # requires scope module or higher for shared event loop
-@pytest.mark.asyncio()
+@pytest.mark.asyncio(scope="session")
 async def test_run2(hatchet: Hatchet):
     run = hatchet.admin.run_workflow("Parent", {"n": 2})
     result = await run.result()

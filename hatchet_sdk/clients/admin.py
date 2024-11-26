@@ -23,13 +23,6 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowVersion,
 )
 from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
-from hatchet_sdk.utils.serialization import flatten
-from hatchet_sdk.utils.tracing import (
-    create_carrier,
-    create_tracer,
-    inject_carrier_into_metadata,
-    parse_carrier_from_metadata,
-)
 from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 
 from ..loader import ClientConfig
@@ -171,7 +164,6 @@ class AdminClientAioImpl(AdminClientBase):
         self.token = config.token
         self.listener_client = new_listener(config)
         self.namespace = config.namespace
-        self.otel_tracer = create_tracer(config=config)
 
     async def run(
         self,
@@ -194,74 +186,45 @@ class AdminClientAioImpl(AdminClientBase):
     async def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ) -> WorkflowRunRef:
-        ctx = parse_carrier_from_metadata(
-            (options or {}).get("additional_metadata", {})
-        )
+        try:
+            if not self.pooled_workflow_listener:
+                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-        with self.otel_tracer.start_as_current_span(
-            f"hatchet.async_run_workflow.{workflow_name}", context=ctx
-        ) as span:
-            carrier = create_carrier()
+            namespace = self.namespace
 
-            try:
-                if not self.pooled_workflow_listener:
-                    self.pooled_workflow_listener = PooledWorkflowRunListener(
-                        self.config
-                    )
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
+                namespace = options["namespace"]
+                del options["namespace"]
 
-                namespace = self.namespace
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
-                if (
-                    options is not None
-                    and "namespace" in options
-                    and options["namespace"] is not None
-                ):
-                    namespace = options.pop("namespace")
+            request = self._prepare_workflow_request(workflow_name, input, options)
 
-                if namespace != "" and not workflow_name.startswith(self.namespace):
-                    workflow_name = f"{namespace}{workflow_name}"
+            resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
+                request,
+                metadata=get_metadata(self.token),
+            )
+            return WorkflowRunRef(
+                workflow_run_id=resp.workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
+            )
+        except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+                raise DedupeViolationErr(e.details())
 
-                if options is not None and "additional_metadata" in options:
-                    options["additional_metadata"] = inject_carrier_into_metadata(
-                        options["additional_metadata"], carrier
-                    )
-                    span.set_attributes(
-                        flatten(
-                            options["additional_metadata"], parent_key="", separator="."
-                        )
-                    )
-
-                request = self._prepare_workflow_request(workflow_name, input, options)
-
-                span.add_event(
-                    "Triggering workflow", attributes={"workflow_name": workflow_name}
-                )
-
-                resp: TriggerWorkflowResponse = await self.aio_client.TriggerWorkflow(
-                    request,
-                    metadata=get_metadata(self.token),
-                )
-
-                span.add_event(
-                    "Received workflow response",
-                    attributes={"workflow_name": workflow_name},
-                )
-
-                return WorkflowRunRef(
-                    workflow_run_id=resp.workflow_run_id,
-                    workflow_listener=self.pooled_workflow_listener,
-                    workflow_run_event_listener=self.listener_client,
-                )
-            except grpc.RpcError as e:
-                if e.code() == grpc.StatusCode.ALREADY_EXISTS:
-                    raise DedupeViolationErr(e.details())
-
-                raise ValueError(f"gRPC error: {e}")
+            raise ValueError(f"gRPC error: {e}")
 
     @tenacity_retry
     async def run_workflows(
         self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> List[WorkflowRunRef]:
+
         if len(workflows) == 0:
             raise ValueError("No workflows to run")
         try:
@@ -281,6 +244,7 @@ class AdminClientAioImpl(AdminClientBase):
             workflow_run_requests: TriggerWorkflowRequest = []
 
             for workflow in workflows:
+
                 workflow_name = workflow["workflow_name"]
                 input_data = workflow["input"]
                 options = workflow["options"]
@@ -397,7 +361,6 @@ class AdminClient(AdminClientBase):
         self.token = config.token
         self.listener_client = new_listener(config)
         self.namespace = config.namespace
-        self.otel_tracer = create_tracer(config=config)
 
     @tenacity_retry
     def put_workflow(
@@ -446,6 +409,7 @@ class AdminClient(AdminClientBase):
         options: ScheduleTriggerWorkflowOptions = None,
     ) -> WorkflowVersion:
         try:
+
             namespace = self.namespace
 
             if (
@@ -473,88 +437,55 @@ class AdminClient(AdminClientBase):
 
             raise ValueError(f"gRPC error: {e}")
 
-    ## TODO: `options` is treated as a dict (wrong type hint)
-    ## TODO: `any` type hint should come from `typing`
     @tenacity_retry
     def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
     ) -> WorkflowRunRef:
-        ctx = parse_carrier_from_metadata(
-            (options or {}).get("additional_metadata", {})
-        )
+        try:
+            if not self.pooled_workflow_listener:
+                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-        with self.otel_tracer.start_as_current_span(
-            f"hatchet.run_workflow.{workflow_name}", context=ctx
-        ) as span:
-            carrier = create_carrier()
+            namespace = self.namespace
 
-            try:
-                if not self.pooled_workflow_listener:
-                    self.pooled_workflow_listener = PooledWorkflowRunListener(
-                        self.config
-                    )
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
+                namespace = options["namespace"]
+                del options["namespace"]
 
-                namespace = self.namespace
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
-                ## TODO: Factor this out - it's repeated a lot of places
-                if (
-                    options is not None
-                    and "namespace" in options
-                    and options["namespace"] is not None
-                ):
-                    namespace = options.pop("namespace")
+            request = self._prepare_workflow_request(workflow_name, input, options)
+            resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
+                request,
+                metadata=get_metadata(self.token),
+            )
+            return WorkflowRunRef(
+                workflow_run_id=resp.workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
+            )
+        except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+                raise DedupeViolationErr(e.details())
 
-                if options is not None and "additional_metadata" in options:
-                    options["additional_metadata"] = inject_carrier_into_metadata(
-                        options["additional_metadata"], carrier
-                    )
-
-                    span.set_attributes(
-                        flatten(
-                            options["additional_metadata"], parent_key="", separator="."
-                        )
-                    )
-
-                if namespace != "" and not workflow_name.startswith(self.namespace):
-                    workflow_name = f"{namespace}{workflow_name}"
-
-                request = self._prepare_workflow_request(workflow_name, input, options)
-
-                span.add_event(
-                    "Triggering workflow", attributes={"workflow_name": workflow_name}
-                )
-
-                resp: TriggerWorkflowResponse = self.client.TriggerWorkflow(
-                    request,
-                    metadata=get_metadata(self.token),
-                )
-
-                span.add_event(
-                    "Received workflow response",
-                    attributes={"workflow_name": workflow_name},
-                )
-
-                return WorkflowRunRef(
-                    workflow_run_id=resp.workflow_run_id,
-                    workflow_listener=self.pooled_workflow_listener,
-                    workflow_run_event_listener=self.listener_client,
-                )
-            except grpc.RpcError as e:
-                if e.code() == grpc.StatusCode.ALREADY_EXISTS:
-                    raise DedupeViolationErr(e.details())
-
-                raise ValueError(f"gRPC error: {e}")
+            raise ValueError(f"gRPC error: {e}")
 
     @tenacity_retry
     def run_workflows(
         self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> list[WorkflowRunRef]:
+
         workflow_run_requests: TriggerWorkflowRequest = []
         try:
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
             for workflow in workflows:
+
                 workflow_name = workflow["workflow_name"]
                 input_data = workflow["input"]
                 options = workflow["options"]

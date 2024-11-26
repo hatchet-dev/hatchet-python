@@ -9,7 +9,6 @@ from testcontainers.core.waiting_utils import wait_for_logs
 
 from hatchet_sdk import Hatchet
 
-
 @pytest_asyncio.fixture()
 async def aiohatchet() -> AsyncGenerator[Hatchet, None]:
     yield Hatchet(debug=True)
@@ -18,7 +17,6 @@ async def aiohatchet() -> AsyncGenerator[Hatchet, None]:
 @pytest.fixture()
 def hatchet() -> Hatchet:
     return Hatchet(debug=True)
-
 
 @pytest.fixture()
 def worker(request: pytest.FixtureRequest) -> Generator[DockerContainer, None, None]:
@@ -32,6 +30,6 @@ def worker(request: pytest.FixtureRequest) -> Generator[DockerContainer, None, N
         ).with_command(
             command
         ) as container:
-            wait_for_logs(container, "sending heartbeat", timeout=60)
+            wait_for_logs(container, "sending heartbeat", timeout=30)
 
             yield container
