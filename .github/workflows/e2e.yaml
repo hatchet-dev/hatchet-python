@@ -13,9 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Hatchet Engine
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        with:
-          compose-file: "./compose.yml"
+        run: docker compose up
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
