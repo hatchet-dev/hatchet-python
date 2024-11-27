@@ -6,6 +6,7 @@ from tests.utils import fixture_bg_worker
 ## IMPORTANT: Worker needs to be set here to ensure at least one workflow exists
 worker = fixture_bg_worker(["poetry", "run", "concurrency_limit_rr"])
 
+
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
 async def test_list_workflows(hatchet: Hatchet, worker):
