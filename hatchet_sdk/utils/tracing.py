@@ -31,12 +31,14 @@ def create_tracer(config: ClientConfig) -> Tracer:
             ),
         )
 
-        trace_provider = TracerProvider(resource=resource)
-        trace_provider.add_span_processor(processor)
+        ## If tracer provider is already set, we don't need to override it
+        if not isinstance(trace.get_tracer_provider(), TracerProvider):
+            trace_provider = TracerProvider(resource=resource)
+            trace_provider.add_span_processor(processor)
+            trace.set_tracer_provider(trace_provider)
     else:
-        trace_provider = NoOpTracerProvider()
-
-    trace.set_tracer_provider(trace_provider)
+        if not isinstance(trace.get_tracer_provider(), NoOpTracerProvider):
+            trace.set_tracer_provider(NoOpTracerProvider())
 
     return trace.get_tracer(__name__)
 
