@@ -19,7 +19,6 @@ async def test_run_timeout(hatchet: Hatchet):
         assert False, "Expected workflow to timeout"
     except Exception as e:
         assert "step1 failed" in str(e)
-        print("\n\n", e, "\n\n")
 
     await asyncio.sleep(5)  # Wait for the on_failure job to finish
 
@@ -28,10 +27,6 @@ async def test_run_timeout(hatchet: Hatchet):
 
     successful_job_runs = [jr for jr in job_runs if jr.status == JobRunStatus.SUCCEEDED]
     failed_job_runs = [jr for jr in job_runs if jr.status == JobRunStatus.FAILED]
-
-    for j in successful_job_runs + failed_job_runs:
-        print()
-        print(j)
 
     assert len(successful_job_runs) == 1
     assert len(failed_job_runs) == 1
