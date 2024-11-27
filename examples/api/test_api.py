@@ -3,6 +3,7 @@ import pytest
 from hatchet_sdk import Hatchet
 from tests.utils import fixture_bg_worker
 
+## IMPORTANT: Worker needs to be set here to ensure at least one workflow exists
 worker = fixture_bg_worker(["poetry", "run", "concurrency_limit_rr"])
 
 # requires scope module or higher for shared event loop

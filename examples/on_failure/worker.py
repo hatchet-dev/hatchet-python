@@ -23,6 +23,7 @@ class OnFailureWorkflow:
     # 👀 After the workflow fails, this special step will run
     @hatchet.on_failure_step()
     def on_failure(self, context: Context):
+        print("\n\nRunning on failure step\n\n")
         # 👀 we can do things like perform cleanup logic
         # or notify a user here
         return {"status": "success"}
