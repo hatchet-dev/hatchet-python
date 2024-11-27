@@ -25,14 +25,24 @@ jobs:
           virtualenvs-in-project: true
       - name: Install dependencies
         run: poetry install --no-interaction
+      - name: Run Hatchet Engine
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: "./compose.yml"
+
+      - name: Generate Env File
+        run: |
+          cat <<EOF > .env
+            HATCHET_CLIENT_TOKEN="$(docker compose run --no-deps setup-config /hatchet/hatchet-admin token create --config /hatchet/config --tenant-id 707d0855-80ab-4e1f-a156-f1c4546cbf52 | xargs)"
+            HATCHET_CLIENT_TLS_STRATEGY=none
+          EOF
+
       - name: Set HATCHET_CLIENT_NAMESPACE
         run: |
           PYTHON_VERSION=$(python -c "import sys; print(f'py{sys.version_info.major}{sys.version_info.minor}')")
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "HATCHET_CLIENT_NAMESPACE=${PYTHON_VERSION}-${SHORT_SHA}" >> $GITHUB_ENV
       - name: Run pytest
-        env:
-          HATCHET_CLIENT_TOKEN: ${{ secrets.HATCHET_CLIENT_TOKEN }}
         run: |
           echo "Using HATCHET_CLIENT_NAMESPACE: $HATCHET_CLIENT_NAMESPACE"
           poetry run pytest -s -vvv --maxfail=5 --timeout=120 --capture=no
