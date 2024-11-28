@@ -87,7 +87,7 @@ def step(
                 for rate_limit in rate_limits or []
             ]
 
-        func._step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
+        func._step_name = name.lower() or str(func.__name__).lower()
         func._step_parents = parents
         func._step_timeout = timeout
         func._step_retries = retries

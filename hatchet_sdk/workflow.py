@@ -16,6 +16,8 @@ from hatchet_sdk.logger import logger
 class WorkflowStepProtocol(Protocol):
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 
+    __name__: str
+
     _step_name: str
     _step_timeout: str | None
     _step_parents: list[str]
