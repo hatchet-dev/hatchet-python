@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Callable, Union, Protocol, Type, TypeVar, cast
+from typing import Any, Callable, Protocol, Type, TypeVar, Union, cast
 
 from hatchet_sdk import ConcurrencyLimitStrategy
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
@@ -69,7 +69,7 @@ class WorkflowInterface(Protocol):
     version: str
     timeout: str
     schedule_timeout: str
-    sticky: Union[StickyStrategy, None]
+    sticky: Union[StickyStrategy.Value, None]
     default_priority: int | None
     concurrency_expression: ConcurrencyExpression | None
 
