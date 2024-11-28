@@ -25,7 +25,12 @@ from .clients.events import EventClient
 from .clients.run_event_listener import RunEventListenerClient
 from .logger import logger
 from .worker.worker import Worker
-from .workflow import ConcurrencyExpression, WorkflowInterface, WorkflowMeta
+from .workflow import (
+    ConcurrencyExpression,
+    WorkflowInterface,
+    WorkflowMeta,
+    WorkflowStepProtocol,
+)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -41,11 +46,11 @@ def workflow(
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
-) -> Callable[[type], Type[WorkflowInterface]]:
+) -> Callable[[Type[WorkflowInterface]], WorkflowMeta]:
     on_events = on_events or []
     on_crons = on_crons or []
 
-    def inner(cls: Any) -> WorkflowMeta:
+    def inner(cls: Type[WorkflowInterface]) -> WorkflowMeta:
         cls.on_events = on_events
         cls.on_crons = on_crons
         cls.name = name or str(cls.__name__)
@@ -61,8 +66,7 @@ def workflow(
         ## TODO: Figure out how to type this metaclass correctly
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
-    ## TODO: Figure out how to type this return correctly
-    return inner  # type: ignore[return-value]
+    return inner
 
 
 def step(
@@ -72,10 +76,10 @@ def step(
     retries: int = 0,
     rate_limits: list[RateLimit] | None = None,
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
     parents = parents or []
 
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
             limits = [
@@ -83,18 +87,17 @@ def step(
                 for rate_limit in rate_limits or []
             ]
 
-        ## TODO: Use Protocol here to help with MyPy errors
         func._step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
-        func._step_parents = parents  # type: ignore[attr-defined]
-        func._step_timeout = timeout  # type: ignore[attr-defined]
-        func._step_retries = retries  # type: ignore[attr-defined]
-        func._step_rate_limits = limits  # type: ignore[attr-defined]
+        func._step_parents = parents
+        func._step_timeout = timeout
+        func._step_retries = retries
+        func._step_rate_limits = limits
 
-        func._step_desired_worker_labels = {}  # type: ignore[attr-defined]
+        func._step_desired_worker_labels = {}
 
         for key, d in desired_worker_labels.items():
             value = d["value"] if "value" in d else None
-            func._step_desired_worker_labels[key] = DesiredWorkerLabels(  # type: ignore[attr-defined]
+            func._step_desired_worker_labels[key] = DesiredWorkerLabels(
                 strValue=str(value) if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
                 required=d["required"] if "required" in d else None,

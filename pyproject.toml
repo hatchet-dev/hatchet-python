@@ -69,7 +69,7 @@ extend_exclude = "hatchet_sdk/contracts/"
 
 [tool.mypy]
 strict = true
-files = ["hatchet_sdk/hatchet.py", "hatchet_sdk/worker/worker.py"]
+files = ["hatchet_sdk/hatchet.py", "hatchet_sdk/worker/worker.py", "hatchet_sdk/workflow.py"]
 exclude = "^examples/*"
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
