@@ -20,8 +20,8 @@ class WorkflowStepProtocol(Protocol):
     _step_timeout: str | None
     _step_parents: list[str]
     _step_retries: int | None
-    _step_rate_limits: list[Any] | None
-    _step_desired_worker_labels: dict[str, Any]
+    _step_rate_limits: list[str] | None
+    _step_desired_worker_labels: dict[str, str]
     _concurrency_max_runs: int | None
     _concurrency_limit_strategy: str | None
     _on_failure_step_timeout: str | None
