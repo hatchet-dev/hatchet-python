@@ -10,10 +10,9 @@ from enum import Enum
 from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, Callable, TypeVar
 
 from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     CreateWorkflowVersionOpts,
 )
@@ -23,7 +22,9 @@ from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
-from hatchet_sdk.workflow import WorkflowInterface, WorkflowMeta
+from hatchet_sdk.workflow import WorkflowInterface
+
+T = TypeVar("T")
 
 
 class WorkerStatus(Enum):
@@ -95,7 +96,6 @@ class Worker:
             sys.exit(1)
 
     def register_workflow(self, workflow: WorkflowInterface) -> None:
-        print(type(workflow))
         namespace = self.client.config.namespace
 
         try:
@@ -145,8 +145,6 @@ class Worker:
     ) -> Future[asyncio.Task[Any] | None]:
         self.owned_loop = self.setup_loop(options.loop)
 
-        assert self.loop
-
         f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
@@ -181,11 +179,8 @@ class Worker:
         if not _from_start:
             self.setup_loop(options.loop)
 
-        print("Starting listener")
-
         self.action_listener_process = self._start_listener()
 
-        print("Started listener")
         self.action_runner = self._run_action_runner()
         self.action_listener_health_check = self.loop.create_task(
             self._check_listener_health()
@@ -314,9 +309,6 @@ class Worker:
         sys.exit(
             1
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
-
-
-T = TypeVar("T")
 
 
 def register_on_worker(callable: HatchetCallable[T], worker: Worker) -> None:
