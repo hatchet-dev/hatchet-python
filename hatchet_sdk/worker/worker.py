@@ -1,22 +1,29 @@
 import asyncio
 import multiprocessing
+import multiprocessing.context
 import os
 import signal
 import sys
+from concurrent.futures import Future
 from dataclasses import dataclass, field
 from enum import Enum
-from multiprocessing import Process, Queue
-from typing import Any, Callable, Dict, Optional
+from multiprocessing import Queue
+from multiprocessing.process import BaseProcess
+from types import FrameType
+from typing import Any, Callable, TypeVar, cast
 
 from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
+from hatchet_sdk.context.context import Context
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+    CreateWorkflowVersionOpts,
+)
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.v2.callable import HatchetCallable
+from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
-from hatchet_sdk.workflow import WorkflowMeta
+from hatchet_sdk.workflow import WorkflowInterface, WorkflowMeta
 
 
 class WorkerStatus(Enum):
@@ -28,46 +35,58 @@ class WorkerStatus(Enum):
 
 @dataclass
 class WorkerStartOptions:
-    loop: asyncio.AbstractEventLoop = field(default=None)
+    loop: asyncio.AbstractEventLoop | None = field(default=None)
 
 
-@dataclass
 class Worker:
-    name: str
-    config: ClientConfig = field(default_factory=dict)
-    max_runs: Optional[int] = None
-    debug: bool = False
-    labels: dict[str, str | int] = field(default_factory=dict)
-    handle_kill: bool = True
+    def __init__(
+        self,
+        name: str,
+        config: ClientConfig = ClientConfig(),
+        max_runs: int | None = None,
+        labels: dict[str, str | int] = {},
+        debug: bool = False,
+        owned_loop: bool = True,
+        handle_kill: bool = True,
+    ) -> None:
+        self.name = name
+        self.config = config
+        self.max_runs = max_runs
+        self.debug = debug
+        self.labels = labels
+        self.handle_kill = handle_kill
+        self.owned_loop = owned_loop
 
-    client: Client = field(init=False)
-    tasks: Dict[str, asyncio.Task] = field(default_factory=dict)
-    contexts: Dict[str, Context] = field(default_factory=dict)
-    action_registry: Dict[str, Callable[..., Any]] = field(default_factory=dict)
-    killing: bool = field(init=False, default=False)
-    _status: WorkerStatus = field(init=False, default=WorkerStatus.INITIALIZED)
+        self.client: Client
 
-    action_listener_process: Process = field(init=False, default=None)
-    action_listener_health_check: asyncio.Task = field(init=False, default=None)
-    action_runner: WorkerActionRunLoopManager = field(init=False, default=None)
-    ctx = multiprocessing.get_context("spawn")
+        self.action_registry: dict[str, Callable[..., Any]] = {}
+        self.killing: bool = False
+        self._status: WorkerStatus
 
-    action_queue: Queue = field(init=False, default_factory=ctx.Queue)
-    event_queue: Queue = field(init=False, default_factory=ctx.Queue)
+        self.action_listener_process: BaseProcess
+        self.action_listener_health_check: asyncio.Task[Any]
+        self.action_runner: WorkerActionRunLoopManager
 
-    loop: asyncio.AbstractEventLoop = field(init=False, default=None)
-    owned_loop: bool = True
+        self.ctx = multiprocessing.get_context("spawn")
 
-    def __post_init__(self):
+        self.action_queue: Queue[Any] = self.ctx.Queue()
+        self.event_queue: Queue[Any] = self.ctx.Queue()
+
+        self.loop: asyncio.AbstractEventLoop
+
         self.client = new_client_raw(self.config, self.debug)
         self.name = self.client.config.namespace + self.name
-        if self.owned_loop:
-            self._setup_signal_handlers()
 
-    def register_function(self, action: str, func: HatchetCallable):
+        self._setup_signal_handlers()
+
+    def register_function(
+        self, action: str, func: HatchetCallable[Any] | ConcurrencyFunction
+    ) -> None:
         self.action_registry[action] = func
 
-    def register_workflow_from_opts(self, name: str, opts: CreateWorkflowVersionOpts):
+    def register_workflow_from_opts(
+        self, name: str, opts: CreateWorkflowVersionOpts
+    ) -> None:
         try:
             self.client.admin.put_workflow(opts.name, opts)
         except Exception as e:
@@ -75,7 +94,8 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-    def register_workflow(self, workflow: WorkflowMeta):
+    def register_workflow(self, workflow: WorkflowInterface) -> None:
+        print(type(workflow))
         namespace = self.client.config.namespace
 
         try:
@@ -87,14 +107,16 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-        def create_action_function(action_func):
-            def action_function(context):
+        def create_action_function(
+            action_func: Callable[..., Any]
+        ) -> Callable[..., Any]:
+            def action_function(context: Any) -> Any:
                 return action_func(workflow, context)
 
             if asyncio.iscoroutinefunction(action_func):
-                action_function.is_coroutine = True
+                setattr(action_function, "is_coroutine", True)
             else:
-                action_function.is_coroutine = False
+                setattr(action_function, "is_coroutine", False)
 
             return action_function
 
@@ -104,7 +126,7 @@ class Worker:
     def status(self) -> WorkerStatus:
         return self._status
 
-    def setup_loop(self, loop: asyncio.AbstractEventLoop = None):
+    def setup_loop(self, loop: asyncio.AbstractEventLoop | None = None) -> bool:
         try:
             loop = loop or asyncio.get_running_loop()
             self.loop = loop
@@ -118,8 +140,13 @@ class Worker:
             created_loop = True
             return created_loop
 
-    def start(self, options: WorkerStartOptions = WorkerStartOptions()):
+    def start(
+        self, options: WorkerStartOptions = WorkerStartOptions()
+    ) -> Future[asyncio.Task[Any] | None]:
         self.owned_loop = self.setup_loop(options.loop)
+
+        assert self.loop
+
         f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
@@ -136,7 +163,7 @@ class Worker:
         self,
         options: WorkerStartOptions = WorkerStartOptions(),
         _from_start: bool = False,
-    ):
+    ) -> Any | None:
         main_pid = os.getpid()
         logger.info("------------------------------------------")
         logger.info("STARTING HATCHET...")
@@ -148,13 +175,17 @@ class Worker:
             logger.error(
                 "no actions registered, register workflows or actions before starting worker"
             )
-            return
+            return None
 
         # non blocking setup
         if not _from_start:
             self.setup_loop(options.loop)
 
+        print("Starting listener")
+
         self.action_listener_process = self._start_listener()
+
+        print("Started listener")
         self.action_runner = self._run_action_runner()
         self.action_listener_health_check = self.loop.create_task(
             self._check_listener_health()
@@ -162,9 +193,9 @@ class Worker:
 
         return await self.action_listener_health_check
 
-    def _run_action_runner(self):
+    def _run_action_runner(self) -> WorkerActionRunLoopManager:
         # Retrieve the shared queue
-        runner = WorkerActionRunLoopManager(
+        return WorkerActionRunLoopManager(
             self.name,
             self.action_registry,
             self.max_runs,
@@ -177,10 +208,9 @@ class Worker:
             self.labels,
         )
 
-        return runner
-
-    def _start_listener(self):
+    def _start_listener(self) -> multiprocessing.context.SpawnProcess:
         action_list = [str(key) for key in self.action_registry.keys()]
+
         try:
             process = self.ctx.Process(
                 target=worker_action_listener_process,
@@ -204,7 +234,7 @@ class Worker:
             logger.error(f"failed to start action listener: {e}")
             sys.exit(1)
 
-    async def _check_listener_health(self):
+    async def _check_listener_health(self) -> None:
         logger.debug("starting action listener health check...")
         try:
             while not self.killing:
@@ -224,21 +254,21 @@ class Worker:
             logger.error(f"error checking listener health: {e}")
 
     ## Cleanup methods
-    def _setup_signal_handlers(self):
+    def _setup_signal_handlers(self) -> None:
         signal.signal(signal.SIGTERM, self._handle_exit_signal)
         signal.signal(signal.SIGINT, self._handle_exit_signal)
         signal.signal(signal.SIGQUIT, self._handle_force_quit_signal)
 
-    def _handle_exit_signal(self, signum, frame):
+    def _handle_exit_signal(self, signum: int, frame: FrameType | None) -> None:
         sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
         logger.info(f"received signal {sig_name}...")
         self.loop.create_task(self.exit_gracefully())
 
-    def _handle_force_quit_signal(self, signum, frame):
+    def _handle_force_quit_signal(self, signum: int, frame: FrameType | None) -> None:
         logger.info("received SIGQUIT...")
         self.exit_forcefully()
 
-    async def close(self):
+    async def close(self) -> None:
         logger.info(f"closing worker '{self.name}'...")
         self.killing = True
         # self.action_queue.close()
@@ -249,7 +279,7 @@ class Worker:
 
         await self.action_listener_health_check
 
-    async def exit_gracefully(self):
+    async def exit_gracefully(self) -> None:
         logger.debug(f"gracefully stopping worker: {self.name}")
 
         if self.killing:
@@ -270,7 +300,7 @@ class Worker:
 
         logger.info("👋")
 
-    def exit_forcefully(self):
+    def exit_forcefully(self) -> None:
         self.killing = True
 
         logger.debug(f"forcefully stopping worker: {self.name}")
@@ -286,7 +316,10 @@ class Worker:
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
 
 
-def register_on_worker(callable: HatchetCallable, worker: Worker):
+T = TypeVar("T")
+
+
+def register_on_worker(callable: HatchetCallable[T], worker: Worker) -> None:
     worker.register_function(callable.get_action_name(), callable)
 
     if callable.function_on_failure is not None:

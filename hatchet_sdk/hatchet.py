@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, ParamSpec, TypeVar
+from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar
 
 from typing_extensions import deprecated
 
@@ -25,14 +25,13 @@ from .clients.events import EventClient
 from .clients.run_event_listener import RunEventListenerClient
 from .logger import logger
 from .worker.worker import Worker
-from .workflow import ConcurrencyExpression, WorkflowMeta
+from .workflow import ConcurrencyExpression, WorkflowInterface, WorkflowMeta
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 
-## TODO: Fix return type here to properly type hint the metaclass
-def workflow(  # type: ignore[no-untyped-def]
+def workflow(
     name: str = "",
     on_events: list[str] | None = None,
     on_crons: list[str] | None = None,
@@ -42,7 +41,7 @@ def workflow(  # type: ignore[no-untyped-def]
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
-):
+) -> Callable[[type], Type[WorkflowInterface]]:
     on_events = on_events or []
     on_crons = on_crons or []
 
@@ -60,9 +59,10 @@ def workflow(  # type: ignore[no-untyped-def]
         # with WorkflowMeta as its metaclass
 
         ## TODO: Figure out how to type this metaclass correctly
-        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))  # type: ignore[no-untyped-call]
+        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
-    return inner
+    ## TODO: Figure out how to type this return correctly
+    return inner  # type: ignore[return-value]
 
 
 def step(

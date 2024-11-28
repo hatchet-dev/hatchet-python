@@ -69,8 +69,9 @@ extend_exclude = "hatchet_sdk/contracts/"
 
 [tool.mypy]
 strict = true
-files = ["hatchet_sdk/hatchet.py"]
+files = ["hatchet_sdk/hatchet.py", "hatchet_sdk/worker/worker.py"]
 follow_imports = "silent"
+disable_error_code = ["unused-coroutine"]
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"
