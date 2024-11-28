@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar
+from typing import Any, Callable, Optional, Type
 
 from typing_extensions import deprecated
 
@@ -31,9 +31,6 @@ from .workflow import (
     WorkflowMeta,
     WorkflowStepProtocol,
 )
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def workflow(
@@ -115,8 +112,8 @@ def on_failure_step(
     timeout: str = "",
     retries: int = 0,
     rate_limits: list[RateLimit] | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
             limits = [
@@ -124,11 +121,10 @@ def on_failure_step(
                 for rate_limit in rate_limits or []
             ]
 
-        ## TODO: Use Protocol here to help with MyPy errors
-        func._on_failure_step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
-        func._on_failure_step_timeout = timeout  # type: ignore[attr-defined]
-        func._on_failure_step_retries = retries  # type: ignore[attr-defined]
-        func._on_failure_step_rate_limits = limits  # type: ignore[attr-defined]
+        func._on_failure_step_name = name.lower() or str(func.__name__).lower()
+        func._on_failure_step_timeout = timeout
+        func._on_failure_step_retries = retries
+        func._on_failure_step_rate_limits = limits
         return func
 
     return inner
@@ -138,12 +134,11 @@ def concurrency(
     name: str = "",
     max_runs: int = 1,
     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
-        ## TODO: Use Protocol here to help with MyPy errors
-        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
-        func._concurrency_max_runs = max_runs  # type: ignore[attr-defined]
-        func._concurrency_limit_strategy = limit_strategy  # type: ignore[attr-defined]
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
+        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
+        func._concurrency_max_runs = max_runs
+        func._concurrency_limit_strategy = limit_strategy
 
         return func
 

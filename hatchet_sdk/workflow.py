@@ -24,11 +24,15 @@ class WorkflowStepProtocol(Protocol):
     _step_retries: int | None
     _step_rate_limits: list[str] | None
     _step_desired_worker_labels: dict[str, str]
+
+    _concurrency_fn_name: str
     _concurrency_max_runs: int | None
     _concurrency_limit_strategy: str | None
+
+    _on_failure_step_name: str
     _on_failure_step_timeout: str | None
-    _on_failure_step_retries: str | None
-    _on_failure_step_rate_limits: list[str]
+    _on_failure_step_retries: int
+    _on_failure_step_rate_limits: list[str] | None
 
 
 StepsType = list[tuple[str, WorkflowStepProtocol]]

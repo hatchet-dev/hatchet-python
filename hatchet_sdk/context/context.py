@@ -259,7 +259,7 @@ class Context(BaseContext):
 
         return default
 
-    def _log(self, line: str) -> (bool, Exception):  # type: ignore
+    def _log(self, line: str) -> tuple[bool, Exception]:
         try:
             self.event_client.log(message=line, step_run_id=self.stepRunId)
             return True, None
