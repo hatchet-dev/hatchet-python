@@ -18,7 +18,7 @@ STOP_LOOP = "STOP_LOOP"
 class WorkerActionRunLoopManager:
     name: str
     action_registry: Dict[str, Callable[..., Any]]
-    max_runs: int
+    max_runs: int | None
     config: ClientConfig
     action_queue: Queue
     event_queue: Queue
@@ -48,23 +48,23 @@ class WorkerActionRunLoopManager:
             self._async_start,
         )(retry_count=retry_count)
 
-    async def _async_start(self, retry_count=1):
+    async def _async_start(self, retry_count: int = 1) -> None:
         logger.info("starting runner...")
         self.loop = asyncio.get_running_loop()
         # needed for graceful termination
         k = self.loop.create_task(self._start_action_loop())
         await k
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.killing = True
 
         self.action_queue.put(STOP_LOOP)
 
-    async def wait_for_tasks(self):
+    async def wait_for_tasks(self) -> None:
         if self.runner:
             await self.runner.wait_for_tasks()
 
-    async def _start_action_loop(self):
+    async def _start_action_loop(self) -> None:
         self.runner = Runner(
             self.name,
             self.event_queue,
@@ -88,7 +88,7 @@ class WorkerActionRunLoopManager:
     async def _get_action(self):
         return await self.loop.run_in_executor(None, self.action_queue.get)
 
-    async def exit_gracefully(self):
+    async def exit_gracefully(self) -> None:
         if self.killing:
             return
 
@@ -101,6 +101,6 @@ class WorkerActionRunLoopManager:
         # task list.
         await asyncio.sleep(1)
 
-    def exit_forcefully(self):
+    def exit_forcefully(self) -> None:
         logger.info("forcefully exiting runner...")
         self.cleanup()

@@ -1,5 +1,5 @@
 import functools
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, List, Protocol, Tuple, Type
 
 from hatchet_sdk import ConcurrencyLimitStrategy
 from hatchet_sdk.contracts.workflows_pb2 import (
@@ -35,8 +35,16 @@ class ConcurrencyExpression:
         self.limit_strategy = limit_strategy
 
 
+class WorkflowInterface(Protocol):
+    def get_name(self, namespace: str) -> str: ...
+
+    def get_actions(self, namespace: str) -> list[tuple[str, Callable[..., Any]]]: ...
+
+    def get_create_opts(self, namespace: str) -> Any: ...
+
+
 class WorkflowMeta(type):
-    def __new__(cls, name, bases, attrs):
+    def __new__(cls, name, bases, attrs) -> Type[WorkflowInterface]:
         concurrencyActions: stepsType = [
             (getattr(func, "_concurrency_fn_name"), attrs.pop(func_name))
             for func_name, func in list(attrs.items())
