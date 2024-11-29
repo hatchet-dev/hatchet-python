@@ -17,6 +17,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )
+from hatchet_sdk.utils.typing import is_basemodel_subclass
 from hatchet_sdk.workflow import WorkflowValidator
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
@@ -244,7 +245,7 @@ class Context(BaseContext):
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
 
-        if output_validator and issubclass(output_validator, BaseModel):
+        if output_validator and is_basemodel_subclass(output_validator):
             return output_validator.model_validate(parent_step_data)
 
         return parent_step_data
@@ -259,11 +260,7 @@ class Context(BaseContext):
     def workflow_input(self, validator: None = None) -> dict[str, Any]: ...
 
     def workflow_input(self, validator: Type[T] | None = None) -> dict[str, Any] | T:
-        if (
-            validator
-            and isinstance(validator, type)
-            and issubclass(validator, BaseModel)
-        ):
+        if validator and is_basemodel_subclass(validator):
             return validator.model_validate(self.input)
 
         return self.input

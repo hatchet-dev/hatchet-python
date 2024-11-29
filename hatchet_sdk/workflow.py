@@ -13,6 +13,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     WorkflowKind,
 )
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.typing import is_basemodel_subclass
 
 
 class WorkflowStepProtocol(Protocol):
@@ -112,9 +113,8 @@ class WorkflowMeta(type):
             steps={
                 s._step_name: t
                 for _, s in steps
-                if issubclass(
+                if is_basemodel_subclass(
                     (t := cast(Type[BaseModel], get_type_hints(s).get("return"))),
-                    BaseModel,
                 )
             },
         )
