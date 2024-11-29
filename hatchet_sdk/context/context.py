@@ -64,6 +64,7 @@ class BaseContext:
         if options is not None and "additional_metadata" in options:
             meta = options["additional_metadata"]
 
+        ## TODO: Pydantic here to simplify this
         trigger_options: TriggerWorkflowOptions = {  # type: ignore[typeddict-item]
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
