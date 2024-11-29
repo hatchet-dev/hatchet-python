@@ -278,7 +278,6 @@ class Runner:
         self, action: Action, action_func: Callable[..., Any] | None
     ) -> Context | DurableContext:
         validators = (
-            ## This is probably fixed in v2 with
             action_func.validators  # type: ignore[attr-defined]
             if action_func
             else WorkflowValidator(input=None, step={})
