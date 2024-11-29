@@ -63,14 +63,13 @@ class BaseContext:
         if options is not None and "additional_metadata" in options:
             meta = options["additional_metadata"]
 
-        trigger_options: TriggerWorkflowOptions = {
+        trigger_options: TriggerWorkflowOptions = {  # type: ignore[typeddict-item]
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,
             "child_index": self.spawn_index,
             "additional_metadata": meta,
             "desired_worker_id": desired_worker_id,
-            "namespace": None,
         }
 
         self.spawn_index += 1
