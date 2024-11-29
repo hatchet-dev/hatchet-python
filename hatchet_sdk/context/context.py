@@ -70,6 +70,7 @@ class BaseContext:
             "child_index": self.spawn_index,
             "additional_metadata": meta,
             "desired_worker_id": desired_worker_id,
+            "namespace": None,
         }
 
         self.spawn_index += 1
