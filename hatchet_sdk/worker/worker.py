@@ -22,7 +22,7 @@ from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
-from hatchet_sdk.workflow import WorkflowInterface
+from hatchet_sdk.workflow import WorkflowInterface, WorkflowValidator
 
 T = TypeVar("T")
 
@@ -78,6 +78,8 @@ class Worker:
         self.client = new_client_raw(self.config, self.debug)
         self.name = self.client.config.namespace + self.name
 
+        self.validators: WorkflowValidator | None
+
         self._setup_signal_handlers()
 
     def register_function(
@@ -118,10 +120,14 @@ class Worker:
             else:
                 setattr(action_function, "is_coroutine", False)
 
+            setattr(action_function, "validators", workflow.validators)
+
             return action_function
 
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
+
+        self.validators = workflow.validators
 
     def status(self) -> WorkerStatus:
         return self._status
@@ -148,12 +154,14 @@ class Worker:
         f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
+
         # start the loop and wait until its closed
         if self.owned_loop:
             self.loop.run_forever()
 
             if self.handle_kill:
                 sys.exit(0)
+
         return f
 
     ## Start methods
@@ -182,6 +190,7 @@ class Worker:
         self.action_listener_process = self._start_listener()
 
         self.action_runner = self._run_action_runner()
+
         self.action_listener_health_check = self.loop.create_task(
             self._check_listener_health()
         )

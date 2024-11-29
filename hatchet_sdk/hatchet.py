@@ -1,7 +1,8 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, Type
+from typing import Any, Callable, Optional, Type, cast, get_type_hints
 
+from pydantic import BaseModel
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
@@ -45,6 +46,7 @@ def workflow(
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
+    input_validator: Type[BaseModel] | None = None,
 ) -> Callable[[Type[WorkflowInterface]], WorkflowMeta]:
     on_events = on_events or []
     on_crons = on_crons or []
@@ -59,6 +61,7 @@ def workflow(
         cls.sticky = sticky
         cls.default_priority = default_priority
         cls.concurrency_expression = concurrency
+        cls.input_validator = input_validator
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
 

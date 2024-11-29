@@ -11,6 +11,7 @@ from threading import Thread, current_thread
 from typing import Any, Callable, Dict, TypeVar, cast
 
 from opentelemetry.trace import StatusCode
+from pydantic import BaseModel
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
@@ -287,6 +288,7 @@ class Runner:
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
+                action_func.validators,
                 self.client.config.namespace,
             )
 
@@ -299,6 +301,7 @@ class Runner:
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.worker_context,
+            action_func.validators,
             self.client.config.namespace,
         )
 
@@ -462,14 +465,18 @@ class Runner:
                 span.add_event(f"Finished cancelling run id: {run_id}")
 
     def serialize_output(self, output: Any) -> str:
-        output_bytes = ""
+
+        if isinstance(output, BaseModel):
+            return output.model_dump_json()
+
         if output is not None:
             try:
-                output_bytes = json.dumps(output)
+                return json.dumps(output)
             except Exception as e:
                 logger.error(f"Could not serialize output: {e}")
-                output_bytes = str(output)
-        return output_bytes
+                return str(output)
+
+        return ""
 
     async def wait_for_tasks(self) -> None:
         running = len(self.tasks.keys())

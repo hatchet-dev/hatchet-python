@@ -4,7 +4,7 @@ import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, cast
 
-from pydantic import StrictStr
+from pydantic import BaseModel, StrictStr
 
 from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
@@ -17,6 +17,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )
+from hatchet_sdk.workflow import WorkflowValidator
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..clients.admin import (
@@ -170,9 +171,12 @@ class Context(BaseContext):
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
         worker: WorkerContext,
+        validators: WorkflowValidator,
         namespace: str = "",
     ):
         self.worker = worker
+
+        self.validators = validators
 
         self.aio = ContextAioImpl(
             action,
@@ -201,6 +205,7 @@ class Context(BaseContext):
             )
 
         self.action = action
+
         # FIXME: stepRunId is a legacy field, we should remove it
         self.stepRunId = action.step_run_id
 
@@ -229,6 +234,14 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any]:
+        output_validator = self.validators.step[step]
+
+        if issubclass(output_validator, BaseModel):
+            try:
+                return output_validator.model_validate(self.data["parents"][step])
+            except ValueError:
+                return None
+
         try:
             return cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
@@ -238,7 +251,7 @@ class Context(BaseContext):
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
     def workflow_input(self) -> dict[str, Any]:
-        return self.input
+        return self.validators.input.model_validate(self.input)
 
     def workflow_run_id(self) -> str:
         return self.action.workflow_run_id
