@@ -69,7 +69,7 @@ class ConcurrencyExpression:
 
 
 class WorkflowValidator(BaseModel):
-    input: Type[BaseModel]
+    input: Type[BaseModel] | None
     step: dict[str, Type[BaseModel]]
 
 
@@ -113,8 +113,12 @@ class WorkflowMeta(type):
         attrs["validators"] = WorkflowValidator(
             input=attrs.pop("input_validator"),
             step={
-                s._step_name: cast(Type[BaseModel], get_type_hints(s).get("return"))
+                s._step_name: t
                 for _, s in steps
+                if isinstance(
+                    (t := cast(Type[BaseModel], get_type_hints(s).get("return"))),
+                    BaseModel,
+                )
             },
         )
 
