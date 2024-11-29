@@ -59,7 +59,10 @@ def inject_carrier_into_metadata(
     return metadata
 
 
-def parse_carrier_from_metadata(metadata: dict[str, Any]) -> Context:
+def parse_carrier_from_metadata(metadata: dict[str, Any] | None) -> Context | None:
+    if not metadata:
+        return None
+
     return (
         TraceContextTextMapPropagator().extract(_ctx)
         if (_ctx := metadata.get(OTEL_CARRIER_KEY))

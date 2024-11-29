@@ -1,17 +1,44 @@
 import functools
-from typing import Any, Callable, List, Protocol, Tuple, Type
+from typing import Any, Callable, Protocol, Type, TypeVar, Union, cast
 
 from hatchet_sdk import ConcurrencyLimitStrategy
-from hatchet_sdk.contracts.workflows_pb2 import (
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
+    StickyStrategy,
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
 from hatchet_sdk.logger import logger
 
-stepsType = List[Tuple[str, Callable[..., Any]]]
+
+class WorkflowStepProtocol(Protocol):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
+    __name__: str
+
+    _step_name: str
+    _step_timeout: str | None
+    _step_parents: list[str]
+    _step_retries: int | None
+    _step_rate_limits: list[str] | None
+    _step_desired_worker_labels: dict[str, str]
+
+    _concurrency_fn_name: str
+    _concurrency_max_runs: int | None
+    _concurrency_limit_strategy: str | None
+
+    _on_failure_step_name: str
+    _on_failure_step_timeout: str | None
+    _on_failure_step_retries: int
+    _on_failure_step_rate_limits: list[str] | None
+
+
+StepsType = list[tuple[str, WorkflowStepProtocol]]
+
+T = TypeVar("T")
+TW = TypeVar("TW", bound="WorkflowInterface")
 
 
 class ConcurrencyExpression:
@@ -42,29 +69,39 @@ class WorkflowInterface(Protocol):
 
     def get_create_opts(self, namespace: str) -> Any: ...
 
+    on_events: list[str]
+    on_crons: list[str]
+    name: str
+    version: str
+    timeout: str
+    schedule_timeout: str
+    sticky: Union[StickyStrategy.Value, None]
+    default_priority: int | None
+    concurrency_expression: ConcurrencyExpression | None
+
 
 class WorkflowMeta(type):
-    def __new__(cls, name, bases, attrs) -> Type[WorkflowInterface]:
-        concurrencyActions: stepsType = [
-            (getattr(func, "_concurrency_fn_name"), attrs.pop(func_name))
-            for func_name, func in list(attrs.items())
-            if hasattr(func, "_concurrency_fn_name")
-        ]
-        steps: stepsType = [
-            (getattr(func, "_step_name"), attrs.pop(func_name))
-            for func_name, func in list(attrs.items())
-            if hasattr(func, "_step_name")
-        ]
-        onFailureSteps: stepsType = [
-            (getattr(func, "_on_failure_step_name"), attrs.pop(func_name))
-            for func_name, func in list(attrs.items())
-            if hasattr(func, "_on_failure_step_name")
-        ]
+    def __new__(
+        cls: Type["WorkflowMeta"],
+        name: str,
+        bases: tuple[type, ...],
+        attrs: dict[str, Any],
+    ) -> "WorkflowMeta":
+        def _create_steps_actions_list(name: str) -> StepsType:
+            return [
+                (getattr(func, name), attrs.pop(func_name))
+                for func_name, func in list(attrs.items())
+                if hasattr(func, name)
+            ]
+
+        concurrencyActions = _create_steps_actions_list("_concurrency_fn_name")
+        steps = _create_steps_actions_list("_step_name")
+        onFailureSteps = _create_steps_actions_list("_on_failure_step_name")
 
         # Define __init__ and get_step_order methods
         original_init = attrs.get("__init__")  # Get the original __init__ if it exists
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self: TW, *args: Any, **kwargs: Any) -> None:
             if original_init:
                 original_init(self, *args, **kwargs)  # Call original __init__
 
@@ -72,7 +109,7 @@ class WorkflowMeta(type):
             return f"{namespace}{name.lower()}"
 
         @functools.cache
-        def get_actions(self, namespace: str) -> stepsType:
+        def get_actions(self: TW, namespace: str) -> StepsType:
             serviceName = get_service_name(namespace)
             func_actions = [
                 (serviceName + ":" + func_name, func) for func_name, func in steps
@@ -95,8 +132,8 @@ class WorkflowMeta(type):
         for step_name, step_func in steps:
             attrs[step_name] = step_func
 
-        def get_name(self, namespace: str):
-            return namespace + attrs["name"]
+        def get_name(self: TW, namespace: str) -> str:
+            return namespace + cast(str, attrs["name"])
 
         attrs["get_name"] = get_name
 
@@ -107,11 +144,11 @@ class WorkflowMeta(type):
         default_priority = attrs["default_priority"]
 
         @functools.cache
-        def get_create_opts(self, namespace: str):
+        def get_create_opts(self: TW, namespace: str) -> CreateWorkflowVersionOpts:
             serviceName = get_service_name(namespace)
             name = self.get_name(namespace)
             event_triggers = [namespace + event for event in attrs["on_events"]]
-            createStepOpts: List[CreateWorkflowStepOpts] = [
+            createStepOpts: list[CreateWorkflowStepOpts] = [
                 CreateWorkflowStepOpts(
                     readable_id=step_name,
                     action=serviceName + ":" + step_name,
@@ -150,7 +187,7 @@ class WorkflowMeta(type):
                     "Error: Both concurrencyActions and concurrency_expression are defined. Please use only one concurrency configuration method."
                 )
 
-            on_failure_job: List[CreateWorkflowJobOpts] | None = None
+            on_failure_job: list[CreateWorkflowJobOpts] | None = None
 
             if len(onFailureSteps) > 0:
                 func_name, func = onFailureSteps[0]

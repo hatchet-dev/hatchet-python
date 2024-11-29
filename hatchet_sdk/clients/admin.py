@@ -54,16 +54,10 @@ class ChildTriggerWorkflowOptions(TypedDict):
     sticky: bool | None = None
 
 
-class WorkflowRunDict(TypedDict):
-    workflow_name: str
-    input: Any
-    options: Optional[dict]
-
-
 class ChildWorkflowRunDict(TypedDict):
     workflow_name: str
     input: Any
-    options: ChildTriggerWorkflowOptions[dict]
+    options: ChildTriggerWorkflowOptions
     key: str | None = None
 
 
@@ -71,6 +65,12 @@ class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
     additional_metadata: Dict[str, str] | None = None
     desired_worker_id: str | None = None
     namespace: str | None = None
+
+
+class WorkflowRunDict(TypedDict):
+    workflow_name: str
+    input: Any
+    options: TriggerWorkflowOptions | None
 
 
 class DedupeViolationErr(Exception):
@@ -260,7 +260,9 @@ class AdminClientAioImpl(AdminClientBase):
 
     @tenacity_retry
     async def run_workflows(
-        self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
+        self,
+        workflows: list[WorkflowRunDict],
+        options: TriggerWorkflowOptions | None = None,
     ) -> List[WorkflowRunRef]:
         if len(workflows) == 0:
             raise ValueError("No workflows to run")

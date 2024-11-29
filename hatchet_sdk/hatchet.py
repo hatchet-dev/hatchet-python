@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar
+from typing import Any, Callable, Optional, Type
 
 from typing_extensions import deprecated
 
@@ -27,10 +27,12 @@ from .clients.events import EventClient
 from .clients.run_event_listener import RunEventListenerClient
 from .logger import logger
 from .worker.worker import Worker
-from .workflow import ConcurrencyExpression, WorkflowInterface, WorkflowMeta
-
-P = ParamSpec("P")
-R = TypeVar("R")
+from .workflow import (
+    ConcurrencyExpression,
+    WorkflowInterface,
+    WorkflowMeta,
+    WorkflowStepProtocol,
+)
 
 
 def workflow(
@@ -43,11 +45,11 @@ def workflow(
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
-) -> Callable[[type], Type[WorkflowInterface]]:
+) -> Callable[[Type[WorkflowInterface]], WorkflowMeta]:
     on_events = on_events or []
     on_crons = on_crons or []
 
-    def inner(cls: Any) -> WorkflowMeta:
+    def inner(cls: Type[WorkflowInterface]) -> WorkflowMeta:
         cls.on_events = on_events
         cls.on_crons = on_crons
         cls.name = name or str(cls.__name__)
@@ -63,8 +65,7 @@ def workflow(
         ## TODO: Figure out how to type this metaclass correctly
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
-    ## TODO: Figure out how to type this return correctly
-    return inner  # type: ignore[return-value]
+    return inner
 
 
 def step(
@@ -76,10 +77,10 @@ def step(
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
     parents = parents or []
 
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
             limits = [
@@ -87,20 +88,19 @@ def step(
                 for rate_limit in rate_limits or []
             ]
 
-        ## TODO: Use Protocol here to help with MyPy errors
-        func._step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
-        func._step_parents = parents  # type: ignore[attr-defined]
-        func._step_timeout = timeout  # type: ignore[attr-defined]
-        func._step_retries = retries  # type: ignore[attr-defined]
-        func._step_rate_limits = limits  # type: ignore[attr-defined]
-        func._step_backoff_factor = backoff_factor  # type: ignore[attr-defined]
-        func._step_backoff_max_seconds = backoff_max_seconds  # type: ignore[attr-defined]
+        func._step_name = name.lower() or str(func.__name__).lower()
+        func._step_parents = parents
+        func._step_timeout = timeout
+        func._step_retries = retries
+        func._step_rate_limits = limits
+        func._step_backoff_factor = backoff_factor
+        func._step_backoff_max_seconds = backoff_max_seconds
 
-        func._step_desired_worker_labels = {}  # type: ignore[attr-defined]
+        func._step_desired_worker_labels = {}
 
         for key, d in desired_worker_labels.items():
             value = d["value"] if "value" in d else None
-            func._step_desired_worker_labels[key] = DesiredWorkerLabels(  # type: ignore[attr-defined]
+            func._step_desired_worker_labels[key] = DesiredWorkerLabels(
                 strValue=str(value) if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
                 required=d["required"] if "required" in d else None,
@@ -120,8 +120,8 @@ def on_failure_step(
     rate_limits: list[RateLimit] | None = None,
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
             limits = [
@@ -129,13 +129,12 @@ def on_failure_step(
                 for rate_limit in rate_limits or []
             ]
 
-        ## TODO: Use Protocol here to help with MyPy errors
-        func._on_failure_step_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
-        func._on_failure_step_timeout = timeout  # type: ignore[attr-defined]
-        func._on_failure_step_retries = retries  # type: ignore[attr-defined]
-        func._on_failure_step_rate_limits = limits  # type: ignore[attr-defined]
-        func._on_failure_step_backoff_factor = backoff_factor  # type: ignore[attr-defined]
-        func._on_failure_step_backoff_max_seconds = backoff_max_seconds  # type: ignore[attr-defined]
+        func._on_failure_step_name = name.lower() or str(func.__name__).lower()
+        func._on_failure_step_timeout = timeout
+        func._on_failure_step_retries = retries
+        func._on_failure_step_rate_limits = limits
+        func._on_failure_step_backoff_factor = backoff_factor
+        func._on_failure_step_backoff_max_seconds = backoff_max_seconds
 
         return func
 
@@ -146,12 +145,11 @@ def concurrency(
     name: str = "",
     max_runs: int = 1,
     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
-        ## TODO: Use Protocol here to help with MyPy errors
-        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()  # type: ignore[attr-defined]
-        func._concurrency_max_runs = max_runs  # type: ignore[attr-defined]
-        func._concurrency_limit_strategy = limit_strategy  # type: ignore[attr-defined]
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
+        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
+        func._concurrency_max_runs = max_runs
+        func._concurrency_limit_strategy = limit_strategy
 
         return func
 
