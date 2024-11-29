@@ -12,6 +12,7 @@ from multiprocessing.process import BaseProcess
 from types import FrameType
 from typing import Any, Callable, TypeVar
 
+from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     CreateWorkflowVersionOpts,
@@ -60,7 +61,7 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, Callable[..., Any]] = {}
+        self.action_registry: dict[str, HatchetCallable[Any] | ConcurrencyFunction] = {}
         self.killing: bool = False
         self._status: WorkerStatus
 
@@ -109,10 +110,8 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-        def create_action_function(
-            action_func: Callable[..., Any]
-        ) -> Callable[..., Any]:
-            def action_function(context: Any) -> Any:
+        def create_action_function(action_func: Callable[..., T]) -> HatchetCallable[T]:
+            def action_function(context: Context) -> T:
                 return action_func(workflow, context)
 
             if asyncio.iscoroutinefunction(action_func):
@@ -122,7 +121,7 @@ class Worker:
 
             setattr(action_function, "validators", workflow.validators)
 
-            return action_function
+            return HatchetCallable(action_function)
 
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)

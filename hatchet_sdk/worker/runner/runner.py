@@ -36,6 +36,7 @@ from hatchet_sdk.utils.tracing import create_tracer, parse_carrier_from_metadata
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
+from hatchet_sdk.workflow import WorkflowStepProtocol, WorkflowValidator
 
 
 class WorkerStatus(Enum):
@@ -278,6 +279,13 @@ class Runner:
     def create_context(
         self, action: Action, action_func: Callable[..., Any] | None
     ) -> Context | DurableContext:
+        validators = (
+            ## This is probably fixed in v2 with
+            action_func.validators  # type: ignore[attr-defined]
+            if action_func
+            else WorkflowValidator(input=None, step={})
+        )
+
         if hasattr(action_func, "durable") and getattr(action_func, "durable"):
             return DurableContext(
                 action,
@@ -288,7 +296,7 @@ class Runner:
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
-                action_func.validators,
+                validators,
                 self.client.config.namespace,
             )
 
@@ -301,7 +309,7 @@ class Runner:
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.worker_context,
-            action_func.validators,
+            validators,
             self.client.config.namespace,
         )
 

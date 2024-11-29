@@ -233,24 +233,23 @@ class Context(BaseContext):
         else:
             self.input = self.data.get("input", {})
 
-    def step_output(self, step: str) -> dict[str, Any]:
+    def step_output(self, step: str) -> dict[str, Any] | BaseModel:
         output_validator = self.validators.step.get(step)
 
-        if output_validator and issubclass(output_validator, BaseModel):
-            try:
-                return output_validator.model_validate(self.data["parents"][step])
-            except ValueError:
-                return None
-
         try:
-            return cast(dict[str, Any], self.data["parents"][step])
+            parent_step_data = cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
+
+        if output_validator and issubclass(output_validator, BaseModel):
+            return output_validator.model_validate(parent_step_data)
+
+        return parent_step_data
 
     def triggered_by_event(self) -> bool:
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
-    def workflow_input(self) -> dict[str, Any]:
+    def workflow_input(self) -> dict[str, Any] | BaseModel:
         input_validator = self.validators.input
 
         if input_validator:
