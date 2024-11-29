@@ -1,10 +1,15 @@
+from typing import Callable, ParamSpec, TypeVar
+
 import grpc
 import tenacity
 
 from hatchet_sdk.logger import logger
 
+P = ParamSpec("P")
+R = TypeVar("R")
 
-def tenacity_retry(func):
+
+def tenacity_retry(func: Callable[P, R]) -> Callable[P, R]:
     return tenacity.retry(
         reraise=True,
         wait=tenacity.wait_exponential_jitter(),
