@@ -234,9 +234,9 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any]:
-        output_validator = self.validators.step[step]
+        output_validator = self.validators.step.get(step)
 
-        if issubclass(output_validator, BaseModel):
+        if output_validator and issubclass(output_validator, BaseModel):
             try:
                 return output_validator.model_validate(self.data["parents"][step])
             except ValueError:
