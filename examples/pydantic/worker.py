@@ -16,7 +16,7 @@ class Parent:
     async def spawn(self, context: Context):
         child = await context.aio.spawn_workflow(
             "Child",
-            {"a": 1, "b": 10},
+            {"a": 1, "b": "10"},
             options={"additional_metadata": {}},
         )
 
