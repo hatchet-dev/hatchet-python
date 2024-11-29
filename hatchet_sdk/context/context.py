@@ -2,7 +2,7 @@ import inspect
 import json
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Any, cast
+from typing import Any, Type, TypeVar, cast, overload
 
 from pydantic import BaseModel, StrictStr
 
@@ -34,6 +34,8 @@ from ..clients.dispatcher.dispatcher import (  # type: ignore[attr-defined]
 from ..logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
+
+T = TypeVar("T", bound=BaseModel)
 
 
 def get_caller_file_path() -> str:
@@ -235,7 +237,7 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any] | BaseModel:
-        output_validator = self.validators.step.get(step)
+        output_validator = self.validators.steps.get(step)
 
         try:
             parent_step_data = cast(dict[str, Any], self.data["parents"][step])
@@ -250,11 +252,19 @@ class Context(BaseContext):
     def triggered_by_event(self) -> bool:
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
-    def workflow_input(self) -> dict[str, Any] | BaseModel:
-        input_validator = self.validators.input
+    @overload
+    def workflow_input(self, validator: Type[T]) -> T: ...
 
-        if input_validator:
-            return input_validator.model_validate(self.input)
+    @overload
+    def workflow_input(self, validator: None = None) -> dict[str, Any]: ...
+
+    def workflow_input(self, validator: Type[T] | None = None) -> dict[str, Any] | T:
+        if (
+            validator
+            and isinstance(validator, type)
+            and issubclass(validator, BaseModel)
+        ):
+            return validator.model_validate(self.input)
 
         return self.input
 

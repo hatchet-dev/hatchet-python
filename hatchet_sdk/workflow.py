@@ -69,8 +69,7 @@ class ConcurrencyExpression:
 
 
 class WorkflowValidator(BaseModel):
-    input: Type[BaseModel] | None
-    step: dict[str, Type[BaseModel]]
+    steps: dict[str, Type[BaseModel]]
 
 
 class WorkflowInterface(Protocol):
@@ -89,7 +88,6 @@ class WorkflowInterface(Protocol):
     sticky: Union[StickyStrategy.Value, None]
     default_priority: int | None
     concurrency_expression: ConcurrencyExpression | None
-    input_validator: Type[BaseModel] | None
     validators: WorkflowValidator | None
 
 
@@ -111,11 +109,10 @@ class WorkflowMeta(type):
         steps = _create_steps_actions_list("_step_name")
 
         attrs["validators"] = WorkflowValidator(
-            input=attrs.pop("input_validator"),
-            step={
+            steps={
                 s._step_name: t
                 for _, s in steps
-                if isinstance(
+                if issubclass(
                     (t := cast(Type[BaseModel], get_type_hints(s).get("return"))),
                     BaseModel,
                 )
