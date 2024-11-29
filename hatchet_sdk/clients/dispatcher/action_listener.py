@@ -61,7 +61,7 @@ class Action:
     worker_id: str
     tenant_id: str
     workflow_run_id: str
-    get_group_key_run_id: Optional[str]
+    get_group_key_run_id: str
     job_id: str
     job_name: str
     job_run_id: str

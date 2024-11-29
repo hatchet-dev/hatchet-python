@@ -70,8 +70,8 @@ class Worker:
 
         self.ctx = multiprocessing.get_context("spawn")
 
-        self.action_queue: Queue[Any] = self.ctx.Queue()
-        self.event_queue: Queue[Any] = self.ctx.Queue()
+        self.action_queue: "Queue[Any]" = self.ctx.Queue()
+        self.event_queue: "Queue[Any]" = self.ctx.Queue()
 
         self.loop: asyncio.AbstractEventLoop
 
