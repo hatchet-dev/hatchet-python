@@ -61,7 +61,7 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, HatchetCallable[Any] | ConcurrencyFunction] = {}
+        self.action_registry: dict[str, Callable[[Context], T]] = {}
         self.killing: bool = False
         self._status: WorkerStatus
 
@@ -110,7 +110,9 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-        def create_action_function(action_func: Callable[..., T]) -> HatchetCallable[T]:
+        def create_action_function(
+            action_func: Callable[..., T]
+        ) -> Callable[[Context], T]:
             def action_function(context: Context) -> T:
                 return action_func(workflow, context)
 
@@ -121,7 +123,7 @@ class Worker:
 
             setattr(action_function, "validators", workflow.validators)
 
-            return HatchetCallable(action_function)
+            return action_function
 
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)

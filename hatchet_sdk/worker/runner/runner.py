@@ -252,10 +252,7 @@ class Runner:
                 )
 
                 loop = asyncio.get_event_loop()
-                res = await loop.run_in_executor(self.thread_pool, pfunc)
-
-                print("Returning from async wrapper")
-                return res
+                return await loop.run_in_executor(self.thread_pool, pfunc)
         except Exception as e:
             logger.error(
                 errorWithTraceback(
@@ -327,7 +324,6 @@ class Runner:
             action_func = self.action_registry.get(action_name)
 
             context = self.create_context(action, action_func)
-            print("Created context")
 
             self.contexts[action.step_run_id] = context
 
@@ -339,8 +335,6 @@ class Runner:
                     )
                 )
 
-                print("Put event to queue")
-
                 loop = asyncio.get_event_loop()
                 task = loop.create_task(
                     self.async_wrapped_action_func(
@@ -348,19 +342,14 @@ class Runner:
                     )
                 )
 
-                print("Created task")
-
                 task.add_done_callback(self.step_run_callback(action))
-                print("Added callback")
                 self.tasks[action.step_run_id] = task
 
                 try:
                     await task
-                    print("Awaited task")
                     span.set_status(StatusCode.OK)
                 except Exception as e:
                     # do nothing, this should be caught in the callback
-                    print(e)
                     span.set_status(StatusCode.ERROR)
                     span.record_exception(e)
 
