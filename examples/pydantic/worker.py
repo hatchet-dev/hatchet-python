@@ -1,3 +1,5 @@
+from typing import cast
+
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
@@ -8,15 +10,10 @@ load_dotenv()
 hatchet = Hatchet(debug=False)
 
 
-class Response(BaseModel):
-    foo: str
-    bar: int
-
-
 @hatchet.workflow(on_events=["parent:create"])
 class Parent:
     @hatchet.step(timeout="5m")
-    async def spawn(self, context: Context) -> Response:
+    async def spawn(self, context: Context):
         child = await context.aio.spawn_workflow(
             "Child",
             {"a": 1, "b": 10},
@@ -53,7 +50,7 @@ class Child:
 
     @hatchet.step(parents=["process"])
     def process2(self, context: Context) -> StepResponse:
-        process_output = context.step_output("process")
+        process_output = cast(StepResponse, context.step_output("process"))
 
         pretty_print(
             process_output, "Process Output:"
@@ -63,7 +60,7 @@ class Child:
 
     @hatchet.step(parents=["process2"])
     def process3(self, context: Context) -> StepResponse:
-        process_2_output = context.step_output("process2")
+        process_2_output = cast(StepResponse, context.step_output("process2"))
 
         pretty_print(
             process_2_output, "Process 2 Output:"
