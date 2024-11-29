@@ -19,7 +19,7 @@ from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
-from hatchet_sdk.context import Context, TypedContext  # type: ignore[attr-defined]
+from hatchet_sdk.context import Context  # type: ignore[attr-defined]
 from hatchet_sdk.context.worker_context import WorkerContext
 from hatchet_sdk.contracts.dispatcher_pb2 import (  # type: ignore[attr-defined]
     GROUP_KEY_EVENT_TYPE_COMPLETED,
