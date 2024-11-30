@@ -1,11 +1,13 @@
 import pytest
 
 from hatchet_sdk import Hatchet
+from tests.utils import fixture_bg_worker
+
+## IMPORTANT: Worker needs to be set here to ensure at least one workflow exists
+worker = fixture_bg_worker(["poetry", "run", "concurrency_limit_rr"])
 
 
 # requires scope module or higher for shared event loop
-## IMPORTANT: Worker needs to be set here to ensure at least one workflow exists
-@pytest.mark.parametrize("worker", ["concurrency_limit_rr"], indirect=True)
 @pytest.mark.asyncio(scope="session")
 async def test_list_workflows(hatchet: Hatchet, worker):
     workflows = hatchet.rest.workflow_list()
@@ -14,7 +16,6 @@ async def test_list_workflows(hatchet: Hatchet, worker):
 
 
 # requires scope module or higher for shared event loop
-@pytest.mark.parametrize("worker", ["concurrency_limit_rr"], indirect=True)
 @pytest.mark.asyncio(scope="session")
 async def test_async_list_workflows(aiohatchet: Hatchet, worker):
     workflows = await aiohatchet.rest.aio.workflow_list()
