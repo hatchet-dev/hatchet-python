@@ -1,5 +1,6 @@
 import logging
 import subprocess
+import time
 from io import BytesIO
 from threading import Thread
 from typing import AsyncGenerator, Callable, cast
@@ -34,15 +35,7 @@ def worker(request: pytest.FixtureRequest):
     if proc.poll() is not None:
         raise Exception(f"Worker failed to start with return code {proc.returncode}")
 
-    def wait_for_log_message(pipe: BytesIO) -> None:
-        for line in iter(pipe.readline, b""):
-            log_line = line.decode().strip()
-            logging.info(log_line)  # Log the output
-            if "sending heartbeat" in log_line:
-                logging.info(f"Found target log message: {log_line}")
-                break
-
-    Thread(target=wait_for_log_message, args=(proc.stdout,), daemon=True).start()
+    time.sleep(5)
 
     def log_output(pipe: BytesIO, log_func: Callable[[str], None]) -> None:
         for line in iter(pipe.readline, b""):
