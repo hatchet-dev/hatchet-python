@@ -4,14 +4,12 @@ import pytest
 
 from hatchet_sdk import Hatchet
 from hatchet_sdk.clients.rest.models.job_run_status import JobRunStatus
-from tests.utils import fixture_bg_worker
-
-worker = fixture_bg_worker(["poetry", "run", "on_failure"])
 
 
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
-async def test_run_timeout(hatchet: Hatchet):
+@pytest.mark.parametrize("worker", ["on_failure"], indirect=True)
+async def test_run_timeout(hatchet: Hatchet, worker):
     run = hatchet.admin.run_workflow("OnFailureWorkflow", {})
     try:
         await run.result()

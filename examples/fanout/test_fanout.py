@@ -1,14 +1,12 @@
 import pytest
 
 from hatchet_sdk import Hatchet
-from tests.utils import fixture_bg_worker
-
-worker = fixture_bg_worker(["poetry", "run", "fanout"])
 
 
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
-async def test_run(hatchet: Hatchet):
+@pytest.mark.parametrize("worker", ["fanout"], indirect=True)
+async def test_run(hatchet: Hatchet, worker):
     run = hatchet.admin.run_workflow("Parent", {"n": 2})
     result = await run.result()
     assert len(result["spawn"]["results"]) == 2
@@ -16,7 +14,8 @@ async def test_run(hatchet: Hatchet):
 
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
-async def test_run2(hatchet: Hatchet):
+@pytest.mark.parametrize("worker", ["fanout"], indirect=True)
+async def test_run2(hatchet: Hatchet, worker):
     run = hatchet.admin.run_workflow("Parent", {"n": 2})
     result = await run.result()
     assert len(result["spawn"]["results"]) == 2
