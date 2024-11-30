@@ -2,8 +2,7 @@ import logging
 import subprocess
 from io import BytesIO
 from threading import Thread
-from typing import AsyncGenerator
-from typing import cast, Callable
+from typing import AsyncGenerator, Callable, cast
 
 import psutil
 import pytest
@@ -43,7 +42,7 @@ def worker(request: pytest.FixtureRequest):
                 logging.info(f"Found target log message: {log_line}")
                 break
 
-    Thread(target=wait_for_log_message, args=(proc.stdout, ), daemon=True).start()
+    Thread(target=wait_for_log_message, args=(proc.stdout,), daemon=True).start()
 
     def log_output(pipe: BytesIO, log_func: Callable[[str], None]) -> None:
         for line in iter(pipe.readline, b""):
