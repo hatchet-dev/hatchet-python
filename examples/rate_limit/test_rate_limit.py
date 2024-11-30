@@ -4,14 +4,12 @@ import time
 import pytest
 
 from hatchet_sdk import Hatchet
-from tests.utils import fixture_bg_worker
-
-worker = fixture_bg_worker(["poetry", "run", "rate_limit"])
 
 
 # requires scope module or higher for shared event loop
 @pytest.mark.skip(reason="The timing for this test is not reliable")
 @pytest.mark.asyncio(scope="session")
+@pytest.mark.parametrize("worker", ["rate_limit"], indirect=True)
 async def test_run(hatchet: Hatchet, worker):
 
     run1 = hatchet.admin.run_workflow("RateLimitWorkflow", {})

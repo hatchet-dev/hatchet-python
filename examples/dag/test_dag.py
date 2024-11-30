@@ -1,13 +1,11 @@
 import pytest
 
 from hatchet_sdk import Hatchet
-from tests.utils import fixture_bg_worker
-
-worker = fixture_bg_worker(["poetry", "run", "dag"])
 
 
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
+@pytest.mark.parametrize("worker", ["dag"], indirect=True)
 async def test_run(hatchet: Hatchet, worker):
     run = hatchet.admin.run_workflow("DagWorkflow", {})
     result = await run.result()

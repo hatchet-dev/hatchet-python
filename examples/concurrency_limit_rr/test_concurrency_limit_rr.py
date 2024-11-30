@@ -1,18 +1,15 @@
-import asyncio
 import time
 
 import pytest
 
 from hatchet_sdk import Hatchet
 from hatchet_sdk.workflow_run import WorkflowRunRef
-from tests.utils import fixture_bg_worker
-
-worker = fixture_bg_worker(["poetry", "run", "concurrency_limit_rr"])
 
 
 # requires scope module or higher for shared event loop
 @pytest.mark.skip(reason="The timing for this test is not reliable")
 @pytest.mark.asyncio(scope="session")
+@pytest.mark.parametrize("worker", ["concurrency_limit_rr"], indirect=True)
 async def test_run(hatchet: Hatchet, worker):
     num_groups = 2
     runs: list[WorkflowRunRef] = []
