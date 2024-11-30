@@ -3,7 +3,7 @@ import json
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any, Type, TypeVar, cast, overload
-
+from warnings import warn
 from pydantic import BaseModel, StrictStr
 
 from hatchet_sdk.clients.events import EventClient
@@ -279,8 +279,8 @@ class Context(BaseContext):
     def playground(self, name: str, default: str | None = None) -> str | None:
         # if the key exists in the overrides_data field, return the value
         if name in self.overrides_data:
-            ## TODO: Check if this is the right type
-            return cast(str, self.overrides_data[name])
+            warn("Use of `overrides_data` is deprecated.", DeprecationWarning, stacklevel=1)
+            return str(self.overrides_data[name])
 
         caller_file = get_caller_file_path()
 
