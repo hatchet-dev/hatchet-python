@@ -33,14 +33,10 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (  # type: ignore[attr-defined]
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.tracing import create_tracer, parse_carrier_from_metadata
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
-
-
-class ValidatorRegistry(BaseModel):
-    workflow_input: Type[BaseModel] | None = None
-    step_outputs: dict[str, Type[BaseModel]] = {}
 
 
 class WorkerStatus(Enum):
@@ -58,7 +54,7 @@ class Runner:
         max_runs: int | None = None,
         handle_kill: bool = True,
         action_registry: dict[str, Callable[..., Any]] = {},
-        validator_registry: ValidatorRegistry | None = None,
+        validator_registry: dict[str, WorkflowValidator] = {},
         config: ClientConfig = ClientConfig(),
         labels: dict[str, str | int] = {},
     ):
@@ -294,6 +290,7 @@ class Runner:
                 self.workflow_run_event_listener,
                 self.worker_context,
                 self.client.config.namespace,
+                validator_registry=self.validator_registry,
             )
 
         return Context(
@@ -306,6 +303,7 @@ class Runner:
             self.workflow_run_event_listener,
             self.worker_context,
             self.client.config.namespace,
+            validator_registry=self.validator_registry,
         )
 
     async def handle_start_step_run(self, action: Action) -> None:

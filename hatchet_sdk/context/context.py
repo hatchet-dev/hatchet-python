@@ -18,8 +18,8 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
-from hatchet_sdk.worker.runner.runner import ValidatorRegistry
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..clients.admin import (
@@ -178,7 +178,7 @@ class Context(BaseContext[Any]):
         workflow_run_event_listener: RunEventListenerClient,
         worker: WorkerContext,
         namespace: str = "",
-        validator_registry: ValidatorRegistry | None = None,
+        validator_registry: dict[str, WorkflowValidator] = {},
     ):
         self.worker = worker
         self.validator_registry = validator_registry
@@ -239,17 +239,16 @@ class Context(BaseContext[Any]):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any] | BaseModel:
-        output_validator = (
-            vr.step_outputs.get(step) if (vr := self.validator_registry) else None
-        )
+        print("Step", step)
+        validators = self.validator_registry.get(step)
 
         try:
             parent_step_data = cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
 
-        if output_validator:
-            return output_validator.model_validate(parent_step_data)
+        if validators and (v := validators.step_output):
+            return v.model_validate(parent_step_data)
 
         return parent_step_data
 
@@ -257,10 +256,13 @@ class Context(BaseContext[Any]):
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
     def workflow_input(self) -> dict[str, Any] | TP:
-        if self.validator_registry and self.validator_registry.workflow_input:
+        print("Registry", self.validator_registry)
+        if (r := self.validator_registry.get(self.action.step_id)) and (
+            i := r.workflow_input
+        ):
             return cast(
                 TP,
-                self.validator_registry.workflow_input.model_validate(self.input),
+                i.model_validate(self.input),
             )
 
         return self.input

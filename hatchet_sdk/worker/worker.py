@@ -19,11 +19,11 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
-from hatchet_sdk.worker.runner.runner import ValidatorRegistry
 from hatchet_sdk.workflow import WorkflowInterface
 
 T = TypeVar("T")
@@ -63,7 +63,7 @@ class Worker:
         self.client: Client
 
         self.action_registry: dict[str, Callable[[Context], T]] = {}
-        self.validator_registry: ValidatorRegistry | None = None
+        self.validator_registry: dict[str, WorkflowValidator] = {}
 
         self.killing: bool = False
         self._status: WorkerStatus
@@ -124,22 +124,12 @@ class Worker:
 
             return action_function
 
-        if workflow.input_validator:
-            self.validator_registry = ValidatorRegistry(
-                workflow_input=workflow.input_validator, step_outputs={}
-            )
-
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
             return_type = get_type_hints(action_func).get("return")
-
-            if return_type and self.validator_registry:
-                self.validator_registry.step_outputs[action_name] = return_type
-
-            if return_type and not self.validator_registry:
-                self.validator_registry = ValidatorRegistry(
-                    step_outputs={action_name: return_type}
-                )
+            self.validator_registry[action_name] = WorkflowValidator(
+                workflow_input=workflow.input_validator, step_output=return_type
+            )
 
     def status(self) -> WorkerStatus:
         return self._status
