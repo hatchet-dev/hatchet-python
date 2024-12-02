@@ -9,7 +9,7 @@ from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.worker.runner.runner import Runner
+from hatchet_sdk.worker.runner.runner import Runner, ValidatorRegistry
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
 STOP_LOOP = "STOP_LOOP"
@@ -21,6 +21,7 @@ T = TypeVar("T")
 class WorkerActionRunLoopManager:
     name: str
     action_registry: dict[str, Callable[[Context], T]]
+    validator_registry: ValidatorRegistry | None
     max_runs: int | None
     config: ClientConfig
     action_queue: Queue
@@ -74,6 +75,7 @@ class WorkerActionRunLoopManager:
             self.max_runs,
             self.handle_kill,
             self.action_registry,
+            self.validator_registry,
             self.config,
             self.labels,
         )

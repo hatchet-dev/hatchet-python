@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import Any, Callable, Dict, TypeVar, cast
+from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
 
 from opentelemetry.trace import StatusCode
 from pydantic import BaseModel
@@ -36,7 +36,11 @@ from hatchet_sdk.utils.tracing import create_tracer, parse_carrier_from_metadata
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
-from hatchet_sdk.workflow import WorkflowStepProtocol, WorkflowValidator
+
+
+class ValidatorRegistry(BaseModel):
+    workflow_input: Type[BaseModel] | None = None
+    step_outputs: dict[str, Type[BaseModel]] = {}
 
 
 class WorkerStatus(Enum):
@@ -54,6 +58,7 @@ class Runner:
         max_runs: int | None = None,
         handle_kill: bool = True,
         action_registry: dict[str, Callable[..., Any]] = {},
+        validator_registry: ValidatorRegistry | None = None,
         config: ClientConfig = ClientConfig(),
         labels: dict[str, str | int] = {},
     ):
@@ -62,9 +67,10 @@ class Runner:
         self.client = new_client_raw(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
-        self.tasks: Dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
-        self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
+        self.tasks: dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
+        self.contexts: dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = action_registry
+        self.validator_registry = validator_registry
 
         self.event_queue = event_queue
 
@@ -277,12 +283,6 @@ class Runner:
     def create_context(
         self, action: Action, action_func: Callable[..., Any] | None
     ) -> Context | DurableContext:
-        validators = (
-            action_func.validators  # type: ignore[attr-defined]
-            if action_func
-            else WorkflowValidator(steps={})
-        )
-
         if hasattr(action_func, "durable") and getattr(action_func, "durable"):
             return DurableContext(
                 action,
@@ -293,7 +293,6 @@ class Runner:
                 self.client.workflow_listener,
                 self.workflow_run_event_listener,
                 self.worker_context,
-                validators,
                 self.client.config.namespace,
             )
 
@@ -306,7 +305,6 @@ class Runner:
             self.client.workflow_listener,
             self.workflow_run_event_listener,
             self.worker_context,
-            validators,
             self.client.config.namespace,
         )
 

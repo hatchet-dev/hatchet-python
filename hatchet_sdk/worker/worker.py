@@ -10,7 +10,7 @@ from enum import Enum
 from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, get_type_hints
 
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
@@ -23,7 +23,8 @@ from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
-from hatchet_sdk.workflow import WorkflowInterface, WorkflowValidator
+from hatchet_sdk.worker.runner.runner import ValidatorRegistry
+from hatchet_sdk.workflow import WorkflowInterface
 
 T = TypeVar("T")
 
@@ -62,6 +63,8 @@ class Worker:
         self.client: Client
 
         self.action_registry: dict[str, Callable[[Context], T]] = {}
+        self.validator_registry: ValidatorRegistry | None = None
+
         self.killing: bool = False
         self._status: WorkerStatus
 
@@ -78,8 +81,6 @@ class Worker:
 
         self.client = new_client_raw(self.config, self.debug)
         self.name = self.client.config.namespace + self.name
-
-        self.validators: WorkflowValidator | None
 
         self._setup_signal_handlers()
 
@@ -121,14 +122,24 @@ class Worker:
             else:
                 setattr(action_function, "is_coroutine", False)
 
-            setattr(action_function, "validators", workflow.validators)
-
             return action_function
+
+        if workflow.input_validator:
+            self.validator_registry = ValidatorRegistry(
+                workflow_input=workflow.input_validator, step_outputs={}
+            )
 
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
+            return_type = get_type_hints(action_func).get("return")
 
-        self.validators = workflow.validators
+            if return_type and self.validator_registry:
+                self.validator_registry.step_outputs[action_name] = return_type
+
+            if return_type and not self.validator_registry:
+                self.validator_registry = ValidatorRegistry(
+                    step_outputs={action_name: return_type}
+                )
 
     def status(self) -> WorkerStatus:
         return self._status
@@ -203,6 +214,7 @@ class Worker:
         return WorkerActionRunLoopManager(
             self.name,
             self.action_registry,
+            self.validator_registry,
             self.max_runs,
             self.config,
             self.action_queue,

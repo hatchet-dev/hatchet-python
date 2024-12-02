@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, Type, cast, get_type_hints
+from typing import Any, Callable, Optional, Type, TypeVar, cast, get_type_hints
 
 from pydantic import BaseModel
 from typing_extensions import deprecated
@@ -35,6 +35,8 @@ from .workflow import (
     WorkflowStepProtocol,
 )
 
+T = TypeVar("T", bound=BaseModel)
+
 
 def workflow(
     name: str = "",
@@ -46,6 +48,7 @@ def workflow(
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
+    input_validator: Type[T] | None = None,
 ) -> Callable[[Type[WorkflowInterface]], WorkflowMeta]:
     on_events = on_events or []
     on_crons = on_crons or []
@@ -64,6 +67,7 @@ def workflow(
         # with WorkflowMeta as its metaclass
 
         ## TODO: Figure out how to type this metaclass correctly
+        cls.input_validator = input_validator
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
     return inner

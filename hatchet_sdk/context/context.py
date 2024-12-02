@@ -2,8 +2,9 @@ import inspect
 import json
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Any, Type, TypeVar, cast, overload
+from typing import Any, Generic, Type, TypeVar, cast, overload
 from warnings import warn
+
 from pydantic import BaseModel, StrictStr
 
 from hatchet_sdk.clients.events import EventClient
@@ -18,7 +19,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     TriggerWorkflowRequest,
 )
 from hatchet_sdk.utils.typing import is_basemodel_subclass
-from hatchet_sdk.workflow import WorkflowValidator
+from hatchet_sdk.worker.runner.runner import ValidatorRegistry
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..clients.admin import (
@@ -36,7 +37,8 @@ from ..logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
 
-T = TypeVar("T", bound=BaseModel)
+T = TypeVar("T", bound=Any)
+TP = TypeVar("TP", bound=BaseModel)
 
 
 def get_caller_file_path() -> str:
@@ -45,7 +47,7 @@ def get_caller_file_path() -> str:
     return caller_frame.filename
 
 
-class BaseContext:
+class BaseContext(Generic[T]):
 
     action: Action
     spawn_index: int
@@ -81,7 +83,7 @@ class BaseContext:
         return trigger_options
 
 
-class ContextAioImpl(BaseContext):
+class ContextAioImpl(BaseContext[Any]):
     def __init__(
         self,
         action: Action,
@@ -160,7 +162,7 @@ class ContextAioImpl(BaseContext):
         return await self.admin_client.aio.run_workflows(bulk_trigger_workflow_runs)
 
 
-class Context(BaseContext):
+class Context(BaseContext[Any]):
     spawn_index = -1
 
     worker: WorkerContext
@@ -175,12 +177,11 @@ class Context(BaseContext):
         workflow_listener: PooledWorkflowRunListener,
         workflow_run_event_listener: RunEventListenerClient,
         worker: WorkerContext,
-        validators: WorkflowValidator,
         namespace: str = "",
+        validator_registry: ValidatorRegistry | None = None,
     ):
         self.worker = worker
-
-        self.validators = validators
+        self.validator_registry = validator_registry
 
         self.aio = ContextAioImpl(
             action,
@@ -238,14 +239,16 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any] | BaseModel:
-        output_validator = self.validators.steps.get(step)
+        output_validator = (
+            vr.step_outputs.get(step) if (vr := self.validator_registry) else None
+        )
 
         try:
             parent_step_data = cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
 
-        if output_validator and is_basemodel_subclass(output_validator):
+        if output_validator:
             return output_validator.model_validate(parent_step_data)
 
         return parent_step_data
@@ -253,15 +256,12 @@ class Context(BaseContext):
     def triggered_by_event(self) -> bool:
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
-    @overload
-    def workflow_input(self, validator: Type[T]) -> T: ...
-
-    @overload
-    def workflow_input(self, validator: None = None) -> dict[str, Any]: ...
-
-    def workflow_input(self, validator: Type[T] | None = None) -> dict[str, Any] | T:
-        if validator and is_basemodel_subclass(validator):
-            return validator.model_validate(self.input)
+    def workflow_input(self) -> dict[str, Any] | TP:
+        if self.validator_registry and self.validator_registry.workflow_input:
+            return cast(
+                TP,
+                self.validator_registry.workflow_input.model_validate(self.input),
+            )
 
         return self.input
 
@@ -279,7 +279,11 @@ class Context(BaseContext):
     def playground(self, name: str, default: str | None = None) -> str | None:
         # if the key exists in the overrides_data field, return the value
         if name in self.overrides_data:
-            warn("Use of `overrides_data` is deprecated.", DeprecationWarning, stacklevel=1)
+            warn(
+                "Use of `overrides_data` is deprecated.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
             return str(self.overrides_data[name])
 
         caller_file = get_caller_file_path()

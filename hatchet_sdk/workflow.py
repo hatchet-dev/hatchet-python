@@ -69,10 +69,6 @@ class ConcurrencyExpression:
         self.limit_strategy = limit_strategy
 
 
-class WorkflowValidator(BaseModel):
-    steps: dict[str, Type[BaseModel]]
-
-
 class WorkflowInterface(Protocol):
     def get_name(self, namespace: str) -> str: ...
 
@@ -89,7 +85,8 @@ class WorkflowInterface(Protocol):
     sticky: Union[StickyStrategy.Value, None]
     default_priority: int | None
     concurrency_expression: ConcurrencyExpression | None
-    validators: WorkflowValidator | None
+    input_validator: Type[BaseModel] | None
+    step_validators: dict[str, Type[BaseModel]]
 
 
 class WorkflowMeta(type):
@@ -109,15 +106,13 @@ class WorkflowMeta(type):
         concurrencyActions = _create_steps_actions_list("_concurrency_fn_name")
         steps = _create_steps_actions_list("_step_name")
 
-        attrs["validators"] = WorkflowValidator(
-            steps={
-                s._step_name: t
-                for _, s in steps
-                if is_basemodel_subclass(
-                    (t := cast(Type[BaseModel], get_type_hints(s).get("return"))),
-                )
-            },
-        )
+        attrs["step_validators"] = {
+            s._step_name: t
+            for _, s in steps
+            if is_basemodel_subclass(
+                (t := cast(Type[BaseModel], get_type_hints(s).get("return"))),
+            )
+        }
 
         onFailureSteps = _create_steps_actions_list("_on_failure_step_name")
 
