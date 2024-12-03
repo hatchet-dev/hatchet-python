@@ -17,19 +17,22 @@ from __future__ import annotations
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Self
 
 
-class WorkflowRunsMetrics(BaseModel):
+class ScheduleWorkflowRunRequest(BaseModel):
     """
-    WorkflowRunsMetrics
+    ScheduleWorkflowRunRequest
     """  # noqa: E501
 
-    counts: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["counts"]
+    input: Dict[str, Any]
+    additional_metadata: Dict[str, Any] = Field(alias="additionalMetadata")
+    trigger_at: datetime = Field(alias="triggerAt")
+    __properties: ClassVar[List[str]] = ["input", "additionalMetadata", "triggerAt"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +51,7 @@ class WorkflowRunsMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of WorkflowRunsMetrics from a JSON string"""
+        """Create an instance of ScheduleWorkflowRunRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -68,14 +71,11 @@ class WorkflowRunsMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of counts
-        if self.counts:
-            _dict["counts"] = self.counts.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of WorkflowRunsMetrics from a dict"""
+        """Create an instance of ScheduleWorkflowRunRequest from a dict"""
         if obj is None:
             return None
 
@@ -84,11 +84,9 @@ class WorkflowRunsMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "counts": (
-                    WorkflowRunsMetricsCounts.from_dict(obj["counts"])
-                    if obj.get("counts") is not None
-                    else None
-                )
+                "input": obj.get("input"),
+                "additionalMetadata": obj.get("additionalMetadata"),
+                "triggerAt": obj.get("triggerAt"),
             }
         )
         return _obj

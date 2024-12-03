@@ -27,6 +27,7 @@ from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
 from hatchet_sdk.clients.rest.models.recent_step_runs import RecentStepRuns
 from hatchet_sdk.clients.rest.models.semaphore_slots import SemaphoreSlots
 from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
+from hatchet_sdk.clients.rest.models.worker_runtime_info import WorkerRuntimeInfo
 
 
 class Worker(BaseModel):
@@ -87,6 +88,7 @@ class Worker(BaseModel):
     webhook_id: Optional[StrictStr] = Field(
         default=None, description="The webhook ID for the worker.", alias="webhookId"
     )
+    runtime_info: Optional[WorkerRuntimeInfo] = Field(default=None, alias="runtimeInfo")
     __properties: ClassVar[List[str]] = [
         "metadata",
         "name",
@@ -103,6 +105,7 @@ class Worker(BaseModel):
         "labels",
         "webhookUrl",
         "webhookId",
+        "runtimeInfo",
     ]
 
     @field_validator("type")
@@ -187,6 +190,9 @@ class Worker(BaseModel):
                 if _item_labels:
                     _items.append(_item_labels.to_dict())
             _dict["labels"] = _items
+        # override the default output from pydantic by calling `to_dict()` of runtime_info
+        if self.runtime_info:
+            _dict["runtimeInfo"] = self.runtime_info.to_dict()
         return _dict
 
     @classmethod
@@ -231,6 +237,11 @@ class Worker(BaseModel):
                 ),
                 "webhookUrl": obj.get("webhookUrl"),
                 "webhookId": obj.get("webhookId"),
+                "runtimeInfo": (
+                    WorkerRuntimeInfo.from_dict(obj["runtimeInfo"])
+                    if obj.get("runtimeInfo") is not None
+                    else None
+                ),
             }
         )
         return _obj

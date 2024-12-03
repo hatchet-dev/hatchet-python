@@ -19,17 +19,29 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Self
 
+from hatchet_sdk.clients.rest.models.worker_runtime_sdks import WorkerRuntimeSDKs
 
-class WorkflowRunsMetrics(BaseModel):
+
+class WorkerRuntimeInfo(BaseModel):
     """
-    WorkflowRunsMetrics
+    WorkerRuntimeInfo
     """  # noqa: E501
 
-    counts: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["counts"]
+    sdk_version: Optional[StrictStr] = Field(default=None, alias="sdkVersion")
+    language: Optional[WorkerRuntimeSDKs] = None
+    language_version: Optional[StrictStr] = Field(default=None, alias="languageVersion")
+    os: Optional[StrictStr] = None
+    runtime_extra: Optional[StrictStr] = Field(default=None, alias="runtimeExtra")
+    __properties: ClassVar[List[str]] = [
+        "sdkVersion",
+        "language",
+        "languageVersion",
+        "os",
+        "runtimeExtra",
+    ]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +60,7 @@ class WorkflowRunsMetrics(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of WorkflowRunsMetrics from a JSON string"""
+        """Create an instance of WorkerRuntimeInfo from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -68,14 +80,11 @@ class WorkflowRunsMetrics(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of counts
-        if self.counts:
-            _dict["counts"] = self.counts.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of WorkflowRunsMetrics from a dict"""
+        """Create an instance of WorkerRuntimeInfo from a dict"""
         if obj is None:
             return None
 
@@ -84,11 +93,11 @@ class WorkflowRunsMetrics(BaseModel):
 
         _obj = cls.model_validate(
             {
-                "counts": (
-                    WorkflowRunsMetricsCounts.from_dict(obj["counts"])
-                    if obj.get("counts") is not None
-                    else None
-                )
+                "sdkVersion": obj.get("sdkVersion"),
+                "language": obj.get("language"),
+                "languageVersion": obj.get("languageVersion"),
+                "os": obj.get("os"),
+                "runtimeExtra": obj.get("runtimeExtra"),
             }
         )
         return _obj

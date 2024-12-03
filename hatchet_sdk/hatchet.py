@@ -14,6 +14,8 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     DesiredWorkerLabels,
     StickyStrategy,
 )
+from hatchet_sdk.features.cron import CronClient
+from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig, ConfigLoader
 from hatchet_sdk.rate_limit import RateLimit
@@ -173,6 +175,8 @@ class Hatchet:
     for working with Hatchet workers, workflows, and steps.
 
     Attributes:
+        cron (CronClient): Interface for cron trigger operations.
+
         admin (AdminClient): Interface for administrative operations.
         dispatcher (DispatcherClient): Interface for dispatching operations.
         event (EventClient): Interface for event-related operations.
@@ -180,6 +184,8 @@ class Hatchet:
     """
 
     _client: Client
+    cron: CronClient
+    scheduled: ScheduledClient
 
     @classmethod
     def from_environment(
@@ -212,6 +218,9 @@ class Hatchet:
 
         if debug:
             logger.setLevel(logging.DEBUG)
+
+        self.cron = CronClient(self._client)
+        self.scheduled = ScheduledClient(self._client)
 
     @property
     @deprecated(

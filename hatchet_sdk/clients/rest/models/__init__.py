@@ -37,6 +37,9 @@ from hatchet_sdk.clients.rest.models.create_api_token_request import (
 from hatchet_sdk.clients.rest.models.create_api_token_response import (
     CreateAPITokenResponse,
 )
+from hatchet_sdk.clients.rest.models.create_cron_workflow_trigger_request import (
+    CreateCronWorkflowTriggerRequest,
+)
 from hatchet_sdk.clients.rest.models.create_event_request import CreateEventRequest
 from hatchet_sdk.clients.rest.models.create_pull_request_from_step_run import (
     CreatePullRequestFromStepRun,
@@ -51,6 +54,11 @@ from hatchet_sdk.clients.rest.models.create_tenant_invite_request import (
     CreateTenantInviteRequest,
 )
 from hatchet_sdk.clients.rest.models.create_tenant_request import CreateTenantRequest
+from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
+from hatchet_sdk.clients.rest.models.cron_workflows_list import CronWorkflowsList
+from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
+    CronWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.event import Event
 from hatchet_sdk.clients.rest.models.event_data import EventData
 from hatchet_sdk.clients.rest.models.event_key_list import EventKeyList
@@ -108,6 +116,17 @@ from hatchet_sdk.clients.rest.models.replay_workflow_runs_response import (
     ReplayWorkflowRunsResponse,
 )
 from hatchet_sdk.clients.rest.models.rerun_step_run_request import RerunStepRunRequest
+from hatchet_sdk.clients.rest.models.schedule_workflow_run_request import (
+    ScheduleWorkflowRunRequest,
+)
+from hatchet_sdk.clients.rest.models.scheduled_run_status import ScheduledRunStatus
+from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
+from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
+    ScheduledWorkflowsList,
+)
+from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import (
+    ScheduledWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.semaphore_slots import SemaphoreSlots
 from hatchet_sdk.clients.rest.models.slack_webhook import SlackWebhook
 from hatchet_sdk.clients.rest.models.sns_integration import SNSIntegration
@@ -186,6 +205,8 @@ from hatchet_sdk.clients.rest.models.webhook_worker_request_method import (
 from hatchet_sdk.clients.rest.models.worker import Worker
 from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 from hatchet_sdk.clients.rest.models.worker_list import WorkerList
+from hatchet_sdk.clients.rest.models.worker_runtime_info import WorkerRuntimeInfo
+from hatchet_sdk.clients.rest.models.worker_runtime_sdks import WorkerRuntimeSDKs
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_concurrency import WorkflowConcurrency
 from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind
