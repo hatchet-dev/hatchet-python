@@ -50,7 +50,7 @@ class StepResponse(BaseModel):
 class Child:
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:
-        input = context.workflow_input()
+        input = cast(ChildInput, context.workflow_input())
 
         pretty_print("Workflow Input:", input)  ## This is a `ChildInput`
 
