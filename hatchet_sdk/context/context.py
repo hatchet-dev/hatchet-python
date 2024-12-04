@@ -37,8 +37,7 @@ from ..logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
 
-T = TypeVar("T", bound=Any)
-TP = TypeVar("TP", bound=BaseModel)
+T = TypeVar("T", bound=BaseModel)
 
 
 def get_caller_file_path() -> str:
@@ -47,7 +46,7 @@ def get_caller_file_path() -> str:
     return caller_frame.filename
 
 
-class BaseContext(Generic[T]):
+class BaseContext:
 
     action: Action
     spawn_index: int
@@ -83,7 +82,7 @@ class BaseContext(Generic[T]):
         return trigger_options
 
 
-class ContextAioImpl(BaseContext[Any]):
+class ContextAioImpl(BaseContext):
     def __init__(
         self,
         action: Action,
@@ -162,7 +161,7 @@ class ContextAioImpl(BaseContext[Any]):
         return await self.admin_client.aio.run_workflows(bulk_trigger_workflow_runs)
 
 
-class Context(BaseContext[Any]):
+class Context(BaseContext):
     spawn_index = -1
 
     worker: WorkerContext
@@ -255,13 +254,13 @@ class Context(BaseContext[Any]):
     def triggered_by_event(self) -> bool:
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
-    def workflow_input(self) -> dict[str, Any] | TP:
+    def workflow_input(self) -> dict[str, Any] | T:
         print("Registry", self.validator_registry)
         if (r := self.validator_registry.get(self.action.step_id)) and (
             i := r.workflow_input
         ):
             return cast(
-                TP,
+                T,
                 i.model_validate(self.input),
             )
 

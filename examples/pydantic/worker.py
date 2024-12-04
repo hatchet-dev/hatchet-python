@@ -23,7 +23,7 @@ def pretty_print(tag: str, model: BaseModel) -> None:
 @hatchet.workflow(input_validator=ParentInput)
 class Parent:
     @hatchet.step(timeout="5m")
-    async def spawn(self, context: Context[ParentInput]):
+    async def spawn(self, context: Context):
         ## Cast your `workflow_input` to the type of your `input_validator`
         input = cast(ParentInput, context.workflow_input())
 
