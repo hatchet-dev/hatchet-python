@@ -7,17 +7,31 @@ from hatchet_sdk import Context, Hatchet
 
 load_dotenv()
 
-hatchet = Hatchet(debug=False)
+hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["parent:create"])
+class ParentInput(BaseModel):
+    x: str
+
+
+def pretty_print(tag: str, model: BaseModel) -> None:
+    print()
+    print(tag, model, "\nType:", type(model))  ## This is an instance of `ChildInput`
+    print()
+
+
+@hatchet.workflow(input_validator=ParentInput)
 class Parent:
     @hatchet.step(timeout="5m")
-    async def spawn(self, context: Context):
+    async def spawn(self, context: Context[ParentInput]):
+        ## Cast your `workflow_input` to the type of your `input_validator`
+        input = cast(ParentInput, context.workflow_input())
+
+        pretty_print("Workflow Input:", input)  ## This is a `ParentInput`
+
         child = await context.aio.spawn_workflow(
             "Child",
             {"a": 1, "b": "10"},
-            options={"additional_metadata": {}},
         )
 
         return await child.result()
@@ -32,19 +46,13 @@ class StepResponse(BaseModel):
     status: str
 
 
-def pretty_print(model: BaseModel, tag: str) -> None:
-    print()
-    print(tag, model, "\nType:", type(model))  ## This is an instance of `ChildInput`
-    print()
-
-
-@hatchet.workflow(on_events=["child:create"])
+@hatchet.workflow()
 class Child:
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:
-        input = context.workflow_input(validator=ChildInput)
+        input = context.workflow_input()
 
-        pretty_print(input, "Workflow Input:")  ## This is an instance of `ChildInput`
+        pretty_print("Workflow Input:", input)  ## This is a `ChildInput`
 
         return StepResponse(status="success")
 
@@ -52,9 +60,7 @@ class Child:
     def process2(self, context: Context) -> StepResponse:
         process_output = cast(StepResponse, context.step_output("process"))
 
-        pretty_print(
-            process_output, "Process Output:"
-        )  ## This is an instance of `StepResponse`
+        pretty_print("Process Output:", process_output)  ## This is a `StepResponse`
 
         return {"status": "step 2 - success"}
 
@@ -62,9 +68,7 @@ class Child:
     def process3(self, context: Context) -> StepResponse:
         process_2_output = cast(StepResponse, context.step_output("process2"))
 
-        pretty_print(
-            process_2_output, "Process 2 Output:"
-        )  ## This is an instance of `StepResponse`
+        pretty_print("Process 2 Output:", process_2_output)  ## This is a `StepResponse`
 
         return StepResponse(status="step 3 - success")
 

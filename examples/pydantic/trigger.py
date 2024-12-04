@@ -11,7 +11,7 @@ async def main():
 
     hatchet.admin.run_workflow(
         "Parent",
-        {},
+        {"x": "foo bar baz"},
     )
 
 
