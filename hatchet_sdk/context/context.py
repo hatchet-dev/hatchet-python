@@ -238,7 +238,6 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any] | BaseModel:
-        print("Step", step)
         validators = self.validator_registry.get(step)
 
         try:
@@ -255,7 +254,6 @@ class Context(BaseContext):
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
     def workflow_input(self) -> dict[str, Any] | T:
-        print("Registry", self.validator_registry)
         if (r := self.validator_registry.get(self.action.step_id)) and (
             i := r.workflow_input
         ):

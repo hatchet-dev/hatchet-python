@@ -11,6 +11,7 @@ async def test_run(hatchet: Hatchet, worker):
         "Parent",
         {},
     )
+
     result = await run.result()
 
     assert len(result["spawn"]) == 3
