@@ -134,9 +134,9 @@ def on_failure_step(
         func._on_failure_step_timeout = timeout  # type: ignore[attr-defined]
         func._on_failure_step_retries = retries  # type: ignore[attr-defined]
         func._on_failure_step_rate_limits = limits  # type: ignore[attr-defined]
-        func._on_failure_step_backoff_factor = backoff_factor # type: ignore[attr-defined]
-        func._on_failure_step_backoff_max_seconds = backoff_max_seconds # type: ignore[attr-defined]
-        
+        func._on_failure_step_backoff_factor = backoff_factor  # type: ignore[attr-defined]
+        func._on_failure_step_backoff_max_seconds = backoff_max_seconds  # type: ignore[attr-defined]
+
         return func
 
     return inner

@@ -2,6 +2,7 @@ from hatchet_sdk import Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
+
 # ❓ Backoff
 @hatchet.workflow()
 class BackoffWorkflow:
@@ -17,9 +18,12 @@ class BackoffWorkflow:
     def step1(self, context: Context):
         if context.retry_count() < 3:
             raise Exception("step1 failed")
-        
+
         return {"status": "success"}
+
+
 # ‼️
+
 
 def main():
     workflow = BackoffWorkflow()
