@@ -113,6 +113,8 @@ class WorkflowMeta(type):
                     retries=func._step_retries,
                     rate_limits=func._step_rate_limits,
                     worker_labels=func._step_desired_worker_labels,
+                    backoff_factor=func._step_backoff_factor,
+                    backoff_max_seconds=func._step_backoff_max_seconds,
                 )
                 for step_name, func in steps
             ]
@@ -155,6 +157,8 @@ class WorkflowMeta(type):
                             parents=[],
                             retries=func._on_failure_step_retries,
                             rate_limits=func._on_failure_step_rate_limits,
+                            backoff_factor=func._on_failure_step_backoff_factor,
+                            backoff_max_seconds=func._on_failure_step_backoff_max_seconds,
                         )
                     ],
                 )

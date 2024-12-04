@@ -74,6 +74,8 @@ def step(
     retries: int = 0,
     rate_limits: list[RateLimit] | None = None,
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+    backoff_factor: float | None = None,
+    backoff_max_seconds: int | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     parents = parents or []
 
@@ -91,6 +93,8 @@ def step(
         func._step_timeout = timeout  # type: ignore[attr-defined]
         func._step_retries = retries  # type: ignore[attr-defined]
         func._step_rate_limits = limits  # type: ignore[attr-defined]
+        func._step_backoff_factor = backoff_factor  # type: ignore[attr-defined]
+        func._step_backoff_max_seconds = backoff_max_seconds  # type: ignore[attr-defined]
 
         func._step_desired_worker_labels = {}  # type: ignore[attr-defined]
 
@@ -114,6 +118,8 @@ def on_failure_step(
     timeout: str = "",
     retries: int = 0,
     rate_limits: list[RateLimit] | None = None,
+    backoff_factor: float | None = None,
+    backoff_max_seconds: int | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def inner(func: Callable[P, R]) -> Callable[P, R]:
         limits = None
@@ -128,6 +134,9 @@ def on_failure_step(
         func._on_failure_step_timeout = timeout  # type: ignore[attr-defined]
         func._on_failure_step_retries = retries  # type: ignore[attr-defined]
         func._on_failure_step_rate_limits = limits  # type: ignore[attr-defined]
+        func._on_failure_step_backoff_factor = backoff_factor # type: ignore[attr-defined]
+        func._on_failure_step_backoff_max_seconds = backoff_max_seconds # type: ignore[attr-defined]
+        
         return func
 
     return inner

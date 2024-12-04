@@ -58,9 +58,9 @@ cp $tmp_dir/hatchet_sdk/clients/rest/api/__init__.py $dst_dir/api/__init__.py
 # remove tmp folder
 rm -rf $tmp_dir
 
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/dispatcher --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts dispatcher.proto
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/events --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts events.proto
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/workflows --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts workflows.proto
+poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/dispatcher --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts dispatcher.proto
+poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/events --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts events.proto
+poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/workflows --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts workflows.proto
 
 # Fix relative imports in _grpc.py files
 if [[ "$OSTYPE" == "darwin"* ]]; then
