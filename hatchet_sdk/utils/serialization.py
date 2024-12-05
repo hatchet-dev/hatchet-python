@@ -5,7 +5,7 @@ def flatten(xs: dict[str, Any], parent_key: str, separator: str) -> dict[str, An
     if not xs:
         return {}
 
-    items = []
+    items: list[tuple[str, Any]] = []
 
     for k, v in xs.items():
         new_key = parent_key + separator + k if parent_key else k

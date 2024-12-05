@@ -15,6 +15,7 @@ async def test_run_validation_error(hatchet: Hatchet, worker):
     with pytest.raises(Exception, match="1 validation error for ParentInput"):
         await run.result()
 
+
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
 @pytest.mark.parametrize("worker", ["pydantic"], indirect=True)
