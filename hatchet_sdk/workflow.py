@@ -24,6 +24,8 @@ class WorkflowStepProtocol(Protocol):
     _step_retries: int | None
     _step_rate_limits: list[str] | None
     _step_desired_worker_labels: dict[str, str]
+    _step_backoff_factor: float | None
+    _step_backoff_max_seconds: int | None
 
     _concurrency_fn_name: str
     _concurrency_max_runs: int | None
@@ -33,6 +35,8 @@ class WorkflowStepProtocol(Protocol):
     _on_failure_step_timeout: str | None
     _on_failure_step_retries: int
     _on_failure_step_rate_limits: list[str] | None
+    _on_failure_step_backoff_factor: float | None
+    _on_failure_step_backoff_max_seconds: int | None
 
 
 StepsType = list[tuple[str, WorkflowStepProtocol]]
