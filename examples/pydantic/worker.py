@@ -46,7 +46,7 @@ class StepResponse(BaseModel):
     status: str
 
 
-@hatchet.workflow()
+@hatchet.workflow(input_validator=ChildInput)
 class Child:
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:

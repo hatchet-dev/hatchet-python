@@ -254,7 +254,7 @@ class Context(BaseContext):
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
     def workflow_input(self) -> dict[str, Any] | T:
-        if (r := self.validator_registry.get(self.action.step_id)) and (
+        if (r := self.validator_registry.get(self.action.action_id)) and (
             i := r.workflow_input
         ):
             return cast(
