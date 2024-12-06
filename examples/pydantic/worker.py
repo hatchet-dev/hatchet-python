@@ -20,8 +20,6 @@ class ParentInput(BaseModel):
 class Parent:
     @hatchet.step(timeout="5m")
     async def spawn(self, context: Context):
-        # 👀 this step will always raise an exception
-
         ## Use `typing.cast` to cast your `workflow_input`
         ## to the type of your `input_validator`
         input = cast(ParentInput, context.workflow_input())  ## This is a `ParentInput`
