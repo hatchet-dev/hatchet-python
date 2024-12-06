@@ -137,14 +137,14 @@ class DispatcherClient:
 
         return response
 
-    def release_slot(self, step_run_id: str):
+    def release_slot(self, step_run_id: str) -> None:
         self.client.ReleaseSlot(
             ReleaseSlotRequest(stepRunId=step_run_id),
             timeout=DEFAULT_REGISTER_TIMEOUT,
             metadata=get_metadata(self.token),
         )
 
-    def refresh_timeout(self, step_run_id: str, increment_by: str):
+    def refresh_timeout(self, step_run_id: str, increment_by: str) -> None:
         self.client.RefreshTimeout(
             RefreshTimeoutRequest(
                 stepRunId=step_run_id,

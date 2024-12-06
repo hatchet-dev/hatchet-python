@@ -42,6 +42,7 @@ class HatchetCallable(Generic[T]):
         default_priority: int | None = None,
     ):
         self.func = func
+        self.validators = func.validators
 
         on_events = on_events or []
         on_crons = on_crons or []

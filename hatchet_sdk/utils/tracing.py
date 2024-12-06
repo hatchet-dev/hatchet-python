@@ -6,9 +6,9 @@ from opentelemetry import trace
 from opentelemetry.context import Context
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import Tracer, TracerProvider
+from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import NoOpTracerProvider
+from opentelemetry.trace import NoOpTracerProvider, Tracer
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from hatchet_sdk.loader import ClientConfig
@@ -44,7 +44,7 @@ def create_tracer(config: ClientConfig) -> Tracer:
 
 
 def create_carrier() -> dict[str, str]:
-    carrier = {}
+    carrier: dict[str, str] = {}
     TraceContextTextMapPropagator().inject(carrier)
 
     return carrier
@@ -59,7 +59,10 @@ def inject_carrier_into_metadata(
     return metadata
 
 
-def parse_carrier_from_metadata(metadata: dict[str, Any]) -> Context:
+def parse_carrier_from_metadata(metadata: dict[str, Any] | None) -> Context | None:
+    if not metadata:
+        return None
+
     return (
         TraceContextTextMapPropagator().extract(_ctx)
         if (_ctx := metadata.get(OTEL_CARRIER_KEY))
