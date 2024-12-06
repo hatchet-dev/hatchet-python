@@ -2,9 +2,10 @@ import inspect
 import json
 import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
-from typing import Any, cast
+from typing import Any, Generic, Type, TypeVar, cast, overload
+from warnings import warn
 
-from pydantic import StrictStr
+from pydantic import BaseModel, StrictStr
 
 from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
@@ -17,6 +18,8 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )
+from hatchet_sdk.utils.types import WorkflowValidator
+from hatchet_sdk.utils.typing import is_basemodel_subclass
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 from ..clients.admin import (
@@ -33,6 +36,8 @@ from ..clients.dispatcher.dispatcher import (  # type: ignore[attr-defined]
 from ..logger import logger
 
 DEFAULT_WORKFLOW_POLLING_INTERVAL = 5  # Seconds
+
+T = TypeVar("T", bound=BaseModel)
 
 
 def get_caller_file_path() -> str:
@@ -63,6 +68,7 @@ class BaseContext:
         if options is not None and "additional_metadata" in options:
             meta = options["additional_metadata"]
 
+        ## TODO: Pydantic here to simplify this
         trigger_options: TriggerWorkflowOptions = {  # type: ignore[typeddict-item]
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
@@ -171,8 +177,10 @@ class Context(BaseContext):
         workflow_run_event_listener: RunEventListenerClient,
         worker: WorkerContext,
         namespace: str = "",
+        validator_registry: dict[str, WorkflowValidator] = {},
     ):
         self.worker = worker
+        self.validator_registry = validator_registry
 
         self.aio = ContextAioImpl(
             action,
@@ -201,6 +209,7 @@ class Context(BaseContext):
             )
 
         self.action = action
+
         # FIXME: stepRunId is a legacy field, we should remove it
         self.stepRunId = action.step_run_id
 
@@ -228,16 +237,31 @@ class Context(BaseContext):
         else:
             self.input = self.data.get("input", {})
 
-    def step_output(self, step: str) -> dict[str, Any]:
+    def step_output(self, step: str) -> dict[str, Any] | BaseModel:
+        validators = self.validator_registry.get(step)
+
         try:
-            return cast(dict[str, Any], self.data["parents"][step])
+            parent_step_data = cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
+
+        if validators and (v := validators.step_output):
+            return v.model_validate(parent_step_data)
+
+        return parent_step_data
 
     def triggered_by_event(self) -> bool:
         return cast(str, self.data.get("triggered_by", "")) == "event"
 
-    def workflow_input(self) -> dict[str, Any]:
+    def workflow_input(self) -> dict[str, Any] | T:
+        if (r := self.validator_registry.get(self.action.action_id)) and (
+            i := r.workflow_input
+        ):
+            return cast(
+                T,
+                i.model_validate(self.input),
+            )
+
         return self.input
 
     def workflow_run_id(self) -> str:
@@ -254,8 +278,12 @@ class Context(BaseContext):
     def playground(self, name: str, default: str | None = None) -> str | None:
         # if the key exists in the overrides_data field, return the value
         if name in self.overrides_data:
-            ## TODO: Check if this is the right type
-            return cast(str, self.overrides_data[name])
+            warn(
+                "Use of `overrides_data` is deprecated.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
+            return str(self.overrides_data[name])
 
         caller_file = get_caller_file_path()
 

@@ -2,22 +2,27 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, Callable, Dict
+from typing import Callable, TypeVar
 
+from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
 STOP_LOOP = "STOP_LOOP"
 
+T = TypeVar("T")
+
 
 @dataclass
 class WorkerActionRunLoopManager:
     name: str
-    action_registry: Dict[str, Callable[..., Any]]
+    action_registry: dict[str, Callable[[Context], T]]
+    validator_registry: dict[str, WorkflowValidator]
     max_runs: int | None
     config: ClientConfig
     action_queue: Queue
@@ -71,6 +76,7 @@ class WorkerActionRunLoopManager:
             self.max_runs,
             self.handle_kill,
             self.action_registry,
+            self.validator_registry,
             self.config,
             self.labels,
         )

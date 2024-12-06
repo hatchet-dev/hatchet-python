@@ -74,7 +74,11 @@ files = [
   "hatchet_sdk/worker/worker.py",
   "hatchet_sdk/context/context.py",
   "hatchet_sdk/worker/runner/runner.py",
-  "hatchet_sdk/workflow.py"
+  "hatchet_sdk/workflow.py",
+  "hatchet_sdk/utils/serialization.py",
+  "hatchet_sdk/utils/tracing.py",
+  "hatchet_sdk/utils/types.py",
+  "hatchet_sdk/utils/backoff.py"
 ]
 exclude = "^examples/*"
 follow_imports = "silent"
@@ -101,3 +105,4 @@ blocked = "examples.blocked_async.worker:main"
 existing_loop = "examples.worker_existing_loop.worker:main"
 bulk_fanout = "examples.bulk_fanout.worker:main"
 retries_with_backoff = "examples.retries_with_backoff.worker:main"
+pydantic = "examples.pydantic.worker:main"

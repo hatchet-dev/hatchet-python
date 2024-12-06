@@ -1,5 +1,7 @@
 import functools
-from typing import Any, Callable, Protocol, Type, TypeVar, Union, cast
+from typing import Any, Callable, Protocol, Type, TypeVar, Union, cast, get_type_hints
+
+from pydantic import BaseModel
 
 from hatchet_sdk import ConcurrencyLimitStrategy
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
@@ -11,6 +13,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     WorkflowKind,
 )
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.typing import is_basemodel_subclass
 
 
 class WorkflowStepProtocol(Protocol):
@@ -82,6 +85,7 @@ class WorkflowInterface(Protocol):
     sticky: Union[StickyStrategy.Value, None]
     default_priority: int | None
     concurrency_expression: ConcurrencyExpression | None
+    input_validator: Type[BaseModel] | None
 
 
 class WorkflowMeta(type):
@@ -100,6 +104,7 @@ class WorkflowMeta(type):
 
         concurrencyActions = _create_steps_actions_list("_concurrency_fn_name")
         steps = _create_steps_actions_list("_step_name")
+
         onFailureSteps = _create_steps_actions_list("_on_failure_step_name")
 
         # Define __init__ and get_step_order methods

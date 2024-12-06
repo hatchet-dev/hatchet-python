@@ -87,15 +87,13 @@ class WorkerActionListenerProcess:
         try:
             self.dispatcher_client = new_dispatcher(self.config)
 
-            self.listener: ActionListener = (
-                await self.dispatcher_client.get_action_listener(
-                    GetActionListenerRequest(
-                        worker_name=self.name,
-                        services=["default"],
-                        actions=self.actions,
-                        max_runs=self.max_runs,
-                        _labels=self.labels,
-                    )
+            self.listener = await self.dispatcher_client.get_action_listener(
+                GetActionListenerRequest(
+                    worker_name=self.name,
+                    services=["default"],
+                    actions=self.actions,
+                    max_runs=self.max_runs,
+                    _labels=self.labels,
                 )
             )
 

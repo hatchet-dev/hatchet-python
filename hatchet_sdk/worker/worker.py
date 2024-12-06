@@ -10,14 +10,16 @@ from enum import Enum
 from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, get_type_hints
 
+from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     CreateWorkflowVersionOpts,
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
@@ -60,7 +62,9 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, Callable[..., Any]] = {}
+        self.action_registry: dict[str, Callable[[Context], T]] = {}
+        self.validator_registry: dict[str, WorkflowValidator] = {}
+
         self.killing: bool = False
         self._status: WorkerStatus
 
@@ -108,9 +112,9 @@ class Worker:
             sys.exit(1)
 
         def create_action_function(
-            action_func: Callable[..., Any]
-        ) -> Callable[..., Any]:
-            def action_function(context: Any) -> Any:
+            action_func: Callable[..., T]
+        ) -> Callable[[Context], T]:
+            def action_function(context: Context) -> T:
                 return action_func(workflow, context)
 
             if asyncio.iscoroutinefunction(action_func):
@@ -122,6 +126,10 @@ class Worker:
 
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
+            return_type = get_type_hints(action_func).get("return")
+            self.validator_registry[action_name] = WorkflowValidator(
+                workflow_input=workflow.input_validator, step_output=return_type
+            )
 
     def status(self) -> WorkerStatus:
         return self._status
@@ -148,12 +156,14 @@ class Worker:
         f = asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
+
         # start the loop and wait until its closed
         if self.owned_loop:
             self.loop.run_forever()
 
             if self.handle_kill:
                 sys.exit(0)
+
         return f
 
     ## Start methods
@@ -182,6 +192,7 @@ class Worker:
         self.action_listener_process = self._start_listener()
 
         self.action_runner = self._run_action_runner()
+
         self.action_listener_health_check = self.loop.create_task(
             self._check_listener_health()
         )
@@ -193,6 +204,7 @@ class Worker:
         return WorkerActionRunLoopManager(
             self.name,
             self.action_registry,
+            self.validator_registry,
             self.max_runs,
             self.config,
             self.action_queue,

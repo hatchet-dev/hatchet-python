@@ -8,9 +8,10 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import Any, Callable, Dict, TypeVar, cast
+from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
 
 from opentelemetry.trace import StatusCode
+from pydantic import BaseModel
 
 from hatchet_sdk.client import new_client_raw
 from hatchet_sdk.clients.admin import new_admin
@@ -32,6 +33,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (  # type: ignore[attr-defined]
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.tracing import create_tracer, parse_carrier_from_metadata
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
@@ -52,6 +54,7 @@ class Runner:
         max_runs: int | None = None,
         handle_kill: bool = True,
         action_registry: dict[str, Callable[..., Any]] = {},
+        validator_registry: dict[str, WorkflowValidator] = {},
         config: ClientConfig = ClientConfig(),
         labels: dict[str, str | int] = {},
     ):
@@ -60,9 +63,10 @@ class Runner:
         self.client = new_client_raw(config)
         self.name = self.client.config.namespace + name
         self.max_runs = max_runs
-        self.tasks: Dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
-        self.contexts: Dict[str, Context] = {}  # Store run ids and contexts
+        self.tasks: dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
+        self.contexts: dict[str, Context] = {}  # Store run ids and contexts
         self.action_registry: dict[str, Callable[..., Any]] = action_registry
+        self.validator_registry = validator_registry
 
         self.event_queue = event_queue
 
@@ -250,9 +254,7 @@ class Runner:
                 )
 
                 loop = asyncio.get_event_loop()
-                res = await loop.run_in_executor(self.thread_pool, pfunc)
-
-                return res
+                return await loop.run_in_executor(self.thread_pool, pfunc)
         except Exception as e:
             logger.error(
                 errorWithTraceback(
@@ -288,6 +290,7 @@ class Runner:
                 self.workflow_run_event_listener,
                 self.worker_context,
                 self.client.config.namespace,
+                validator_registry=self.validator_registry,
             )
 
         return Context(
@@ -300,6 +303,7 @@ class Runner:
             self.workflow_run_event_listener,
             self.worker_context,
             self.client.config.namespace,
+            validator_registry=self.validator_registry,
         )
 
     async def handle_start_step_run(self, action: Action) -> None:
@@ -462,14 +466,18 @@ class Runner:
                 span.add_event(f"Finished cancelling run id: {run_id}")
 
     def serialize_output(self, output: Any) -> str:
-        output_bytes = ""
+
+        if isinstance(output, BaseModel):
+            return output.model_dump_json()
+
         if output is not None:
             try:
-                output_bytes = json.dumps(output)
+                return json.dumps(output)
             except Exception as e:
                 logger.error(f"Could not serialize output: {e}")
-                output_bytes = str(output)
-        return output_bytes
+                return str(output)
+
+        return ""
 
     async def wait_for_tasks(self) -> None:
         running = len(self.tasks.keys())
