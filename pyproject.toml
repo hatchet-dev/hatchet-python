@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.42.1"
+version = "0.42.2"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -106,3 +106,4 @@ existing_loop = "examples.worker_existing_loop.worker:main"
 bulk_fanout = "examples.bulk_fanout.worker:main"
 retries_with_backoff = "examples.retries_with_backoff.worker:main"
 pydantic = "examples.pydantic.worker:main"
+v2_simple = "examples.v2.simple.worker:main"
