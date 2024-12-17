@@ -61,7 +61,7 @@ class ChildWorkflowRunDict(TypedDict):
     key: str | None = None
 
 
-class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, TypedDict):
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
     additional_metadata: Dict[str, str] | None = None
     desired_worker_id: str | None = None
     namespace: str | None = None

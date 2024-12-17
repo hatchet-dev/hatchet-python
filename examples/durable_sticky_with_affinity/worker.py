@@ -46,7 +46,7 @@ class StickyChildWorkflow:
             },
         },
     )
-    async def child(self, context: Context) -> dict[str, str]:
+    async def child(self, context: Context) -> dict[str, str | None]:
         await context.worker.async_upsert_labels({"running_workflow": "True"})
 
         print(f"Heavy work started on {context.worker.id()}")

@@ -25,7 +25,7 @@ def my_func(context: Context) -> MyResultType:
 
 @hatchet.durable()
 async def my_durable_func(context: DurableContext) -> dict[str, str]:
-    result = await context.run(my_func, {"test": "test"}).result()
+    result: RunRef[MyResultType] = await context.run(my_func, {"test": "test"}).result()
 
     context.log(result)
 

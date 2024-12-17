@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -14,7 +15,7 @@ hatchet = Hatchet(debug=True)
 
 
 @hatchet.function()
-async def fanout_sync_async(context: Context) -> dict:
+async def fanout_sync_async(context: Context) -> dict[str, Any]:
     print("spawning child")
 
     context.put_stream("spawning...")

@@ -1,5 +1,6 @@
 import random
 import time
+from typing import Any, cast
 
 from dotenv import load_dotenv
 
@@ -33,8 +34,8 @@ class DagWorkflow:
 
     @hatchet.step(parents=["step1", "step2"])
     def step3(self, context: Context) -> dict[str, int]:
-        one = context.step_output("step1")["rando"]
-        two = context.step_output("step2")["rando"]
+        one = cast(dict[str, Any], context.step_output("step1"))["rando"]
+        two = cast(dict[str, Any], context.step_output("step2"))["rando"]
 
         return {
             "sum": one + two,

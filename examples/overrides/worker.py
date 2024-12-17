@@ -11,7 +11,7 @@ hatchet = Hatchet(debug=True)
 
 @hatchet.workflow(on_events=["overrides:create"], schedule_timeout="10m")
 class OverridesWorkflow:
-    def __init__(self):
+    def __init__(self) -> None:
         self.my_value = "test"
 
     @hatchet.step(timeout="5s")
@@ -69,8 +69,9 @@ class OverridesWorkflow:
         }
 
 
-workflow = OverridesWorkflow()
-worker = hatchet.worker("overrides-worker")
-worker.register_workflow(workflow)
+if __name__ == "__main__":
+    workflow = OverridesWorkflow()
+    worker = hatchet.worker("overrides-worker")
+    worker.register_workflow(workflow)
 
-worker.start()
+    worker.start()

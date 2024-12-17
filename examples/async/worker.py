@@ -13,23 +13,23 @@ hatchet = Hatchet(debug=True)
 class AsyncWorkflow:
 
     @hatchet.step(timeout="10s")
-    async def step1(self, context: Context):
+    async def step1(self, context: Context) -> dict[str, str]:
         print("started step1")
         return {"test": "test"}
 
     @hatchet.step(parents=["step1"], timeout="10s")
-    async def step2(self, context):
+    async def step2(self, context: Context) -> None:
         print("finished step2")
 
 
-async def _main():
+async def _main() -> None:
     workflow = AsyncWorkflow()
     worker = hatchet.worker("async-worker", max_runs=4)
     worker.register_workflow(workflow)
     await worker.async_start()
 
 
-def main():
+def main() -> None:
     asyncio.run(_main())
 
 
