@@ -41,7 +41,7 @@ def new_admin(config: ClientConfig):
     return AdminClient(config)
 
 
-class ScheduleTriggerWorkflowOptions(TypedDict):
+class ScheduleTriggerWorkflowOptions(TypedDict, total=False):
     parent_id: Optional[str]
     parent_step_run_id: Optional[str]
     child_index: Optional[int]
@@ -49,25 +49,25 @@ class ScheduleTriggerWorkflowOptions(TypedDict):
     namespace: Optional[str]
 
 
-class ChildTriggerWorkflowOptions(TypedDict):
+class ChildTriggerWorkflowOptions(TypedDict, total=False):
     additional_metadata: Dict[str, str] | None = None
     sticky: bool | None = None
 
 
-class ChildWorkflowRunDict(TypedDict):
+class ChildWorkflowRunDict(TypedDict, total=False):
     workflow_name: str
     input: Any
     options: ChildTriggerWorkflowOptions
     key: str | None = None
 
 
-class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, total=False):
     additional_metadata: Dict[str, str] | None = None
     desired_worker_id: str | None = None
     namespace: str | None = None
 
 
-class WorkflowRunDict(TypedDict):
+class WorkflowRunDict(TypedDict, total=False):
     workflow_name: str
     input: Any
     options: TriggerWorkflowOptions | None

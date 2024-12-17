@@ -43,16 +43,16 @@ def proto_timestamp_now():
     return timestamp_pb2.Timestamp(seconds=seconds, nanos=nanos)
 
 
-class PushEventOptions(TypedDict):
+class PushEventOptions(TypedDict, total=False):
     additional_metadata: Dict[str, str] | None = None
     namespace: str | None = None
 
 
-class BulkPushEventOptions(TypedDict):
+class BulkPushEventOptions(TypedDict, total=False):
     namespace: str | None = None
 
 
-class BulkPushEventWithMetadata(TypedDict):
+class BulkPushEventWithMetadata(TypedDict, total=False):
     key: str
     payload: Any
     additional_metadata: Optional[Dict[str, Any]]  # Optional metadata

@@ -69,7 +69,7 @@ class BaseContext:
             meta = options["additional_metadata"]
 
         ## TODO: Pydantic here to simplify this
-        trigger_options: TriggerWorkflowOptions = {  # type: ignore[typeddict-item]
+        trigger_options: TriggerWorkflowOptions = {
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,
@@ -149,8 +149,7 @@ class ContextAioImpl(BaseContext):
             key = child_workflow_run.get("key")
             options = child_workflow_run.get("options", {})
 
-            ## TODO: figure out why this is failing
-            trigger_options = self._prepare_workflow_options(key, options, worker_id)  # type: ignore[arg-type]
+            trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
             bulk_trigger_workflow_runs.append(
                 WorkflowRunDict(

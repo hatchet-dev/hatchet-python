@@ -1,4 +1,4 @@
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 from hatchet_sdk import Worker
 from hatchet_sdk.context.context import Context
@@ -10,7 +10,7 @@ from hatchet_sdk.hatchet import Hatchet as HatchetV1
 from hatchet_sdk.hatchet import workflow
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.v2.callable import HatchetCallable
+from hatchet_sdk.v2.callable import DurableContext, HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.worker import register_on_worker
 
@@ -132,7 +132,7 @@ class Hatchet(HatchetV1):
         concurrency: ConcurrencyFunction | None = None,
         on_failure: "HatchetCallable[T]" | None = None,
         default_priority: int | None = None,
-    ):
+    ) -> Callable[[Callable[[Context], Any]], Callable[[Context], Any]]:
         resp = function(
             name=name,
             auto_register=auto_register,
@@ -177,7 +177,7 @@ class Hatchet(HatchetV1):
         concurrency: ConcurrencyFunction | None = None,
         on_failure: "HatchetCallable[T]" | None = None,
         default_priority: int | None = None,
-    ) -> Callable[[HatchetCallable[T]], HatchetCallable[T]]:
+    ) -> Callable[[Callable[[DurableContext], Any]], Callable[[DurableContext], Any]]:
         resp = durable(
             name=name,
             auto_register=auto_register,

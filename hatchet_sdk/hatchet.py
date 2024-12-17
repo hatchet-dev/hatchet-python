@@ -135,7 +135,7 @@ def on_failure_step(
     rate_limits: list[RateLimit] | None = None,
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[[Context], Any]], Callable[[Context], Any]]:
+) -> Callable[..., Any]:
     def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
         limits = None
         if rate_limits:

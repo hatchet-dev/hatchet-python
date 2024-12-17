@@ -11,6 +11,7 @@ from typing import (
     Union,
 )
 
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     CreateStepRateLimit,
@@ -171,18 +172,13 @@ class HatchetCallable(Generic[T]):
         return self.function_namespace + ":" + self.function_name
 
 
-class TriggerOptions(TypedDict):
-    additional_metadata: dict[str, str] | None
-    sticky: bool | None
-
-
 class DurableContext(Context):
     def run(
         self,
-        function: Union[str, HatchetCallable[T]],
+        function: str | Callable[[Context], Any],
         input: dict[Any, Any] = {},
         key: str | None = None,
-        options: TriggerOptions | None = None,
+        options: ChildTriggerWorkflowOptions | None = None,
     ) -> "RunRef[T]":
         worker_id = self.worker.id()
 

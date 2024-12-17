@@ -3,9 +3,10 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Hatchet
-from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy
+from hatchet_sdk import Context, Hatchet
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+    ConcurrencyLimitStrategy,
+)
 from hatchet_sdk.workflow import ConcurrencyExpression
 
 load_dotenv()

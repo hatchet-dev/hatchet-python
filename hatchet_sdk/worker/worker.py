@@ -65,7 +65,7 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, Callable[[Context], T]] = {}
+        self.action_registry: dict[str, Callable[[Context], Any]] = {}
         self.validator_registry: dict[str, WorkflowValidator] = {}
 
         self.killing: bool = False
@@ -87,9 +87,7 @@ class Worker:
 
         self._setup_signal_handlers()
 
-    def register_function(
-        self, action: str, func: HatchetCallable[Any] | ConcurrencyFunction
-    ) -> None:
+    def register_function(self, action: str, func: Callable[[Context], Any]) -> None:
         self.action_registry[action] = func
 
     def register_workflow_from_opts(
