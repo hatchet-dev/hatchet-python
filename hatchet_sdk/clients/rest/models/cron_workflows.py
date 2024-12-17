@@ -19,11 +19,17 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    StrictStr,
+    field_validator,
+)
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.cron_workflows_method import CronWorkflowsMethod
 
 
 class CronWorkflows(BaseModel):
@@ -43,7 +49,7 @@ class CronWorkflows(BaseModel):
         default=None, alias="additionalMetadata"
     )
     enabled: StrictBool
-    method: CronWorkflowsMethod
+    method: StrictStr
     __properties: ClassVar[List[str]] = [
         "metadata",
         "tenantId",
@@ -57,6 +63,13 @@ class CronWorkflows(BaseModel):
         "enabled",
         "method",
     ]
+
+    @field_validator("method")
+    def method_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(["DEFAULT", "API"]):
+            raise ValueError("must be one of enum values ('DEFAULT', 'API')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,

@@ -28,7 +28,6 @@ from hatchet_sdk.clients.rest.models.recent_step_runs import RecentStepRuns
 from hatchet_sdk.clients.rest.models.semaphore_slots import SemaphoreSlots
 from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 from hatchet_sdk.clients.rest.models.worker_runtime_info import WorkerRuntimeInfo
-from hatchet_sdk.clients.rest.models.worker_type import WorkerType
 
 
 class Worker(BaseModel):
