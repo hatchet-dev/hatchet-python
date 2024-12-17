@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from hatchet_sdk.clients.dispatcher.action_listener import (
@@ -7,7 +9,7 @@ from hatchet_sdk.clients.dispatcher.action_listener import (
 )
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.connection import new_conn
-from hatchet_sdk.contracts.dispatcher_pb2 import (
+from hatchet_sdk.contracts.dispatcher_pb2 import (  # type: ignore[attr-defined]
     STEP_EVENT_TYPE_COMPLETED,
     STEP_EVENT_TYPE_FAILED,
     ActionEventResponse,
@@ -31,7 +33,7 @@ from ...metadata import get_metadata
 DEFAULT_REGISTER_TIMEOUT = 30
 
 
-def new_dispatcher(config: ClientConfig):
+def new_dispatcher(config: ClientConfig) -> "DispatcherClient":
     return DispatcherClient(config=config)
 
 
@@ -40,10 +42,10 @@ class DispatcherClient:
 
     def __init__(self, config: ClientConfig):
         conn = new_conn(config)
-        self.client = DispatcherStub(conn)
+        self.client = DispatcherStub(conn)  # type: ignore[no-untyped-call]
 
         aio_conn = new_conn(config, True)
-        self.aio_client = DispatcherStub(aio_conn)
+        self.aio_client = DispatcherStub(aio_conn)  # type: ignore[no-untyped-call]
         self.token = config.token
         self.config = config
 
@@ -67,7 +69,7 @@ class DispatcherClient:
 
     async def send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
-    ):
+    ) -> Any:
         try:
             return await self._try_send_step_action_event(action, event_type, payload)
         except Exception as e:
@@ -87,7 +89,7 @@ class DispatcherClient:
     @tenacity_retry
     async def _try_send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
-    ):
+    ) -> Any:
         eventTimestamp = Timestamp()
         eventTimestamp.GetCurrentTime()
 
@@ -103,6 +105,7 @@ class DispatcherClient:
             eventPayload=payload,
         )
 
+        ## TODO: What does this return?
         return await self.aio_client.SendStepActionEvent(
             event,
             metadata=get_metadata(self.token),
@@ -110,7 +113,7 @@ class DispatcherClient:
 
     async def send_group_key_action_event(
         self, action: Action, event_type: GroupKeyActionEventType, payload: str
-    ):
+    ) -> Any:
         eventTimestamp = Timestamp()
         eventTimestamp.GetCurrentTime()
 
@@ -124,18 +127,20 @@ class DispatcherClient:
             eventPayload=payload,
         )
 
+        ## TODO: What does this return?
         return await self.aio_client.SendGroupKeyActionEvent(
             event,
             metadata=get_metadata(self.token),
         )
 
-    def put_overrides_data(self, data: OverridesData):
-        response: ActionEventResponse = self.client.PutOverridesData(
-            data,
-            metadata=get_metadata(self.token),
+    def put_overrides_data(self, data: OverridesData) -> ActionEventResponse:
+        return cast(
+            ActionEventResponse,
+            self.client.PutOverridesData(
+                data,
+                metadata=get_metadata(self.token),
+            ),
         )
-
-        return response
 
     def release_slot(self, step_run_id: str) -> None:
         self.client.ReleaseSlot(
@@ -154,7 +159,9 @@ class DispatcherClient:
             metadata=get_metadata(self.token),
         )
 
-    def upsert_worker_labels(self, worker_id: str, labels: dict[str, str | int]):
+    def upsert_worker_labels(
+        self, worker_id: str | None, labels: dict[str, str | int]
+    ) -> None:
         worker_labels = {}
 
         for key, value in labels.items():
@@ -171,9 +178,9 @@ class DispatcherClient:
 
     async def async_upsert_worker_labels(
         self,
-        worker_id: str,
+        worker_id: str | None,
         labels: dict[str, str | int],
-    ):
+    ) -> None:
         worker_labels = {}
 
         for key, value in labels.items():

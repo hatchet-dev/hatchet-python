@@ -1,7 +1,9 @@
-from typing import Callable
+from typing import Any, Callable
 
-from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy
+from hatchet_sdk.context.context import Context
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+    ConcurrencyLimitStrategy,
+)
 
 
 class ConcurrencyFunction:
@@ -18,19 +20,19 @@ class ConcurrencyFunction:
         self.limit_strategy = limit_strategy
         self.namespace = "default"
 
-    def set_namespace(self, namespace: str):
+    def set_namespace(self, namespace: str) -> None:
         self.namespace = namespace
 
     def get_action_name(self) -> str:
         return self.namespace + ":" + self.name
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> str:
         return self.func(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name}({self.max_runs})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.name}({self.max_runs})"
 
 
@@ -38,7 +40,7 @@ def concurrency(
     name: str = "",
     max_runs: int = 1,
     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN,
-):
+) -> Callable[[Callable[[Context], str]], ConcurrencyFunction]:
     def inner(func: Callable[[Context], str]) -> ConcurrencyFunction:
         return ConcurrencyFunction(func, name, max_runs, limit_strategy)
 

@@ -83,7 +83,10 @@ files = [
   "examples/*",
   "hatchet_sdk/clients/rest/models/workflow_list.py",
   "hatchet_sdk/clients/rest/models/workflow_run.py",
-  "hatchet_sdk/context/worker_context.py"
+  "hatchet_sdk/context/worker_context.py",
+  "hatchet_sdk/clients/dispatcher/dispatcher.py",
+  "hatchet_sdk/v2/*.py",
+  "hatchet_sdk/utils/aio_utils.py"
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]

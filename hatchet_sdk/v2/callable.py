@@ -1,8 +1,18 @@
 import asyncio
-from typing import Callable, Dict, Generic, List, Optional, TypedDict, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
-from hatchet_sdk.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import (
+from hatchet_sdk.context.context import Context
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     CreateStepRateLimit,
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
@@ -28,8 +38,8 @@ class HatchetCallable(Generic[T]):
         durable: bool = False,
         name: str = "",
         auto_register: bool = True,
-        on_events: list | None = None,
-        on_crons: list | None = None,
+        on_events: list[str] | None = None,
+        on_crons: list[str] | None = None,
         version: str = "",
         timeout: str = "60m",
         schedule_timeout: str = "5m",
@@ -37,8 +47,8 @@ class HatchetCallable(Generic[T]):
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
         concurrency: ConcurrencyFunction | None = None,
-        on_failure: Optional["HatchetCallable"] = None,
-        desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
+        on_failure: "HatchetCallable[T]" | None = None,
+        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
         default_priority: int | None = None,
     ):
         self.func = func
@@ -85,7 +95,7 @@ class HatchetCallable(Generic[T]):
     def __call__(self, context: Context) -> T:
         return self.func(context)
 
-    def with_namespace(self, namespace: str):
+    def with_namespace(self, namespace: str) -> None:
         if namespace is not None and namespace != "":
             self.function_namespace = namespace
             self.function_name = namespace + self.function_name
@@ -161,21 +171,18 @@ class HatchetCallable(Generic[T]):
         return self.function_namespace + ":" + self.function_name
 
 
-T = TypeVar("T")
-
-
 class TriggerOptions(TypedDict):
-    additional_metadata: Dict[str, str] | None = None
-    sticky: bool | None = None
+    additional_metadata: dict[str, str] | None
+    sticky: bool | None
 
 
 class DurableContext(Context):
     def run(
         self,
         function: Union[str, HatchetCallable[T]],
-        input: dict = {},
-        key: str = None,
-        options: TriggerOptions = None,
+        input: dict[Any, Any] = {},
+        key: str | None = None,
+        options: TriggerOptions | None = None,
     ) -> "RunRef[T]":
         worker_id = self.worker.id()
 

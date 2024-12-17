@@ -14,7 +14,7 @@ hatchet = Hatchet(debug=True)
 class DagWorkflow:
 
     @hatchet.step(timeout="5s")
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, int]:
         rando = random.randint(
             1, 100
         )  # Generate a random number between 1 and 100return {
@@ -23,7 +23,7 @@ class DagWorkflow:
         }
 
     @hatchet.step(timeout="5s")
-    def step2(self, context: Context):
+    def step2(self, context: Context) -> dict[str, int]:
         rando = random.randint(
             1, 100
         )  # Generate a random number between 1 and 100return {
@@ -32,7 +32,7 @@ class DagWorkflow:
         }
 
     @hatchet.step(parents=["step1", "step2"])
-    def step3(self, context: Context):
+    def step3(self, context: Context) -> dict[str, int]:
         one = context.step_output("step1")["rando"]
         two = context.step_output("step2")["rando"]
 
@@ -41,7 +41,7 @@ class DagWorkflow:
         }
 
     @hatchet.step(parents=["step1", "step3"])
-    def step4(self, context: Context):
+    def step4(self, context: Context) -> dict[str, str]:
         print(
             "executed step4",
             time.strftime("%H:%M:%S", time.localtime()),
@@ -54,8 +54,7 @@ class DagWorkflow:
         }
 
 
-def main():
-
+def main() -> None:
     workflow = DagWorkflow()
     worker = hatchet.worker("dag-worker")
     worker.register_workflow(workflow)

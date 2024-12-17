@@ -16,13 +16,13 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["user:create"])
 class OnFailureWorkflow:
     @hatchet.step(timeout="1s")
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> None:
         # 👀 this step will always raise an exception
         raise Exception("step1 failed")
 
     # 👀 After the workflow fails, this special step will run
     @hatchet.on_failure_step()
-    def on_failure(self, context: Context):
+    def on_failure(self, context: Context) -> dict[str, str]:
         # 👀 we can do things like perform cleanup logic
         # or notify a user here
         return {"status": "success"}
@@ -38,12 +38,12 @@ class OnFailureWorkflow:
 class OnFailureWorkflowWithDetails:
     # ... defined as above
     @hatchet.step(timeout="1s")
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> None:
         raise Exception("step1 failed")
 
     # 👀 After the workflow fails, this special step will run
     @hatchet.on_failure_step()
-    def on_failure(self, context: Context):
+    def on_failure(self, context: Context) -> dict[str, str]:
         failures = context.fetch_run_failures()
 
         # 👀 we can access the failure details here
@@ -57,7 +57,7 @@ class OnFailureWorkflowWithDetails:
 # ‼️
 
 
-def main():
+def main() -> None:
     workflow = OnFailureWorkflow()
     workflow2 = OnFailureWorkflowWithDetails()
     worker = hatchet.worker("on-failure-worker", max_runs=4)
