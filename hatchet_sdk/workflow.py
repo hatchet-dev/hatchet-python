@@ -14,7 +14,7 @@ from typing import (
 from pydantic import BaseModel
 
 from hatchet_sdk import ConcurrencyLimitStrategy
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
@@ -93,7 +93,7 @@ class WorkflowInterface(Protocol):
     version: str
     timeout: str
     schedule_timeout: str
-    sticky: Union[StickyStrategy.Value, None]
+    sticky: Union[StickyStrategy, None]
     default_priority: int | None
     concurrency_expression: ConcurrencyExpression | None
     input_validator: Type[BaseModel] | None
@@ -177,8 +177,8 @@ class WorkflowMeta(type):
                     inputs="{}",
                     parents=[x for x in func._step_parents],
                     retries=func._step_retries,
-                    rate_limits=func._step_rate_limits,
-                    worker_labels=func._step_desired_worker_labels,
+                    rate_limits=func._step_rate_limits,  # type: ignore[arg-type]
+                    worker_labels=func._step_desired_worker_labels,  # type: ignore[arg-type]
                     backoff_factor=func._step_backoff_factor,
                     backoff_max_seconds=func._step_backoff_max_seconds,
                 )
@@ -208,7 +208,7 @@ class WorkflowMeta(type):
                     "Error: Both concurrencyActions and concurrency_expression are defined. Please use only one concurrency configuration method."
                 )
 
-            on_failure_job: list[CreateWorkflowJobOpts] | None = None
+            on_failure_job: CreateWorkflowJobOpts | None = None
 
             if len(onFailureSteps) > 0:
                 func_name, func = onFailureSteps[0]
@@ -222,7 +222,7 @@ class WorkflowMeta(type):
                             inputs="{}",
                             parents=[],
                             retries=func._on_failure_step_retries,
-                            rate_limits=func._on_failure_step_rate_limits,
+                            rate_limits=func._on_failure_step_rate_limits,  # type: ignore[arg-type]
                             backoff_factor=func._on_failure_step_backoff_factor,
                             backoff_max_seconds=func._on_failure_step_backoff_max_seconds,
                         )

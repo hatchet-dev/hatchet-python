@@ -13,8 +13,8 @@ from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context.worker_context import WorkerContext
-from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData  # type: ignore
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
+from hatchet_sdk.contracts.workflows_pb2 import (
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )

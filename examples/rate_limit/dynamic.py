@@ -20,12 +20,11 @@ class RateLimitWorkflow:
             )
         ]
     )
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> None:
         print("executed step1")
-        pass
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("rate-limit-worker", max_runs=10)
     worker.register_workflow(RateLimitWorkflow())
 

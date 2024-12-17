@@ -16,9 +16,7 @@ from pydantic import BaseModel
 
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
-    CreateWorkflowVersionOpts,
-)
+from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator

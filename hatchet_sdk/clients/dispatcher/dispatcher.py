@@ -9,7 +9,7 @@ from hatchet_sdk.clients.dispatcher.action_listener import (
 )
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.connection import new_conn
-from hatchet_sdk.contracts.dispatcher_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.contracts.dispatcher_pb2 import (
     STEP_EVENT_TYPE_COMPLETED,
     STEP_EVENT_TYPE_FAILED,
     ActionEventResponse,

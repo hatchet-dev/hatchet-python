@@ -7,10 +7,7 @@ from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.context.context import Context
-
-## TODO: These type stubs need to be updated to mass MyPy, and then we can remove this ignore
-## There are file-level type ignore lines in the corresponding .pyi files.
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
     DesiredWorkerLabels,
@@ -48,7 +45,7 @@ def workflow(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
-    sticky: StickyStrategy = None,
+    sticky: StickyStrategy | None = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
     input_validator: Type[T] | None = None,
@@ -112,9 +109,9 @@ def step(
             return DesiredWorkerLabels(
                 strValue=str(value) if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
-                required=d["required"] if "required" in d else None,
+                required=d["required"] if "required" in d else None,  # type: ignore[arg-type]
                 weight=d["weight"] if "weight" in d else None,
-                comparator=d["comparator"] if "comparator" in d else None,
+                comparator=d["comparator"] if "comparator" in d else None,  # type: ignore[arg-type]
             )
 
         setattr(
@@ -140,7 +137,7 @@ def on_failure_step(
         limits = None
         if rate_limits:
             limits = [
-                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)
+                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)  # type: ignore[arg-type]
                 for rate_limit in rate_limits or []
             ]
 
