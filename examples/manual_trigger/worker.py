@@ -47,9 +47,8 @@ class ManualTriggerWorkflow:
         return {"step2": "data2"}
 
 
-if __name__ == "__main__":
-    workflow = ManualTriggerWorkflow()
-    worker = hatchet.worker("manual-worker", max_runs=4)
-    worker.register_workflow(workflow)
+workflow = ManualTriggerWorkflow()
+worker = hatchet.worker("manual-worker", max_runs=4)
+worker.register_workflow(workflow)
 
-    worker.start()
+worker.start()

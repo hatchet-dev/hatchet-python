@@ -23,9 +23,8 @@ class CancelWorkflow:
             print("Cancelled")
 
 
-if __name__ == "__main__":
-    workflow = CancelWorkflow()
-    worker = hatchet.worker("cancellation-worker", max_runs=4)
-    worker.register_workflow(workflow)
+workflow = CancelWorkflow()
+worker = hatchet.worker("cancellation-worker", max_runs=4)
+worker.register_workflow(workflow)
 
-    worker.start()
+worker.start()

@@ -36,8 +36,7 @@ class StickyChildWorkflow:
         return {"worker": context.worker.id()}
 
 
-if __name__ == "__main__":
-    worker = hatchet.worker("sticky-worker", max_runs=10)
-    worker.register_workflow(StickyWorkflow())
-    worker.register_workflow(StickyChildWorkflow())
-    worker.start()
+worker = hatchet.worker("sticky-worker", max_runs=10)
+worker.register_workflow(StickyWorkflow())
+worker.register_workflow(StickyChildWorkflow())
+worker.start()
