@@ -20,10 +20,13 @@ import re  # noqa: F401
 from datetime import datetime
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing_extensions import Annotated, Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from hatchet_sdk.clients.rest.models.scheduled_workflows_method import (
+    ScheduledWorkflowsMethod,
+)
 from hatchet_sdk.clients.rest.models.workflow_run_status import WorkflowRunStatus
 
 
@@ -54,7 +57,7 @@ class ScheduledWorkflows(BaseModel):
     workflow_run_id: Optional[
         Annotated[str, Field(min_length=36, strict=True, max_length=36)]
     ] = Field(default=None, alias="workflowRunId")
-    method: StrictStr
+    method: ScheduledWorkflowsMethod
     __properties: ClassVar[List[str]] = [
         "metadata",
         "tenantId",
@@ -70,13 +73,6 @@ class ScheduledWorkflows(BaseModel):
         "workflowRunId",
         "method",
     ]
-
-    @field_validator("method")
-    def method_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(["DEFAULT", "API"]):
-            raise ValueError("must be one of enum values ('DEFAULT', 'API')")
-        return value
 
     model_config = ConfigDict(
         populate_by_name=True,

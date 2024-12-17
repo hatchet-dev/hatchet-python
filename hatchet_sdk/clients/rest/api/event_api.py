@@ -22,9 +22,6 @@ from hatchet_sdk.clients.rest.api_response import ApiResponse
 from hatchet_sdk.clients.rest.models.bulk_create_event_request import (
     BulkCreateEventRequest,
 )
-from hatchet_sdk.clients.rest.models.bulk_create_event_response import (
-    BulkCreateEventResponse,
-)
 from hatchet_sdk.clients.rest.models.cancel_event_request import CancelEventRequest
 from hatchet_sdk.clients.rest.models.create_event_request import CreateEventRequest
 from hatchet_sdk.clients.rest.models.event import Event
@@ -376,7 +373,7 @@ class EventApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> BulkCreateEventResponse:
+    ) -> Events:
         """Bulk Create events
 
         Bulk creates new events.
@@ -417,7 +414,7 @@ class EventApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "BulkCreateEventResponse",
+            "200": "Events",
             "400": "APIErrors",
             "403": "APIErrors",
             "429": "APIErrors",
@@ -454,7 +451,7 @@ class EventApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[BulkCreateEventResponse]:
+    ) -> ApiResponse[Events]:
         """Bulk Create events
 
         Bulk creates new events.
@@ -495,7 +492,7 @@ class EventApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "BulkCreateEventResponse",
+            "200": "Events",
             "400": "APIErrors",
             "403": "APIErrors",
             "429": "APIErrors",
@@ -573,7 +570,7 @@ class EventApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            "200": "BulkCreateEventResponse",
+            "200": "Events",
             "400": "APIErrors",
             "403": "APIErrors",
             "429": "APIErrors",
