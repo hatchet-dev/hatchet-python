@@ -12,6 +12,8 @@ from multiprocessing.process import BaseProcess
 from types import FrameType
 from typing import Any, Callable, TypeVar, get_type_hints
 
+from pydantic import BaseModel
+
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
@@ -20,6 +22,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator
+from hatchet_sdk.utils.typing import is_basemodel_subclass
 from hatchet_sdk.v2.callable import HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
@@ -131,8 +134,10 @@ class Worker:
         for action_name, action_func in workflow.get_actions(namespace):
             self.action_registry[action_name] = create_action_function(action_func)
             return_type = get_type_hints(action_func).get("return")
+
             self.validator_registry[action_name] = WorkflowValidator(
-                workflow_input=workflow.input_validator, step_output=return_type
+                workflow_input=workflow.input_validator,
+                step_output=return_type if is_basemodel_subclass(return_type) else None,
             )
 
     def status(self) -> WorkerStatus:

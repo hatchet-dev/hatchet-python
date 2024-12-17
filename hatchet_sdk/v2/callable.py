@@ -48,7 +48,7 @@ class HatchetCallable(Generic[T]):
         retries: int = 0,
         rate_limits: List[RateLimit] | None = None,
         concurrency: ConcurrencyFunction | None = None,
-        on_failure: "HatchetCallable[T]" | None = None,
+        on_failure: Union["HatchetCallable[T]", None] = None,
         desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
         default_priority: int | None = None,
     ):

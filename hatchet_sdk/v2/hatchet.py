@@ -1,4 +1,4 @@
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, Union
 
 from hatchet_sdk import Worker
 from hatchet_sdk.context.context import Context
@@ -30,7 +30,7 @@ def function(
     rate_limits: list[RateLimit] | None = None,
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
     concurrency: ConcurrencyFunction | None = None,
-    on_failure: "HatchetCallable[T]" | None = None,
+    on_failure: Union["HatchetCallable[T]", None] = None,
     default_priority: int | None = None,
 ) -> Callable[[Callable[[Context], str]], HatchetCallable[T]]:
     def inner(func: Callable[[Context], T]) -> HatchetCallable[T]:
@@ -130,7 +130,7 @@ class Hatchet(HatchetV1):
         rate_limits: list[RateLimit] | None = None,
         desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
         concurrency: ConcurrencyFunction | None = None,
-        on_failure: "HatchetCallable[T]" | None = None,
+        on_failure: Union["HatchetCallable[T]", None] = None,
         default_priority: int | None = None,
     ) -> Callable[[Callable[[Context], Any]], Callable[[Context], Any]]:
         resp = function(
@@ -175,7 +175,7 @@ class Hatchet(HatchetV1):
         rate_limits: list[RateLimit] | None = None,
         desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
         concurrency: ConcurrencyFunction | None = None,
-        on_failure: "HatchetCallable[T]" | None = None,
+        on_failure: Union["HatchetCallable[T]", None] = None,
         default_priority: int | None = None,
     ) -> Callable[[Callable[[DurableContext], Any]], Callable[[DurableContext], Any]]:
         resp = durable(
