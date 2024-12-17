@@ -1,5 +1,15 @@
 import functools
-from typing import Any, Callable, Protocol, Type, TypeVar, Union, cast, get_type_hints
+from typing import (
+    Any,
+    Callable,
+    Protocol,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+    get_type_hints,
+    runtime_checkable,
+)
 
 from pydantic import BaseModel
 
@@ -69,6 +79,7 @@ class ConcurrencyExpression:
         self.limit_strategy = limit_strategy
 
 
+@runtime_checkable
 class WorkflowInterface(Protocol):
     def get_name(self, namespace: str) -> str: ...
 
@@ -76,8 +87,8 @@ class WorkflowInterface(Protocol):
 
     def get_create_opts(self, namespace: str) -> Any: ...
 
-    on_events: list[str]
-    on_crons: list[str]
+    on_events: list[str] | None
+    on_crons: list[str] | None
     name: str
     version: str
     timeout: str
@@ -117,9 +128,11 @@ class WorkflowMeta(type):
         def get_service_name(namespace: str) -> str:
             return f"{namespace}{name.lower()}"
 
+
         @functools.cache
         def get_actions(self: TW, namespace: str) -> StepsType:
             serviceName = get_service_name(namespace)
+
             func_actions = [
                 (serviceName + ":" + func_name, func) for func_name, func in steps
             ]
