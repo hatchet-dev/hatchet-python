@@ -34,5 +34,5 @@ jobs:
       - name: Run Isort
         run: poetry run isort . --check-only --diff
 
-      # - name: Run MyPy
-      #   run: poetry run mypy --config-file=pyproject.toml
+      - name: Run MyPy
+        run: poetry run mypy --config-file=pyproject.toml
