@@ -425,7 +425,7 @@ class AdminClient(AdminClientBase):
         self,
         key: str,
         limit: int,
-        duration: RateLimitDuration | str = RateLimitDuration.SECOND,
+        duration: Union[RateLimitDuration, str] = RateLimitDuration.SECOND,
     ):
         try:
             self.client.PutRateLimit(

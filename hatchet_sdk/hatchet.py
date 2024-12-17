@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, Type, TypeVar, cast, get_type_hints
+from typing import Any, Callable, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
 from typing_extensions import deprecated
@@ -45,7 +45,7 @@ def workflow(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
-    sticky: StickyStrategy | None = None,
+    sticky: Union[StickyStrategy, None] = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
     input_validator: Type[T] | None = None,
