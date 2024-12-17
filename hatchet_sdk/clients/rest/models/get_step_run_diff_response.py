@@ -73,9 +73,9 @@ class GetStepRunDiffResponse(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in diffs (list)
         _items = []
         if self.diffs:
-            for _item in self.diffs:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_diffs in self.diffs:
+                if _item_diffs:
+                    _items.append(_item_diffs.to_dict())
             _dict["diffs"] = _items
         return _dict
 

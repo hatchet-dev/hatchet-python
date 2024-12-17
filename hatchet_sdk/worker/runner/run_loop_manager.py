@@ -2,23 +2,28 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, Callable, Dict
+from typing import Callable, TypeVar
 
+from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
+from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
 STOP_LOOP = "STOP_LOOP"
 
+T = TypeVar("T")
+
 
 @dataclass
 class WorkerActionRunLoopManager:
     name: str
-    action_registry: Dict[str, Callable[..., Any]]
-    max_runs: int
+    action_registry: dict[str, Callable[[Context], T]]
+    validator_registry: dict[str, WorkflowValidator]
+    max_runs: int | None
     config: ClientConfig
     action_queue: Queue
     event_queue: Queue
@@ -43,32 +48,35 @@ class WorkerActionRunLoopManager:
 
     async def async_start(self, retry_count=1):
         await capture_logs(
-            self.client.logger,
+            self.client.logInterceptor,
             self.client.event,
             self._async_start,
         )(retry_count=retry_count)
 
-    async def _async_start(self, retry_count=1):
+    async def _async_start(self, retry_count: int = 1) -> None:
         logger.info("starting runner...")
         self.loop = asyncio.get_running_loop()
+        # needed for graceful termination
         k = self.loop.create_task(self._start_action_loop())
+        await k
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.killing = True
 
         self.action_queue.put(STOP_LOOP)
 
-    async def wait_for_tasks(self):
+    async def wait_for_tasks(self) -> None:
         if self.runner:
             await self.runner.wait_for_tasks()
 
-    async def _start_action_loop(self):
+    async def _start_action_loop(self) -> None:
         self.runner = Runner(
             self.name,
             self.event_queue,
             self.max_runs,
             self.handle_kill,
             self.action_registry,
+            self.validator_registry,
             self.config,
             self.labels,
         )
@@ -86,7 +94,7 @@ class WorkerActionRunLoopManager:
     async def _get_action(self):
         return await self.loop.run_in_executor(None, self.action_queue.get)
 
-    async def exit_gracefully(self):
+    async def exit_gracefully(self) -> None:
         if self.killing:
             return
 
@@ -99,6 +107,6 @@ class WorkerActionRunLoopManager:
         # task list.
         await asyncio.sleep(1)
 
-    def exit_forcefully(self):
+    def exit_forcefully(self) -> None:
         logger.info("forcefully exiting runner...")
         self.cleanup()

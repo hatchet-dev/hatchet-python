@@ -117,9 +117,9 @@ class WorkflowVersion(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
         _items = []
         if self.jobs:
-            for _item in self.jobs:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_jobs in self.jobs:
+                if _item_jobs:
+                    _items.append(_item_jobs.to_dict())
             _dict["jobs"] = _items
         return _dict
 

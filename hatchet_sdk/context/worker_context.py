@@ -21,7 +21,7 @@ class WorkerContext:
         await self.client.async_upsert_worker_labels(self._worker_id, labels)
         self._labels.update(labels)
 
-    def id(self):
+    def id(self) -> str:
         return self._worker_id
 
     # def has_workflow(self, workflow_name: str):

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.37.2"
+version = "0.42.3"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -22,11 +22,26 @@ aiohttp = "^3.10.5"
 aiohttp-retry = "^2.8.3"
 tenacity = ">=8.4.1"
 cel-python = "^0.1.5"
+opentelemetry-api = "^1.27.0"
+opentelemetry-sdk = "^1.27.0"
+opentelemetry-instrumentation = "^0.48b0"
+opentelemetry-distro = "^0.48b0"
+opentelemetry-exporter-otlp = "^1.27.0"
+opentelemetry-exporter-otlp-proto-http = "^1.27.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-asyncio = "^0.23.8"
 psutil = "^6.0.0"
+
+[tool.poetry.group.lint.dependencies]
+mypy = "^1.13.0"
+types-protobuf = "^5.28.3.20241030"
+black = "^24.10.0"
+isort = "^5.13.2"
+
+[tool.poetry.group.test.dependencies]
+pytest-timeout = "^2.3.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -48,6 +63,27 @@ known_third_party = [
   "pyyaml",
   "urllib3",
 ]
+extend_skip = ["hatchet_sdk/contracts/"]
+
+[tool.black]
+extend_exclude = "hatchet_sdk/contracts/"
+
+[tool.mypy]
+strict = true
+files = [
+  "hatchet_sdk/hatchet.py",
+  "hatchet_sdk/worker/worker.py",
+  "hatchet_sdk/context/context.py",
+  "hatchet_sdk/worker/runner/runner.py",
+  "hatchet_sdk/workflow.py",
+  "hatchet_sdk/utils/serialization.py",
+  "hatchet_sdk/utils/tracing.py",
+  "hatchet_sdk/utils/types.py",
+  "hatchet_sdk/utils/backoff.py"
+]
+exclude = "^examples/*"
+follow_imports = "silent"
+disable_error_code = ["unused-coroutine"]
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"
@@ -69,3 +105,7 @@ simple = "examples.simple.worker:main"
 timeout = "examples.timeout.worker:main"
 blocked = "examples.blocked_async.worker:main"
 existing_loop = "examples.worker_existing_loop.worker:main"
+bulk_fanout = "examples.bulk_fanout.worker:main"
+retries_with_backoff = "examples.retries_with_backoff.worker:main"
+pydantic = "examples.pydantic.worker:main"
+v2_simple = "examples.v2.simple.worker:main"

@@ -117,9 +117,9 @@ class JobRun(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of each item in step_runs (list)
         _items = []
         if self.step_runs:
-            for _item in self.step_runs:
-                if _item:
-                    _items.append(_item.to_dict())
+            for _item_step_runs in self.step_runs:
+                if _item_step_runs:
+                    _items.append(_item_step_runs.to_dict())
             _dict["stepRuns"] = _items
         return _dict
 

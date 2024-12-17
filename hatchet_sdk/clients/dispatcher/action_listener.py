@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator, List, Optional
 
 import grpc
 from grpc._cython import cygrpc
@@ -23,6 +23,7 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
+from hatchet_sdk.utils.serialization import flatten
 
 from ...loader import ClientConfig
 from ...metadata import get_metadata
@@ -60,7 +61,7 @@ class Action:
     worker_id: str
     tenant_id: str
     workflow_run_id: str
-    get_group_key_run_id: Optional[str]
+    get_group_key_run_id: str
     job_id: str
     job_name: str
     job_run_id: str
@@ -87,6 +88,29 @@ class Action:
         # Ensure additional_metadata is always a dictionary
         if not isinstance(self.additional_metadata, dict):
             self.additional_metadata = {}
+
+    @property
+    def otel_attributes(self) -> dict[str, Any]:
+        return flatten(
+            xs={
+                "worker_id": self.worker_id,
+                "tenant_id": self.tenant_id,
+                "workflow_run_id": self.workflow_run_id,
+                "get_group_key_run_id": self.get_group_key_run_id,
+                "job_id": self.job_id,
+                "job_name": self.job_name,
+                "job_run_id": self.job_run_id,
+                "step_id": self.step_id,
+                "step_run_id": self.step_run_id,
+                "retry_count": self.retry_count,
+                "child_workflow_index": self.child_workflow_index,
+                "child_workflow_key": self.child_workflow_key,
+                "parent_workflow_run_id": self.parent_workflow_run_id,
+                "action_payload": self.action_payload,
+            },
+            parent_key="",
+            separator=".",
+        )
 
 
 START_STEP_RUN = 0
@@ -202,7 +226,6 @@ class ActionListener:
         listener = None
 
         while not self.stop_signal:
-
             if listener is not None:
                 listener.cancel()
 

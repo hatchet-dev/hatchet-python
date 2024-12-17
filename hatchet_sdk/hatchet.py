@@ -1,41 +1,59 @@
 import asyncio
 import logging
-from typing import List, Optional
+from typing import Any, Callable, Optional, Type, TypeVar, cast, get_type_hints
 
+from pydantic import BaseModel
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
-from hatchet_sdk.contracts.workflows_pb2 import (
+
+## TODO: These type stubs need to be updated to mass MyPy, and then we can remove this ignore
+## There are file-level type ignore lines in the corresponding .pyi files.
+from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
     DesiredWorkerLabels,
     StickyStrategy,
 )
+from hatchet_sdk.features.cron import CronClient
+from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig, ConfigLoader
 from hatchet_sdk.rate_limit import RateLimit
 
 from .client import Client, new_client, new_client_raw
+from .clients.admin import AdminClient
+from .clients.dispatcher.dispatcher import DispatcherClient
+from .clients.events import EventClient
+from .clients.run_event_listener import RunEventListenerClient
 from .logger import logger
-from .worker import Worker
-from .workflow import ConcurrencyExpression, WorkflowMeta
+from .worker.worker import Worker
+from .workflow import (
+    ConcurrencyExpression,
+    WorkflowInterface,
+    WorkflowMeta,
+    WorkflowStepProtocol,
+)
+
+T = TypeVar("T", bound=BaseModel)
 
 
 def workflow(
     name: str = "",
-    on_events: list | None = None,
-    on_crons: list | None = None,
+    on_events: list[str] | None = None,
+    on_crons: list[str] | None = None,
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
     sticky: StickyStrategy = None,
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
-):
+    input_validator: Type[T] | None = None,
+) -> Callable[[Type[WorkflowInterface]], WorkflowMeta]:
     on_events = on_events or []
     on_crons = on_crons or []
 
-    def inner(cls) -> WorkflowMeta:
+    def inner(cls: Type[WorkflowInterface]) -> WorkflowMeta:
         cls.on_events = on_events
         cls.on_crons = on_crons
         cls.name = name or str(cls.__name__)
@@ -47,6 +65,9 @@ def workflow(
         cls.concurrency_expression = concurrency
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
+
+        ## TODO: Figure out how to type this metaclass correctly
+        cls.input_validator = input_validator
         return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
 
     return inner
@@ -55,14 +76,16 @@ def workflow(
 def step(
     name: str = "",
     timeout: str = "",
-    parents: List[str] | None = None,
+    parents: list[str] | None = None,
     retries: int = 0,
-    rate_limits: List[RateLimit] | None = None,
-    desired_worker_labels: dict[str:DesiredWorkerLabel] = {},
-):
+    rate_limits: list[RateLimit] | None = None,
+    desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+    backoff_factor: float | None = None,
+    backoff_max_seconds: int | None = None,
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
     parents = parents or []
 
-    def inner(func):
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
             limits = [rate_limit._req for rate_limit in rate_limits or []]
@@ -72,6 +95,8 @@ def step(
         func._step_timeout = timeout
         func._step_retries = retries
         func._step_rate_limits = limits
+        func._step_backoff_factor = backoff_factor
+        func._step_backoff_max_seconds = backoff_max_seconds
 
         func._step_desired_worker_labels = {}
 
@@ -94,9 +119,11 @@ def on_failure_step(
     name: str = "",
     timeout: str = "",
     retries: int = 0,
-    rate_limits: List[RateLimit] | None = None,
-):
-    def inner(func):
+    rate_limits: list[RateLimit] | None = None,
+    backoff_factor: float | None = None,
+    backoff_max_seconds: int | None = None,
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
             limits = [
@@ -108,6 +135,9 @@ def on_failure_step(
         func._on_failure_step_timeout = timeout
         func._on_failure_step_retries = retries
         func._on_failure_step_rate_limits = limits
+        func._on_failure_step_backoff_factor = backoff_factor
+        func._on_failure_step_backoff_max_seconds = backoff_max_seconds
+
         return func
 
     return inner
@@ -117,8 +147,8 @@ def concurrency(
     name: str = "",
     max_runs: int = 1,
     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-):
-    def inner(func):
+) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
         func._concurrency_max_runs = max_runs
         func._concurrency_limit_strategy = limit_strategy
@@ -142,8 +172,8 @@ class HatchetRest:
     rest: RestApi
 
     def __init__(self, config: ClientConfig = ClientConfig()):
-        config: ClientConfig = ConfigLoader(".").load_client_config(config)
-        self.rest = RestApi(config.server_url, config.token, config.tenant_id)
+        _config: ClientConfig = ConfigLoader(".").load_client_config(config)
+        self.rest = RestApi(_config.server_url, _config.token, _config.tenant_id)
 
 
 class Hatchet:
@@ -154,6 +184,8 @@ class Hatchet:
     for working with Hatchet workers, workflows, and steps.
 
     Attributes:
+        cron (CronClient): Interface for cron trigger operations.
+
         admin (AdminClient): Interface for administrative operations.
         dispatcher (DispatcherClient): Interface for dispatching operations.
         event (EventClient): Interface for event-related operations.
@@ -161,13 +193,17 @@ class Hatchet:
     """
 
     _client: Client
+    cron: CronClient
+    scheduled: ScheduledClient
 
     @classmethod
-    def from_environment(cls, defaults: ClientConfig = ClientConfig(), **kwargs):
+    def from_environment(
+        cls, defaults: ClientConfig = ClientConfig(), **kwargs: Any
+    ) -> "Hatchet":
         return cls(client=new_client(defaults), **kwargs)
 
     @classmethod
-    def from_config(cls, config: ClientConfig, **kwargs):
+    def from_config(cls, config: ClientConfig, **kwargs: Any) -> "Hatchet":
         return cls(client=new_client_raw(config), **kwargs)
 
     def __init__(
@@ -192,6 +228,9 @@ class Hatchet:
         if debug:
             logger.setLevel(logging.DEBUG)
 
+        self.cron = CronClient(self._client)
+        self.scheduled = ScheduledClient(self._client)
+
     @property
     @deprecated(
         "Direct access to client is deprecated and will be removed in a future version. Use specific client properties (Hatchet.admin, Hatchet.dispatcher, Hatchet.event, Hatchet.rest) instead. [0.32.0]",
@@ -200,31 +239,31 @@ class Hatchet:
         return self._client
 
     @property
-    def admin(self):
+    def admin(self) -> AdminClient:
         return self._client.admin
 
     @property
-    def dispatcher(self):
+    def dispatcher(self) -> DispatcherClient:
         return self._client.dispatcher
 
     @property
-    def event(self):
+    def event(self) -> EventClient:
         return self._client.event
 
     @property
-    def rest(self):
+    def rest(self) -> RestApi:
         return self._client.rest
 
     @property
-    def listener(self):
+    def listener(self) -> RunEventListenerClient:
         return self._client.listener
 
     @property
-    def config(self):
+    def config(self) -> ClientConfig:
         return self._client.config
 
     @property
-    def tenant_id(self):
+    def tenant_id(self) -> str:
         return self._client.config.tenant_id
 
     concurrency = staticmethod(concurrency)
@@ -237,7 +276,7 @@ class Hatchet:
 
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    ):
+    ) -> Worker:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:

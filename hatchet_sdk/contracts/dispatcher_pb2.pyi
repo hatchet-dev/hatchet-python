@@ -1,3 +1,5 @@
+# type: ignore
+
 from google.protobuf import timestamp_pb2 as _timestamp_pb2
 from google.protobuf.internal import containers as _containers
 from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
@@ -6,6 +8,13 @@ from google.protobuf import message as _message
 from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
+
+class SDKS(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    UNKNOWN: _ClassVar[SDKS]
+    GO: _ClassVar[SDKS]
+    PYTHON: _ClassVar[SDKS]
+    TYPESCRIPT: _ClassVar[SDKS]
 
 class ActionType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -26,6 +35,7 @@ class StepActionEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     STEP_EVENT_TYPE_STARTED: _ClassVar[StepActionEventType]
     STEP_EVENT_TYPE_COMPLETED: _ClassVar[StepActionEventType]
     STEP_EVENT_TYPE_FAILED: _ClassVar[StepActionEventType]
+    STEP_EVENT_TYPE_ACKNOWLEDGED: _ClassVar[StepActionEventType]
 
 class ResourceType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -46,6 +56,10 @@ class ResourceEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
 class WorkflowRunEventType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     WORKFLOW_RUN_EVENT_TYPE_FINISHED: _ClassVar[WorkflowRunEventType]
+UNKNOWN: SDKS
+GO: SDKS
+PYTHON: SDKS
+TYPESCRIPT: SDKS
 START_STEP_RUN: ActionType
 CANCEL_STEP_RUN: ActionType
 START_GET_GROUP_KEY: ActionType
@@ -57,6 +71,7 @@ STEP_EVENT_TYPE_UNKNOWN: StepActionEventType
 STEP_EVENT_TYPE_STARTED: StepActionEventType
 STEP_EVENT_TYPE_COMPLETED: StepActionEventType
 STEP_EVENT_TYPE_FAILED: StepActionEventType
+STEP_EVENT_TYPE_ACKNOWLEDGED: StepActionEventType
 RESOURCE_TYPE_UNKNOWN: ResourceType
 RESOURCE_TYPE_STEP_RUN: ResourceType
 RESOURCE_TYPE_WORKFLOW_RUN: ResourceType
@@ -77,8 +92,22 @@ class WorkerLabels(_message.Message):
     intValue: int
     def __init__(self, strValue: _Optional[str] = ..., intValue: _Optional[int] = ...) -> None: ...
 
+class RuntimeInfo(_message.Message):
+    __slots__ = ("sdkVersion", "language", "languageVersion", "os", "extra")
+    SDKVERSION_FIELD_NUMBER: _ClassVar[int]
+    LANGUAGE_FIELD_NUMBER: _ClassVar[int]
+    LANGUAGEVERSION_FIELD_NUMBER: _ClassVar[int]
+    OS_FIELD_NUMBER: _ClassVar[int]
+    EXTRA_FIELD_NUMBER: _ClassVar[int]
+    sdkVersion: str
+    language: SDKS
+    languageVersion: str
+    os: str
+    extra: str
+    def __init__(self, sdkVersion: _Optional[str] = ..., language: _Optional[_Union[SDKS, str]] = ..., languageVersion: _Optional[str] = ..., os: _Optional[str] = ..., extra: _Optional[str] = ...) -> None: ...
+
 class WorkerRegisterRequest(_message.Message):
-    __slots__ = ("workerName", "actions", "services", "maxRuns", "labels", "webhookId")
+    __slots__ = ("workerName", "actions", "services", "maxRuns", "labels", "webhookId", "runtimeInfo")
     class LabelsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -92,13 +121,15 @@ class WorkerRegisterRequest(_message.Message):
     MAXRUNS_FIELD_NUMBER: _ClassVar[int]
     LABELS_FIELD_NUMBER: _ClassVar[int]
     WEBHOOKID_FIELD_NUMBER: _ClassVar[int]
+    RUNTIMEINFO_FIELD_NUMBER: _ClassVar[int]
     workerName: str
     actions: _containers.RepeatedScalarFieldContainer[str]
     services: _containers.RepeatedScalarFieldContainer[str]
     maxRuns: int
     labels: _containers.MessageMap[str, WorkerLabels]
     webhookId: str
-    def __init__(self, workerName: _Optional[str] = ..., actions: _Optional[_Iterable[str]] = ..., services: _Optional[_Iterable[str]] = ..., maxRuns: _Optional[int] = ..., labels: _Optional[_Mapping[str, WorkerLabels]] = ..., webhookId: _Optional[str] = ...) -> None: ...
+    runtimeInfo: RuntimeInfo
+    def __init__(self, workerName: _Optional[str] = ..., actions: _Optional[_Iterable[str]] = ..., services: _Optional[_Iterable[str]] = ..., maxRuns: _Optional[int] = ..., labels: _Optional[_Mapping[str, WorkerLabels]] = ..., webhookId: _Optional[str] = ..., runtimeInfo: _Optional[_Union[RuntimeInfo, _Mapping]] = ...) -> None: ...
 
 class WorkerRegisterResponse(_message.Message):
     __slots__ = ("tenantId", "workerId", "workerName")

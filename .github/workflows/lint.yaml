@@ -1,10 +1,38 @@
-name: lint all
-on: pull_request
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - uses: pre-commit/action@v3.0.1
-        name: lint
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.5.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install linting tools
+        run: poetry install --no-root
+
+      - name: Run Black
+        run: poetry run black . --check --verbose --diff --color
+
+      - name: Run Isort
+        run: poetry run isort . --check-only --diff
+
+      - name: Run MyPy
+        run: poetry run mypy --config-file=pyproject.toml

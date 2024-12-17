@@ -16,7 +16,7 @@ openapi-generator-cli version || npm install @openapitools/openapi-generator-cli
 # fi
 
 # generate deps from hatchet repo
-cd hatchet/ && sh ./hack/oas/generate-server.sh && cd $ROOT_DIR
+cd ../oss/ && sh ./hack/oas/generate-server.sh && cd $ROOT_DIR
 
 # generate python rest client
 
@@ -27,7 +27,7 @@ mkdir -p $dst_dir
 tmp_dir=./tmp
 
 # generate into tmp folder
-openapi-generator-cli generate -i ./hatchet/bin/oas/openapi.yaml -g python -o ./tmp --skip-validate-spec \
+openapi-generator-cli generate -i ../oss/bin/oas/openapi.yaml -g python -o ./tmp --skip-validate-spec \
     --library asyncio \
     --global-property=apiTests=false \
     --global-property=apiDocs=true \
@@ -42,7 +42,7 @@ mv $tmp_dir/hatchet_sdk/clients/rest/exceptions.py $dst_dir/exceptions.py
 mv $tmp_dir/hatchet_sdk/clients/rest/__init__.py $dst_dir/__init__.py
 mv $tmp_dir/hatchet_sdk/clients/rest/rest.py $dst_dir/rest.py
 
-openapi-generator-cli generate -i ./hatchet/bin/oas/openapi.yaml -g python -o . --skip-validate-spec \
+openapi-generator-cli generate -i ../oss/bin/oas/openapi.yaml -g python -o . --skip-validate-spec \
     --library asyncio \
     --global-property=apis,models \
     --global-property=apiTests=false \
@@ -58,9 +58,9 @@ cp $tmp_dir/hatchet_sdk/clients/rest/api/__init__.py $dst_dir/api/__init__.py
 # remove tmp folder
 rm -rf $tmp_dir
 
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/dispatcher --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts dispatcher.proto
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/events --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts events.proto
-poetry run python -m grpc_tools.protoc --proto_path=hatchet/api-contracts/workflows --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts workflows.proto
+poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/dispatcher --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts dispatcher.proto
+poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/events --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts events.proto
+poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/workflows --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts workflows.proto
 
 # Fix relative imports in _grpc.py files
 if [[ "$OSTYPE" == "darwin"* ]]; then
