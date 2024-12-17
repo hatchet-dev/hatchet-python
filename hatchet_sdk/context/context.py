@@ -237,14 +237,17 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any] | BaseModel:
-        validators = self.validator_registry.get(step)
+        workflow_validator = next(
+            (v for k, v in self.validator_registry.items() if k.split(":")[-1] == step),
+            None,
+        )
 
         try:
             parent_step_data = cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
 
-        if validators and (v := validators.step_output):
+        if workflow_validator and (v := workflow_validator.step_output):
             return v.model_validate(parent_step_data)
 
         return parent_step_data

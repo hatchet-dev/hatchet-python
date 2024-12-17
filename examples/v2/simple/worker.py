@@ -1,6 +1,6 @@
 import json
 import time
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from dotenv import load_dotenv
 
@@ -25,11 +25,11 @@ def my_func(context: Context) -> MyResultType:
 
 @hatchet.durable()
 async def my_durable_func(context: DurableContext) -> dict[str, MyResultType]:
-    ref: RunRef[MyResultType] = await context.run(my_func, {"test": "test"}).result()
+    result = cast(dict[str, Any], await context.run(my_func, {"test": "test"}).result())
 
-    context.log(ref)
+    context.log(result)
 
-    return {"my_durable_func": await ref.result()}
+    return {"my_durable_func": result.get("my_func")}
 
 
 def main() -> None:
