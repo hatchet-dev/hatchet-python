@@ -41,6 +41,9 @@ class WorkerStartOptions:
     loop: asyncio.AbstractEventLoop | None = field(default=None)
 
 
+TWorkflow = TypeVar("TWorkflow", bound=object)
+
+
 class Worker:
     def __init__(
         self,
@@ -99,7 +102,10 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-    def register_workflow(self, workflow: WorkflowInterface) -> None:
+    def register_workflow(self, workflow: TWorkflow) -> None:
+        ## Hack for typing
+        assert isinstance(workflow, WorkflowInterface)
+
         namespace = self.client.config.namespace
 
         try:

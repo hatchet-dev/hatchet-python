@@ -7,10 +7,11 @@ load_dotenv()
 hatchet = Hatchet(debug=True)
 
 
-def main():
-    list: WorkflowList = hatchet.rest.workflow_list()
+def main() -> None:
+    workflow_list = hatchet.rest.workflow_list()
+    rows = workflow_list.rows or []
 
-    for workflow in list.rows:
+    for workflow in rows:
         print(workflow.name)
         print(workflow.metadata.id)
         print(workflow.metadata.created_at)

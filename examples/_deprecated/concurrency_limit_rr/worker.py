@@ -24,7 +24,7 @@ class ConcurrencyDemoWorkflowRR:
         return f'group-{input["group"]}'
 
     @hatchet.step()
-    def step1(self, context):
+    def step1(self, context: Context) -> None:
         print("starting step1")
         time.sleep(2)
         print("finished step1")

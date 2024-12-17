@@ -128,7 +128,6 @@ class WorkflowMeta(type):
         def get_service_name(namespace: str) -> str:
             return f"{namespace}{name.lower()}"
 
-
         @functools.cache
         def get_actions(self: TW, namespace: str) -> StepsType:
             serviceName = get_service_name(namespace)

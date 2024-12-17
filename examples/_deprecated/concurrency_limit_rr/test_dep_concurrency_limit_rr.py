@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from hatchet_sdk import Hatchet
+from hatchet_sdk import Hatchet, Worker
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 
@@ -11,7 +11,7 @@ from hatchet_sdk.workflow_run import WorkflowRunRef
 @pytest.mark.parametrize("worker", ["concurrency_limit_rr"], indirect=True)
 @pytest.mark.skip(reason="The timing for this test is not reliable")
 @pytest.mark.asyncio(scope="session")
-async def test_run(aiohatchet: Hatchet, worker):
+async def test_run(aiohatchet: Hatchet, worker: Worker) -> None:
     num_groups = 2
     runs: list[WorkflowRunRef] = []
 

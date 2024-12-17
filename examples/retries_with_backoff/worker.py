@@ -15,7 +15,7 @@ class BackoffWorkflow:
         # This sequence will be 2s, 4s, 8s, 16s, 32s, 60s... due to the maxSeconds limit
         backoff_factor=2.0,
     )
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, str]:
         if context.retry_count() < 3:
             raise Exception("step1 failed")
 
@@ -25,7 +25,7 @@ class BackoffWorkflow:
 # ‼️
 
 
-def main():
+def main() -> None:
     workflow = BackoffWorkflow()
     worker = hatchet.worker("backoff-worker", max_runs=4)
     worker.register_workflow(workflow)

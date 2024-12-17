@@ -32,10 +32,10 @@ class WorkflowList(BaseModel):
     WorkflowList
     """  # noqa: E501
 
-    metadata: Optional[APIResourceMeta] = None
-    rows: Optional[List[Workflow]] = None
-    pagination: Optional[PaginationResponse] = None
-    __properties: ClassVar[List[str]] = ["metadata", "rows", "pagination"]
+    metadata: APIResourceMeta | None = None
+    rows: list[Workflow] | None = None
+    pagination: PaginationResponse | None = None
+    __properties: ClassVar[list[str]] = ["metadata", "rows", "pagination"]
 
     model_config = ConfigDict(
         populate_by_name=True,

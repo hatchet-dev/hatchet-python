@@ -19,7 +19,7 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["user:create"])
 class Blocked:
     @hatchet.step(timeout="11s", retries=3)
-    async def step1(self, context: Context):
+    async def step1(self, context: Context) -> dict[str, str | int | float]:
         print("Executing step1")
 
         # CPU-bound task: Calculate a large number of SHA-256 hashes
@@ -42,7 +42,7 @@ class Blocked:
         }
 
 
-def main():
+def main() -> None:
     workflow = Blocked()
     worker = hatchet.worker("blocked-worker", max_runs=3)
     worker.register_workflow(workflow)

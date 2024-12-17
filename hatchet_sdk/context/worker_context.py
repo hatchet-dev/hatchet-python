@@ -10,7 +10,7 @@ class WorkerContext:
         self._labels = labels
         self.client = client
 
-    def labels(self):
+    def labels(self) -> dict[str, str | int]:
         return self._labels
 
     def upsert_labels(self, labels: dict[str, str | int]):
