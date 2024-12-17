@@ -19,8 +19,12 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing_extensions import Self
+
+from hatchet_sdk.clients.rest.models.concurrency_limit_strategy import (
+    ConcurrencyLimitStrategy,
+)
 
 
 class WorkflowConcurrency(BaseModel):
@@ -31,7 +35,7 @@ class WorkflowConcurrency(BaseModel):
     max_runs: StrictInt = Field(
         description="The maximum number of concurrent workflow runs.", alias="maxRuns"
     )
-    limit_strategy: StrictStr = Field(
+    limit_strategy: ConcurrencyLimitStrategy = Field(
         description="The strategy to use when the concurrency limit is reached.",
         alias="limitStrategy",
     )
@@ -44,17 +48,6 @@ class WorkflowConcurrency(BaseModel):
         "limitStrategy",
         "getConcurrencyGroup",
     ]
-
-    @field_validator("limit_strategy")
-    def limit_strategy_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(
-            ["CANCEL_IN_PROGRESS", "DROP_NEWEST", "QUEUE_NEWEST", "GROUP_ROUND_ROBIN"]
-        ):
-            raise ValueError(
-                "must be one of enum values ('CANCEL_IN_PROGRESS', 'DROP_NEWEST', 'QUEUE_NEWEST', 'GROUP_ROUND_ROBIN')"
-            )
-        return value
 
     model_config = ConfigDict(
         populate_by_name=True,

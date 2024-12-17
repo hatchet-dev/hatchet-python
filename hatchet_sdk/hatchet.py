@@ -88,10 +88,7 @@ def step(
     def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
         limits = None
         if rate_limits:
-            limits = [
-                CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
-                for rate_limit in rate_limits or []
-            ]
+            limits = [rate_limit._req for rate_limit in rate_limits or []]
 
         func._step_name = name.lower() or str(func.__name__).lower()
         func._step_parents = parents
@@ -130,7 +127,7 @@ def on_failure_step(
         limits = None
         if rate_limits:
             limits = [
-                CreateStepRateLimit(key=rate_limit.key, units=rate_limit.units)
+                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)
                 for rate_limit in rate_limits or []
             ]
 

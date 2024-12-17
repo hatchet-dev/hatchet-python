@@ -19,44 +19,21 @@ import pprint
 import re  # noqa: F401
 from typing import Any, ClassVar, Dict, List, Optional, Set
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Self
 
 from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
-from hatchet_sdk.clients.rest.models.cron_workflows_method import CronWorkflowsMethod
+from hatchet_sdk.clients.rest.models.event import Event
 
 
-class CronWorkflows(BaseModel):
+class Events(BaseModel):
     """
-    CronWorkflows
+    Events
     """  # noqa: E501
 
     metadata: APIResourceMeta
-    tenant_id: StrictStr = Field(alias="tenantId")
-    workflow_version_id: StrictStr = Field(alias="workflowVersionId")
-    workflow_id: StrictStr = Field(alias="workflowId")
-    workflow_name: StrictStr = Field(alias="workflowName")
-    cron: StrictStr
-    name: Optional[StrictStr] = None
-    input: Optional[Dict[str, Any]] = None
-    additional_metadata: Optional[Dict[str, Any]] = Field(
-        default=None, alias="additionalMetadata"
-    )
-    enabled: StrictBool
-    method: CronWorkflowsMethod
-    __properties: ClassVar[List[str]] = [
-        "metadata",
-        "tenantId",
-        "workflowVersionId",
-        "workflowId",
-        "workflowName",
-        "cron",
-        "name",
-        "input",
-        "additionalMetadata",
-        "enabled",
-        "method",
-    ]
+    events: List[Event] = Field(description="The events.")
+    __properties: ClassVar[List[str]] = ["metadata", "events"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -75,7 +52,7 @@ class CronWorkflows(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CronWorkflows from a JSON string"""
+        """Create an instance of Events from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -98,11 +75,18 @@ class CronWorkflows(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of metadata
         if self.metadata:
             _dict["metadata"] = self.metadata.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in events (list)
+        _items = []
+        if self.events:
+            for _item_events in self.events:
+                if _item_events:
+                    _items.append(_item_events.to_dict())
+            _dict["events"] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CronWorkflows from a dict"""
+        """Create an instance of Events from a dict"""
         if obj is None:
             return None
 
@@ -116,16 +100,11 @@ class CronWorkflows(BaseModel):
                     if obj.get("metadata") is not None
                     else None
                 ),
-                "tenantId": obj.get("tenantId"),
-                "workflowVersionId": obj.get("workflowVersionId"),
-                "workflowId": obj.get("workflowId"),
-                "workflowName": obj.get("workflowName"),
-                "cron": obj.get("cron"),
-                "name": obj.get("name"),
-                "input": obj.get("input"),
-                "additionalMetadata": obj.get("additionalMetadata"),
-                "enabled": obj.get("enabled"),
-                "method": obj.get("method"),
+                "events": (
+                    [Event.from_dict(_item) for _item in obj["events"]]
+                    if obj.get("events") is not None
+                    else None
+                ),
             }
         )
         return _obj

@@ -27,10 +27,10 @@ from hatchet_sdk.clients.rest.models.api_token import APIToken
 from hatchet_sdk.clients.rest.models.bulk_create_event_request import (
     BulkCreateEventRequest,
 )
-from hatchet_sdk.clients.rest.models.bulk_create_event_response import (
-    BulkCreateEventResponse,
-)
 from hatchet_sdk.clients.rest.models.cancel_event_request import CancelEventRequest
+from hatchet_sdk.clients.rest.models.concurrency_limit_strategy import (
+    ConcurrencyLimitStrategy,
+)
 from hatchet_sdk.clients.rest.models.create_api_token_request import (
     CreateAPITokenRequest,
 )
@@ -56,6 +56,7 @@ from hatchet_sdk.clients.rest.models.create_tenant_invite_request import (
 from hatchet_sdk.clients.rest.models.create_tenant_request import CreateTenantRequest
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
 from hatchet_sdk.clients.rest.models.cron_workflows_list import CronWorkflowsList
+from hatchet_sdk.clients.rest.models.cron_workflows_method import CronWorkflowsMethod
 from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
     CronWorkflowsOrderByField,
 )
@@ -73,6 +74,7 @@ from hatchet_sdk.clients.rest.models.event_update_cancel200_response import (
 from hatchet_sdk.clients.rest.models.event_workflow_run_summary import (
     EventWorkflowRunSummary,
 )
+from hatchet_sdk.clients.rest.models.events import Events
 from hatchet_sdk.clients.rest.models.get_step_run_diff_response import (
     GetStepRunDiffResponse,
 )
@@ -123,6 +125,9 @@ from hatchet_sdk.clients.rest.models.scheduled_run_status import ScheduledRunSta
 from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
 from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
     ScheduledWorkflowsList,
+)
+from hatchet_sdk.clients.rest.models.scheduled_workflows_method import (
+    ScheduledWorkflowsMethod,
 )
 from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import (
     ScheduledWorkflowsOrderByField,
@@ -207,6 +212,7 @@ from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 from hatchet_sdk.clients.rest.models.worker_list import WorkerList
 from hatchet_sdk.clients.rest.models.worker_runtime_info import WorkerRuntimeInfo
 from hatchet_sdk.clients.rest.models.worker_runtime_sdks import WorkerRuntimeSDKs
+from hatchet_sdk.clients.rest.models.worker_type import WorkerType
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_concurrency import WorkflowConcurrency
 from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind

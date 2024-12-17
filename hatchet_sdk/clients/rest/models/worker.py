@@ -28,6 +28,7 @@ from hatchet_sdk.clients.rest.models.recent_step_runs import RecentStepRuns
 from hatchet_sdk.clients.rest.models.semaphore_slots import SemaphoreSlots
 from hatchet_sdk.clients.rest.models.worker_label import WorkerLabel
 from hatchet_sdk.clients.rest.models.worker_runtime_info import WorkerRuntimeInfo
+from hatchet_sdk.clients.rest.models.worker_type import WorkerType
 
 
 class Worker(BaseModel):
@@ -37,7 +38,7 @@ class Worker(BaseModel):
 
     metadata: APIResourceMeta
     name: StrictStr = Field(description="The name of the worker.")
-    type: StrictStr
+    type: WorkerType
     last_heartbeat_at: Optional[datetime] = Field(
         default=None,
         description="The time this worker last sent a heartbeat.",
@@ -107,15 +108,6 @@ class Worker(BaseModel):
         "webhookId",
         "runtimeInfo",
     ]
-
-    @field_validator("type")
-    def type_validate_enum(cls, value):
-        """Validates the enum"""
-        if value not in set(["SELFHOSTED", "MANAGED", "WEBHOOK"]):
-            raise ValueError(
-                "must be one of enum values ('SELFHOSTED', 'MANAGED', 'WEBHOOK')"
-            )
-        return value
 
     @field_validator("status")
     def status_validate_enum(cls, value):
