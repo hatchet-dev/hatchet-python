@@ -2,7 +2,7 @@ import logging
 import time
 
 from examples.logger.client import hatchet
-from hatchet_sdk.context import Context
+from hatchet_sdk import Context
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 @hatchet.workflow()
 class LoggingWorkflow:
     @hatchet.step()
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> None:
         for i in range(12):
             logger.info("executed step1 - {}".format(i))
             logger.info({"step1": "step1"})

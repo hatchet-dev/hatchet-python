@@ -15,7 +15,7 @@ class OverridesWorkflow:
         self.my_value = "test"
 
     @hatchet.step(timeout="5s")
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, str | None]:
         print(
             "starting step1",
             time.strftime("%H:%M:%S", time.localtime()),
@@ -30,7 +30,7 @@ class OverridesWorkflow:
         }
 
     @hatchet.step()
-    def step2(self, context: Context):
+    def step2(self, context: Context) -> dict[str, str]:
         print(
             "starting step2",
             time.strftime("%H:%M:%S", time.localtime()),
@@ -43,7 +43,7 @@ class OverridesWorkflow:
         }
 
     @hatchet.step(parents=["step1", "step2"])
-    def step3(self, context: Context):
+    def step3(self, context: Context) -> dict[str, str]:
         print(
             "executed step3",
             time.strftime("%H:%M:%S", time.localtime()),
@@ -56,7 +56,7 @@ class OverridesWorkflow:
         }
 
     @hatchet.step(parents=["step1", "step3"])
-    def step4(self, context: Context):
+    def step4(self, context: Context) -> dict[str, str]:
         print(
             "executed step4",
             time.strftime("%H:%M:%S", time.localtime()),

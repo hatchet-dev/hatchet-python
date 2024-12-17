@@ -24,7 +24,7 @@ def my_func(context: Context) -> MyResultType:
 
 
 @hatchet.durable()
-async def my_durable_func(context: DurableContext):
+async def my_durable_func(context: DurableContext) -> dict[str, str]:
     result = await context.run(my_func, {"test": "test"}).result()
 
     context.log(result)
@@ -32,7 +32,7 @@ async def my_durable_func(context: DurableContext):
     return {"my_durable_func": result.get("my_func")}
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("test-worker", max_runs=5)
 
     hatchet.admin.run(my_durable_func, {"test": "test"})

@@ -6,7 +6,7 @@ from examples.logger.client import hatchet
 from examples.logger.workflow import LoggingWorkflow
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("logger-worker", max_runs=5)
 
     workflow = LoggingWorkflow()

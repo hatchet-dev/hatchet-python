@@ -1,4 +1,5 @@
 import time
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -23,14 +24,14 @@ hatchet = Hatchet(debug=True)
 class ConcurrencyDemoWorkflow:
 
     @hatchet.step()
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, Any]:
         input = context.workflow_input()
         time.sleep(3)
         print("executed step1")
         return {"run": input["run"]}
 
 
-def main():
+def main() -> None:
     workflow = ConcurrencyDemoWorkflow()
     worker = hatchet.worker("concurrency-demo-worker", max_runs=10)
     worker.register_workflow(workflow)
