@@ -13,47 +13,31 @@
 
 
 from __future__ import annotations
-
-import json
 import pprint
 import re  # noqa: F401
-from typing import Any, ClassVar, Dict, List, Optional, Set
+import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List
+from hatchet_sdk.clients.rest.models.api_resource_meta import APIResourceMeta
+from hatchet_sdk.clients.rest.models.event import Event
+from typing import Optional, Set
 from typing_extensions import Self
 
-from hatchet_sdk.clients.rest.models.concurrency_limit_strategy import (
-    ConcurrencyLimitStrategy,
-)
-
-
-class WorkflowConcurrency(BaseModel):
+class Events(BaseModel):
     """
-    WorkflowConcurrency
-    """  # noqa: E501
-
-    max_runs: StrictInt = Field(
-        description="The maximum number of concurrent workflow runs.", alias="maxRuns"
-    )
-    limit_strategy: ConcurrencyLimitStrategy = Field(
-        description="The strategy to use when the concurrency limit is reached.",
-        alias="limitStrategy",
-    )
-    get_concurrency_group: StrictStr = Field(
-        description="An action which gets the concurrency group for the WorkflowRun.",
-        alias="getConcurrencyGroup",
-    )
-    __properties: ClassVar[List[str]] = [
-        "maxRuns",
-        "limitStrategy",
-        "getConcurrencyGroup",
-    ]
+    Events
+    """ # noqa: E501
+    metadata: APIResourceMeta
+    events: List[Event] = Field(description="The events.")
+    __properties: ClassVar[List[str]] = ["metadata", "events"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,7 +50,7 @@ class WorkflowConcurrency(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of WorkflowConcurrency from a JSON string"""
+        """Create an instance of Events from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -79,29 +63,39 @@ class WorkflowConcurrency(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of metadata
+        if self.metadata:
+            _dict['metadata'] = self.metadata.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in events (list)
+        _items = []
+        if self.events:
+            for _item_events in self.events:
+                if _item_events:
+                    _items.append(_item_events.to_dict())
+            _dict['events'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of WorkflowConcurrency from a dict"""
+        """Create an instance of Events from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "maxRuns": obj.get("maxRuns"),
-                "limitStrategy": obj.get("limitStrategy"),
-                "getConcurrencyGroup": obj.get("getConcurrencyGroup"),
-            }
-        )
+        _obj = cls.model_validate({
+            "metadata": APIResourceMeta.from_dict(obj["metadata"]) if obj.get("metadata") is not None else None,
+            "events": [Event.from_dict(_item) for _item in obj["events"]] if obj.get("events") is not None else None
+        })
         return _obj
+
+

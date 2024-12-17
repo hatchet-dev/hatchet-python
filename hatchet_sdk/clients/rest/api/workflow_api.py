@@ -2540,6 +2540,15 @@ class WorkflowApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
+        offset: Annotated[
+            Optional[StrictInt], Field(description="The number to skip")
+        ] = None,
+        limit: Annotated[
+            Optional[StrictInt], Field(description="The number to limit by")
+        ] = None,
+        name: Annotated[
+            Optional[StrictStr], Field(description="Search by name")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2558,6 +2567,12 @@ class WorkflowApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
+        :param offset: The number to skip
+        :type offset: int
+        :param limit: The number to limit by
+        :type limit: int
+        :param name: Search by name
+        :type name: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2582,6 +2597,9 @@ class WorkflowApi:
 
         _param = self._workflow_list_serialize(
             tenant=tenant,
+            offset=offset,
+            limit=limit,
+            name=name,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2611,6 +2629,15 @@ class WorkflowApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
+        offset: Annotated[
+            Optional[StrictInt], Field(description="The number to skip")
+        ] = None,
+        limit: Annotated[
+            Optional[StrictInt], Field(description="The number to limit by")
+        ] = None,
+        name: Annotated[
+            Optional[StrictStr], Field(description="Search by name")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2629,6 +2656,12 @@ class WorkflowApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
+        :param offset: The number to skip
+        :type offset: int
+        :param limit: The number to limit by
+        :type limit: int
+        :param name: Search by name
+        :type name: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2653,6 +2686,9 @@ class WorkflowApi:
 
         _param = self._workflow_list_serialize(
             tenant=tenant,
+            offset=offset,
+            limit=limit,
+            name=name,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2682,6 +2718,15 @@ class WorkflowApi:
                 min_length=36, strict=True, max_length=36, description="The tenant id"
             ),
         ],
+        offset: Annotated[
+            Optional[StrictInt], Field(description="The number to skip")
+        ] = None,
+        limit: Annotated[
+            Optional[StrictInt], Field(description="The number to limit by")
+        ] = None,
+        name: Annotated[
+            Optional[StrictStr], Field(description="Search by name")
+        ] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2700,6 +2745,12 @@ class WorkflowApi:
 
         :param tenant: The tenant id (required)
         :type tenant: str
+        :param offset: The number to skip
+        :type offset: int
+        :param limit: The number to limit by
+        :type limit: int
+        :param name: Search by name
+        :type name: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2724,6 +2775,9 @@ class WorkflowApi:
 
         _param = self._workflow_list_serialize(
             tenant=tenant,
+            offset=offset,
+            limit=limit,
+            name=name,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2743,6 +2797,9 @@ class WorkflowApi:
     def _workflow_list_serialize(
         self,
         tenant,
+        offset,
+        limit,
+        name,
         _request_auth,
         _content_type,
         _headers,
@@ -2766,6 +2823,18 @@ class WorkflowApi:
         if tenant is not None:
             _path_params["tenant"] = tenant
         # process the query parameters
+        if offset is not None:
+
+            _query_params.append(("offset", offset))
+
+        if limit is not None:
+
+            _query_params.append(("limit", limit))
+
+        if name is not None:
+
+            _query_params.append(("name", name))
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
