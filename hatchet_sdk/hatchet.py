@@ -45,7 +45,7 @@ def workflow(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
-    sticky: Union[StickyStrategy, None] = None,
+    sticky: Union[StickyStrategy.Value, None] = None,  # type: ignore[name-defined]
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
     input_validator: Type[T] | None = None,
