@@ -24,6 +24,7 @@ class ConcurrencyLimitStrategy(int, metaclass=_enum_type_wrapper.EnumTypeWrapper
     DROP_NEWEST: _ClassVar[ConcurrencyLimitStrategy]
     QUEUE_NEWEST: _ClassVar[ConcurrencyLimitStrategy]
     GROUP_ROUND_ROBIN: _ClassVar[ConcurrencyLimitStrategy]
+    CANCEL_NEWEST: _ClassVar[ConcurrencyLimitStrategy]
 
 class WorkerLabelComparator(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -52,6 +53,7 @@ CANCEL_IN_PROGRESS: ConcurrencyLimitStrategy
 DROP_NEWEST: ConcurrencyLimitStrategy
 QUEUE_NEWEST: ConcurrencyLimitStrategy
 GROUP_ROUND_ROBIN: ConcurrencyLimitStrategy
+CANCEL_NEWEST: ConcurrencyLimitStrategy
 EQUAL: WorkerLabelComparator
 NOT_EQUAL: WorkerLabelComparator
 GREATER_THAN: WorkerLabelComparator
