@@ -1,13 +1,15 @@
 import os
 from typing import TYPE_CHECKING, Any
 
-import grpc
+import grpc  # type: ignore[import-untyped]
 
 if TYPE_CHECKING:
     from hatchet_sdk.loader import ClientConfig
 
 
-def new_conn(config: "ClientConfig", aio=False):
+def new_conn(
+    config: "ClientConfig", aio: bool = False
+) -> grpc.Channel | grpc.aio.Channel:
 
     credentials: grpc.ChannelCredentials | None = None
 
