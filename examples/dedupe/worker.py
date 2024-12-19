@@ -1,5 +1,6 @@
 import asyncio
 import random
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -15,7 +16,7 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["parent:create"])
 class DedupeParent:
     @hatchet.step(timeout="1m")
-    async def spawn(self, context: Context):
+    async def spawn(self, context: Context) -> dict[str, list[Any]]:
         print("spawning child")
 
         results = []
@@ -45,19 +46,19 @@ class DedupeParent:
 @hatchet.workflow(on_events=["child:create"])
 class DedupeChild:
     @hatchet.step()
-    async def process(self, context: Context):
+    async def process(self, context: Context) -> dict[str, str]:
         await asyncio.sleep(3)
 
         print(f"child process")
         return {"status": "success"}
 
     @hatchet.step()
-    async def process2(self, context: Context):
+    async def process2(self, context: Context) -> dict[str, str]:
         print("child process2")
         return {"status2": "success"}
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("fanout-worker", max_runs=100)
     worker.register_workflow(DedupeParent())
     worker.register_workflow(DedupeChild())

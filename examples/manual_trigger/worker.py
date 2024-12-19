@@ -14,7 +14,7 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["man:create"])
 class ManualTriggerWorkflow:
     @hatchet.step()
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, str]:
         res = context.playground("res", "HELLO")
 
         # Get the directory of the current script
@@ -37,10 +37,10 @@ class ManualTriggerWorkflow:
 
         time.sleep(3)
         print("executed step1")
-        return {"step1": "data1 " + res}
+        return {"step1": "data1 " + (res or "")}
 
     @hatchet.step(parents=["step1"], timeout="4s")
-    def step2(self, context):
+    def step2(self, context: Context) -> dict[str, str]:
         print("started step2")
         time.sleep(1)
         print("finished step2")

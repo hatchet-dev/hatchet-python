@@ -27,7 +27,7 @@ async def low_prio_func(context: Context) -> MyResultType:
     return MyResultType(return_string="Low Priority Return")
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("example-priority-worker", max_runs=1)
     hatchet.admin.run(high_prio_func, {"test": "test"})
     hatchet.admin.run(high_prio_func, {"test": "test"})

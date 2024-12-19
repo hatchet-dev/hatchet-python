@@ -8,21 +8,21 @@ from hatchet_sdk.hatchet import Hatchet
 
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
-async def test_event_push(hatchet: Hatchet):
+async def test_event_push(hatchet: Hatchet) -> None:
     e = hatchet.event.push("user:create", {"test": "test"})
 
     assert e.eventId is not None
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_async_event_push(aiohatchet: Hatchet):
+async def test_async_event_push(aiohatchet: Hatchet) -> None:
     e = await aiohatchet.event.async_push("user:create", {"test": "test"})
 
     assert e.eventId is not None
 
 
 @pytest.mark.asyncio(scope="session")
-async def test_async_event_bulk_push(aiohatchet: Hatchet):
+async def test_async_event_bulk_push(aiohatchet: Hatchet) -> None:
 
     events: List[BulkPushEventWithMetadata] = [
         {

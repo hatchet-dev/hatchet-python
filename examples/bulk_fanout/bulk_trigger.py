@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import os
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -11,11 +12,11 @@ from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.run_event_listener import StepRunEventType
 
 
-async def main():
+async def main() -> None:
     load_dotenv()
     hatchet = new_client()
 
-    workflowRuns: WorkflowRun = []
+    workflowRuns: list[dict[str, Any]] = []
 
     # we are going to run the BulkParent workflow 20 which will trigger the Child workflows n times for each n in range(20)
     for i in range(20):

@@ -1,4 +1,5 @@
 import asyncio
+from typing import cast
 
 from dotenv import load_dotenv
 
@@ -9,10 +10,11 @@ load_dotenv()
 hatchet = Hatchet(debug=True)
 
 
-async def main():
-    list: WorkflowList = await hatchet.rest.aio.workflow_list()
+async def main() -> None:
+    workflow_list = await hatchet.rest.aio.workflow_list()
+    rows = workflow_list.rows or []
 
-    for workflow in list.rows:
+    for workflow in rows:
         print(workflow.name)
         print(workflow.metadata.id)
         print(workflow.metadata.created_at)

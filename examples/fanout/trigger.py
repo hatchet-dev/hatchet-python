@@ -10,7 +10,7 @@ from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.run_event_listener import StepRunEventType
 
 
-async def main():
+async def main() -> None:
     load_dotenv()
     hatchet = new_client()
 

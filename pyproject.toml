@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.42.3"
+version = "0.42.4"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -79,11 +79,16 @@ files = [
   "hatchet_sdk/utils/serialization.py",
   "hatchet_sdk/utils/tracing.py",
   "hatchet_sdk/utils/types.py",
-  "hatchet_sdk/utils/backoff.py"
+  "hatchet_sdk/utils/backoff.py",
+  "examples/**/*.py",
+  "hatchet_sdk/clients/rest/models/workflow_list.py",
+  "hatchet_sdk/clients/rest/models/workflow_run.py",
+  "hatchet_sdk/context/worker_context.py",
+  "hatchet_sdk/clients/dispatcher/dispatcher.py",
 ]
-exclude = "^examples/*"
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
+explicit_package_bases = true
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"

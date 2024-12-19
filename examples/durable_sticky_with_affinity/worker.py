@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -21,7 +22,7 @@ hatchet = Hatchet(debug=True)
         },
     },
 )
-async def my_durable_func(context: DurableContext):
+async def my_durable_func(context: DurableContext) -> dict[str, Any]:
     try:
         ref = await context.aio.spawn_workflow(
             "StickyChildWorkflow", {}, options={"sticky": True}
@@ -45,7 +46,7 @@ class StickyChildWorkflow:
             },
         },
     )
-    async def child(self, context: Context):
+    async def child(self, context: Context) -> dict[str, str | None]:
         await context.worker.async_upsert_labels({"running_workflow": "True"})
 
         print(f"Heavy work started on {context.worker.id()}")
@@ -55,8 +56,7 @@ class StickyChildWorkflow:
         return {"worker": context.worker.id()}
 
 
-def main():
-
+def main() -> None:
     worker = hatchet.worker(
         "sticky-worker",
         max_runs=10,

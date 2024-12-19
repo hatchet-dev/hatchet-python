@@ -13,7 +13,7 @@ hatchet = Hatchet(debug=True)
 class TimeoutWorkflow:
 
     @hatchet.step(timeout="4s")
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, str]:
         time.sleep(5)
         return {"status": "success"}
 
@@ -22,7 +22,7 @@ class TimeoutWorkflow:
 class RefreshTimeoutWorkflow:
 
     @hatchet.step(timeout="4s")
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, str]:
 
         context.refresh_timeout("10s")
         time.sleep(5)
@@ -30,7 +30,7 @@ class RefreshTimeoutWorkflow:
         return {"status": "success"}
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("timeout-worker", max_runs=4)
     worker.register_workflow(TimeoutWorkflow())
     worker.register_workflow(RefreshTimeoutWorkflow())

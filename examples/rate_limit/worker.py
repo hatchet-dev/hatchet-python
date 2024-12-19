@@ -12,12 +12,11 @@ hatchet = Hatchet(debug=True)
 class RateLimitWorkflow:
 
     @hatchet.step(rate_limits=[RateLimit(key="test-limit", units=1)])
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> None:
         print("executed step1")
-        pass
 
 
-def main():
+def main() -> None:
     hatchet.admin.put_rate_limit("test-limit", 2, RateLimitDuration.SECOND)
 
     worker = hatchet.worker("rate-limit-worker", max_runs=10)

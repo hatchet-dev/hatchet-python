@@ -6,4 +6,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 def is_basemodel_subclass(model: Any) -> bool:
-    return isinstance(model, type) and issubclass(model, BaseModel)
+    try:
+        return issubclass(model, BaseModel)
+    except TypeError:
+        return False

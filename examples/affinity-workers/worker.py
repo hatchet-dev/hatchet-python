@@ -19,7 +19,7 @@ class AffinityWorkflow:
             },
         },
     )
-    async def step(self, context: Context):
+    async def step(self, context: Context) -> dict[str, str | None]:
         if context.worker.labels().get("model") != "fancy-ai-model-v2":
             context.worker.upsert_labels({"model": "unset"})
             # DO WORK TO EVICT OLD MODEL / LOAD NEW MODEL
@@ -28,7 +28,7 @@ class AffinityWorkflow:
         return {"worker": context.worker.id()}
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker(
         "affinity-worker",
         max_runs=10,

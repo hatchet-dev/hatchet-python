@@ -2,7 +2,12 @@ import time
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import ConcurrencyExpression, ConcurrencyLimitStrategy, Hatchet
+from hatchet_sdk import (
+    ConcurrencyExpression,
+    ConcurrencyLimitStrategy,
+    Context,
+    Hatchet,
+)
 
 load_dotenv()
 
@@ -21,7 +26,7 @@ hatchet = Hatchet(debug=True)
 class ConcurrencyDemoWorkflowRR:
 
     @hatchet.step()
-    def step1(self, context):
+    def step1(self, context: Context) -> None:
         print("starting step1")
         time.sleep(2)
         print("finished step1")

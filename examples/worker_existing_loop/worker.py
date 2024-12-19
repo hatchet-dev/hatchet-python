@@ -13,14 +13,14 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(name="MyWorkflow")
 class MyWorkflow:
     @hatchet.step()
-    async def step(self, context: Context):
+    async def step(self, context: Context) -> dict[str, str]:
         print("started")
         await asyncio.sleep(10)
         print("finished")
         return {"result": "returned result"}
 
 
-async def async_main():
+async def async_main() -> None:
     worker = None
     try:
         workflow = MyWorkflow()
@@ -33,10 +33,11 @@ async def async_main():
         while True:
             await asyncio.sleep(1)
     finally:
-        await worker.exit_gracefully()
+        if worker:
+            await worker.exit_gracefully()
 
 
-def main():
+def main() -> None:
     with suppress(KeyboardInterrupt):
         asyncio.run(async_main())
 

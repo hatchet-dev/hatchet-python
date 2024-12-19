@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -12,7 +13,7 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["parent:create"])
 class Parent:
     @hatchet.step(timeout="5m")
-    async def spawn(self, context: Context):
+    async def spawn(self, context: Context) -> dict[str, Any]:
         print("spawning child")
 
         context.put_stream("spawning...")
@@ -41,20 +42,20 @@ class Parent:
 @hatchet.workflow(on_events=["child:create"])
 class Child:
     @hatchet.step()
-    def process(self, context: Context):
+    def process(self, context: Context) -> dict[str, str]:
         a = context.workflow_input()["a"]
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}
 
     @hatchet.step()
-    def process2(self, context: Context):
+    def process2(self, context: Context) -> dict[str, str]:
         print("child process2")
         context.put_stream("child 2...")
         return {"status2": "success"}
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("fanout-worker", max_runs=40)
     worker.register_workflow(Parent())
     worker.register_workflow(Child())

@@ -12,7 +12,7 @@ hatchet = Hatchet(debug=True)
 @hatchet.workflow(on_events=["printer:schedule"])
 class PrintSchedule:
     @hatchet.step()
-    def schedule(self, context: Context):
+    def schedule(self, context: Context) -> None:
         now = datetime.now()
         print(f"the time is \t {now.strftime('%H:%M:%S')}")
         future_time = now + timedelta(seconds=15)
@@ -26,7 +26,7 @@ class PrintSchedule:
 @hatchet.workflow()
 class PrintPrinter:
     @hatchet.step()
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> None:
         now = datetime.now()
         print(f"printed at \t {now.strftime('%H:%M:%S')}")
         print(f"message \t {context.workflow_input()['message']}")

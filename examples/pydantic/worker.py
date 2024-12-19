@@ -19,7 +19,7 @@ class ParentInput(BaseModel):
 @hatchet.workflow(input_validator=ParentInput)
 class Parent:
     @hatchet.step(timeout="5m")
-    async def spawn(self, context: Context):
+    async def spawn(self, context: Context) -> dict[str, str]:
         ## Use `typing.cast` to cast your `workflow_input`
         ## to the type of your `input_validator`
         input = cast(ParentInput, context.workflow_input())  ## This is a `ParentInput`
@@ -29,7 +29,7 @@ class Parent:
             {"a": 1, "b": "10"},
         )
 
-        return await child.result()
+        return cast(dict[str, str], await child.result())
 
 
 class ChildInput(BaseModel):
@@ -55,7 +55,7 @@ class Child:
         ## This is an instance of `StepResponse`
         process_output = cast(StepResponse, context.step_output("process"))
 
-        return {"status": "step 2 - success"}
+        return {"status": "step 2 - success"}  # type: ignore[return-value]
 
     @hatchet.step(parents=["process2"])
     def process3(self, context: Context) -> StepResponse:
@@ -71,7 +71,7 @@ class Child:
 # ‼️
 
 
-def main():
+def main() -> None:
     worker = hatchet.worker("pydantic-worker")
     worker.register_workflow(Parent())
     worker.register_workflow(Child())

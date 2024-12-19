@@ -1,12 +1,12 @@
 import pytest
 
-from hatchet_sdk import Hatchet
+from hatchet_sdk import Hatchet, Worker
 
 
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
 @pytest.mark.parametrize("worker", ["pydantic"], indirect=True)
-async def test_run_validation_error(hatchet: Hatchet, worker):
+async def test_run_validation_error(hatchet: Hatchet, worker: Worker) -> None:
     run = hatchet.admin.run_workflow(
         "Parent",
         {},
@@ -19,7 +19,7 @@ async def test_run_validation_error(hatchet: Hatchet, worker):
 # requires scope module or higher for shared event loop
 @pytest.mark.asyncio(scope="session")
 @pytest.mark.parametrize("worker", ["pydantic"], indirect=True)
-async def test_run(hatchet: Hatchet, worker):
+async def test_run(hatchet: Hatchet, worker: Worker) -> None:
     run = hatchet.admin.run_workflow(
         "Parent",
         {"x": "foobar"},

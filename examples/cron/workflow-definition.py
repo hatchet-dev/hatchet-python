@@ -13,10 +13,10 @@ hatchet = Hatchet(debug=True)
 # Adding a cron trigger to a workflow is as simple
 # as adding a `cron expression` to the `on_cron`
 # prop of the workflow definition
-@hatchet.workflow(on_cron="* * * * *")
+@hatchet.workflow(on_crons=["* * * * *"])
 class CronWorkflow:
     @hatchet.step()
-    def step1(self, context: Context):
+    def step1(self, context: Context) -> dict[str, str]:
 
         return {
             "time": "step1",
@@ -26,7 +26,7 @@ class CronWorkflow:
 # !!
 
 
-def main():
+def main() -> None:
     workflow = CronWorkflow()
     worker = hatchet.worker("test-worker", max_runs=1)
     worker.register_workflow(workflow)

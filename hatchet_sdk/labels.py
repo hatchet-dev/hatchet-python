@@ -1,7 +1,7 @@
 from typing import TypedDict
 
 
-class DesiredWorkerLabel(TypedDict):
+class DesiredWorkerLabel(TypedDict, total=False):
     value: str | int
     required: bool | None = None
     weight: int | None = None

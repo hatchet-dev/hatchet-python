@@ -10,7 +10,7 @@ load_dotenv()
 hatchet = Hatchet()
 
 
-async def create_scheduled():
+async def create_scheduled() -> None:
     # ❓ Create
     scheduled_run = await hatchet.scheduled.aio.create(
         workflow_name="simple-workflow",

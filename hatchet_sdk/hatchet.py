@@ -1,15 +1,13 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, Type, TypeVar, cast, get_type_hints
+from typing import Any, Callable, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
-
-## TODO: These type stubs need to be updated to mass MyPy, and then we can remove this ignore
-## There are file-level type ignore lines in the corresponding .pyi files.
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.context.context import Context
+from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
     DesiredWorkerLabels,
@@ -20,6 +18,7 @@ from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig, ConfigLoader
 from hatchet_sdk.rate_limit import RateLimit
+from hatchet_sdk.v2.callable import HatchetCallable
 
 from .client import Client, new_client, new_client_raw
 from .clients.admin import AdminClient
@@ -36,6 +35,7 @@ from .workflow import (
 )
 
 T = TypeVar("T", bound=BaseModel)
+TWorkflow = TypeVar("TWorkflow", bound=object)
 
 
 def workflow(
@@ -45,30 +45,35 @@ def workflow(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
-    sticky: StickyStrategy = None,
+    sticky: Union[StickyStrategy.Value, None] = None,  # type: ignore[name-defined]
     default_priority: int | None = None,
     concurrency: ConcurrencyExpression | None = None,
     input_validator: Type[T] | None = None,
-) -> Callable[[Type[WorkflowInterface]], WorkflowMeta]:
+) -> Callable[[Type[TWorkflow]], WorkflowMeta]:
     on_events = on_events or []
     on_crons = on_crons or []
 
-    def inner(cls: Type[WorkflowInterface]) -> WorkflowMeta:
-        cls.on_events = on_events
-        cls.on_crons = on_crons
-        cls.name = name or str(cls.__name__)
-        cls.version = version
-        cls.timeout = timeout
-        cls.schedule_timeout = schedule_timeout
-        cls.sticky = sticky
-        cls.default_priority = default_priority
-        cls.concurrency_expression = concurrency
+    def inner(cls: Type[TWorkflow]) -> WorkflowMeta:
+        nonlocal name
+        name = name or str(cls.__name__)
+
+        setattr(cls, "on_events", on_events)
+        setattr(cls, "on_crons", on_crons)
+        setattr(cls, "name", name)
+        setattr(cls, "version", version)
+        setattr(cls, "timeout", timeout)
+        setattr(cls, "schedule_timeout", schedule_timeout)
+        setattr(cls, "sticky", sticky)
+        setattr(cls, "default_priority", default_priority)
+        setattr(cls, "concurrency_expression", concurrency)
+
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
 
         ## TODO: Figure out how to type this metaclass correctly
-        cls.input_validator = input_validator
-        return WorkflowMeta(cls.name, cls.__bases__, dict(cls.__dict__))
+        setattr(cls, "input_validator", input_validator)
+
+        return WorkflowMeta(name, cls.__bases__, dict(cls.__dict__))
 
     return inner
 
@@ -82,33 +87,38 @@ def step(
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
+) -> Callable[..., Any]:
     parents = parents or []
 
-    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
+    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
         limits = None
         if rate_limits:
             limits = [rate_limit._req for rate_limit in rate_limits or []]
 
-        func._step_name = name.lower() or str(func.__name__).lower()
-        func._step_parents = parents
-        func._step_timeout = timeout
-        func._step_retries = retries
-        func._step_rate_limits = limits
-        func._step_backoff_factor = backoff_factor
-        func._step_backoff_max_seconds = backoff_max_seconds
+        setattr(func, "_step_name", name.lower() or str(func.__name__).lower())
+        setattr(func, "_step_parents", parents)
+        setattr(func, "_step_timeout", timeout)
+        setattr(func, "_step_retries", retries)
+        setattr(func, "_step_rate_limits", retries)
+        setattr(func, "_step_rate_limits", limits)
+        setattr(func, "_step_backoff_factor", backoff_factor)
+        setattr(func, "_step_backoff_max_seconds", backoff_max_seconds)
 
-        func._step_desired_worker_labels = {}
-
-        for key, d in desired_worker_labels.items():
+        def create_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
             value = d["value"] if "value" in d else None
-            func._step_desired_worker_labels[key] = DesiredWorkerLabels(
+            return DesiredWorkerLabels(
                 strValue=str(value) if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
-                required=d["required"] if "required" in d else None,
+                required=d["required"] if "required" in d else None,  # type: ignore[arg-type]
                 weight=d["weight"] if "weight" in d else None,
-                comparator=d["comparator"] if "comparator" in d else None,
+                comparator=d["comparator"] if "comparator" in d else None,  # type: ignore[arg-type]
             )
+
+        setattr(
+            func,
+            "_step_desired_worker_labels",
+            {key: create_label(d) for key, d in desired_worker_labels.items()},
+        )
 
         return func
 
@@ -122,21 +132,23 @@ def on_failure_step(
     rate_limits: list[RateLimit] | None = None,
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
-    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
+) -> Callable[..., Any]:
+    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
         limits = None
         if rate_limits:
             limits = [
-                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)
+                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)  # type: ignore[arg-type]
                 for rate_limit in rate_limits or []
             ]
 
-        func._on_failure_step_name = name.lower() or str(func.__name__).lower()
-        func._on_failure_step_timeout = timeout
-        func._on_failure_step_retries = retries
-        func._on_failure_step_rate_limits = limits
-        func._on_failure_step_backoff_factor = backoff_factor
-        func._on_failure_step_backoff_max_seconds = backoff_max_seconds
+        setattr(
+            func, "_on_failure_step_name", name.lower() or str(func.__name__).lower()
+        )
+        setattr(func, "_on_failure_step_timeout", timeout)
+        setattr(func, "_on_failure_step_retries", retries)
+        setattr(func, "_on_failure_step_rate_limits", limits)
+        setattr(func, "_on_failure_step_backoff_factor", backoff_factor)
+        setattr(func, "_on_failure_step_backoff_max_seconds", backoff_max_seconds)
 
         return func
 
@@ -147,11 +159,15 @@ def concurrency(
     name: str = "",
     max_runs: int = 1,
     limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-) -> Callable[[WorkflowStepProtocol], WorkflowStepProtocol]:
-    def inner(func: WorkflowStepProtocol) -> WorkflowStepProtocol:
-        func._concurrency_fn_name = name.lower() or str(func.__name__).lower()
-        func._concurrency_max_runs = max_runs
-        func._concurrency_limit_strategy = limit_strategy
+) -> Callable[..., Any]:
+    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
+        setattr(
+            func,
+            "_concurrency_fn_name",
+            name.lower() or str(func.__name__).lower(),
+        )
+        setattr(func, "_concurrency_max_runs", max_runs)
+        setattr(func, "_concurrency_limit_strategy", limit_strategy)
 
         return func
 

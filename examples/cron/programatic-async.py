@@ -7,7 +7,7 @@ load_dotenv()
 hatchet = Hatchet()
 
 
-async def create_cron():
+async def create_cron() -> None:
     # ❓ Create
     cron_trigger = await hatchet.cron.aio.create(
         workflow_name="simple-cron-workflow",

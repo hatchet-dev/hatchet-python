@@ -1,10 +1,13 @@
 import asyncio
 import inspect
+from concurrent.futures import Executor
 from functools import partial, wraps
 from threading import Thread
+from typing import Any
 
 
-def sync_to_async(func):
+## TODO: Stricter typing here
+def sync_to_async(func: Any) -> Any:
     """
     A decorator to run a synchronous function or coroutine in an asynchronous context with added
     asyncio loop safety.
@@ -40,8 +43,14 @@ def sync_to_async(func):
         asyncio.run(main())
     """
 
+    ## TODO: Stricter typing here
     @wraps(func)
-    async def run(*args, loop=None, executor=None, **kwargs):
+    async def run(
+        *args: Any,
+        loop: asyncio.AbstractEventLoop | None = None,
+        executor: Executor | None = None,
+        **kwargs: Any
+    ) -> Any:
         """
         The asynchronous wrapper function that runs the given function in an executor.
 
@@ -59,7 +68,7 @@ def sync_to_async(func):
 
         if inspect.iscoroutinefunction(func):
             # Wrap the coroutine to run it in an executor
-            async def wrapper():
+            async def wrapper() -> Any:
                 return await func(*args, **kwargs)
 
             pfunc = partial(asyncio.run, wrapper())
@@ -75,7 +84,7 @@ def sync_to_async(func):
 class EventLoopThread:
     """A class that manages an asyncio event loop running in a separate thread."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the EventLoopThread by creating an event loop
         and setting up a thread to run the loop.

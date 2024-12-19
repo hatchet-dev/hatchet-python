@@ -12,7 +12,7 @@ from hatchet_sdk.clients.run_event_listener import StepRunEventType
 from hatchet_sdk.v2.hatchet import Hatchet
 
 
-def main():
+def main() -> None:
     load_dotenv()
     hatchet = Hatchet()
 

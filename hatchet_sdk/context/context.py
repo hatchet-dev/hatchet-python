@@ -13,8 +13,8 @@ from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context.worker_context import WorkerContext
-from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData  # type: ignore
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.contracts.dispatcher_pb2 import OverridesData
+from hatchet_sdk.contracts.workflows_pb2 import (
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )
@@ -69,7 +69,7 @@ class BaseContext:
             meta = options["additional_metadata"]
 
         ## TODO: Pydantic here to simplify this
-        trigger_options: TriggerWorkflowOptions = {  # type: ignore[typeddict-item]
+        trigger_options: TriggerWorkflowOptions = {
             "parent_id": workflow_run_id,
             "parent_step_run_id": step_run_id,
             "child_key": key,
@@ -149,8 +149,7 @@ class ContextAioImpl(BaseContext):
             key = child_workflow_run.get("key")
             options = child_workflow_run.get("options", {})
 
-            ## TODO: figure out why this is failing
-            trigger_options = self._prepare_workflow_options(key, options, worker_id)  # type: ignore[arg-type]
+            trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
             bulk_trigger_workflow_runs.append(
                 WorkflowRunDict(
@@ -238,14 +237,17 @@ class Context(BaseContext):
             self.input = self.data.get("input", {})
 
     def step_output(self, step: str) -> dict[str, Any] | BaseModel:
-        validators = self.validator_registry.get(step)
+        workflow_validator = next(
+            (v for k, v in self.validator_registry.items() if k.split(":")[-1] == step),
+            None,
+        )
 
         try:
             parent_step_data = cast(dict[str, Any], self.data["parents"][step])
         except KeyError:
             raise ValueError(f"Step output for '{step}' not found")
 
-        if validators and (v := validators.step_output):
+        if workflow_validator and (v := workflow_validator.step_output):
             return v.model_validate(parent_step_data)
 
         return parent_step_data
