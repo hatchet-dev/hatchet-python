@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Union
 
-from celpy import CELEvalError, Environment
+from celpy import CELEvalError, Environment  # type: ignore[import-untyped]
 
 from hatchet_sdk.contracts.workflows_pb2 import CreateStepRateLimit
 
@@ -69,11 +69,11 @@ class RateLimit:
     dynamic_key: Union[str, None] = None
     units: Union[int, str] = 1
     limit: Union[int, str, None] = None
-    duration: RateLimitDuration = RateLimitDuration.MINUTE
+    duration: RateLimitDuration = RateLimitDuration.MINUTE  # type: ignore[assignment]
 
-    _req: CreateStepRateLimit = None
+    _req: CreateStepRateLimit | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # juggle the key and key_expr fields
         key = self.static_key
         key_expression = self.dynamic_key
@@ -122,5 +122,5 @@ class RateLimit:
             units=units,
             units_expr=units_expression,
             limit_values_expr=limit_expression,
-            duration=self.duration,
+            duration=self.duration,  # type: ignore[arg-type]
         )
