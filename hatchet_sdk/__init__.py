@@ -137,8 +137,9 @@ from .clients.events import PushEventOptions
 from .clients.run_event_listener import StepRunEventType, WorkflowRunEventType
 from .context.context import Context
 from .context.worker_context import WorkerContext
-from .hatchet import ClientConfig, Hatchet, concurrency, on_failure_step, step, workflow
-from .worker import Worker, WorkerStartOptions, WorkerStatus
+from .hatchet import Hatchet, concurrency, on_failure_step, step, workflow
+from .loader import ClientConfig
+from .worker.worker import Worker, WorkerStartOptions, WorkerStatus
 from .workflow import ConcurrencyExpression
 
 __all__ = [

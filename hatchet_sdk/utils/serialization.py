@@ -1,7 +1,9 @@
 from typing import Any
 
 
-def flatten(xs: dict[str, Any], parent_key: str, separator: str) -> dict[str, Any]:
+def flatten(
+    xs: dict[str, Any] | None, parent_key: str, separator: str
+) -> dict[str, Any]:
     if not xs:
         return {}
 

@@ -30,7 +30,7 @@ class Client:
         defaults: ClientConfig = ClientConfig(),
         debug: bool = False,
         *opts_functions: Callable[[ClientConfig], None],
-    ):
+    ) -> "Client":
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -48,7 +48,7 @@ class Client:
         cls,
         config: ClientConfig = ClientConfig(),
         debug: bool = False,
-    ):
+    ) -> "Client":
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -89,7 +89,7 @@ class Client:
         rest_client: RestApi,
         config: ClientConfig,
         debug: bool = False,
-    ):
+    ) -> None:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -107,8 +107,8 @@ class Client:
         self.debug = debug
 
 
-def with_host_port(host: str, port: int):
-    def with_host_port_impl(config: ClientConfig):
+def with_host_port(host: str, port: int) -> Callable[[ClientConfig], None]:
+    def with_host_port_impl(config: ClientConfig) -> None:
         config.host = host
         config.port = port
 
