@@ -94,6 +94,9 @@ files = [
   "hatchet_sdk/context/worker_context.py",
   "hatchet_sdk/clients/dispatcher/dispatcher.py",
 ]
+exclude = [
+  "hatchet_sdk/clients/rest",
+]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
 explicit_package_bases = true
