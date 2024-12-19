@@ -28,14 +28,14 @@ from ..loader import ClientConfig
 from ..metadata import get_metadata
 
 
-def new_event(conn, config: ClientConfig):
+def new_event(conn: grpc.Channel, config: ClientConfig) -> "EventClient":
     return EventClient(
         client=EventsServiceStub(conn),
         config=config,
     )
 
 
-def proto_timestamp_now():
+def proto_timestamp_now() -> timestamp_pb2.Timestamp:
     t = datetime.datetime.now().timestamp()
     seconds = int(t)
     nanos = int(t % 1 * 1e9)
@@ -44,12 +44,12 @@ def proto_timestamp_now():
 
 
 class PushEventOptions(TypedDict, total=False):
-    additional_metadata: Dict[str, str] | None = None
-    namespace: str | None = None
+    additional_metadata: dict[str, str] | None
+    namespace: str | None
 
 
 class BulkPushEventOptions(TypedDict, total=False):
-    namespace: str | None = None
+    namespace: str | None
 
 
 class BulkPushEventWithMetadata(TypedDict, total=False):
@@ -134,7 +134,7 @@ class EventClient:
     def bulk_push(
         self,
         events: List[BulkPushEventWithMetadata],
-        options: BulkPushEventOptions = None,
+        options: BulkPushEventOptions | None = None,
     ) -> List[Event]:
         namespace = self.namespace
         bulk_push_correlation_id = uuid4()
@@ -196,7 +196,7 @@ class EventClient:
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
-    def log(self, message: str, step_run_id: str):
+    def log(self, message: str, step_run_id: str) -> None:
         try:
             request = PutLogRequest(
                 stepRunId=step_run_id,
@@ -208,7 +208,7 @@ class EventClient:
         except Exception as e:
             raise ValueError(f"Error logging: {e}")
 
-    def stream(self, data: str | bytes, step_run_id: str):
+    def stream(self, data: str | bytes, step_run_id: str) -> None:
         try:
             if isinstance(data, str):
                 data_bytes = data.encode("utf-8")

@@ -2,10 +2,7 @@ from typing import Any, Callable, TypeVar, Union
 
 from hatchet_sdk import Worker
 from hatchet_sdk.context.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
-    ConcurrencyLimitStrategy,
-    StickyStrategy,
-)
+from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy, StickyStrategy
 from hatchet_sdk.hatchet import Hatchet as HatchetV1
 from hatchet_sdk.hatchet import workflow
 from hatchet_sdk.labels import DesiredWorkerLabel
@@ -63,7 +60,7 @@ def durable(
     version: str = "",
     timeout: str = "60m",
     schedule_timeout: str = "5m",
-    sticky: StickyStrategy = None,
+    sticky: StickyStrategy | None = None,
     retries: int = 0,
     rate_limits: list[RateLimit] | None = None,
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
@@ -209,7 +206,7 @@ class Hatchet(HatchetV1):
 
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    ):
+    ) -> Worker:
         worker = Worker(
             name=name,
             max_runs=max_runs,

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Union
 
 from pydantic import BaseModel, field_validator
 
@@ -24,7 +24,7 @@ class CreateCronTriggerInput(BaseModel):
     """
 
     expression: str = None
-    input: dict = {}
+    input: dict[str, Any] = {}
     additional_metadata: dict[str, str] = {}
 
     @field_validator("expression")
@@ -86,7 +86,7 @@ class CronClient:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: dict,
+        input: dict[str, Any],
         additional_metadata: dict[str, str],
     ) -> CronWorkflows:
         """

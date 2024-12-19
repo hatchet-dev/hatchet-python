@@ -46,7 +46,7 @@ class GetActionListenerRequest:
 
     labels: dict[str, WorkerLabels] = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.labels = {}
 
         for key, value in self._labels.items():
@@ -77,7 +77,7 @@ class Action:
     child_workflow_key: str | None = None
     parent_workflow_run_id: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
             try:
                 self.additional_metadata = json.loads(self.additional_metadata)
@@ -137,15 +137,15 @@ class ActionListener:
 
     missed_heartbeats: int = field(default=0, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.client = DispatcherStub(new_conn(self.config))
         self.aio_client = DispatcherStub(new_conn(self.config, True))
         self.token = self.config.token
 
-    def is_healthy(self):
+    def is_healthy(self) -> bool:
         return self.last_heartbeat_succeeded
 
-    async def heartbeat(self):
+    async def heartbeat(self) -> None:
         # send a heartbeat every 4 seconds
         heartbeat_delay = 4
 
@@ -205,7 +205,7 @@ class ActionListener:
                     break
             await asyncio.sleep(heartbeat_delay)
 
-    async def start_heartbeater(self):
+    async def start_heartbeater(self) -> None:
         if self.heartbeat_task is not None:
             return
 
@@ -219,7 +219,7 @@ class ActionListener:
                 raise e
         self.heartbeat_task = loop.create_task(self.heartbeat())
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncGenerator[Action, None]:
         return self._generator()
 
     async def _generator(self) -> AsyncGenerator[Action, None]:
@@ -323,14 +323,14 @@ class ActionListener:
 
                     self.retries = self.retries + 1
 
-    def parse_action_payload(self, payload: str):
+    def parse_action_payload(self, payload: str) -> dict[str, Any]:
         try:
             payload_data = json.loads(payload)
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding payload: {e}")
         return payload_data
 
-    def map_action_type(self, action_type):
+    def map_action_type(self, action_type: ActionType) -> int:
         if action_type == ActionType.START_STEP_RUN:
             return START_STEP_RUN
         elif action_type == ActionType.CANCEL_STEP_RUN:
@@ -341,7 +341,7 @@ class ActionListener:
             # logger.error(f"Unknown action type: {action_type}")
             return None
 
-    async def get_listen_client(self):
+    async def get_listen_client(self) -> Any:
         current_time = int(time.time())
 
         if (
@@ -392,7 +392,7 @@ class ActionListener:
 
         return listener
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.run_heartbeat = False
         self.heartbeat_task.cancel()
 
@@ -404,7 +404,7 @@ class ActionListener:
         if self.interrupt:
             self.interrupt.set()
 
-    def unregister(self):
+    def unregister(self) -> Any:
         self.run_heartbeat = False
         self.heartbeat_task.cancel()
 

@@ -32,12 +32,12 @@ class InjectingFilter(logging.Filter):
 
 
 class CustomLogHandler(logging.StreamHandler):
-    def __init__(self, event_client: EventClient, stream=None):
+    def __init__(self, event_client: EventClient, stream=None) -> None:
         super().__init__(stream)
         self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
         self.event_client = event_client
 
-    def _log(self, line: str, step_run_id: str | None):
+    def _log(self, line: str, step_run_id: str | None) -> None:
         try:
             if not step_run_id:
                 return
@@ -46,7 +46,7 @@ class CustomLogHandler(logging.StreamHandler):
         except Exception as e:
             logger.error(f"Error logging: {e}")
 
-    def emit(self, record):
+    def emit(self, record) -> None:
         super().emit(record)
 
         log_entry = self.format(record)
@@ -57,7 +57,7 @@ def capture_logs(
     logger: logging.Logger,
     event_client: EventClient,
     func: Coroutine[Any, Any, Any],
-):
+) -> Coroutine[Any, Any, Any]:
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         if not logger:

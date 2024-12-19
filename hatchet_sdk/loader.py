@@ -1,7 +1,6 @@
-import json
 import os
 from logging import Logger, getLogger
-from typing import Dict, Optional
+from typing import Any, Optional, cast
 
 import yaml
 
@@ -25,18 +24,16 @@ class ClientTLSConfig:
 
 
 class ClientConfig:
-    logInterceptor: Logger
-
     def __init__(
         self,
-        tenant_id: str = None,
-        tls_config: ClientTLSConfig = None,
-        token: str = None,
+        tenant_id: str | None = None,
+        tls_config: ClientTLSConfig | None = None,
+        token: str | None = None,
         host_port: str = "localhost:7070",
         server_url: str = "https://app.dev.hatchet-tools.com",
-        namespace: str = None,
-        listener_v2_timeout: int = None,
-        logger: Logger = None,
+        namespace: str | None = None,
+        listener_v2_timeout: int | None = None,
+        logger: Logger | None = None,
         grpc_max_recv_message_length: int = 4 * 1024 * 1024,  # 4MB
         grpc_max_send_message_length: int = 4 * 1024 * 1024,  # 4MB
         otel_exporter_oltp_endpoint: str | None = None,
@@ -82,14 +79,14 @@ class ConfigLoader:
 
     def load_client_config(self, defaults: ClientConfig) -> ClientConfig:
         config_file_path = os.path.join(self.directory, "client.yaml")
-        config_data: object = {"tls": {}}
+        config_data: dict[str, Any] = {"tls": {}}
 
         # determine if client.yaml exists
         if os.path.exists(config_file_path):
             with open(config_file_path, "r") as file:
                 config_data = yaml.safe_load(file)
 
-        def get_config_value(key, env_var):
+        def get_config_value(key: str, env_var: str) -> str | None:
             if key in config_data:
                 return config_data[key]
 
@@ -102,10 +99,12 @@ class ConfigLoader:
 
         tenant_id = get_config_value("tenantId", "HATCHET_CLIENT_TENANT_ID")
         token = get_config_value("token", "HATCHET_CLIENT_TOKEN")
-        listener_v2_timeout = get_config_value(
+        _listener_v2_timeout = get_config_value(
             "listener_v2_timeout", "HATCHET_CLIENT_LISTENER_V2_TIMEOUT"
         )
-        listener_v2_timeout = int(listener_v2_timeout) if listener_v2_timeout else None
+        listener_v2_timeout = (
+            int(_listener_v2_timeout) if _listener_v2_timeout else None
+        )
 
         if not token:
             raise ValueError(
@@ -115,20 +114,27 @@ class ConfigLoader:
         host_port = get_config_value("hostPort", "HATCHET_CLIENT_HOST_PORT")
         server_url: str | None = None
 
-        grpc_max_recv_message_length = get_config_value(
-            "grpc_max_recv_message_length",
-            "HATCHET_CLIENT_GRPC_MAX_RECV_MESSAGE_LENGTH",
-        )
-        grpc_max_send_message_length = get_config_value(
-            "grpc_max_send_message_length",
-            "HATCHET_CLIENT_GRPC_MAX_SEND_MESSAGE_LENGTH",
+        grpc_max_recv_message_length = (
+            int(_grpc_max_recv_message_length)
+            if (
+                _grpc_max_recv_message_length := get_config_value(
+                    "grpc_max_recv_message_length",
+                    "HATCHET_CLIENT_GRPC_MAX_RECV_MESSAGE_LENGTH",
+                )
+            )
+            else None
         )
 
-        if grpc_max_recv_message_length:
-            grpc_max_recv_message_length = int(grpc_max_recv_message_length)
-
-        if grpc_max_send_message_length:
-            grpc_max_send_message_length = int(grpc_max_send_message_length)
+        grpc_max_send_message_length = (
+            int(_grpc_max_send_message_length)
+            if (
+                _grpc_max_send_message_length := get_config_value(
+                    "grpc_max_send_message_length",
+                    "HATCHET_CLIENT_GRPC_MAX_SEND_MESSAGE_LENGTH",
+                )
+            )
+            else None
+        )
 
         if not host_port:
             # extract host and port from token
@@ -203,36 +209,27 @@ class ConfigLoader:
             worker_healthcheck_enabled=worker_healthcheck_enabled,
         )
 
-    def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
+    def _load_tls_config(
+        self, tls_data: dict[str, Any], host_port: str
+    ) -> ClientTLSConfig:
         tls_strategy = (
-            tls_data["tlsStrategy"]
-            if "tlsStrategy" in tls_data
-            else self._get_env_var("HATCHET_CLIENT_TLS_STRATEGY")
+            cast(str | None, tls_data.get("tlsStrategy"))
+            or self._get_env_var("HATCHET_CLIENT_TLS_STRATEGY")
+            or "tls"
         )
 
-        if not tls_strategy:
-            tls_strategy = "tls"
-
-        cert_file = (
-            tls_data["tlsCertFile"]
-            if "tlsCertFile" in tls_data
-            else self._get_env_var("HATCHET_CLIENT_TLS_CERT_FILE")
+        cert_file = tls_data.get("tlsCertFile") or self._get_env_var(
+            "HATCHET_CLIENT_TLS_CERT_FILE"
         )
-        key_file = (
-            tls_data["tlsKeyFile"]
-            if "tlsKeyFile" in tls_data
-            else self._get_env_var("HATCHET_CLIENT_TLS_KEY_FILE")
+        key_file = tls_data.get("tlsKeyFile") or self._get_env_var(
+            "HATCHET_CLIENT_TLS_KEY_FILE"
         )
-        ca_file = (
-            tls_data["tlsRootCAFile"]
-            if "tlsRootCAFile" in tls_data
-            else self._get_env_var("HATCHET_CLIENT_TLS_ROOT_CA_FILE")
+        ca_file = tls_data.get("tlsRootCAFile") or self._get_env_var(
+            "HATCHET_CLIENT_TLS_ROOT_CA_FILE"
         )
 
-        server_name = (
-            tls_data["tlsServerName"]
-            if "tlsServerName" in tls_data
-            else self._get_env_var("HATCHET_CLIENT_TLS_SERVER_NAME")
+        server_name = tls_data.get("tlsServerName") or self._get_env_var(
+            "HATCHET_CLIENT_TLS_SERVER_NAME"
         )
 
         # if server_name is not set, use the host from the host_port

@@ -51,8 +51,11 @@ def create_carrier() -> dict[str, str]:
 
 
 def inject_carrier_into_metadata(
-    metadata: dict[Any, Any], carrier: dict[str, str]
+    metadata: dict[Any, Any] | None, carrier: dict[str, str]
 ) -> dict[Any, Any]:
+    if metadata is None:
+        metadata = {}
+
     if carrier:
         metadata[OTEL_CARRIER_KEY] = carrier
 

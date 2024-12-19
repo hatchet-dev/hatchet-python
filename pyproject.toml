@@ -47,6 +47,8 @@ mypy = "^1.14.0"
 types-protobuf = "^5.28.3.20241030"
 black = "^24.10.0"
 isort = "^5.13.2"
+types-pyyaml = "^6.0.12.20240917"
+types-psutil = "^6.1.0.20241102"
 
 [tool.poetry.group.test.dependencies]
 pytest-timeout = "^2.3.1"
@@ -78,24 +80,11 @@ extend_exclude = "hatchet_sdk/contracts/"
 
 [tool.mypy]
 strict = true
-files = [
-  "hatchet_sdk/hatchet.py",
-  "hatchet_sdk/worker/worker.py",
-  "hatchet_sdk/context/context.py",
-  "hatchet_sdk/worker/runner/runner.py",
-  "hatchet_sdk/workflow.py",
-  "hatchet_sdk/utils/serialization.py",
-  "hatchet_sdk/utils/tracing.py",
-  "hatchet_sdk/utils/types.py",
-  "hatchet_sdk/utils/backoff.py",
-  "examples/**/*.py",
-  "hatchet_sdk/clients/rest/models/workflow_list.py",
-  "hatchet_sdk/clients/rest/models/workflow_run.py",
-  "hatchet_sdk/context/worker_context.py",
-  "hatchet_sdk/clients/dispatcher/dispatcher.py",
-]
+files = "."
 exclude = [
-  "hatchet_sdk/clients/rest",
+    "hatchet_sdk/clients/rest/.*",
+    ".*.pyi$",
+    "hatchet_sdk/contracts/.*"
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]

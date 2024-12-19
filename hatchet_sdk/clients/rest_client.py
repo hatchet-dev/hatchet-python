@@ -2,7 +2,7 @@ import asyncio
 import atexit
 import datetime
 import threading
-from typing import Any, Coroutine, List
+from typing import Any, Coroutine, List, TypeVar
 
 from pydantic import StrictInt
 
@@ -78,49 +78,49 @@ class AsyncRestApi:
         )
 
         self._api_client = None
-        self._workflow_api = None
-        self._workflow_run_api = None
-        self._step_run_api = None
-        self._event_api = None
-        self._log_api = None
+        self._workflow_api: WorkflowApi | None = None
+        self._workflow_run_api: WorkflowRunApi | None = None
+        self._step_run_api: StepRunApi | None = None
+        self._event_api: EventApi | None = None
+        self._log_api: LogApi | None = None
 
     @property
-    def api_client(self):
+    def api_client(self) -> ApiClient:
         if self._api_client is None:
             self._api_client = ApiClient(configuration=self.config)
         return self._api_client
 
     @property
-    def workflow_api(self):
+    def workflow_api(self) -> WorkflowApi:
         if self._workflow_api is None:
             self._workflow_api = WorkflowApi(self.api_client)
         return self._workflow_api
 
     @property
-    def workflow_run_api(self):
+    def workflow_run_api(self) -> WorkflowRunApi:
         if self._workflow_run_api is None:
             self._workflow_run_api = WorkflowRunApi(self.api_client)
         return self._workflow_run_api
 
     @property
-    def step_run_api(self):
+    def step_run_api(self) -> StepRunApi:
         if self._step_run_api is None:
             self._step_run_api = StepRunApi(self.api_client)
         return self._step_run_api
 
     @property
-    def event_api(self):
+    def event_api(self) -> EventApi:
         if self._event_api is None:
             self._event_api = EventApi(self.api_client)
         return self._event_api
 
     @property
-    def log_api(self):
+    def log_api(self) -> LogApi:
         if self._log_api is None:
             self._log_api = LogApi(self.api_client)
         return self._log_api
 
-    async def close(self):
+    async def close(self) -> None:
         # Ensure the aiohttp client session is closed
         if self._api_client is not None:
             await self._api_client.close()
@@ -231,7 +231,7 @@ class AsyncRestApi:
         expression: str,
         input: dict[str, Any],
         additional_metadata: dict[str, str],
-    ):
+    ) -> CronWorkflows:
         return await self.workflow_run_api.cron_workflow_trigger_create(
             tenant=self.tenant_id,
             workflow=workflow_name,
@@ -243,7 +243,7 @@ class AsyncRestApi:
             ),
         )
 
-    async def cron_delete(self, cron_trigger_id: str):
+    async def cron_delete(self, cron_trigger_id: str) -> None:
         return await self.workflow_api.workflow_cron_delete(
             tenant=self.tenant_id,
             cron_workflow=cron_trigger_id,
@@ -257,7 +257,7 @@ class AsyncRestApi:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> CronWorkflows:
         return await self.workflow_api.cron_workflow_list(
             tenant=self.tenant_id,
             offset=offset,
@@ -268,7 +268,7 @@ class AsyncRestApi:
             order_by_direction=order_by_direction,
         )
 
-    async def cron_get(self, cron_trigger_id: str):
+    async def cron_get(self, cron_trigger_id: str) -> CronWorkflows:
         return await self.workflow_api.workflow_cron_get(
             tenant=self.tenant_id,
             cron_workflow=cron_trigger_id,
@@ -280,7 +280,7 @@ class AsyncRestApi:
         trigger_at: datetime.datetime,
         input: dict[str, Any],
         additional_metadata: dict[str, str],
-    ):
+    ) -> ScheduledWorkflows:
         return await self.workflow_run_api.scheduled_workflow_run_create(
             tenant=self.tenant_id,
             workflow=name,
@@ -291,7 +291,7 @@ class AsyncRestApi:
             ),
         )
 
-    async def schedule_delete(self, scheduled_trigger_id: str):
+    async def schedule_delete(self, scheduled_trigger_id: str) -> None:
         return await self.workflow_api.workflow_scheduled_delete(
             tenant=self.tenant_id,
             scheduled_workflow_run=scheduled_trigger_id,
@@ -307,7 +307,7 @@ class AsyncRestApi:
         parent_step_run_id: str | None = None,
         order_by_field: ScheduledWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> ScheduledWorkflows:
         return await self.workflow_api.workflow_scheduled_list(
             tenant=self.tenant_id,
             offset=offset,
@@ -320,7 +320,7 @@ class AsyncRestApi:
             order_by_direction=order_by_direction,
         )
 
-    async def schedule_get(self, scheduled_trigger_id: str):
+    async def schedule_get(self, scheduled_trigger_id: str) -> ScheduledWorkflows:
         return await self.workflow_api.workflow_scheduled_get(
             tenant=self.tenant_id,
             scheduled_workflow_run=scheduled_trigger_id,
@@ -381,8 +381,11 @@ class AsyncRestApi:
         )
 
 
+T = TypeVar("T")
+
+
 class RestApi:
-    def __init__(self, host: str, api_key: str, tenant_id: str):
+    def __init__(self, host: str, api_key: str, tenant_id: str) -> None:
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._run_event_loop, daemon=True)
         self._thread.start()
@@ -393,7 +396,7 @@ class RestApi:
         # Register the cleanup method to be called on exit
         atexit.register(self._cleanup)
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """
         Stop the running thread and clean up the event loop.
         """
@@ -401,18 +404,17 @@ class RestApi:
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join()
 
-    def _run_event_loop(self):
+    def _run_event_loop(self) -> None:
         """
         Run the asyncio event loop in a separate thread.
         """
         asyncio.set_event_loop(self._loop)
         self._loop.run_forever()
 
-    def _run_coroutine(self, coro) -> Any:
-        """
-        Execute a coroutine in the event loop and return the result.
-        """
+    def _run_coroutine(self, coro: Coroutine[Any, Any, T]) -> T:
+        """Run a coroutine and return its result."""
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+
         return future.result()
 
     def workflow_list(self) -> WorkflowList:
@@ -494,7 +496,7 @@ class RestApi:
             )
         )
 
-    def cron_delete(self, cron_trigger_id: str):
+    def cron_delete(self, cron_trigger_id: str) -> None:
         return self._run_coroutine(self.aio.cron_delete(cron_trigger_id))
 
     def cron_list(
@@ -505,7 +507,7 @@ class RestApi:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> CronWorkflows:
         return self._run_coroutine(
             self.aio.cron_list(
                 offset,
@@ -517,7 +519,7 @@ class RestApi:
             )
         )
 
-    def cron_get(self, cron_trigger_id: str):
+    def cron_get(self, cron_trigger_id: str) -> CronWorkflows:
         return self._run_coroutine(self.aio.cron_get(cron_trigger_id))
 
     def schedule_create(
@@ -526,14 +528,14 @@ class RestApi:
         trigger_at: datetime.datetime,
         input: dict[str, Any],
         additional_metadata: dict[str, str],
-    ):
+    ) -> ScheduledWorkflows:
         return self._run_coroutine(
             self.aio.schedule_create(
                 workflow_name, trigger_at, input, additional_metadata
             )
         )
 
-    def schedule_delete(self, scheduled_trigger_id: str):
+    def schedule_delete(self, scheduled_trigger_id: str) -> None:
         return self._run_coroutine(self.aio.schedule_delete(scheduled_trigger_id))
 
     def schedule_list(
@@ -544,7 +546,7 @@ class RestApi:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> ScheduledWorkflows:
         return self._run_coroutine(
             self.aio.schedule_list(
                 offset,
@@ -556,7 +558,7 @@ class RestApi:
             )
         )
 
-    def schedule_get(self, scheduled_trigger_id: str):
+    def schedule_get(self, scheduled_trigger_id: str) -> ScheduledWorkflows:
         return self._run_coroutine(self.aio.schedule_get(scheduled_trigger_id))
 
     def list_logs(
