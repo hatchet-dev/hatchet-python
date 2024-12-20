@@ -13,8 +13,7 @@ from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
 from typing import Any, Callable, TypeVar, get_type_hints
-
-from pydantic import BaseModel
+from prometheus_client import Gauge, CONTENT_TYPE_LATEST, generate_latest
 
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
@@ -90,6 +89,9 @@ class Worker:
 
         self._setup_signal_handlers()
 
+        self.worker_status_gauge = Gauge("hatchet_worker_status", "Current status of the Hatchet worker")
+
+
     def register_function(self, action: str, func: Callable[[Context], Any]) -> None:
         self.action_registry[action] = func
 
@@ -159,19 +161,33 @@ class Worker:
 
     async def health_check_handler(self, request: Request):
         status = self.status()
+
         return web.json_response({"status": status.name})
 
+    async def metrics_handler(self, request: Request):
+        return web.Response(
+            body=generate_latest(),
+            content_type="text/plain"
+        )
 
     async def start_health_server(self):
-        port = int(os.getenv("HATCHET_WORKER_HEALTHCHECK_PORT", 8001))
+        port = self.config.worker_healthcheck_port or 8001
 
         app = web.Application()
-        app.add_routes([web.get('/health', self.health_check_handler)])
+        app.add_routes([
+            web.get('/health', self.health_check_handler),
+            web.get('/metrics', self.metrics_handler),
+        ])
 
         runner = web.AppRunner(app)
 
-        await runner.setup()
-        await web.TCPSite(runner, '0.0.0.0', port).start()
+        try:
+            await runner.setup()
+            await web.TCPSite(runner, '0.0.0.0', port).start()
+        except Exception as e:
+            logger.error("failed to start healthcheck server")
+            logger.error(str(e))
+            return
 
         logger.info(f"healthcheck server running on port {port}")
 
