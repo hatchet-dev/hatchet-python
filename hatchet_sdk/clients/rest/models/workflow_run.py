@@ -39,28 +39,28 @@ class WorkflowRun(BaseModel):
     metadata: APIResourceMeta
     tenant_id: StrictStr = Field(alias="tenantId")
     workflow_version_id: StrictStr = Field(alias="workflowVersionId")
-    workflow_version: WorkflowVersion | None = Field(
+    workflow_version: Optional[WorkflowVersion] = Field(
         default=None, alias="workflowVersion"
     )
     status: WorkflowRunStatus
-    display_name: StrictStr | None = Field(default=None, alias="displayName")
-    job_runs: list[JobRun] | None = Field(default=None, alias="jobRuns")
+    display_name: Optional[StrictStr] = Field(default=None, alias="displayName")
+    job_runs: Optional[List[JobRun]] = Field(default=None, alias="jobRuns")
     triggered_by: WorkflowRunTriggeredBy = Field(alias="triggeredBy")
-    input: dict[str, Any] | None = None
-    error: StrictStr | None = None
-    started_at: datetime | None = Field(default=None, alias="startedAt")
-    finished_at: datetime | None = Field(default=None, alias="finishedAt")
-    duration: StrictInt | None = None
+    input: Optional[Dict[str, Any]] = None
+    error: Optional[StrictStr] = None
+    started_at: Optional[datetime] = Field(default=None, alias="startedAt")
+    finished_at: Optional[datetime] = Field(default=None, alias="finishedAt")
+    duration: Optional[StrictInt] = None
     parent_id: Optional[
         Annotated[str, Field(min_length=36, strict=True, max_length=36)]
     ] = Field(default=None, alias="parentId")
     parent_step_run_id: Optional[
         Annotated[str, Field(min_length=36, strict=True, max_length=36)]
     ] = Field(default=None, alias="parentStepRunId")
-    additional_metadata: dict[str, Any] | None = Field(
+    additional_metadata: Optional[Dict[str, Any]] = Field(
         default=None, alias="additionalMetadata"
     )
-    __properties: ClassVar[list[str]] = [
+    __properties: ClassVar[List[str]] = [
         "metadata",
         "tenantId",
         "workflowVersionId",
