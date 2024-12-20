@@ -168,6 +168,8 @@ class Worker:
         return web.json_response({"status": status.name})
 
     async def metrics_handler(self, request: Request) -> Response:
+        self.worker_status_gauge.set(1 if self.status() == WorkerStatus.HEALTHY else 0)
+
         return web.Response(body=generate_latest(), content_type="text/plain")
 
     async def start_health_server(self) -> None:
