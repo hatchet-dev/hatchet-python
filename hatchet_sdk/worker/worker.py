@@ -2,6 +2,8 @@ import asyncio
 import multiprocessing
 import multiprocessing.context
 import os
+from aiohttp import web
+from aiohttp.web_request import Request
 import signal
 import sys
 from concurrent.futures import Future
@@ -155,6 +157,25 @@ class Worker:
             created_loop = True
             return created_loop
 
+    async def health_check_handler(self, request: Request):
+        status = self.status()
+        return web.json_response({"status": status.name})
+
+
+    async def start_health_server(self):
+        port = int(os.getenv("HATCHET_WORKER_HEALTHCHECK_PORT", 8001))
+
+        app = web.Application()
+        app.add_routes([web.get('/health', self.health_check_handler)])
+
+        runner = web.AppRunner(app)
+
+        await runner.setup()
+        await web.TCPSite(runner, '0.0.0.0', port).start()
+
+        logger.info(f"healthcheck server running on port {port}")
+
+
     def start(
         self, options: WorkerStartOptions = WorkerStartOptions()
     ) -> Future[asyncio.Task[Any] | None]:
@@ -195,6 +216,8 @@ class Worker:
         # non blocking setup
         if not _from_start:
             self.setup_loop(options.loop)
+
+        await self.start_health_server()
 
         self.action_listener_process = self._start_listener()
 
