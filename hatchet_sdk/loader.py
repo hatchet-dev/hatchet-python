@@ -165,7 +165,12 @@ class ConfigLoader:
             "otel_exporter_oltp_protocol", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_PROTOCOL"
         )
 
-        worker_healthcheck_port = int(get_config_value("worker_healthcheck_port", "HATCHET_CLIENT_WORKER_HEALTHCHECK_PORT") or 8001)
+        worker_healthcheck_port = int(
+            get_config_value(
+                "worker_healthcheck_port", "HATCHET_CLIENT_WORKER_HEALTHCHECK_PORT"
+            )
+            or 8001
+        )
 
         return ClientConfig(
             tenant_id=tenant_id,
@@ -182,7 +187,7 @@ class ConfigLoader:
             otel_service_name=otel_service_name,
             otel_exporter_oltp_headers=otel_exporter_oltp_headers,
             otel_exporter_oltp_protocol=otel_exporter_oltp_protocol,
-            worker_healthcheck_port=worker_healthcheck_port
+            worker_healthcheck_port=worker_healthcheck_port,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
