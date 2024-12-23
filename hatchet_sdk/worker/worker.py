@@ -236,7 +236,8 @@ class Worker:
         if not _from_start:
             self.setup_loop(options.loop)
 
-        await self.start_health_server()
+        if self.config.worker_healthcheck_enabled:
+            await self.start_health_server()
 
         self.action_listener_process = self._start_listener()
 
