@@ -4,6 +4,7 @@ version = "0.43.1"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
+include = ["hatchet_sdk/py.typed"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -36,7 +37,7 @@ pytest-asyncio = "^0.23.8"
 psutil = "^6.0.0"
 
 [tool.poetry.group.lint.dependencies]
-mypy = "^1.13.0"
+mypy = "^1.14.0"
 types-protobuf = "^5.28.3.20241030"
 black = "^24.10.0"
 isort = "^5.13.2"
