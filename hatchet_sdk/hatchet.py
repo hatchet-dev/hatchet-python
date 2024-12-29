@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar, Union
 
 from pydantic import BaseModel
 from typing_extensions import deprecated
@@ -35,6 +35,9 @@ from .workflow import (
 )
 
 T = TypeVar("T", bound=BaseModel)
+R = TypeVar("R")
+P = ParamSpec("P")
+
 TWorkflow = TypeVar("TWorkflow", bound=object)
 
 
@@ -87,10 +90,10 @@ def step(
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[..., Any]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     parents = parents or []
 
-    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
+    def inner(func: Callable[P, R]) -> Callable[P, R]:
         limits = None
         if rate_limits:
             limits = [rate_limit._req for rate_limit in rate_limits or []]
@@ -99,7 +102,6 @@ def step(
         setattr(func, "_step_parents", parents)
         setattr(func, "_step_timeout", timeout)
         setattr(func, "_step_retries", retries)
-        setattr(func, "_step_rate_limits", retries)
         setattr(func, "_step_rate_limits", limits)
         setattr(func, "_step_backoff_factor", backoff_factor)
         setattr(func, "_step_backoff_max_seconds", backoff_max_seconds)
