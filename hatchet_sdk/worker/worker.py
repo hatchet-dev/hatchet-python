@@ -12,7 +12,10 @@ from multiprocessing.process import BaseProcess
 from types import FrameType
 from typing import Any, Callable, TypeVar, get_type_hints
 
-from pydantic import BaseModel
+from aiohttp import web
+from aiohttp.web_request import Request
+from aiohttp.web_response import Response
+from prometheus_client import CONTENT_TYPE_LATEST, Gauge, generate_latest
 
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
@@ -88,6 +91,10 @@ class Worker:
 
         self._setup_signal_handlers()
 
+        self.worker_status_gauge = Gauge(
+            "hatchet_worker_status", "Current status of the Hatchet worker"
+        )
+
     def register_function(self, action: str, func: Callable[[Context], Any]) -> None:
         self.action_registry[action] = func
 
@@ -155,6 +162,39 @@ class Worker:
             created_loop = True
             return created_loop
 
+    async def health_check_handler(self, request: Request) -> Response:
+        status = self.status()
+
+        return web.json_response({"status": status.name})
+
+    async def metrics_handler(self, request: Request) -> Response:
+        self.worker_status_gauge.set(1 if self.status() == WorkerStatus.HEALTHY else 0)
+
+        return web.Response(body=generate_latest(), content_type="text/plain")
+
+    async def start_health_server(self) -> None:
+        port = self.config.worker_healthcheck_port or 8001
+
+        app = web.Application()
+        app.add_routes(
+            [
+                web.get("/health", self.health_check_handler),
+                web.get("/metrics", self.metrics_handler),
+            ]
+        )
+
+        runner = web.AppRunner(app)
+
+        try:
+            await runner.setup()
+            await web.TCPSite(runner, "0.0.0.0", port).start()
+        except Exception as e:
+            logger.error("failed to start healthcheck server")
+            logger.error(str(e))
+            return
+
+        logger.info(f"healthcheck server running on port {port}")
+
     def start(
         self, options: WorkerStartOptions = WorkerStartOptions()
     ) -> Future[asyncio.Task[Any] | None]:
@@ -195,6 +235,9 @@ class Worker:
         # non blocking setup
         if not _from_start:
             self.setup_loop(options.loop)
+
+        if self.config.worker_healthcheck_enabled:
+            await self.start_health_server()
 
         self.action_listener_process = self._start_listener()
 

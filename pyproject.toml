@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.42.5"
+version = "0.43.0"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -28,6 +28,7 @@ opentelemetry-instrumentation = "^0.48b0"
 opentelemetry-distro = "^0.48b0"
 opentelemetry-exporter-otlp = "^1.27.0"
 opentelemetry-exporter-otlp-proto-http = "^1.27.0"
+prometheus-client = "^0.21.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

@@ -43,6 +43,8 @@ class ClientConfig:
         otel_service_name: str | None = None,
         otel_exporter_oltp_headers: dict[str, str] | None = None,
         otel_exporter_oltp_protocol: str | None = None,
+        worker_healthcheck_port: int | None = None,
+        worker_healthcheck_enabled: bool | None = None,
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -57,6 +59,8 @@ class ClientConfig:
         self.otel_service_name = otel_service_name
         self.otel_exporter_oltp_headers = otel_exporter_oltp_headers
         self.otel_exporter_oltp_protocol = otel_exporter_oltp_protocol
+        self.worker_healthcheck_port = worker_healthcheck_port
+        self.worker_healthcheck_enabled = worker_healthcheck_enabled
 
         if not self.logInterceptor:
             self.logInterceptor = getLogger()
@@ -163,6 +167,23 @@ class ConfigLoader:
             "otel_exporter_oltp_protocol", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_PROTOCOL"
         )
 
+        worker_healthcheck_port = int(
+            get_config_value(
+                "worker_healthcheck_port", "HATCHET_CLIENT_WORKER_HEALTHCHECK_PORT"
+            )
+            or 8001
+        )
+
+        worker_healthcheck_enabled = (
+            str(
+                get_config_value(
+                    "worker_healthcheck_port",
+                    "HATCHET_CLIENT_WORKER_HEALTHCHECK_ENABLED",
+                )
+            )
+            == "True"
+        )
+
         return ClientConfig(
             tenant_id=tenant_id,
             tls_config=tls_config,
@@ -178,6 +199,8 @@ class ConfigLoader:
             otel_service_name=otel_service_name,
             otel_exporter_oltp_headers=otel_exporter_oltp_headers,
             otel_exporter_oltp_protocol=otel_exporter_oltp_protocol,
+            worker_healthcheck_port=worker_healthcheck_port,
+            worker_healthcheck_enabled=worker_healthcheck_enabled,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
