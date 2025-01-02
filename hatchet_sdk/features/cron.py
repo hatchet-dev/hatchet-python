@@ -1,6 +1,6 @@
 from typing import Any, Union
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ValidationError, field_validator
 
 from hatchet_sdk.client import Client
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
@@ -23,12 +23,12 @@ class CreateCronTriggerInput(BaseModel):
         additional_metadata (dict[str, str]): Additional metadata associated with the cron trigger (e.g. {"key1": "value1", "key2": "value2"}).
     """
 
-    expression: str = None
+    expression: str
     input: dict[str, Any] = {}
     additional_metadata: dict[str, str] = {}
 
     @field_validator("expression")
-    def validate_cron_expression(cls, v):
+    def validate_cron_expression(cls, v: Any) -> str:
         """
         Validates the cron expression to ensure it adheres to the expected format.
 
@@ -42,11 +42,14 @@ class CreateCronTriggerInput(BaseModel):
             str: The validated cron expression.
         """
         if not v:
-            raise ValueError("Cron expression is required")
+            raise ValidationError("Cron expression is required")
+
+        if not isinstance(v, str):
+            raise ValidationError("Cron expression must be a string")
 
         parts = v.split()
         if len(parts) != 5:
-            raise ValueError(
+            raise ValidationError(
                 "Cron expression must have 5 parts: minute hour day month weekday"
             )
 
@@ -55,7 +58,7 @@ class CreateCronTriggerInput(BaseModel):
                 part == "*"
                 or part.replace("*/", "").replace("-", "").replace(",", "").isdigit()
             ):
-                raise ValueError(f"Invalid cron expression part: {part}")
+                raise ValidationError(f"Invalid cron expression part: {part}")
 
         return v
 
@@ -121,9 +124,12 @@ class CronClient:
         Args:
             cron_trigger (Union[str, CronWorkflows]): The cron trigger ID or CronWorkflows instance to delete.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
+        id_ = (
+            cron_trigger.metadata.id
+            if isinstance(cron_trigger, CronWorkflows)
+            else cron_trigger
+        )
+
         self._client.rest.cron_delete(id_)
 
     def list(
@@ -134,7 +140,7 @@ class CronClient:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ) -> CronWorkflowsList:
+    ) -> CronWorkflows:
         """
         Retrieves a list of all workflow cron triggers matching the criteria.
 
@@ -280,7 +286,10 @@ class CronClientAsync:
         Returns:
             CronWorkflows: The requested cron workflow instance.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
+        id_ = (
+            cron_trigger.metadata.id
+            if isinstance(cron_trigger, CronWorkflows)
+            else cron_trigger
+        )
+
         return await self._client.rest.aio.cron_get(id_)

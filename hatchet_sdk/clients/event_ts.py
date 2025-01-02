@@ -9,6 +9,8 @@ class Event_ts(asyncio.Event):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+        self._loop: asyncio.AbstractEventLoop
+
         if self._loop is None:
             self._loop = asyncio.get_event_loop()
 

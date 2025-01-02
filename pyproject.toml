@@ -49,6 +49,7 @@ black = "^24.10.0"
 isort = "^5.13.2"
 types-pyyaml = "^6.0.12.20240917"
 types-psutil = "^6.1.0.20241102"
+grpc-stubs = "^1.53.0.5"
 
 [tool.poetry.group.test.dependencies]
 pytest-timeout = "^2.3.1"

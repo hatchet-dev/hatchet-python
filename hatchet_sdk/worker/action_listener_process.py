@@ -267,7 +267,7 @@ class WorkerActionListenerProcess:
         logger.debug("forcefully closing listener...")
 
 
-def worker_action_listener_process(*args, **kwargs) -> None:
+def worker_action_listener_process(*args: Any, **kwargs: Any) -> None:
     async def run() -> None:
         process = WorkerActionListenerProcess(*args, **kwargs)
         await process.start()

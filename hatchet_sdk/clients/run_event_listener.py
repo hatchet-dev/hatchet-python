@@ -2,7 +2,7 @@ import asyncio
 import json
 from typing import AsyncGenerator, Callable, Generator
 
-import grpc  # type: ignore[import-untyped]
+import grpc
 
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
