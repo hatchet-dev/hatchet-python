@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import json
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict, cast
 from uuid import uuid4
 
 import grpc
@@ -74,13 +74,15 @@ class EventClient:
 
     async def async_bulk_push(
         self,
-        events: List[BulkPushEventWithMetadata],
-        options: Optional[BulkPushEventOptions] = None,
+        events: list[BulkPushEventWithMetadata],
+        options: BulkPushEventOptions | None = None,
     ) -> List[Event]:
         return await asyncio.to_thread(self.bulk_push, events=events, options=options)
 
     @tenacity_retry
-    def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
+    def push(
+        self, event_key, payload, options: PushEventOptions | None = None
+    ) -> Event:
         ctx = parse_carrier_from_metadata(
             (options or {}).get("additional_metadata", {})
         )
@@ -96,7 +98,7 @@ class EventClient:
                 and "namespace" in options
                 and options["namespace"] is not None
             ):
-                namespace = options.pop("namespace")
+                namespace = cast(str, options.pop("namespace"))
 
             namespaced_event_key = namespace + event_key
 
@@ -147,7 +149,7 @@ class EventClient:
             and "namespace" in options
             and options["namespace"] is not None
         ):
-            namespace = options.pop("namespace")
+            namespace = cast(str, options.pop("namespace"))
 
         bulk_events = []
         for event in events:
