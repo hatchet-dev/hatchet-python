@@ -91,9 +91,12 @@ class ScheduledClient:
         Args:
             scheduled (Union[str, ScheduledWorkflows]): The scheduled workflow trigger ID or ScheduledWorkflows instance to delete.
         """
-        id_ = scheduled
-        if isinstance(scheduled, ScheduledWorkflows):
-            id_ = scheduled.metadata.id
+        id_ = (
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
+        )
+
         self._client.rest.schedule_delete(id_)
 
     def list(
@@ -138,9 +141,12 @@ class ScheduledClient:
         Returns:
             ScheduledWorkflows: The requested scheduled workflow instance.
         """
-        id_ = scheduled
-        if isinstance(scheduled, ScheduledWorkflows):
-            id_ = scheduled.metadata.id
+        id_ = (
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
+        )
+
         return self._client.rest.schedule_get(id_)
 
 
@@ -193,9 +199,12 @@ class ScheduledClientAsync:
         Args:
             scheduled (Union[str, ScheduledWorkflows]): The scheduled workflow trigger ID or ScheduledWorkflows instance to delete.
         """
-        id_ = scheduled
-        if isinstance(scheduled, ScheduledWorkflows):
-            id_ = scheduled.metadata.id
+        id_ = (
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
+        )
+
         await self._client.rest.aio.schedule_delete(id_)
 
     async def list(
@@ -242,7 +251,10 @@ class ScheduledClientAsync:
         Returns:
             ScheduledWorkflows: The requested scheduled workflow instance.
         """
-        id_ = scheduled
-        if isinstance(scheduled, ScheduledWorkflows):
-            id_ = scheduled.metadata.id
+        id_ = (
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
+        )
+
         return await self._client.rest.aio.schedule_get(id_)

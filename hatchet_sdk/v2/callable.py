@@ -13,7 +13,7 @@ from typing import (
 
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
 from hatchet_sdk.context.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
+from hatchet_sdk.contracts.workflows_pb2 import (
     CreateStepRateLimit,
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,

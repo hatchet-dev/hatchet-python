@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import grpc
 
@@ -7,7 +7,9 @@ if TYPE_CHECKING:
     from hatchet_sdk.loader import ClientConfig
 
 
-def new_conn(config: "ClientConfig", aio=False):
+def new_conn(
+    config: "ClientConfig", aio: bool = False
+) -> grpc.Channel | grpc.aio.Channel:
 
     credentials: grpc.ChannelCredentials | None = None
 
@@ -32,7 +34,7 @@ def new_conn(config: "ClientConfig", aio=False):
 
     start = grpc if not aio else grpc.aio
 
-    channel_options = [
+    channel_options: list[tuple[str, str | int]] = [
         ("grpc.max_send_message_length", config.grpc_max_send_message_length),
         ("grpc.max_receive_message_length", config.grpc_max_recv_message_length),
         ("grpc.keepalive_time_ms", 10 * 1000),
@@ -47,18 +49,23 @@ def new_conn(config: "ClientConfig", aio=False):
     os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "False"
 
     if config.tls_config.tls_strategy == "none":
-        conn = start.insecure_channel(
-            target=config.host_port,
-            options=channel_options,
+        return cast(
+            grpc.Channel,
+            start.insecure_channel(
+                target=config.host_port,
+                options=channel_options,
+            ),
         )
     else:
         channel_options.append(
             ("grpc.ssl_target_name_override", config.tls_config.server_name)
         )
 
-        conn = start.secure_channel(
-            target=config.host_port,
-            credentials=credentials,
-            options=channel_options,
+        return cast(
+            grpc.Channel,
+            start.secure_channel(
+                target=config.host_port,
+                credentials=credentials,
+                options=channel_options,
+            ),
         )
-    return conn

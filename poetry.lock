@@ -572,6 +572,20 @@ protobuf = ">=3.20.2,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4
 grpc = ["grpcio (>=1.44.0,<2.0.0.dev0)"]
 
 [[package]]
+name = "grpc-stubs"
+version = "1.53.0.5"
+description = "Mypy stubs for gRPC"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "grpc-stubs-1.53.0.5.tar.gz", hash = "sha256:3e1b642775cbc3e0c6332cfcedfccb022176db87e518757bef3a1241397be406"},
+    {file = "grpc_stubs-1.53.0.5-py3-none-any.whl", hash = "sha256:04183fb65a1b166a1febb9627e3d9647d3926ccc2dfe049fe7b6af243428dbe1"},
+]
+
+[package.dependencies]
+grpcio = "*"
+
+[[package]]
 name = "grpcio"
 version = "1.68.1"
 description = "HTTP/2-based RPC framework"
@@ -1764,6 +1778,28 @@ files = [
 ]
 
 [[package]]
+name = "types-psutil"
+version = "6.1.0.20241221"
+description = "Typing stubs for psutil"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types_psutil-6.1.0.20241221-py3-none-any.whl", hash = "sha256:8498dbe13285a9ba7d4b2fa934c569cc380efc74e3dacdb34ae16d2cdf389ec3"},
+    {file = "types_psutil-6.1.0.20241221.tar.gz", hash = "sha256:600f5a36bd5e0eb8887f0e3f3ff2cf154d90690ad8123c8a707bba4ab94d3185"},
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20241230"
+description = "Typing stubs for PyYAML"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types_PyYAML-6.0.12.20241230-py3-none-any.whl", hash = "sha256:fa4d32565219b68e6dee5f67534c722e53c00d1cfc09c435ef04d7353e1e96e6"},
+    {file = "types_pyyaml-6.0.12.20241230.tar.gz", hash = "sha256:7f07622dbd34bb9c8b264fe860a17e0efcad00d50b5f27e93984909d9363498c"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1997,4 +2033,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "de3918b2b151e8ff8c5993a13631d7d11f0178d319b02ab907b2a3ec1fe3849e"
+content-hash = "22205be13e63ea909b28cf9fd8bf64b01a4a8ef7dcdf1139562197fb3e5004e7"

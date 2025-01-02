@@ -69,13 +69,12 @@ def workflow(
         setattr(cls, "sticky", sticky)
         setattr(cls, "default_priority", default_priority)
         setattr(cls, "concurrency_expression", concurrency)
+        setattr(cls, "input_validator", input_validator)
 
         # Define a new class with the same name and bases as the original, but
         # with WorkflowMeta as its metaclass
 
         ## TODO: Figure out how to type this metaclass correctly
-        setattr(cls, "input_validator", input_validator)
-
         return WorkflowMeta(name, cls.__bases__, dict(cls.__dict__))
 
     return inner

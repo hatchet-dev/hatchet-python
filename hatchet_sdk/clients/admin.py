@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
+from typing import Any, Callable, Optional, TypedDict, TypeVar, Union, cast
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -37,7 +37,7 @@ from ..metadata import get_metadata
 from ..workflow import WorkflowMeta
 
 
-def new_admin(config: ClientConfig):
+def new_admin(config: ClientConfig) -> "AdminClient":
     return AdminClient(config)
 
 
@@ -50,21 +50,20 @@ class ScheduleTriggerWorkflowOptions(TypedDict, total=False):
 
 
 class ChildTriggerWorkflowOptions(TypedDict, total=False):
-    additional_metadata: Dict[str, str] | None = None
-    sticky: bool | None = None
+    additional_metadata: dict[str, str] | None
+    sticky: bool | None
 
 
 class ChildWorkflowRunDict(TypedDict, total=False):
     workflow_name: str
     input: Any
     options: ChildTriggerWorkflowOptions
-    key: str | None = None
+    key: str | None
 
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, total=False):
-    additional_metadata: Dict[str, str] | None = None
-    desired_worker_id: str | None = None
-    namespace: str | None = None
+    additional_metadata: dict[str, str | bytes] | None
+    desired_worker_id: str | None
 
 
 class WorkflowRunDict(TypedDict, total=False):
@@ -83,8 +82,13 @@ class AdminClientBase:
     pooled_workflow_listener: PooledWorkflowRunListener | None = None
 
     def _prepare_workflow_request(
-        self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
-    ):
+        self,
+        workflow_name: str,
+        input: Any,
+        options: TriggerWorkflowOptions | None = None,
+    ) -> TriggerWorkflowRequest:
+        options = options or {}
+
         try:
             payload_data = json.dumps(input)
 
@@ -110,7 +114,7 @@ class AdminClientBase:
         name: str,
         workflow: CreateWorkflowVersionOpts | WorkflowMeta,
         overrides: CreateWorkflowVersionOpts | None = None,
-    ):
+    ) -> PutWorkflowRequest:
         try:
             opts: CreateWorkflowVersionOpts
 
@@ -133,10 +137,10 @@ class AdminClientBase:
     def _prepare_schedule_workflow_request(
         self,
         name: str,
-        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
-        input={},
-        options: ScheduleTriggerWorkflowOptions = None,
-    ):
+        schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
+        input: dict[str, Any] = {},
+        options: ScheduleTriggerWorkflowOptions | None = None,
+    ) -> ScheduleWorkflowRequest:
         timestamp_schedules = []
         for schedule in schedules:
             if isinstance(schedule, datetime):
@@ -176,13 +180,14 @@ class AdminClientAioImpl(AdminClientBase):
     async def run(
         self,
         function: Union[str, Callable[[Any], T]],
-        input: any,
-        options: TriggerWorkflowOptions = None,
+        input: Any,
+        options: TriggerWorkflowOptions | None = None,
     ) -> "RunRef[T]":
-        workflow_name = function
-
-        if not isinstance(function, str):
-            workflow_name = function.function_name
+        workflow_name = (
+            cast(str, getattr(function, "function_name"))
+            if not isinstance(function, str)
+            else function
+        )
 
         wrr = await self.run_workflow(workflow_name, input, options)
 
@@ -192,7 +197,10 @@ class AdminClientAioImpl(AdminClientBase):
 
     @tenacity_retry
     async def run_workflow(
-        self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
+        self,
+        workflow_name: str,
+        input: Any,
+        options: TriggerWorkflowOptions | None = None,
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(
             (options or {}).get("additional_metadata", {})
@@ -216,7 +224,7 @@ class AdminClientAioImpl(AdminClientBase):
                     and "namespace" in options
                     and options["namespace"] is not None
                 ):
-                    namespace = options.pop("namespace")
+                    namespace = cast(str, options.pop("namespace"))
 
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
@@ -227,7 +235,9 @@ class AdminClientAioImpl(AdminClientBase):
                     )
                     span.set_attributes(
                         flatten(
-                            options["additional_metadata"], parent_key="", separator="."
+                            options["additional_metadata"] or {},
+                            parent_key="",
+                            separator=".",
                         )
                     )
 
@@ -263,7 +273,7 @@ class AdminClientAioImpl(AdminClientBase):
         self,
         workflows: list[WorkflowRunDict],
         options: TriggerWorkflowOptions | None = None,
-    ) -> List[WorkflowRunRef]:
+    ) -> list[WorkflowRunRef]:
         if len(workflows) == 0:
             raise ValueError("No workflows to run")
         try:
@@ -280,21 +290,20 @@ class AdminClientAioImpl(AdminClientBase):
                 namespace = options["namespace"]
                 del options["namespace"]
 
-            workflow_run_requests: TriggerWorkflowRequest = []
+            workflow_run_requests: list[TriggerWorkflowRequest] = []
 
             for workflow in workflows:
                 workflow_name = workflow["workflow_name"]
                 input_data = workflow["input"]
-                options = workflow["options"]
+                options = workflow["options"] or {}
 
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(
-                    workflow_name, input_data, options
+                workflow_run_requests.append(
+                    self._prepare_workflow_request(workflow_name, input_data, options)
                 )
-                workflow_run_requests.append(request)
 
             request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
@@ -327,9 +336,12 @@ class AdminClientAioImpl(AdminClientBase):
         try:
             opts = self._prepare_put_workflow_request(name, workflow, overrides)
 
-            return await self.aio_client.PutWorkflow(
-                opts,
-                metadata=get_metadata(self.token),
+            return cast(
+                WorkflowVersion,
+                await self.aio_client.PutWorkflow(
+                    opts,
+                    metadata=get_metadata(self.token),
+                ),
             )
         except grpc.RpcError as e:
             raise ValueError(f"Could not put workflow: {e}")
@@ -340,7 +352,7 @@ class AdminClientAioImpl(AdminClientBase):
         key: str,
         limit: int,
         duration: RateLimitDuration = RateLimitDuration.SECOND,
-    ):
+    ) -> None:
         try:
             await self.aio_client.PutRateLimit(
                 PutRateLimitRequest(
@@ -357,9 +369,9 @@ class AdminClientAioImpl(AdminClientBase):
     async def schedule_workflow(
         self,
         name: str,
-        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
-        input={},
-        options: ScheduleTriggerWorkflowOptions = None,
+        schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
+        input: dict[str, Any] = {},
+        options: ScheduleTriggerWorkflowOptions | None = None,
     ) -> WorkflowVersion:
         try:
             namespace = self.namespace
@@ -379,9 +391,12 @@ class AdminClientAioImpl(AdminClientBase):
                 name, schedules, input, options
             )
 
-            return await self.aio_client.ScheduleWorkflow(
-                request,
-                metadata=get_metadata(self.token),
+            return cast(
+                WorkflowVersion,
+                await self.aio_client.ScheduleWorkflow(
+                    request,
+                    metadata=get_metadata(self.token),
+                ),
             )
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
@@ -426,7 +441,7 @@ class AdminClient(AdminClientBase):
         key: str,
         limit: int,
         duration: Union[RateLimitDuration.Value, str] = RateLimitDuration.SECOND,
-    ):
+    ) -> None:
         try:
             self.client.PutRateLimit(
                 PutRateLimitRequest(
@@ -443,9 +458,9 @@ class AdminClient(AdminClientBase):
     def schedule_workflow(
         self,
         name: str,
-        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
-        input={},
-        options: ScheduleTriggerWorkflowOptions = None,
+        schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
+        input: dict[str, Any] = {},
+        options: ScheduleTriggerWorkflowOptions | None = None,
     ) -> WorkflowVersion:
         try:
             namespace = self.namespace
@@ -465,9 +480,12 @@ class AdminClient(AdminClientBase):
                 name, schedules, input, options
             )
 
-            return self.client.ScheduleWorkflow(
-                request,
-                metadata=get_metadata(self.token),
+            return cast(
+                WorkflowVersion,
+                self.client.ScheduleWorkflow(
+                    request,
+                    metadata=get_metadata(self.token),
+                ),
             )
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
@@ -479,7 +497,10 @@ class AdminClient(AdminClientBase):
     ## TODO: `any` type hint should come from `typing`
     @tenacity_retry
     def run_workflow(
-        self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
+        self,
+        workflow_name: str,
+        input: Any,
+        options: TriggerWorkflowOptions | None = None,
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(
             (options or {}).get("additional_metadata", {})
@@ -504,7 +525,7 @@ class AdminClient(AdminClientBase):
                     and "namespace" in options
                     and options["namespace"] is not None
                 ):
-                    namespace = options.pop("namespace")
+                    namespace = cast(str, options.pop("namespace"))
 
                 if options is not None and "additional_metadata" in options:
                     options["additional_metadata"] = inject_carrier_into_metadata(
@@ -549,9 +570,11 @@ class AdminClient(AdminClientBase):
 
     @tenacity_retry
     def run_workflows(
-        self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
+        self,
+        workflows: list[WorkflowRunDict],
+        options: TriggerWorkflowOptions | None = None,
     ) -> list[WorkflowRunRef]:
-        workflow_run_requests: TriggerWorkflowRequest = []
+        workflow_run_requests: list[TriggerWorkflowRequest] = []
         try:
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
@@ -575,13 +598,11 @@ class AdminClient(AdminClientBase):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(
-                    workflow_name, input_data, options
+                workflow_run_requests.append(
+                    self._prepare_workflow_request(workflow_name, input_data, options)
                 )
 
-                workflow_run_requests.append(request)
-
-                request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
+            request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
             resp: BulkTriggerWorkflowResponse = self.client.BulkTriggerWorkflow(
                 request,
@@ -603,13 +624,14 @@ class AdminClient(AdminClientBase):
     def run(
         self,
         function: Union[str, Callable[[Any], T]],
-        input: any,
-        options: TriggerWorkflowOptions = None,
+        input: Any,
+        options: TriggerWorkflowOptions | None = None,
     ) -> "RunRef[T]":
-        workflow_name = function
-
-        if not isinstance(function, str):
-            workflow_name = function.function_name
+        workflow_name = (
+            cast(str, getattr(function, "function_name"))
+            if not isinstance(function, str)
+            else function
+        )
 
         wrr = self.run_workflow(workflow_name, input, options)
 

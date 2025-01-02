@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from io import StringIO
 from typing import Any, Coroutine
 
-from hatchet_sdk import logger
 from hatchet_sdk.clients.events import EventClient
+from hatchet_sdk.logger import logger
 
 wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "workflow_run_id", default=None
@@ -25,19 +25,19 @@ def copy_context_vars(ctx_vars, func, *args, **kwargs):
 class InjectingFilter(logging.Filter):
     # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
     # otherwise we would use emit within the CustomLogHandler
-    def filter(self, record):
+    def filter(self, record) -> bool:
         record.workflow_run_id = wr.get()
         record.step_run_id = sr.get()
         return True
 
 
 class CustomLogHandler(logging.StreamHandler):
-    def __init__(self, event_client: EventClient, stream=None):
+    def __init__(self, event_client: EventClient, stream=None) -> None:
         super().__init__(stream)
         self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
         self.event_client = event_client
 
-    def _log(self, line: str, step_run_id: str | None):
+    def _log(self, line: str, step_run_id: str | None) -> None:
         try:
             if not step_run_id:
                 return
@@ -46,7 +46,7 @@ class CustomLogHandler(logging.StreamHandler):
         except Exception as e:
             logger.error(f"Error logging: {e}")
 
-    def emit(self, record):
+    def emit(self, record) -> None:
         super().emit(record)
 
         log_entry = self.format(record)
@@ -57,7 +57,7 @@ def capture_logs(
     logger: logging.Logger,
     event_client: EventClient,
     func: Coroutine[Any, Any, Any],
-):
+) -> Coroutine[Any, Any, Any]:
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         if not logger:

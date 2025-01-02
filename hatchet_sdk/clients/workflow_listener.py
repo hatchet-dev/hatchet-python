@@ -1,7 +1,7 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 
 import grpc
 from grpc._cython import cygrpc
@@ -31,7 +31,7 @@ class _Subscription:
         self.workflow_run_id = workflow_run_id
         self.queue: asyncio.Queue[WorkflowRunEvent | None] = asyncio.Queue()
 
-    async def __aiter__(self):
+    async def __aiter__(self) -> "_Subscription":
         return self
 
     async def __anext__(self) -> WorkflowRunEvent:
@@ -45,10 +45,10 @@ class _Subscription:
 
         return event
 
-    async def put(self, item: WorkflowRunEvent):
+    async def put(self, item: WorkflowRunEvent) -> None:
         await self.queue.put(item)
 
-    async def close(self):
+    async def close(self) -> None:
         await self.queue.put(None)
 
 
@@ -65,14 +65,14 @@ class PooledWorkflowRunListener:
     requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
     listener: AsyncGenerator[WorkflowRunEvent, None] = None
-    listener_task: asyncio.Task = None
+    listener_task: asyncio.Task[Any] = None
 
     curr_requester: int = 0
 
     # events have keys of the format workflow_run_id + subscription_id
     events: dict[int, _Subscription] = {}
 
-    interrupter: asyncio.Task = None
+    interrupter: asyncio.Task[Any] = None
 
     def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)
@@ -80,7 +80,7 @@ class PooledWorkflowRunListener:
         self.token = config.token
         self.config = config
 
-    async def _interrupter(self):
+    async def _interrupter(self) -> None:
         """
         _interrupter runs in a separate thread and interrupts the listener according to a configurable duration.
         """
@@ -89,7 +89,7 @@ class PooledWorkflowRunListener:
         if self.interrupt is not None:
             self.interrupt.set()
 
-    async def _init_producer(self):
+    async def _init_producer(self) -> None:
         try:
             if not self.listener:
                 while True:
@@ -178,7 +178,7 @@ class PooledWorkflowRunListener:
             yield request
             self.requests.task_done()
 
-    def cleanup_subscription(self, subscription_id: int):
+    def cleanup_subscription(self, subscription_id: int) -> None:
         workflow_run_id = self.subscriptionsToWorkflows[subscription_id]
 
         if workflow_run_id in self.workflowsToSubscriptions:
@@ -187,8 +187,7 @@ class PooledWorkflowRunListener:
         del self.subscriptionsToWorkflows[subscription_id]
         del self.events[subscription_id]
 
-    async def subscribe(self, workflow_run_id: str):
-        init_producer: asyncio.Task = None
+    async def subscribe(self, workflow_run_id: str) -> WorkflowRunEvent:
         try:
             # create a new subscription id, place a mutex on the counter
             await self.subscription_counter_lock.acquire()
@@ -224,7 +223,7 @@ class PooledWorkflowRunListener:
         finally:
             self.cleanup_subscription(subscription_id)
 
-    async def result(self, workflow_run_id: str):
+    async def result(self, workflow_run_id: str) -> dict[str, Any]:
         from hatchet_sdk.clients.admin import DedupeViolationErr
 
         event = await self.subscribe(workflow_run_id)
@@ -240,15 +239,13 @@ class PooledWorkflowRunListener:
             else:
                 raise Exception(f"Workflow Errors: {errors}")
 
-        results = {
+        return {
             result.stepReadableId: json.loads(result.output)
             for result in event.results
             if result.output
         }
 
-        return results
-
-    async def _retry_subscribe(self):
+    async def _retry_subscribe(self) -> AsyncIterator[SubscribeToWorkflowRunsRequest]:
         retries = 0
 
         while retries < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
@@ -271,3 +268,5 @@ class PooledWorkflowRunListener:
                     retries = retries + 1
                 else:
                     raise ValueError(f"gRPC error: {e}")
+
+        raise ValueError("Failed to connect to workflow run listener")
