@@ -87,6 +87,8 @@ class AdminClientBase:
         input: Any,
         options: TriggerWorkflowOptions | None = None,
     ) -> TriggerWorkflowRequest:
+        options = options or {}
+
         try:
             payload_data = json.dumps(input)
 

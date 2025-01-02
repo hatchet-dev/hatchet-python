@@ -174,9 +174,12 @@ class CronClient:
         Returns:
             CronWorkflows: The requested cron workflow instance.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
+        id_ = (
+            cron_trigger.metadata.id
+            if isinstance(cron_trigger, CronWorkflows)
+            else cron_trigger
+        )
+
         return self._client.rest.cron_get(id_)
 
 
@@ -204,7 +207,7 @@ class CronClientAsync:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: dict,
+        input: dict[str, Any],
         additional_metadata: dict[str, str],
     ) -> CronWorkflows:
         """
@@ -239,9 +242,12 @@ class CronClientAsync:
         Args:
             cron_trigger (Union[str, CronWorkflows]): The cron trigger ID or CronWorkflows instance to delete.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
+        id_ = (
+            cron_trigger.metadata.id
+            if isinstance(cron_trigger, CronWorkflows)
+            else cron_trigger
+        )
+
         await self._client.rest.aio.cron_delete(id_)
 
     async def list(
@@ -252,7 +258,7 @@ class CronClientAsync:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ) -> CronWorkflowsList:
+    ) -> CronWorkflows:
         """
         Asynchronously retrieves a list of all workflow cron triggers matching the criteria.
 
