@@ -4,16 +4,16 @@ from typing import cast
 
 
 ## TODO: Narrow `None` out of the return type if possible.
-def get_tenant_id_from_jwt(token: str) -> str | None:
+def get_tenant_id_from_jwt(token: str) -> str:
     claims = extract_claims_from_jwt(token)
 
-    return claims.get("sub")
+    return claims["sub"]
 
 
-def get_addresses_from_jwt(token: str) -> tuple[str | None, str | None]:
+def get_addresses_from_jwt(token: str) -> tuple[str, str]:
     claims = extract_claims_from_jwt(token)
 
-    return claims.get("server_url"), claims.get("grpc_broadcast_address")
+    return claims["server_url"], claims["grpc_broadcast_address"]
 
 
 def extract_claims_from_jwt(token: str) -> dict[str, str]:

@@ -88,7 +88,7 @@ class ConfigLoader:
 
         def get_config_value(key: str, env_var: str) -> str | None:
             if key in config_data:
-                return config_data[key]
+                return cast(str, config_data[key])
 
             if self._get_env_var(env_var) is not None:
                 return self._get_env_var(env_var)
