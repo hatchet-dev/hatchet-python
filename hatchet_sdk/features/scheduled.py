@@ -242,7 +242,10 @@ class ScheduledClientAsync:
         Returns:
             ScheduledWorkflows: The requested scheduled workflow instance.
         """
-        id_ = scheduled
-        if isinstance(scheduled, ScheduledWorkflows):
-            id_ = scheduled.metadata.id
+        id_ = (
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
+        )
+
         return await self._client.rest.aio.schedule_get(id_)

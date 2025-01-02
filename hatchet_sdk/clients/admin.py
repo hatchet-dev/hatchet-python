@@ -64,7 +64,6 @@ class ChildWorkflowRunDict(TypedDict, total=False):
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, total=False):
     additional_metadata: dict[str, str | bytes] | None
     desired_worker_id: str | None
-    namespace: str | None
 
 
 class WorkflowRunDict(TypedDict, total=False):
@@ -180,12 +179,13 @@ class AdminClientAioImpl(AdminClientBase):
         self,
         function: Union[str, Callable[[Any], T]],
         input: Any,
-        options: TriggerWorkflowOptions = None,
+        options: TriggerWorkflowOptions | None = None,
     ) -> "RunRef[T]":
-        workflow_name = function
-
-        if not isinstance(function, str):
-            workflow_name = function.function_name
+        workflow_name = (
+            cast(str, getattr(function, "function_name"))
+            if not isinstance(function, str)
+            else function
+        )
 
         wrr = await self.run_workflow(workflow_name, input, options)
 
@@ -222,7 +222,7 @@ class AdminClientAioImpl(AdminClientBase):
                     and "namespace" in options
                     and options["namespace"] is not None
                 ):
-                    namespace = options.pop("namespace")
+                    namespace = cast(str, options.pop("namespace"))
 
                 if namespace != "" and not workflow_name.startswith(self.namespace):
                     workflow_name = f"{namespace}{workflow_name}"
@@ -288,7 +288,7 @@ class AdminClientAioImpl(AdminClientBase):
                 namespace = options["namespace"]
                 del options["namespace"]
 
-            workflow_run_requests: TriggerWorkflowRequest = []
+            workflow_run_requests: list[TriggerWorkflowRequest] = []
 
             for workflow in workflows:
                 workflow_name = workflow["workflow_name"]

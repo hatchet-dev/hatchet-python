@@ -184,7 +184,7 @@ class AsyncRestApi:
         return await self.workflow_run_api.workflow_run_update_replay(
             tenant=self.tenant_id,
             replay_workflow_runs_request=ReplayWorkflowRunsRequest(
-                workflow_run_ids=workflow_run_ids,
+                workflowRunIds=workflow_run_ids,
             ),
         )
 
@@ -287,7 +287,7 @@ class AsyncRestApi:
             create_schedule_workflow_trigger_request=ScheduleWorkflowRunRequest(
                 triggerAt=trigger_at,
                 input=input,
-                additional_metadata=additional_metadata,
+                additionalMetadata=additional_metadata,
             ),
         )
 
