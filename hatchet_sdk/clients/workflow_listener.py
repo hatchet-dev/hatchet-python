@@ -65,14 +65,14 @@ class PooledWorkflowRunListener:
     requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
     listener: AsyncGenerator[WorkflowRunEvent, None] = None
-    listener_task: asyncio.Task = None
+    listener_task: asyncio.Task[Any] = None
 
     curr_requester: int = 0
 
     # events have keys of the format workflow_run_id + subscription_id
     events: dict[int, _Subscription] = {}
 
-    interrupter: asyncio.Task = None
+    interrupter: asyncio.Task[Any] = None
 
     def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)

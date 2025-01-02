@@ -222,7 +222,7 @@ class ActionListener:
     def __aiter__(self) -> AsyncGenerator[Action, None]:
         return self._generator()
 
-    async def _generator(self) -> AsyncGenerator[Action, None]:
+    async def _generator(self) -> AsyncGenerator[Action | None, None]:
         listener = None
 
         while not self.stop_signal:

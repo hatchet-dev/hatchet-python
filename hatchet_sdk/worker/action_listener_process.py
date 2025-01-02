@@ -48,21 +48,21 @@ def noop_handler() -> None:
 @dataclass
 class WorkerActionListenerProcess:
     name: str
-    actions: List[str]
+    actions: list[str]
     max_runs: int
     config: ClientConfig
-    action_queue: Queue
-    event_queue: Queue
+    action_queue: Queue[Any]
+    event_queue: Queue[Any]
     handle_kill: bool = True
     debug: bool = False
-    labels: dict = field(default_factory=dict)
+    labels: dict[str, str | int] = field(default_factory=dict)
 
     listener: ActionListener = field(init=False, default=None)
 
     killing: bool = field(init=False, default=False)
 
-    action_loop_task: asyncio.Task = field(init=False, default=None)
-    event_send_loop_task: asyncio.Task = field(init=False, default=None)
+    action_loop_task: asyncio.Task[Any] = field(init=False, default=None)
+    event_send_loop_task: asyncio.Task[Any] = field(init=False, default=None)
 
     running_step_runs: Mapping[str, float] = field(init=False, default_factory=dict)
 

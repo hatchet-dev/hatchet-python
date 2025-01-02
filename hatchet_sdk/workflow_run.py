@@ -31,7 +31,7 @@ class WorkflowRunRef:
     def result(self) -> Coroutine:
         return self.workflow_listener.result(self.workflow_run_id)
 
-    def sync_result(self) -> dict:
+    def sync_result(self) -> dict[str, Any]:
         loop = get_active_event_loop()
         if loop is None:
             with EventLoopThread() as loop:

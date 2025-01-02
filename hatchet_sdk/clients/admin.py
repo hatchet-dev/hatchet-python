@@ -299,10 +299,9 @@ class AdminClientAioImpl(AdminClientBase):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(
-                    workflow_name, input_data, options
+                workflow_run_requests.append(
+                    self._prepare_workflow_request(workflow_name, input_data, options)
                 )
-                workflow_run_requests.append(request)
 
             request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
