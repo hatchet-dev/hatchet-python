@@ -268,3 +268,5 @@ class PooledWorkflowRunListener:
                     retries = retries + 1
                 else:
                     raise ValueError(f"gRPC error: {e}")
+
+        raise ValueError("Failed to connect to workflow run listener")

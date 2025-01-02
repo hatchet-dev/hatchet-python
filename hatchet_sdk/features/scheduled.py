@@ -91,9 +91,12 @@ class ScheduledClient:
         Args:
             scheduled (Union[str, ScheduledWorkflows]): The scheduled workflow trigger ID or ScheduledWorkflows instance to delete.
         """
-        id_ = scheduled
-        if isinstance(scheduled, ScheduledWorkflows):
-            id_ = scheduled.metadata.id
+        id_ = (
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
+        )
+
         self._client.rest.schedule_delete(id_)
 
     def list(

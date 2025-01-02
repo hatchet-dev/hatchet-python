@@ -1,8 +1,9 @@
 import asyncio
 import json
-from typing import AsyncGenerator, Callable, Generator
+from typing import AsyncGenerator, Callable, Generator, cast
 
 import grpc
+import grpc.aio
 
 from hatchet_sdk.connection import new_conn
 from hatchet_sdk.contracts.dispatcher_pb2 import (
@@ -207,11 +208,14 @@ class RunEventListener:
                     await asyncio.sleep(DEFAULT_ACTION_LISTENER_RETRY_INTERVAL)
 
                 if self.workflow_run_id is not None:
-                    return self.client.SubscribeToWorkflowEvents(
-                        SubscribeToWorkflowEventsRequest(
-                            workflowRunId=self.workflow_run_id,
+                    return cast(
+                        grpc.aio.StreamStreamCall,
+                        self.client.SubscribeToWorkflowEvents(
+                            SubscribeToWorkflowEventsRequest(
+                                workflowRunId=self.workflow_run_id,
+                            ),
+                            metadata=get_metadata(self.token),
                         ),
-                        metadata=get_metadata(self.token),
                     )
                 elif self.additional_meta_kv is not None:
                     return self.client.SubscribeToWorkflowEvents(
@@ -229,6 +233,8 @@ class RunEventListener:
                     retries = retries + 1
                 else:
                     raise ValueError(f"gRPC error: {e}")
+
+        raise ValueError("Failed to subscribe to events")
 
 
 class RunEventListenerClient:
