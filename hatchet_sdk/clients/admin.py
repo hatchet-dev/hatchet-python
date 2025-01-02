@@ -83,7 +83,10 @@ class AdminClientBase:
     pooled_workflow_listener: PooledWorkflowRunListener | None = None
 
     def _prepare_workflow_request(
-        self, workflow_name: str, input: Any, options: TriggerWorkflowOptions = None
+        self,
+        workflow_name: str,
+        input: Any,
+        options: TriggerWorkflowOptions | None = None,
     ) -> TriggerWorkflowRequest:
         try:
             payload_data = json.dumps(input)
@@ -476,9 +479,12 @@ class AdminClient(AdminClientBase):
                 name, schedules, input, options
             )
 
-            return self.client.ScheduleWorkflow(
-                request,
-                metadata=get_metadata(self.token),
+            return cast(
+                WorkflowVersion,
+                self.client.ScheduleWorkflow(
+                    request,
+                    metadata=get_metadata(self.token),
+                ),
             )
         except grpc.RpcError as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
@@ -518,7 +524,7 @@ class AdminClient(AdminClientBase):
                     and "namespace" in options
                     and options["namespace"] is not None
                 ):
-                    namespace = options.pop("namespace")
+                    namespace = cast(str, options.pop("namespace"))
 
                 if options is not None and "additional_metadata" in options:
                     options["additional_metadata"] = inject_carrier_into_metadata(
@@ -567,7 +573,7 @@ class AdminClient(AdminClientBase):
         workflows: list[WorkflowRunDict],
         options: TriggerWorkflowOptions | None = None,
     ) -> list[WorkflowRunRef]:
-        workflow_run_requests: TriggerWorkflowRequest = []
+        workflow_run_requests: list[TriggerWorkflowRequest] = []
         try:
             if not self.pooled_workflow_listener:
                 self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
@@ -591,13 +597,11 @@ class AdminClient(AdminClientBase):
                     workflow_name = f"{namespace}{workflow_name}"
 
                 # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(
-                    workflow_name, input_data, options
+                workflow_run_requests.append(
+                    self._prepare_workflow_request(workflow_name, input_data, options)
                 )
 
-                workflow_run_requests.append(request)
-
-                request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
+            request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
             resp: BulkTriggerWorkflowResponse = self.client.BulkTriggerWorkflow(
                 request,
@@ -622,10 +626,11 @@ class AdminClient(AdminClientBase):
         input: Any,
         options: TriggerWorkflowOptions | None = None,
     ) -> "RunRef[T]":
-        workflow_name = function
-
-        if not isinstance(function, str):
-            workflow_name = function.function_name
+        workflow_name = (
+            cast(str, getattr(function, "function_name"))
+            if not isinstance(function, str)
+            else function
+        )
 
         wrr = self.run_workflow(workflow_name, input, options)
 

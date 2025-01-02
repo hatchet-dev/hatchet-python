@@ -84,7 +84,8 @@ files = "."
 exclude = [
     "hatchet_sdk/clients/rest/.*",
     ".*.pyi$",
-    "hatchet_sdk/contracts/.*"
+    "hatchet_sdk/contracts/.*",
+    "hatchet_sdk/v2"
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
