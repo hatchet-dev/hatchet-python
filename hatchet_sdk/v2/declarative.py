@@ -44,10 +44,10 @@ class DeclarativeWorkflow(Generic[TWorkflowInput]):
             workflow_name=self.config.name, input=input.model_dump()
         )
 
-    def spawn_workflow(
+    async def spawn_workflow(
         self, context: Context, input: SpawnWorkflowInput
     ) -> WorkflowRunRef:
-        return context.aio.spawn_workflow(
+        return await context.aio.spawn_workflow(
             workflow_name=input.workflow_name,
             input=input.input.model_dump(),
             key=input.key,
