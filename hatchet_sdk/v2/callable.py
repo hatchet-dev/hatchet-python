@@ -1,20 +1,11 @@
 import asyncio
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    TypedDict,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generic, List, Type, TypeVar, Union
+
+from pydantic import BaseModel
 
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
-    CreateStepRateLimit,
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
@@ -32,10 +23,15 @@ from hatchet_sdk.workflow_run import RunRef
 T = TypeVar("T")
 
 
+class EmptyModel(BaseModel):
+    pass
+
+
 class HatchetCallable(Generic[T]):
     def __init__(
         self,
         func: Callable[[Context], T],
+        input_validator: Type[BaseModel] = EmptyModel,
         durable: bool = False,
         name: str = "",
         auto_register: bool = True,
@@ -87,6 +83,7 @@ class HatchetCallable(Generic[T]):
         self.function_on_failure = on_failure
         self.function_namespace = "default"
         self.function_auto_register = auto_register
+        self.input_validator = input_validator
 
         self.is_coroutine = False
 
