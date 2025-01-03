@@ -1,8 +1,6 @@
 from collections import Counter
 from typing import Literal
 
-from pydantic import BaseModel
-
 from examples.v2.declarative_workflows.client import hatchet
 from examples.v2.declarative_workflows.workflows import (
     Greeting,
