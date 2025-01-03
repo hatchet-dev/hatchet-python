@@ -1,0 +1,53 @@
+name: Generate Python Docs on SDK Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'hatchet_sdk/clients/rest/**'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Go Repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+          repository: hatchet-dev/hatchet
+          path: ./hatchet
+
+      - name: Generate Docs
+        run: |
+          pip install pydoc-markdown
+          pydoc-markdown -p hatchet_sdk/clients/rest --render-toc > docs.md  
+
+          # Copy all contexts of docs.md to hatchet/frontend/docs/gen/python
+          mkdir -p ./hatchet/frontend/docs/gen/python
+          cp docs.md ./hatchet/frontend/docs/gen/python
+
+      - name: Commit and Push changes to Hatchet Repo
+        run: |
+          cd hatchet
+          git remote -v
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b feat/actions/generate-python-docs
+          git add .
+          git commit -m "feat: generate Python Docs"
+          git push origin feat/actions/generate-python-docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Pull Request
+        run: |
+          cd hatchet
+          gh pr create -R hatchet-dev/hatchet -B main -H feat/actions/generate-python-docs --title 'Generate Python Docs' --body 'This PR generates Python Docs for updated openapi spec.'
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
