@@ -39,12 +39,12 @@ class DeclarativeWorkflow(Generic[TWorkflowInput]):
         self.config = config
         self.hatchet = hatchet
 
-    def run_workflow(self, input: TWorkflowInput) -> WorkflowRunRef:
+    def run(self, input: TWorkflowInput) -> WorkflowRunRef:
         return self.hatchet.admin.run_workflow(
             workflow_name=self.config.name, input=input.model_dump()
         )
 
-    async def spawn_workflow(
+    async def spawn(
         self, context: Context, input: SpawnWorkflowInput
     ) -> WorkflowRunRef:
         return await context.aio.spawn_workflow(

@@ -28,9 +28,11 @@ async def greet(ctx: Context) -> dict[Literal["message"], str]:
     workflow_input = greet_workflow.workflow_input(ctx)
     greeting = workflow_input.greeting
 
-    await language_counter_workflow.spawn_workflow(
+    await language_counter_workflow.spawn(
         context=ctx,
-        input=language_counter_workflow.construct_spawn_workflow_input(input=workflow_input),
+        input=language_counter_workflow.construct_spawn_workflow_input(
+            input=workflow_input
+        ),
     )
 
     return {"message": greeting + " " + complete_greeting(greeting)}
