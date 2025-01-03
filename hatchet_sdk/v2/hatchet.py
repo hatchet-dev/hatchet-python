@@ -1,4 +1,6 @@
-from typing import Any, Callable, TypeVar, Union
+from typing import Any, Callable, Type, TypeVar, Union
+
+from pydantic import BaseModel
 
 from hatchet_sdk import Worker
 from hatchet_sdk.context.context import Context
@@ -18,6 +20,7 @@ T = TypeVar("T")
 
 
 def function(
+    input_validator: Type[BaseModel],
     name: str = "",
     auto_register: bool = True,
     on_events: list[str] | None = None,
@@ -50,6 +53,7 @@ def function(
             concurrency=concurrency,
             on_failure=on_failure,
             default_priority=default_priority,
+            input_validator=input_validator,
         )
 
     return inner
@@ -119,6 +123,7 @@ class Hatchet(HatchetV1):
 
     def function(
         self,
+        input_validator: Type[BaseModel],
         name: str = "",
         auto_register: bool = True,
         on_events: list[str] | None = None,
@@ -147,9 +152,10 @@ class Hatchet(HatchetV1):
             concurrency=concurrency,
             on_failure=on_failure,
             default_priority=default_priority,
+            input_validator=input_validator,
         )
 
-        def wrapper(func: Callable[[Context], str]) -> HatchetCallable[T]:
+        def wrapper(func: Callable[[Context], Any]) -> HatchetCallable[T]:
             wrapped_resp = resp(func)
 
             if wrapped_resp.function_auto_register:
