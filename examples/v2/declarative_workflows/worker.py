@@ -43,7 +43,7 @@ language_counter: Counter[Language] = Counter()
 
 
 @language_counter_workflow.declare()
-async def translate(
+async def counter(
     ctx: Context,
 ) -> dict[Language, int]:
     greeting = language_counter_workflow.workflow_input(ctx).greeting
