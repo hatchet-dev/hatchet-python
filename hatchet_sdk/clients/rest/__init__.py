@@ -111,6 +111,9 @@ from hatchet_sdk.clients.rest.models.events import Events
 from hatchet_sdk.clients.rest.models.get_step_run_diff_response import (
     GetStepRunDiffResponse,
 )
+from hatchet_sdk.clients.rest.models.info_get_version200_response import (
+    InfoGetVersion200Response,
+)
 from hatchet_sdk.clients.rest.models.job import Job
 from hatchet_sdk.clients.rest.models.job_run import JobRun
 from hatchet_sdk.clients.rest.models.job_run_status import JobRunStatus
