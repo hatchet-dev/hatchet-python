@@ -98,7 +98,7 @@ class Worker:
     def register_function(self, action: str, func: Callable[[Context], Any]) -> None:
         self.action_registry[action] = func
         self.validator_registry[action] = WorkflowValidator(
-            workflow_input=func.input_validator,
+            workflow_input=getattr(func, "input_validator"),
             step_output=None,
         )
 

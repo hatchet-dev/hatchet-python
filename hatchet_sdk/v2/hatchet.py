@@ -179,7 +179,7 @@ class Hatchet(HatchetV1):
 
     def function(
         self,
-        input_validator: Type[BaseModel],
+        input_validator: Type[BaseModel] = EmptyModel,
         name: str = "",
         auto_register: bool = True,
         on_events: list[str] | None = None,
