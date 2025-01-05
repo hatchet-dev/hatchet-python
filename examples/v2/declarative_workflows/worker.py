@@ -37,24 +37,24 @@ async def greet(ctx: Context) -> dict[Literal["message"], str]:
 
 
 ## Imagine this is a metric in a monitoring system
-language_counter: Counter[Language] = Counter()
+counter: Counter[Language] = Counter()
 
 
 @language_counter_workflow.declare()
-async def counter(
+async def language_counter(
     ctx: Context,
 ) -> dict[Language, int]:
     greeting = language_counter_workflow.workflow_input(ctx).greeting
 
     match greeting:
         case "Hello":
-            language_counter["English"] += 1
+            counter["English"] += 1
         case "Ciao":
-            language_counter["Italian"] += 1
+            counter["Italian"] += 1
         case "Hej":
-            language_counter["Swedish"] += 1
+            counter["Swedish"] += 1
 
-    return dict(language_counter)
+    return dict(counter)
 
 
 if __name__ == "__main__":

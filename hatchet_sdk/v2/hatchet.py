@@ -1,8 +1,9 @@
-from typing import Any, Callable, Type, TypeVar, Union
+from typing import Any, Callable, Generic, Type, TypeVar, Union, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from hatchet_sdk import Worker
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     ConcurrencyLimitStrategy,
@@ -12,11 +13,27 @@ from hatchet_sdk.hatchet import Hatchet as HatchetV1
 from hatchet_sdk.hatchet import workflow
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.v2.callable import DurableContext, HatchetCallable
+from hatchet_sdk.v2.callable import DurableContext, EmptyModel, HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.worker import register_on_worker
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 T = TypeVar("T")
+TWorkflowInput = TypeVar("TWorkflowInput", bound=BaseModel)
+
+
+class DeclarativeWorkflowConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    input_validator: Type[BaseModel] = EmptyModel
+    name: str = ""
+    on_events: list[str] | None = None
+    on_crons: list[str] | None = None
+    version: str = ""
+    timeout: str = "60m"
+    schedule_timeout: str = "5m"
+    concurrency: ConcurrencyFunction | None = None
+    default_priority: int | None = None
 
 
 def function(
@@ -113,6 +130,45 @@ def concurrency(
         return ConcurrencyFunction(func, name, max_runs, limit_strategy)
 
     return inner
+
+
+class SpawnWorkflowInput(BaseModel):
+    workflow_name: str
+    input: BaseModel
+    key: str | None = None
+    options: ChildTriggerWorkflowOptions | None = None
+
+
+class DeclarativeWorkflow(Generic[TWorkflowInput]):
+    def __init__(self, config: DeclarativeWorkflowConfig, hatchet: Hatchet):
+        self.config = config
+        self.hatchet = hatchet
+
+    def run(self, input: TWorkflowInput) -> WorkflowRunRef:
+        return self.hatchet.admin.run_workflow(
+            workflow_name=self.config.name, input=input.model_dump()
+        )
+
+    async def spawn(
+        self, context: Context, input: SpawnWorkflowInput
+    ) -> WorkflowRunRef:
+        return await context.aio.spawn_workflow(
+            workflow_name=input.workflow_name,
+            input=input.input.model_dump(),
+            key=input.key,
+            options=input.options,
+        )
+
+    def construct_spawn_workflow_input(
+        self, input: TWorkflowInput
+    ) -> SpawnWorkflowInput:
+        return SpawnWorkflowInput(workflow_name=self.config.name, input=input)
+
+    def declare(self) -> Callable[[Callable[[Context], Any]], Callable[[Context], Any]]:
+        return self.hatchet.function(**self.config.model_dump())
+
+    def workflow_input(self, ctx: Context) -> TWorkflowInput:
+        return cast(TWorkflowInput, ctx.workflow_input())
 
 
 class Hatchet(HatchetV1):
@@ -228,3 +284,30 @@ class Hatchet(HatchetV1):
             register_on_worker(func, worker)
 
         return worker
+
+    def declare_workflow(
+        self,
+        input_validator: Type[TWorkflowInput],
+        name: str = "",
+        on_events: list[str] | None = None,
+        on_crons: list[str] | None = None,
+        version: str = "",
+        timeout: str = "60m",
+        schedule_timeout: str = "5m",
+        concurrency: ConcurrencyFunction | None = None,
+        default_priority: int | None = None,
+    ) -> DeclarativeWorkflow[TWorkflowInput]:
+        return DeclarativeWorkflow[input_validator](
+            hatchet=self,
+            config=DeclarativeWorkflowConfig(
+                input_validator=input_validator,
+                name=name,
+                on_events=on_events,
+                on_crons=on_crons,
+                version=version,
+                timeout=timeout,
+                schedule_timeout=schedule_timeout,
+                concurrency=concurrency,
+                default_priority=default_priority,
+            ),
+        )

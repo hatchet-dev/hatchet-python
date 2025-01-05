@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, Callable, Generic, List, Type, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
 from hatchet_sdk.context.context import Context
@@ -24,7 +24,7 @@ T = TypeVar("T")
 
 
 class EmptyModel(BaseModel):
-    pass
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="allow")
 
 
 class HatchetCallable(Generic[T]):
