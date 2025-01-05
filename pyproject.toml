@@ -9,11 +9,11 @@ include = ["hatchet_sdk/py.typed"]
 [tool.poetry.dependencies]
 python = "^3.10"
 grpcio = [
-    { version = "^1.64.1, ^1.65, ^1.66, ^1.67, >=1.69.0", markers = "python_version < '3.13'" },
+    { version = ">=1.64.1, !=1.68.*", markers = "python_version < '3.13'" },
     { version = ">=1.69.0", markers = "python_version >= '3.13'" }
 ]
 grpcio-tools = [
-    { version = "^1.64.1, ^1.65, ^1.66, ^1.67, >=1.69.0", markers = "python_version < '3.13'" },
+    { version = ">=1.64.1, !=1.68.*", markers = "python_version < '3.13'" },
     { version = ">=1.69.0", markers = "python_version >= '3.13'" }
 ]
 python-dotenv = "^1.0.0"
