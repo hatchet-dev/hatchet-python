@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Unio
 
 import grpc
 from google.protobuf import timestamp_pb2
+from pydantic import BaseModel
 
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
@@ -51,6 +52,11 @@ class ScheduleTriggerWorkflowOptions(TypedDict, total=False):
 
 class ChildTriggerWorkflowOptions(TypedDict, total=False):
     additional_metadata: Dict[str, str] | None = None
+    sticky: bool | None = None
+
+
+class ChildTriggerWorkflowOptionsV2(BaseModel):
+    additional_metadata: dict[str, str] | None = None
     sticky: bool | None = None
 
 

@@ -3,7 +3,7 @@ from typing import Any, Callable, Generic, Type, TypeVar, Union, cast
 from pydantic import BaseModel, ConfigDict
 
 from hatchet_sdk import Worker
-from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptionsV2
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     ConcurrencyLimitStrategy,
@@ -37,7 +37,6 @@ class DeclarativeWorkflowConfig(BaseModel):
 
 
 def function(
-    input_validator: Type[BaseModel],
     name: str = "",
     auto_register: bool = True,
     on_events: list[str] | None = None,
@@ -52,6 +51,7 @@ def function(
     concurrency: ConcurrencyFunction | None = None,
     on_failure: Union["HatchetCallable[T]", None] = None,
     default_priority: int | None = None,
+    input_validator: Type[BaseModel] = EmptyModel,
 ) -> Callable[[Callable[[Context], str]], HatchetCallable[T]]:
     def inner(func: Callable[[Context], T]) -> HatchetCallable[T]:
         return HatchetCallable(
@@ -91,6 +91,7 @@ def durable(
     concurrency: ConcurrencyFunction | None = None,
     on_failure: HatchetCallable[T] | None = None,
     default_priority: int | None = None,
+    input_validator: Type[BaseModel] = EmptyModel,
 ) -> Callable[[HatchetCallable[T]], HatchetCallable[T]]:
     def inner(func: HatchetCallable[T]) -> HatchetCallable[T]:
         func.durable = True
@@ -110,6 +111,7 @@ def durable(
             concurrency=concurrency,
             on_failure=on_failure,
             default_priority=default_priority,
+            input_validator=input_validator,
         )
 
         resp = f(func)
@@ -136,11 +138,11 @@ class SpawnWorkflowInput(BaseModel):
     workflow_name: str
     input: BaseModel
     key: str | None = None
-    options: ChildTriggerWorkflowOptions | None = None
+    options: ChildTriggerWorkflowOptionsV2 | None = None
 
 
 class DeclarativeWorkflow(Generic[TWorkflowInput]):
-    def __init__(self, config: DeclarativeWorkflowConfig, hatchet: Hatchet):
+    def __init__(self, config: DeclarativeWorkflowConfig, hatchet: "Hatchet"):
         self.config = config
         self.hatchet = hatchet
 
