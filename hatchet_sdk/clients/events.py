@@ -66,7 +66,10 @@ class EventClient:
         self.otel_tracer = create_tracer(config=config)
 
     async def async_push(
-        self, event_key, payload, options: Optional[PushEventOptions] = None
+        self,
+        event_key: str,
+        payload: dict[str, Any],
+        options: Optional[PushEventOptions] = None,
     ) -> Event:
         return await asyncio.to_thread(
             self.push, event_key=event_key, payload=payload, options=options
@@ -81,7 +84,10 @@ class EventClient:
 
     @tenacity_retry
     def push(
-        self, event_key, payload, options: PushEventOptions | None = None
+        self,
+        event_key: str,
+        payload: dict[str, Any],
+        options: PushEventOptions | None = None,
     ) -> Event:
         ctx = parse_carrier_from_metadata(
             (options or {}).get("additional_metadata", {})

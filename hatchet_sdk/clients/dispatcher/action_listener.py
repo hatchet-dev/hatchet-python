@@ -260,7 +260,6 @@ class ActionListener:
                         break
 
                     self.retries = 0
-                    assigned_action: AssignedAction
 
                     # Process the received action
                     action_type = self.map_action_type(assigned_action.actionType)

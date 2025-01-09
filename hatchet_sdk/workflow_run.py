@@ -28,7 +28,7 @@ class WorkflowRunRef:
     def stream(self) -> RunEventListener:
         return self.workflow_run_event_listener.stream(self.workflow_run_id)
 
-    def result(self) -> Coroutine[]:
+    def result(self) -> Coroutine[None, None, dict[str, Any]]:
         return self.workflow_listener.result(self.workflow_run_id)
 
     def sync_result(self) -> dict[str, Any]:

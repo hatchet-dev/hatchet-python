@@ -171,7 +171,7 @@ class AdminClientAioImpl(AdminClientBase):
     def __init__(self, config: ClientConfig):
         aio_conn = new_conn(config, True)
         self.config = config
-        self.aio_client = WorkflowServiceStub(aio_conn)
+        self.aio_client = WorkflowServiceStub(aio_conn)  # type: ignore[no-untyped-call]
         self.token = config.token
         self.listener_client = new_listener(config)
         self.namespace = config.namespace
@@ -409,7 +409,7 @@ class AdminClient(AdminClientBase):
     def __init__(self, config: ClientConfig):
         conn = new_conn(config)
         self.config = config
-        self.client = WorkflowServiceStub(conn)
+        self.client = WorkflowServiceStub(conn)  # type: ignore[no-untyped-call]
         self.aio = AdminClientAioImpl(config)
         self.token = config.token
         self.listener_client = new_listener(config)
@@ -440,7 +440,7 @@ class AdminClient(AdminClientBase):
         self,
         key: str,
         limit: int,
-        duration: Union[RateLimitDuration.Value, str] = RateLimitDuration.SECOND,
+        duration: Union[RateLimitDuration.Value, str] = RateLimitDuration.SECOND,  # type: ignore[arg-type]
     ) -> None:
         try:
             self.client.PutRateLimit(
