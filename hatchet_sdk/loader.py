@@ -81,7 +81,7 @@ class ClientConfig(BaseModel):
     @classmethod
     def validate_token(cls, token: str) -> str:
         if not token:
-            return ""
+            raise ValueError("Token must be set")
 
         return token
 
@@ -100,7 +100,7 @@ class ClientConfig(BaseModel):
 
         if not tenant_id:
             if not token:
-                return ""
+                raise ValueError("Either the token or tenant_id must be set")
 
             return get_tenant_id_from_jwt(token)
 
@@ -109,10 +109,7 @@ class ClientConfig(BaseModel):
     @field_validator("host_port", mode="after")
     @classmethod
     def validate_host_port(cls, host_port: str, info: ValidationInfo) -> str:
-        token = cast(str | None, info.data.get("token"))
-
-        if not token:
-            return host_port
+        token = cast(str, info.data.get("token"))
 
         _, grpc_broadcast_address = get_addresses_from_jwt(token)
 
@@ -121,10 +118,7 @@ class ClientConfig(BaseModel):
     @field_validator("server_url", mode="after")
     @classmethod
     def validate_server_url(cls, server_url: str, info: ValidationInfo) -> str:
-        token = cast(str | None, info.data.get("token"))
-
-        if not token:
-            return server_url
+        token = cast(str, info.data.get("token"))
 
         _server_url, _ = get_addresses_from_jwt(token)
 
