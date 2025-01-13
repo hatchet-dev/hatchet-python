@@ -37,11 +37,10 @@ class Client:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
-            opt_function(config)
+            opt_function(defaults)
 
-        return cls.from_config(config, debug)
+        return cls.from_config(defaults, debug)
 
     @classmethod
     def from_config(

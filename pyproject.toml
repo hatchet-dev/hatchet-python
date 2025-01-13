@@ -93,6 +93,7 @@ files = [
   "hatchet_sdk/clients/rest/models/workflow_run.py",
   "hatchet_sdk/context/worker_context.py",
   "hatchet_sdk/clients/dispatcher/dispatcher.py",
+  "hatchet_sdk/loader.py",
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
