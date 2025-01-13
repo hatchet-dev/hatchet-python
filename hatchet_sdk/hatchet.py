@@ -192,6 +192,7 @@ class HatchetRest:
     def __init__(self, config: ClientConfig = ClientConfig()):
         self.rest = RestApi(config.server_url, config.token, config.tenant_id)
 
+
 class Hatchet:
     """
     Main client for interacting with the Hatchet SDK.
