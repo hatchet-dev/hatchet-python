@@ -94,6 +94,7 @@ files = [
   "hatchet_sdk/context/worker_context.py",
   "hatchet_sdk/clients/dispatcher/dispatcher.py",
   "hatchet_sdk/loader.py",
+  "hatchet_sdk/token.py"
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
