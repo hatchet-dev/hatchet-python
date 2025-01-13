@@ -21,9 +21,7 @@ def parse_headers(headers: str | None) -> dict[str, str]:
         return {}
 
     try:
-        otel_header_key, api_key = headers.split("=", maxsplit=1)
-
-        return {otel_header_key: api_key}
+        return dict([headers.split("=", maxsplit=1)])
     except ValueError:
         raise ValueError("OTLP headers must be in the format `key=value`")
 
