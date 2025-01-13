@@ -88,6 +88,9 @@ class ClientConfig(BaseModel):
     @field_validator("namespace", mode="after")
     @classmethod
     def validate_namespace(cls, namespace: str) -> str:
+        if not namespace:
+            return ""
+
         if not namespace.endswith("_"):
             namespace = f"{namespace}_"
 
