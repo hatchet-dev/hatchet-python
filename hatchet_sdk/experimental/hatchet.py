@@ -16,7 +16,7 @@ from hatchet_sdk.experimental.contracts.workflows_pb2 import (
 from hatchet_sdk.experimental.features.cron import CronClient
 from hatchet_sdk.experimental.features.scheduled import ScheduledClient
 from hatchet_sdk.experimental.labels import DesiredWorkerLabel
-from hatchet_sdk.experimental.loader import ClientConfig, ConfigLoader
+from hatchet_sdk.experimental.loader import ClientConfig
 from hatchet_sdk.experimental.rate_limit import RateLimit
 from hatchet_sdk.experimental.v2.callable import HatchetCallable
 
@@ -190,8 +190,7 @@ class HatchetRest:
     rest: RestApi
 
     def __init__(self, config: ClientConfig = ClientConfig()):
-        _config: ClientConfig = ConfigLoader(".").load_client_config(config)
-        self.rest = RestApi(_config.server_url, _config.token, _config.tenant_id)
+        self.rest = RestApi(config.server_url, config.token, config.tenant_id)
 
 
 class Hatchet:

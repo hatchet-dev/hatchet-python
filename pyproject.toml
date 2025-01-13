@@ -93,6 +93,19 @@ files = [
   "hatchet_sdk/clients/rest/models/workflow_run.py",
   "hatchet_sdk/context/worker_context.py",
   "hatchet_sdk/clients/dispatcher/dispatcher.py",
+  "hatchet_sdk/experimental/hatchet.py",
+  "hatchet_sdk/experimental/worker/worker.py",
+  "hatchet_sdk/experimental/context/context.py",
+  "hatchet_sdk/experimental/worker/runner/runner.py",
+  "hatchet_sdk/experimental/workflow.py",
+  "hatchet_sdk/experimental/utils/serialization.py",
+  "hatchet_sdk/experimental/utils/tracing.py",
+  "hatchet_sdk/experimental/utils/types.py",
+  "hatchet_sdk/experimental/utils/backoff.py",
+  "hatchet_sdk/experimental/clients/rest/models/workflow_list.py",
+  "hatchet_sdk/experimental/clients/rest/models/workflow_run.py",
+  "hatchet_sdk/experimental/context/worker_context.py",
+  "hatchet_sdk/experimental/clients/dispatcher/dispatcher.py",
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
