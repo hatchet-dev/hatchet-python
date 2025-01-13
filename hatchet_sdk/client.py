@@ -12,7 +12,7 @@ from .clients.admin import AdminClient, new_admin
 from .clients.dispatcher.dispatcher import DispatcherClient, new_dispatcher
 from .clients.events import EventClient, new_event
 from .clients.rest_client import RestApi
-from .loader import ClientConfig, ConfigLoader
+from .loader import ClientConfig
 
 
 class Client:
@@ -102,7 +102,7 @@ class Client:
         self.config = config
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
-        self.logInterceptor = config.logInterceptor
+        self.logInterceptor = config.logger
         self.debug = debug
 
 

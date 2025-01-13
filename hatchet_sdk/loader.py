@@ -1,10 +1,11 @@
+import json
 import os
 from logging import Logger, getLogger
-from typing import cast
+from typing import Any, cast
 
-from pydantic import BaseModel, ValidationError, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
-from .token import get_tenant_id_from_jwt
+from .token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
 
 class ClientTLSConfig(BaseModel):
@@ -15,15 +16,21 @@ class ClientTLSConfig(BaseModel):
     server_name: str
 
 
-def _load_tls_config(host_port: str) -> ClientTLSConfig:
+def _load_tls_config(host_port: str | None = None) -> ClientTLSConfig:
+    server_name = os.getenv("HATCHET_CLIENT_TLS_SERVER_NAME")
+
+    if not server_name and host_port:
+        server_name = host_port.split(":")[0]
+
+    if not server_name:
+        server_name = "localhost"
+
     return ClientTLSConfig(
         tls_strategy=os.getenv("HATCHET_CLIENT_TLS_STRATEGY", "tls"),
         cert_file=os.getenv("HATCHET_CLIENT_TLS_CERT_FILE"),
         key_file=os.getenv("HATCHET_CLIENT_TLS_KEY_FILE"),
         ca_file=os.getenv("HATCHET_CLIENT_TLS_ROOT_CA_FILE"),
-        server_name=os.getenv(
-            "HATCHET_CLIENT_TLS_SERVER_NAME", host_port.split(":")[0]
-        ),
+        server_name=server_name,
     )
 
 
@@ -35,11 +42,13 @@ def parse_listener_timeout(timeout: str | None) -> int | None:
 
 
 class ClientConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, validate_default=True)
+
     token: str = os.getenv("HATCHET_CLIENT_TOKEN", "")
     logger: Logger = getLogger()
     tenant_id: str = os.getenv("HATCHET_CLIENT_TENANT_ID", "")
     host_port: str = os.getenv("HATCHET_CLIENT_HOST_PORT", "localhost:7070")
-    tls_config: ClientTLSConfig = _load_tls_config(host_port)
+    tls_config: ClientTLSConfig = _load_tls_config()
     server_url: str = "https://app.dev.hatchet-tools.com"
     namespace: str = os.getenv("HATCHET_CLIENT_NAMESPACE", "")
     listener_v2_timeout: int | None = parse_listener_timeout(
@@ -72,7 +81,7 @@ class ClientConfig(BaseModel):
     @classmethod
     def validate_token(cls, token: str) -> str:
         if not token:
-            raise ValidationError("Token must be set")
+            return ""
 
         return token
 
@@ -91,13 +100,47 @@ class ClientConfig(BaseModel):
 
         if not tenant_id:
             if not token:
-                raise ValidationError(
-                    "Token must be set before attempting to infer tenant ID"
-                )
+                return ""
 
             return get_tenant_id_from_jwt(token)
 
         return tenant_id
+
+    @field_validator("host_port", mode="after")
+    @classmethod
+    def validate_host_port(cls, host_port: str, info: ValidationInfo) -> str:
+        token = cast(str | None, info.data.get("token"))
+
+        if not token:
+            return host_port
+
+        _, grpc_broadcast_address = get_addresses_from_jwt(token)
+
+        return grpc_broadcast_address
+
+    @field_validator("server_url", mode="after")
+    @classmethod
+    def validate_server_url(cls, server_url: str, info: ValidationInfo) -> str:
+        token = cast(str | None, info.data.get("token"))
+
+        if not token:
+            return server_url
+
+        _server_url, _ = get_addresses_from_jwt(token)
+
+        return _server_url
+
+    @field_validator("tls_config", mode="after")
+    @classmethod
+    def validate_tls_config(
+        cls, tls_config: ClientTLSConfig, info: ValidationInfo
+    ) -> ClientTLSConfig:
+        host_port = cast(str, info.data.get("host_port"))
+
+        return _load_tls_config(host_port)
+
+    def __hash__(self) -> int:
+        return hash(json.dumps(self.model_dump(), default=str))
 
     ## TODO: Fix host port overrides here
     ## Old code:

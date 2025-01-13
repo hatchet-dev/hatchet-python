@@ -1,5 +1,6 @@
 import base64
 import json
+from typing import Any
 
 
 def get_tenant_id_from_jwt(token: str) -> str:
@@ -8,13 +9,13 @@ def get_tenant_id_from_jwt(token: str) -> str:
     return claims.get("sub")
 
 
-def get_addresses_from_jwt(token: str) -> (str, str):
+def get_addresses_from_jwt(token: str) -> tuple[str, str]:
     claims = extract_claims_from_jwt(token)
 
-    return claims.get("server_url"), claims.get("grpc_broadcast_address")
+    return claims["server_url"], claims["grpc_broadcast_address"]
 
 
-def extract_claims_from_jwt(token: str):
+def extract_claims_from_jwt(token: str) -> dict[str, Any]:
     parts = token.split(".")
     if len(parts) != 3:
         raise ValueError("Invalid token format")
