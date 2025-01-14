@@ -114,7 +114,7 @@ def step(
                 intValue=value if isinstance(value, int) else None,
                 required=d.required,
                 weight=d.weight,
-                comparator=d.comparator,
+                comparator=d.comparator,  # type: ignore[arg-type]
             )
 
         setattr(

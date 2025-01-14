@@ -1,6 +1,6 @@
-from typing import Union
+from typing import Any, Union
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from hatchet_sdk.client import Client
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
@@ -25,8 +25,8 @@ class CreateCronTriggerInput(BaseModel):
     """
 
     expression: str = None
-    input: dict = {}
-    additional_metadata: AdditionalMetadata = {}
+    input: dict[str, Any] = Field(default_factory=dict)
+    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
 
     @field_validator("expression")
     def validate_cron_expression(cls, v):

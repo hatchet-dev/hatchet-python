@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import grpc
 from google.protobuf import timestamp_pb2
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.contracts.events_pb2 import (
@@ -46,7 +46,7 @@ def proto_timestamp_now():
 
 
 class PushEventOptions(BaseModel):
-    additional_metadata: AdditionalMetadata = {}
+    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
     namespace: str | None = None
 
 
@@ -57,7 +57,7 @@ class BulkPushEventOptions(BaseModel):
 class BulkPushEventWithMetadata(BaseModel):
     key: str
     payload: Any
-    additional_metadata: AdditionalMetadata = {}
+    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
 
 
 class EventClient:

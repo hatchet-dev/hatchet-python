@@ -72,7 +72,7 @@ class Action:
     action_payload: str
     action_type: ActionType
     retry_count: int
-    additional_metadata: AdditionalMetadata = {}
+    additional_metadata: AdditionalMetadata = field(default_factory=dict)
 
     child_workflow_index: int | None = None
     child_workflow_key: str | None = None

@@ -4,7 +4,7 @@ from typing import Any, Callable, TypeVar, Union
 
 import grpc
 from google.protobuf import timestamp_pb2
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
@@ -52,7 +52,7 @@ class ScheduleTriggerWorkflowOptions(BaseModel):
 
 
 class ChildTriggerWorkflowOptions(BaseModel):
-    additional_metadata: AdditionalMetadata = {}
+    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
     sticky: bool | None = None
 
 
@@ -64,7 +64,7 @@ class ChildWorkflowRunDict(BaseModel):
 
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
-    additional_metadata: AdditionalMetadata = {}
+    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
     desired_worker_id: str | None = None
     namespace: str | None = None
 

@@ -1,7 +1,7 @@
 import datetime
 from typing import Any, Coroutine, Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from hatchet_sdk.client import Client
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
@@ -28,9 +28,9 @@ class CreateScheduledTriggerInput(BaseModel):
         trigger_at (Optional[datetime.datetime]): The datetime when the run should be triggered.
     """
 
-    input: Dict[str, Any] = {}
-    additional_metadata: AdditionalMetadata = {}
-    trigger_at: Optional[datetime.datetime] = None
+    input: dict[str, Any] = Field(default_factory=dict)
+    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    trigger_at: datetime.datetime | None = None
 
 
 class ScheduledClient:
@@ -168,8 +168,8 @@ class ScheduledClientAsync:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: Dict[str, Any],
-        additional_metadata: AdditionalMetadatan,
+        input: dict[str, Any],
+        additional_metadata: AdditionalMetadata,
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.
