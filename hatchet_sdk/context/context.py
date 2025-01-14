@@ -18,7 +18,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     BulkTriggerWorkflowRequest,
     TriggerWorkflowRequest,
 )
-from hatchet_sdk.utils.types import WorkflowValidator
+from hatchet_sdk.utils.types import Input, WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
@@ -101,7 +101,7 @@ class ContextAioImpl(BaseContext):
     async def spawn_workflow(
         self,
         workflow_name: str,
-        input: dict[str, Any] = {},
+        input: Input = {},
         key: str | None = None,
         options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
     ) -> WorkflowRunRef:
@@ -126,7 +126,7 @@ class ContextAioImpl(BaseContext):
         bulk_trigger_workflow_runs = [
             WorkflowRunDict(
                 workflow_name=child_workflow_run.workflow_name,
-                input=input,
+                input=child_workflow_run.input,
                 options=self._prepare_workflow_options(
                     child_workflow_run.key, child_workflow_run.options, worker_id
                 ),

@@ -15,7 +15,7 @@ from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
 )
-from hatchet_sdk.utils.types import AdditionalMetadata
+from hatchet_sdk.utils.types import AdditionalMetadata, Input
 
 
 class CreateScheduledTriggerInput(BaseModel):
@@ -28,7 +28,7 @@ class CreateScheduledTriggerInput(BaseModel):
         trigger_at (Optional[datetime.datetime]): The datetime when the run should be triggered.
     """
 
-    input: dict[str, Any] = Field(default_factory=dict)
+    input: Input = Field(default_factory=dict)
     additional_metadata: AdditionalMetadata = Field(default_factory=dict)
     trigger_at: datetime.datetime | None = None
 
@@ -58,7 +58,7 @@ class ScheduledClient:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: Dict[str, Any],
+        input: Input,
         additional_metadata: AdditionalMetadata,
     ) -> ScheduledWorkflows:
         """
@@ -168,7 +168,7 @@ class ScheduledClientAsync:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: dict[str, Any],
+        input: Input,
         additional_metadata: AdditionalMetadata,
     ) -> ScheduledWorkflows:
         """

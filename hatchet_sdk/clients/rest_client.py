@@ -66,7 +66,7 @@ from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
-from hatchet_sdk.utils.types import AdditionalMetadata
+from hatchet_sdk.utils.types import AdditionalMetadata, Input
 
 
 class AsyncRestApi:
@@ -212,7 +212,7 @@ class AsyncRestApi:
     async def workflow_run_create(
         self,
         workflow_id: str,
-        input: dict[str, Any],
+        input: Input,
         version: str | None = None,
         additional_metadata: list[str] | None = None,
     ) -> WorkflowRun:
@@ -230,7 +230,7 @@ class AsyncRestApi:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: dict[str, Any],
+        input: Input,
         additional_metadata: AdditionalMetadata,
     ):
         return await self.workflow_run_api.cron_workflow_trigger_create(
@@ -279,7 +279,7 @@ class AsyncRestApi:
         self,
         name: str,
         trigger_at: datetime.datetime,
-        input: dict[str, Any],
+        input: Input,
         additional_metadata: AdditionalMetadata,
     ):
         return await self.workflow_run_api.scheduled_workflow_run_create(
@@ -471,7 +471,7 @@ class RestApi:
     def workflow_run_create(
         self,
         workflow_id: str,
-        input: dict[str, Any],
+        input: Input,
         version: str | None = None,
         additional_metadata: list[str] | None = None,
     ) -> WorkflowRun:
@@ -486,7 +486,7 @@ class RestApi:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: dict[str, Any],
+        input: Input,
         additional_metadata: AdditionalMetadata,
     ) -> CronWorkflows:
         return self._run_coroutine(
@@ -525,7 +525,7 @@ class RestApi:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: dict[str, Any],
+        input: Input,
         additional_metadata: AdditionalMetadata,
     ):
         return self._run_coroutine(
