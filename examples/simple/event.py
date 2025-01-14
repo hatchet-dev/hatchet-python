@@ -1,9 +1,7 @@
-from typing import List
-
 from dotenv import load_dotenv
 
 from hatchet_sdk import new_client
-from hatchet_sdk.clients.events import BulkPushEventOptions, BulkPushEventWithMetadata
+from hatchet_sdk.clients.events import BulkPushEventOptions, BulkPushEventWithMetadata, PushEventOptions
 
 load_dotenv()
 
@@ -11,7 +9,7 @@ client = new_client()
 
 # client.event.push("user:create", {"test": "test"})
 client.event.push(
-    "user:create", {"test": "test"}, options={"additional_metadata": {"hello": "moon"}}
+    "user:create", {"test": "test"}, options=PushEventOptions(additional_metadata={"hello": "moon"})
 )
 
 events = [
