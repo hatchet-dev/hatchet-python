@@ -66,6 +66,7 @@ from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
+from hatchet_sdk.utils.types import AdditionalMetadata
 
 
 class AsyncRestApi:
@@ -230,7 +231,7 @@ class AsyncRestApi:
         cron_name: str,
         expression: str,
         input: dict[str, Any],
-        additional_metadata: dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ):
         return await self.workflow_run_api.cron_workflow_trigger_create(
             tenant=self.tenant_id,
@@ -279,7 +280,7 @@ class AsyncRestApi:
         name: str,
         trigger_at: datetime.datetime,
         input: dict[str, Any],
-        additional_metadata: dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ):
         return await self.workflow_run_api.scheduled_workflow_run_create(
             tenant=self.tenant_id,
@@ -486,7 +487,7 @@ class RestApi:
         cron_name: str,
         expression: str,
         input: dict[str, Any],
-        additional_metadata: dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ) -> CronWorkflows:
         return self._run_coroutine(
             self.aio.cron_create(
@@ -525,7 +526,7 @@ class RestApi:
         workflow_name: str,
         trigger_at: datetime.datetime,
         input: dict[str, Any],
-        additional_metadata: dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ):
         return self._run_coroutine(
             self.aio.schedule_create(

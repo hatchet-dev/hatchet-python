@@ -12,6 +12,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateStepRateLimit,
     DesiredWorkerLabels,
     StickyStrategy,
+    WorkerLabelComparator,
 )
 from hatchet_sdk.features.cron import CronClient
 from hatchet_sdk.features.scheduled import ScheduledClient
@@ -107,13 +108,13 @@ def step(
         setattr(func, "_step_backoff_max_seconds", backoff_max_seconds)
 
         def create_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
-            value = d["value"] if "value" in d else None
+            value = d.value
             return DesiredWorkerLabels(
-                strValue=str(value) if not isinstance(value, int) else None,
+                strValue=value if not isinstance(value, int) else None,
                 intValue=value if isinstance(value, int) else None,
-                required=d["required"] if "required" in d else None,  # type: ignore[arg-type]
-                weight=d["weight"] if "weight" in d else None,
-                comparator=d["comparator"] if "comparator" in d else None,  # type: ignore[arg-type]
+                required=d.required,
+                weight=d.weight,
+                comparator=d.comparator,
             )
 
         setattr(

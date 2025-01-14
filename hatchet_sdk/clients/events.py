@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import grpc
 from google.protobuf import timestamp_pb2
+from pydantic import BaseModel
 
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
 from hatchet_sdk.contracts.events_pb2 import (
@@ -23,6 +24,7 @@ from hatchet_sdk.utils.tracing import (
     inject_carrier_into_metadata,
     parse_carrier_from_metadata,
 )
+from hatchet_sdk.utils.types import AdditionalMetadata
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -43,19 +45,19 @@ def proto_timestamp_now():
     return timestamp_pb2.Timestamp(seconds=seconds, nanos=nanos)
 
 
-class PushEventOptions(TypedDict, total=False):
-    additional_metadata: Dict[str, str] | None = None
+class PushEventOptions(BaseModel):
+    additional_metadata: AdditionalMetadata = {}
     namespace: str | None = None
 
 
-class BulkPushEventOptions(TypedDict, total=False):
+class BulkPushEventOptions(BaseModel):
     namespace: str | None = None
 
 
-class BulkPushEventWithMetadata(TypedDict, total=False):
+class BulkPushEventWithMetadata(BaseModel):
     key: str
     payload: Any
-    additional_metadata: Optional[Dict[str, Any]]  # Optional metadata
+    additional_metadata: AdditionalMetadata = {}
 
 
 class EventClient:

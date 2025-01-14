@@ -15,6 +15,7 @@ from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
 )
+from hatchet_sdk.utils.types import AdditionalMetadata
 
 
 class CreateScheduledTriggerInput(BaseModel):
@@ -28,7 +29,7 @@ class CreateScheduledTriggerInput(BaseModel):
     """
 
     input: Dict[str, Any] = {}
-    additional_metadata: Dict[str, str] = {}
+    additional_metadata: AdditionalMetadata = {}
     trigger_at: Optional[datetime.datetime] = None
 
 
@@ -58,7 +59,7 @@ class ScheduledClient:
         workflow_name: str,
         trigger_at: datetime.datetime,
         input: Dict[str, Any],
-        additional_metadata: Dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.
@@ -168,7 +169,7 @@ class ScheduledClientAsync:
         workflow_name: str,
         trigger_at: datetime.datetime,
         input: Dict[str, Any],
-        additional_metadata: Dict[str, str],
+        additional_metadata: AdditionalMetadatan,
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.

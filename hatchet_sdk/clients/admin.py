@@ -1,9 +1,10 @@
 import json
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, TypedDict, TypeVar, Union
+from typing import Any, Callable, TypeVar, Union
 
 import grpc
 from google.protobuf import timestamp_pb2
+from pydantic import BaseModel
 
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
 from hatchet_sdk.clients.rest.tenacity_utils import tenacity_retry
@@ -30,6 +31,7 @@ from hatchet_sdk.utils.tracing import (
     inject_carrier_into_metadata,
     parse_carrier_from_metadata,
 )
+from hatchet_sdk.utils.types import AdditionalMetadata
 from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 
 from ..loader import ClientConfig
@@ -41,36 +43,36 @@ def new_admin(config: ClientConfig):
     return AdminClient(config)
 
 
-class ScheduleTriggerWorkflowOptions(TypedDict, total=False):
-    parent_id: Optional[str]
-    parent_step_run_id: Optional[str]
-    child_index: Optional[int]
-    child_key: Optional[str]
-    namespace: Optional[str]
+class ScheduleTriggerWorkflowOptions(BaseModel):
+    parent_id: str | None = None
+    parent_step_run_id: str | None = None
+    child_index: int | None = None
+    child_key: str | None = None
+    namespace: str | None = None
 
 
-class ChildTriggerWorkflowOptions(TypedDict, total=False):
-    additional_metadata: Dict[str, str] | None = None
+class ChildTriggerWorkflowOptions(BaseModel):
+    additional_metadata: AdditionalMetadata = {}
     sticky: bool | None = None
 
 
-class ChildWorkflowRunDict(TypedDict, total=False):
+class ChildWorkflowRunDict(BaseModel):
     workflow_name: str
     input: Any
     options: ChildTriggerWorkflowOptions
     key: str | None = None
 
 
-class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions, total=False):
-    additional_metadata: Dict[str, str] | None = None
+class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
+    additional_metadata: AdditionalMetadata = {}
     desired_worker_id: str | None = None
     namespace: str | None = None
 
 
-class WorkflowRunDict(TypedDict, total=False):
+class WorkflowRunDict(BaseModel):
     workflow_name: str
     input: Any
-    options: TriggerWorkflowOptions | None
+    options: TriggerWorkflowOptions
 
 
 class DedupeViolationErr(Exception):
@@ -133,7 +135,7 @@ class AdminClientBase:
     def _prepare_schedule_workflow_request(
         self,
         name: str,
-        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
+        schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
         options: ScheduleTriggerWorkflowOptions = None,
     ):
@@ -263,7 +265,7 @@ class AdminClientAioImpl(AdminClientBase):
         self,
         workflows: list[WorkflowRunDict],
         options: TriggerWorkflowOptions | None = None,
-    ) -> List[WorkflowRunRef]:
+    ) -> list[WorkflowRunRef]:
         if len(workflows) == 0:
             raise ValueError("No workflows to run")
         try:
@@ -357,7 +359,7 @@ class AdminClientAioImpl(AdminClientBase):
     async def schedule_workflow(
         self,
         name: str,
-        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
+        schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
         options: ScheduleTriggerWorkflowOptions = None,
     ) -> WorkflowVersion:
@@ -443,7 +445,7 @@ class AdminClient(AdminClientBase):
     def schedule_workflow(
         self,
         name: str,
-        schedules: List[Union[datetime, timestamp_pb2.Timestamp]],
+        schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
         input={},
         options: ScheduleTriggerWorkflowOptions = None,
     ) -> WorkflowVersion:
@@ -549,7 +551,7 @@ class AdminClient(AdminClientBase):
 
     @tenacity_retry
     def run_workflows(
-        self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
+        self, workflows: list[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> list[WorkflowRunRef]:
         workflow_run_requests: TriggerWorkflowRequest = []
         try:

@@ -54,29 +54,20 @@ class BaseContext:
     def _prepare_workflow_options(
         self,
         key: str | None = None,
-        options: ChildTriggerWorkflowOptions | None = None,
+        options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
         worker_id: str | None = None,
     ) -> TriggerWorkflowOptions:
         workflow_run_id = self.action.workflow_run_id
         step_run_id = self.action.step_run_id
 
-        desired_worker_id = None
-        if options is not None and "sticky" in options and options["sticky"] == True:
-            desired_worker_id = worker_id
-
-        meta = None
-        if options is not None and "additional_metadata" in options:
-            meta = options["additional_metadata"]
-
-        ## TODO: Pydantic here to simplify this
-        trigger_options: TriggerWorkflowOptions = {
-            "parent_id": workflow_run_id,
-            "parent_step_run_id": step_run_id,
-            "child_key": key,
-            "child_index": self.spawn_index,
-            "additional_metadata": meta,
-            "desired_worker_id": desired_worker_id,
-        }
+        trigger_options = TriggerWorkflowOptions(
+            parent_id=workflow_run_id,
+            parent_step_run_id=step_run_id,
+            child_key=key,
+            child_index=self.spawn_index,
+            additional_metadata=options.additional_metadata,
+            desired_worker_id=worker_id if options.sticky else None,
+        )
 
         self.spawn_index += 1
         return trigger_options
@@ -112,18 +103,9 @@ class ContextAioImpl(BaseContext):
         workflow_name: str,
         input: dict[str, Any] = {},
         key: str | None = None,
-        options: ChildTriggerWorkflowOptions | None = None,
+        options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
     ) -> WorkflowRunRef:
         worker_id = self.worker.id()
-        # if (
-        #     options is not None
-        #     and "sticky" in options
-        #     and options["sticky"] == True
-        #     and not self.worker.has_workflow(workflow_name)
-        # ):
-        #     raise Exception(
-        #         f"cannot run with sticky: workflow {workflow_name} is not registered on the worker"
-        #     )
 
         trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
@@ -141,21 +123,16 @@ class ContextAioImpl(BaseContext):
 
         worker_id = self.worker.id()
 
-        bulk_trigger_workflow_runs: list[WorkflowRunDict] = []
-        for child_workflow_run in child_workflow_runs:
-            workflow_name = child_workflow_run["workflow_name"]
-            input = child_workflow_run["input"]
-
-            key = child_workflow_run.get("key")
-            options = child_workflow_run.get("options", {})
-
-            trigger_options = self._prepare_workflow_options(key, options, worker_id)
-
-            bulk_trigger_workflow_runs.append(
-                WorkflowRunDict(
-                    workflow_name=workflow_name, input=input, options=trigger_options
-                )
+        bulk_trigger_workflow_runs = [
+            WorkflowRunDict(
+                workflow_name=child_workflow_run.workflow_name,
+                input=input,
+                options=self._prepare_workflow_options(
+                    child_workflow_run.key, child_workflow_run.options, worker_id
+                ),
             )
+            for child_workflow_run in child_workflow_runs
+        ]
 
         return await self.admin_client.aio.run_workflows(bulk_trigger_workflow_runs)
 

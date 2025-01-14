@@ -3,7 +3,13 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, StickyStrategy, WorkerLabelComparator
+from hatchet_sdk import (
+    ChildTriggerWorkflowOptions,
+    Context,
+    StickyStrategy,
+    WorkerLabelComparator,
+)
+from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.v2.hatchet import Hatchet
 
@@ -15,17 +21,17 @@ hatchet = Hatchet(debug=True)
 @hatchet.durable(
     sticky=StickyStrategy.HARD,
     desired_worker_labels={
-        "running_workflow": {
-            "value": "True",
-            "required": True,
-            "comparator": WorkerLabelComparator.NOT_EQUAL,
-        },
+        "running_workflow": DesiredWorkerLabel(
+            value="True",
+            required=True,
+            comparator=WorkerLabelComparator.NOT_EQUAL,
+        ),
     },
 )
 async def my_durable_func(context: DurableContext) -> dict[str, Any]:
     try:
         ref = await context.aio.spawn_workflow(
-            "StickyChildWorkflow", {}, options={"sticky": True}
+            "StickyChildWorkflow", {}, options=ChildTriggerWorkflowOptions(sticky=True)
         )
         result = await ref.result()
     except Exception as e:
@@ -39,11 +45,11 @@ async def my_durable_func(context: DurableContext) -> dict[str, Any]:
 class StickyChildWorkflow:
     @hatchet.step(
         desired_worker_labels={
-            "running_workflow": {
-                "value": "True",
-                "required": True,
-                "comparator": WorkerLabelComparator.NOT_EQUAL,
-            },
+            "running_workflow": DesiredWorkerLabel(
+                value="True",
+                required=True,
+                comparator=WorkerLabelComparator.NOT_EQUAL,
+            ),
         },
     )
     async def child(self, context: Context) -> dict[str, str | None]:

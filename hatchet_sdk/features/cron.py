@@ -11,6 +11,7 @@ from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
 )
+from hatchet_sdk.utils.types import AdditionalMetadata
 
 
 class CreateCronTriggerInput(BaseModel):
@@ -25,7 +26,7 @@ class CreateCronTriggerInput(BaseModel):
 
     expression: str = None
     input: dict = {}
-    additional_metadata: dict[str, str] = {}
+    additional_metadata: AdditionalMetadata = {}
 
     @field_validator("expression")
     def validate_cron_expression(cls, v):
@@ -87,7 +88,7 @@ class CronClient:
         cron_name: str,
         expression: str,
         input: dict,
-        additional_metadata: dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ) -> CronWorkflows:
         """
         Creates a new workflow cron trigger.
@@ -199,7 +200,7 @@ class CronClientAsync:
         cron_name: str,
         expression: str,
         input: dict,
-        additional_metadata: dict[str, str],
+        additional_metadata: AdditionalMetadata,
     ) -> CronWorkflows:
         """
         Asynchronously creates a new workflow cron trigger.

@@ -1,10 +1,10 @@
-from typing import TypedDict
+from pydantic import BaseModel
+
+from hatchet_sdk.contracts.workflows_pb2 import WorkerLabelComparator
 
 
-class DesiredWorkerLabel(TypedDict, total=False):
+class DesiredWorkerLabel(BaseModel):
     value: str | int
-    required: bool | None = None
+    required: bool = False
     weight: int | None = None
-    comparator: int | None = (
-        None  # _ClassVar[WorkerLabelComparator] TODO figure out type
-    )
+    comparator: WorkerLabelComparator | None = None

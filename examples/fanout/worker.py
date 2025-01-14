@@ -3,7 +3,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet
 
 load_dotenv()
 
@@ -28,7 +28,9 @@ class Parent:
                         "Child",
                         {"a": str(i)},
                         key=f"child{i}",
-                        options={"additional_metadata": {"hello": "earth"}},
+                        options=ChildTriggerWorkflowOptions(
+                            additional_metadata={"hello": "earth"}
+                        ),
                     )
                 ).result()
             )

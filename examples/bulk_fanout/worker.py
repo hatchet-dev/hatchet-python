@@ -4,7 +4,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
-from hatchet_sdk.clients.admin import ChildWorkflowRunDict
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions, ChildWorkflowRunDict
 
 load_dotenv()
 
@@ -22,18 +22,17 @@ class BulkParent:
 
         n = context.workflow_input().get("n", 100)
 
-        child_workflow_runs: list[ChildWorkflowRunDict] = []
-
-        for i in range(n):
-
-            child_workflow_runs.append(
-                {
-                    "workflow_name": "BulkChild",
-                    "input": {"a": str(i)},
-                    "key": f"child{i}",
-                    "options": {"additional_metadata": {"hello": "earth"}},
-                }
+        child_workflow_runs = [
+            ChildWorkflowRunDict(
+                workflow_name="BulkChild",
+                input={"a": str(i)},
+                key=f"child{i}",
+                options=ChildTriggerWorkflowOptions(
+                    additional_metadata={"hello": "earth"}
+                ),
             )
+            for i in range(n)
+        ]
 
         if len(child_workflow_runs) == 0:
             return {}
