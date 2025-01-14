@@ -3,7 +3,7 @@ from typing import List
 from dotenv import load_dotenv
 
 from hatchet_sdk import new_client
-from hatchet_sdk.clients.events import BulkPushEventWithMetadata
+from hatchet_sdk.clients.events import BulkPushEventOptions, BulkPushEventWithMetadata
 
 load_dotenv()
 
@@ -34,8 +34,7 @@ events = [
 
 
 result = client.event.bulk_push(
-    events,
-    options={"namespace": "bulk-test"},
+    events, options=BulkPushEventOptions(namespace="bulk-test")
 )
 
 print(result)

@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import json
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict, cast
 from uuid import uuid4
 
 import grpc
@@ -19,6 +19,7 @@ from hatchet_sdk.contracts.events_pb2 import (
 from hatchet_sdk.contracts.events_pb2_grpc import EventsServiceStub
 from hatchet_sdk.utils.serialization import flatten
 from hatchet_sdk.utils.tracing import (
+    OTEL_CARRIER_KEY,
     create_carrier,
     create_tracer,
     inject_carrier_into_metadata,
@@ -30,14 +31,14 @@ from ..loader import ClientConfig
 from ..metadata import get_metadata
 
 
-def new_event(conn, config: ClientConfig):
+def new_event(conn: grpc.Channel, config: ClientConfig) -> "EventClient":
     return EventClient(
-        client=EventsServiceStub(conn),
+        client=EventsServiceStub(conn),  # type: ignore[no-untyped-call]
         config=config,
     )
 
 
-def proto_timestamp_now():
+def proto_timestamp_now() -> timestamp_pb2.Timestamp:
     t = datetime.datetime.now().timestamp()
     seconds = int(t)
     nanos = int(t % 1 * 1e9)
@@ -52,6 +53,7 @@ class PushEventOptions(BaseModel):
 
 class BulkPushEventOptions(BaseModel):
     namespace: str | None = None
+    otel_carrier: dict[str, str] = Field(default_factory=dict)
 
 
 class BulkPushEventWithMetadata(BaseModel):
@@ -68,7 +70,10 @@ class EventClient:
         self.otel_tracer = create_tracer(config=config)
 
     async def async_push(
-        self, event_key, payload, options: Optional[PushEventOptions] = None
+        self,
+        event_key: str,
+        payload: dict[str, Any],
+        options: PushEventOptions = PushEventOptions(),
     ) -> Event:
         return await asyncio.to_thread(
             self.push, event_key=event_key, payload=payload, options=options
@@ -76,51 +81,47 @@ class EventClient:
 
     async def async_bulk_push(
         self,
-        events: List[BulkPushEventWithMetadata],
-        options: Optional[BulkPushEventOptions] = None,
+        events: list[BulkPushEventWithMetadata],
+        options: BulkPushEventOptions = BulkPushEventOptions(),
     ) -> List[Event]:
         return await asyncio.to_thread(self.bulk_push, events=events, options=options)
 
     @tenacity_retry
-    def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
-        ctx = parse_carrier_from_metadata(
-            (options or {}).get("additional_metadata", {})
-        )
+    def push(
+        self,
+        event_key: str,
+        payload: dict[str, Any],
+        options: PushEventOptions = PushEventOptions(),
+    ) -> Event:
+        ctx = parse_carrier_from_metadata(options.additional_metadata)
 
         with self.otel_tracer.start_as_current_span(
             "hatchet.push", context=ctx
         ) as span:
             carrier = create_carrier()
-            namespace = self.namespace
-
-            if (
-                options is not None
-                and "namespace" in options
-                and options["namespace"] is not None
-            ):
-                namespace = options.pop("namespace")
+            namespace = options.namespace or self.namespace
 
             namespaced_event_key = namespace + event_key
 
             try:
                 meta = inject_carrier_into_metadata(
-                    dict() if options is None else options["additional_metadata"],
+                    options.additional_metadata,
                     carrier,
                 )
-                meta_bytes = None if meta is None else json.dumps(meta).encode("utf-8")
+                meta_bytes = None if meta is None else json.dumps(meta)
             except Exception as e:
                 raise ValueError(f"Error encoding meta: {e}")
 
             span.set_attributes(flatten(meta, parent_key="", separator="."))
 
             try:
-                payload_bytes = json.dumps(payload).encode("utf-8")
-            except json.UnicodeEncodeError as e:
+                payload_str = json.dumps(payload)
+            except (TypeError, ValueError) as e:
                 raise ValueError(f"Error encoding payload: {e}")
 
             request = PushEventRequest(
                 key=namespaced_event_key,
-                payload=payload_bytes,
+                payload=payload_str,
                 eventTimestamp=proto_timestamp_now(),
                 additionalMetadata=meta_bytes,
             )
@@ -128,7 +129,9 @@ class EventClient:
             span.add_event("Pushing event", attributes={"key": namespaced_event_key})
 
             try:
-                return self.client.Push(request, metadata=get_metadata(self.token))
+                return cast(
+                    Event, self.client.Push(request, metadata=get_metadata(self.token))
+                )
             except grpc.RpcError as e:
                 raise ValueError(f"gRPC error: {e}")
 
@@ -136,20 +139,12 @@ class EventClient:
     def bulk_push(
         self,
         events: List[BulkPushEventWithMetadata],
-        options: BulkPushEventOptions = None,
+        options: BulkPushEventOptions,
     ) -> List[Event]:
-        namespace = self.namespace
+        namespace = options.namespace or self.namespace
         bulk_push_correlation_id = uuid4()
-        ctx = parse_carrier_from_metadata(
-            (options or {}).get("additional_metadata", {})
-        )
 
-        if (
-            options is not None
-            and "namespace" in options
-            and options["namespace"] is not None
-        ):
-            namespace = options.pop("namespace")
+        ctx = parse_carrier_from_metadata({OTEL_CARRIER_KEY: options.otel_carrier})
 
         bulk_events = []
         for event in events:
@@ -161,29 +156,27 @@ class EventClient:
                     "bulk_push_correlation_id", str(bulk_push_correlation_id)
                 )
 
-                event_key = namespace + event["key"]
-                payload = event["payload"]
+                event_key = namespace + event.key
+                payload = event.payload
 
-                try:
-                    meta = inject_carrier_into_metadata(
-                        event.get("additional_metadata", {}), carrier
-                    )
-                    meta_bytes = json.dumps(meta).encode("utf-8") if meta else None
-                except Exception as e:
-                    raise ValueError(f"Error encoding meta: {e}")
-
+                meta = inject_carrier_into_metadata(event.additional_metadata, carrier)
                 span.set_attributes(flatten(meta, parent_key="", separator="."))
 
                 try:
-                    payload_bytes = json.dumps(payload).encode("utf-8")
-                except json.UnicodeEncodeError as e:
+                    meta_str = json.dumps(meta)
+                except Exception as e:
+                    raise ValueError(f"Error encoding meta: {e}")
+
+                try:
+                    payload = json.dumps(payload)
+                except (TypeError, ValueError) as e:
                     raise ValueError(f"Error encoding payload: {e}")
 
                 request = PushEventRequest(
                     key=event_key,
-                    payload=payload_bytes,
+                    payload=payload,
                     eventTimestamp=proto_timestamp_now(),
-                    additionalMetadata=meta_bytes,
+                    additionalMetadata=meta_str,
                 )
                 bulk_events.append(request)
 
@@ -194,11 +187,14 @@ class EventClient:
             response = self.client.BulkPush(
                 bulk_request, metadata=get_metadata(self.token)
             )
-            return response.events
+            return cast(
+                list[Event],
+                response.events,
+            )
         except grpc.RpcError as e:
             raise ValueError(f"gRPC error: {e}")
 
-    def log(self, message: str, step_run_id: str):
+    def log(self, message: str, step_run_id: str) -> None:
         try:
             request = PutLogRequest(
                 stepRunId=step_run_id,
@@ -210,7 +206,7 @@ class EventClient:
         except Exception as e:
             raise ValueError(f"Error logging: {e}")
 
-    def stream(self, data: str | bytes, step_run_id: str):
+    def stream(self, data: str | bytes, step_run_id: str) -> None:
         try:
             if isinstance(data, str):
                 data_bytes = data.encode("utf-8")

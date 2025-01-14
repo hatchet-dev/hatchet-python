@@ -101,6 +101,7 @@ files = [
   "hatchet_sdk/loader.py",
   "hatchet_sdk/token.py",
   "hatchet_sdk/clients/admin.py",
+  "hatchet_sdk/clients/events.py",
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
