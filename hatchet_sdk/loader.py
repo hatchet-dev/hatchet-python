@@ -5,7 +5,7 @@ from typing import cast
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
-from .token import get_addresses_from_jwt, get_tenant_id_from_jwt
+from hatchet_sdk.token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
 
 class ClientTLSConfig(BaseModel):
@@ -125,6 +125,9 @@ class ClientConfig(BaseModel):
 
         token = cast(str, info.data.get("token"))
 
+        if not token:
+            raise ValueError("Token must be set")
+
         _, grpc_broadcast_address = get_addresses_from_jwt(token)
 
         return grpc_broadcast_address
@@ -141,6 +144,9 @@ class ClientConfig(BaseModel):
             return host_port
 
         token = cast(str, info.data.get("token"))
+
+        if not token:
+            raise ValueError("Token must be set")
 
         _server_url, _ = get_addresses_from_jwt(token)
 
