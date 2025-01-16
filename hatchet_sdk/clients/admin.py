@@ -256,7 +256,7 @@ class AdminClientAioImpl(AdminClientBase):
                 if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                     raise DedupeViolationErr(e.details())
 
-                raise ValueError(f"gRPC error: {e}")
+                raise e
 
     @tenacity_retry
     async def run_workflows(
@@ -266,56 +266,49 @@ class AdminClientAioImpl(AdminClientBase):
     ) -> List[WorkflowRunRef]:
         if len(workflows) == 0:
             raise ValueError("No workflows to run")
-        try:
-            if not self.pooled_workflow_listener:
-                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            namespace = self.namespace
+        if not self.pooled_workflow_listener:
+            self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            if (
-                options is not None
-                and "namespace" in options
-                and options["namespace"] is not None
-            ):
-                namespace = options["namespace"]
-                del options["namespace"]
+        namespace = self.namespace
 
-            workflow_run_requests: TriggerWorkflowRequest = []
+        if (
+            options is not None
+            and "namespace" in options
+            and options["namespace"] is not None
+        ):
+            namespace = options["namespace"]
+            del options["namespace"]
 
-            for workflow in workflows:
-                workflow_name = workflow["workflow_name"]
-                input_data = workflow["input"]
-                options = workflow["options"]
+        workflow_run_requests: TriggerWorkflowRequest = []
 
-                if namespace != "" and not workflow_name.startswith(self.namespace):
-                    workflow_name = f"{namespace}{workflow_name}"
+        for workflow in workflows:
+            workflow_name = workflow["workflow_name"]
+            input_data = workflow["input"]
+            options = workflow["options"]
 
-                # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(
-                    workflow_name, input_data, options
-                )
-                workflow_run_requests.append(request)
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
-            request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
+            # Prepare and trigger workflow for each workflow name and input
+            request = self._prepare_workflow_request(workflow_name, input_data, options)
+            workflow_run_requests.append(request)
 
-            resp: BulkTriggerWorkflowResponse = (
-                await self.aio_client.BulkTriggerWorkflow(
-                    request,
-                    metadata=get_metadata(self.token),
-                )
+        request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
+
+        resp: BulkTriggerWorkflowResponse = await self.aio_client.BulkTriggerWorkflow(
+            request,
+            metadata=get_metadata(self.token),
+        )
+
+        return [
+            WorkflowRunRef(
+                workflow_run_id=workflow_run_id,
+                workflow_listener=self.pooled_workflow_listener,
+                workflow_run_event_listener=self.listener_client,
             )
-
-            return [
-                WorkflowRunRef(
-                    workflow_run_id=workflow_run_id,
-                    workflow_listener=self.pooled_workflow_listener,
-                    workflow_run_event_listener=self.listener_client,
-                )
-                for workflow_run_id in resp.workflow_run_ids
-            ]
-
-        except grpc.RpcError as e:
-            raise ValueError(f"gRPC error: {e}")
+            for workflow_run_id in resp.workflow_run_ids
+        ]
 
     @tenacity_retry
     async def put_workflow(
@@ -324,15 +317,12 @@ class AdminClientAioImpl(AdminClientBase):
         workflow: CreateWorkflowVersionOpts | WorkflowMeta,
         overrides: CreateWorkflowVersionOpts | None = None,
     ) -> WorkflowVersion:
-        try:
-            opts = self._prepare_put_workflow_request(name, workflow, overrides)
+        opts = self._prepare_put_workflow_request(name, workflow, overrides)
 
-            return await self.aio_client.PutWorkflow(
-                opts,
-                metadata=get_metadata(self.token),
-            )
-        except grpc.RpcError as e:
-            raise ValueError(f"Could not put workflow: {e}")
+        return await self.aio_client.PutWorkflow(
+            opts,
+            metadata=get_metadata(self.token),
+        )
 
     @tenacity_retry
     async def put_rate_limit(
@@ -341,17 +331,14 @@ class AdminClientAioImpl(AdminClientBase):
         limit: int,
         duration: RateLimitDuration = RateLimitDuration.SECOND,
     ):
-        try:
-            await self.aio_client.PutRateLimit(
-                PutRateLimitRequest(
-                    key=key,
-                    limit=limit,
-                    duration=duration,
-                ),
-                metadata=get_metadata(self.token),
-            )
-        except grpc.RpcError as e:
-            raise ValueError(f"Could not put rate limit: {e}")
+        await self.aio_client.PutRateLimit(
+            PutRateLimitRequest(
+                key=key,
+                limit=limit,
+                duration=duration,
+            ),
+            metadata=get_metadata(self.token),
+        )
 
     @tenacity_retry
     async def schedule_workflow(
@@ -383,11 +370,11 @@ class AdminClientAioImpl(AdminClientBase):
                 request,
                 metadata=get_metadata(self.token),
             )
-        except grpc.RpcError as e:
+        except (grpc.aio.AioRpcError, grpc.RpcError) as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                 raise DedupeViolationErr(e.details())
 
-            raise ValueError(f"gRPC error: {e}")
+            raise e
 
 
 class AdminClient(AdminClientBase):
@@ -408,17 +395,14 @@ class AdminClient(AdminClientBase):
         workflow: CreateWorkflowVersionOpts | WorkflowMeta,
         overrides: CreateWorkflowVersionOpts | None = None,
     ) -> WorkflowVersion:
-        try:
-            opts = self._prepare_put_workflow_request(name, workflow, overrides)
+        opts = self._prepare_put_workflow_request(name, workflow, overrides)
 
-            resp: WorkflowVersion = self.client.PutWorkflow(
-                opts,
-                metadata=get_metadata(self.token),
-            )
+        resp: WorkflowVersion = self.client.PutWorkflow(
+            opts,
+            metadata=get_metadata(self.token),
+        )
 
-            return resp
-        except grpc.RpcError as e:
-            raise ValueError(f"Could not put workflow: {e}")
+        return resp
 
     @tenacity_retry
     def put_rate_limit(
@@ -427,17 +411,14 @@ class AdminClient(AdminClientBase):
         limit: int,
         duration: Union[RateLimitDuration.Value, str] = RateLimitDuration.SECOND,
     ):
-        try:
-            self.client.PutRateLimit(
-                PutRateLimitRequest(
-                    key=key,
-                    limit=limit,
-                    duration=duration,
-                ),
-                metadata=get_metadata(self.token),
-            )
-        except grpc.RpcError as e:
-            raise ValueError(f"Could not put rate limit: {e}")
+        self.client.PutRateLimit(
+            PutRateLimitRequest(
+                key=key,
+                limit=limit,
+                duration=duration,
+            ),
+            metadata=get_metadata(self.token),
+        )
 
     @tenacity_retry
     def schedule_workflow(
@@ -469,11 +450,11 @@ class AdminClient(AdminClientBase):
                 request,
                 metadata=get_metadata(self.token),
             )
-        except grpc.RpcError as e:
+        except (grpc.RpcError, grpc.aio.AioRpcError) as e:
             if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                 raise DedupeViolationErr(e.details())
 
-            raise ValueError(f"gRPC error: {e}")
+            raise e
 
     ## TODO: `options` is treated as a dict (wrong type hint)
     ## TODO: `any` type hint should come from `typing`
@@ -541,55 +522,49 @@ class AdminClient(AdminClientBase):
                     workflow_listener=self.pooled_workflow_listener,
                     workflow_run_event_listener=self.listener_client,
                 )
-            except grpc.RpcError as e:
+            except (grpc.RpcError, grpc.aio.AioRpcError) as e:
                 if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                     raise DedupeViolationErr(e.details())
 
-                raise ValueError(f"gRPC error: {e}")
+                raise e
 
     @tenacity_retry
     def run_workflows(
         self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None
     ) -> list[WorkflowRunRef]:
         workflow_run_requests: TriggerWorkflowRequest = []
-        try:
-            if not self.pooled_workflow_listener:
-                self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
+        if not self.pooled_workflow_listener:
+            self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
-            for workflow in workflows:
-                workflow_name = workflow["workflow_name"]
-                input_data = workflow["input"]
-                options = workflow["options"]
+        for workflow in workflows:
+            workflow_name = workflow["workflow_name"]
+            input_data = workflow["input"]
+            options = workflow["options"]
 
-                namespace = self.namespace
+            namespace = self.namespace
 
-                if (
-                    options is not None
-                    and "namespace" in options
-                    and options["namespace"] is not None
-                ):
-                    namespace = options["namespace"]
-                    del options["namespace"]
+            if (
+                options is not None
+                and "namespace" in options
+                and options["namespace"] is not None
+            ):
+                namespace = options["namespace"]
+                del options["namespace"]
 
-                if namespace != "" and not workflow_name.startswith(self.namespace):
-                    workflow_name = f"{namespace}{workflow_name}"
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
-                # Prepare and trigger workflow for each workflow name and input
-                request = self._prepare_workflow_request(
-                    workflow_name, input_data, options
-                )
+            # Prepare and trigger workflow for each workflow name and input
+            request = self._prepare_workflow_request(workflow_name, input_data, options)
 
-                workflow_run_requests.append(request)
+            workflow_run_requests.append(request)
 
-                request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
+            request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
-            resp: BulkTriggerWorkflowResponse = self.client.BulkTriggerWorkflow(
-                request,
-                metadata=get_metadata(self.token),
-            )
-
-        except grpc.RpcError as e:
-            raise ValueError(f"gRPC error: {e}")
+        resp: BulkTriggerWorkflowResponse = self.client.BulkTriggerWorkflow(
+            request,
+            metadata=get_metadata(self.token),
+        )
 
         return [
             WorkflowRunRef(
