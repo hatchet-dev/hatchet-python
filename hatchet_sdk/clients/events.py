@@ -125,10 +125,7 @@ class EventClient:
 
             span.add_event("Pushing event", attributes={"key": namespaced_event_key})
 
-            try:
-                return self.client.Push(request, metadata=get_metadata(self.token))
-            except grpc.RpcError as e:
-                raise ValueError(f"gRPC error: {e}")
+            return self.client.Push(request, metadata=get_metadata(self.token))
 
     @tenacity_retry
     def bulk_push(
@@ -188,13 +185,9 @@ class EventClient:
         bulk_request = BulkPushEventRequest(events=bulk_events)
 
         span.add_event("Pushing bulk events")
-        try:
-            response = self.client.BulkPush(
-                bulk_request, metadata=get_metadata(self.token)
-            )
-            return response.events
-        except grpc.RpcError as e:
-            raise ValueError(f"gRPC error: {e}")
+        response = self.client.BulkPush(bulk_request, metadata=get_metadata(self.token))
+
+        return response.events
 
     def log(self, message: str, step_run_id: str):
         try:
