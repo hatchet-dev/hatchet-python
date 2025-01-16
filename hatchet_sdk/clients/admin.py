@@ -252,7 +252,7 @@ class AdminClientAioImpl(AdminClientBase):
                     workflow_listener=self.pooled_workflow_listener,
                     workflow_run_event_listener=self.listener_client,
                 )
-            except grpc.RpcError as e:
+            except (grpc.RpcError, grpc.aio.AioRpcError) as e:
                 if e.code() == grpc.StatusCode.ALREADY_EXISTS:
                     raise DedupeViolationErr(e.details())
 
