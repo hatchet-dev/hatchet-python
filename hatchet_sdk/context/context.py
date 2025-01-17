@@ -377,7 +377,7 @@ class Context(BaseContext):
         return self.action.parent_workflow_run_id
 
     def step_run_errors(self) -> dict[str, str]:
-        return cast(dict[str, str], self.input.get("step_run_errors", {}))
+        return cast(dict[str, str], self.data.get("step_run_errors", {}))
 
     def fetch_run_failures(self) -> list[dict[str, StrictStr]]:
         data = self.rest_client.workflow_run_get(self.action.workflow_run_id)
