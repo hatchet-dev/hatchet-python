@@ -16,6 +16,16 @@ from hatchet_sdk.loader import ClientConfig
 OTEL_CARRIER_KEY = "__otel_carrier"
 
 
+def parse_headers(headers: str | None) -> dict[str, str]:
+    if headers is None:
+        return {}
+
+    try:
+        return dict([headers.split("=", maxsplit=1)])
+    except ValueError:
+        raise ValueError("OTLP headers must be in the format `key=value`")
+
+
 @cache
 def create_tracer(config: ClientConfig) -> Tracer:
     ## TODO: Figure out how to specify protocol here
@@ -27,7 +37,7 @@ def create_tracer(config: ClientConfig) -> Tracer:
         processor = BatchSpanProcessor(
             OTLPSpanExporter(
                 endpoint=config.otel_exporter_oltp_endpoint,
-                headers=config.otel_exporter_oltp_headers,
+                headers=parse_headers(config.otel_exporter_oltp_headers),
             ),
         )
 

@@ -12,7 +12,7 @@ from .clients.admin import AdminClient, new_admin
 from .clients.dispatcher.dispatcher import DispatcherClient, new_dispatcher
 from .clients.events import EventClient, new_event
 from .clients.rest_client import RestApi
-from .loader import ClientConfig, ConfigLoader
+from .loader import ClientConfig
 
 
 class Client:
@@ -37,11 +37,10 @@ class Client:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        config: ClientConfig = ConfigLoader(".").load_client_config(defaults)
         for opt_function in opts_functions:
-            opt_function(config)
+            opt_function(defaults)
 
-        return cls.from_config(config, debug)
+        return cls.from_config(defaults, debug)
 
     @classmethod
     def from_config(
@@ -103,7 +102,7 @@ class Client:
         self.config = config
         self.listener = RunEventListenerClient(config)
         self.workflow_listener = workflow_listener
-        self.logInterceptor = config.logInterceptor
+        self.logInterceptor = config.logger
         self.debug = debug
 
 
