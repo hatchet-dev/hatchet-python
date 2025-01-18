@@ -25,6 +25,10 @@ class OnFailureWorkflow:
     def on_failure(self, context: Context) -> dict[str, str]:
         # 👀 we can do things like perform cleanup logic
         # or notify a user here
+
+        # 👀 Fetch the errors from upstream step runs from the context
+        print(context.step_run_errors())
+
         return {"status": "success"}
 
 
