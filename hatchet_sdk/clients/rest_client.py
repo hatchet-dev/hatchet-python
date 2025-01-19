@@ -237,7 +237,7 @@ class AsyncRestApi:
             workflow=workflow_name,
             create_cron_workflow_trigger_request=CreateCronWorkflowTriggerRequest(
                 cronName=cron_name,
-                expression=expression,
+                cronExpression=expression,
                 input=input,
                 additional_metadata=additional_metadata,
             ),
