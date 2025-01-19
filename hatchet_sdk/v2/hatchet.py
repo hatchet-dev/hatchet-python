@@ -1,6 +1,9 @@
-from typing import Any, Callable, TypeVar, Union
+from typing import Any, Callable, Generic, Type, TypeVar, Union, cast
+
+from pydantic import BaseModel, ConfigDict
 
 from hatchet_sdk import Worker
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptionsV2
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
     ConcurrencyLimitStrategy,
@@ -10,11 +13,27 @@ from hatchet_sdk.hatchet import Hatchet as HatchetV1
 from hatchet_sdk.hatchet import workflow
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.v2.callable import DurableContext, HatchetCallable
+from hatchet_sdk.v2.callable import DurableContext, EmptyModel, HatchetCallable
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.worker import register_on_worker
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 T = TypeVar("T")
+TWorkflowInput = TypeVar("TWorkflowInput", bound=BaseModel)
+
+
+class DeclarativeWorkflowConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    input_validator: Type[BaseModel] = EmptyModel
+    name: str = ""
+    on_events: list[str] | None = None
+    on_crons: list[str] | None = None
+    version: str = ""
+    timeout: str = "60m"
+    schedule_timeout: str = "5m"
+    concurrency: ConcurrencyFunction | None = None
+    default_priority: int | None = None
 
 
 def function(
@@ -32,6 +51,7 @@ def function(
     concurrency: ConcurrencyFunction | None = None,
     on_failure: Union["HatchetCallable[T]", None] = None,
     default_priority: int | None = None,
+    input_validator: Type[BaseModel] = EmptyModel,
 ) -> Callable[[Callable[[Context], str]], HatchetCallable[T]]:
     def inner(func: Callable[[Context], T]) -> HatchetCallable[T]:
         return HatchetCallable(
@@ -50,6 +70,7 @@ def function(
             concurrency=concurrency,
             on_failure=on_failure,
             default_priority=default_priority,
+            input_validator=input_validator,
         )
 
     return inner
@@ -70,6 +91,7 @@ def durable(
     concurrency: ConcurrencyFunction | None = None,
     on_failure: HatchetCallable[T] | None = None,
     default_priority: int | None = None,
+    input_validator: Type[BaseModel] = EmptyModel,
 ) -> Callable[[HatchetCallable[T]], HatchetCallable[T]]:
     def inner(func: HatchetCallable[T]) -> HatchetCallable[T]:
         func.durable = True
@@ -89,6 +111,7 @@ def durable(
             concurrency=concurrency,
             on_failure=on_failure,
             default_priority=default_priority,
+            input_validator=input_validator,
         )
 
         resp = f(func)
@@ -111,6 +134,45 @@ def concurrency(
     return inner
 
 
+class SpawnWorkflowInput(BaseModel):
+    workflow_name: str
+    input: BaseModel
+    key: str | None = None
+    options: ChildTriggerWorkflowOptionsV2 | None = None
+
+
+class DeclarativeWorkflow(Generic[TWorkflowInput]):
+    def __init__(self, config: DeclarativeWorkflowConfig, hatchet: "Hatchet"):
+        self.config = config
+        self.hatchet = hatchet
+
+    def run(self, input: TWorkflowInput) -> WorkflowRunRef:
+        return self.hatchet.admin.run_workflow(
+            workflow_name=self.config.name, input=input.model_dump()
+        )
+
+    async def spawn(
+        self, context: Context, input: SpawnWorkflowInput
+    ) -> WorkflowRunRef:
+        return await context.aio.spawn_workflow(
+            workflow_name=input.workflow_name,
+            input=input.input.model_dump(),
+            key=input.key,
+            options=input.options,
+        )
+
+    def construct_spawn_workflow_input(
+        self, input: TWorkflowInput
+    ) -> SpawnWorkflowInput:
+        return SpawnWorkflowInput(workflow_name=self.config.name, input=input)
+
+    def declare(self) -> Callable[[Callable[[Context], Any]], Callable[[Context], Any]]:
+        return self.hatchet.function(**self.config.model_dump())
+
+    def workflow_input(self, ctx: Context) -> TWorkflowInput:
+        return cast(TWorkflowInput, ctx.workflow_input())
+
+
 class Hatchet(HatchetV1):
     dag = staticmethod(workflow)
     concurrency = staticmethod(concurrency)
@@ -119,6 +181,7 @@ class Hatchet(HatchetV1):
 
     def function(
         self,
+        input_validator: Type[BaseModel] = EmptyModel,
         name: str = "",
         auto_register: bool = True,
         on_events: list[str] | None = None,
@@ -147,9 +210,10 @@ class Hatchet(HatchetV1):
             concurrency=concurrency,
             on_failure=on_failure,
             default_priority=default_priority,
+            input_validator=input_validator,
         )
 
-        def wrapper(func: Callable[[Context], str]) -> HatchetCallable[T]:
+        def wrapper(func: Callable[[Context], Any]) -> HatchetCallable[T]:
             wrapped_resp = resp(func)
 
             if wrapped_resp.function_auto_register:
@@ -222,3 +286,30 @@ class Hatchet(HatchetV1):
             register_on_worker(func, worker)
 
         return worker
+
+    def declare_workflow(
+        self,
+        input_validator: Type[TWorkflowInput],
+        name: str = "",
+        on_events: list[str] | None = None,
+        on_crons: list[str] | None = None,
+        version: str = "",
+        timeout: str = "60m",
+        schedule_timeout: str = "5m",
+        concurrency: ConcurrencyFunction | None = None,
+        default_priority: int | None = None,
+    ) -> DeclarativeWorkflow[TWorkflowInput]:
+        return DeclarativeWorkflow[input_validator](
+            hatchet=self,
+            config=DeclarativeWorkflowConfig(
+                input_validator=input_validator,
+                name=name,
+                on_events=on_events,
+                on_crons=on_crons,
+                version=version,
+                timeout=timeout,
+                schedule_timeout=schedule_timeout,
+                concurrency=concurrency,
+                default_priority=default_priority,
+            ),
+        )
