@@ -32,7 +32,6 @@ async def create_cron() -> None:
     cron_trigger = await hatchet.cron.aio.get(cron_trigger=cron_trigger.metadata.id)
     # !!
 
-
     # ❓ Delete
     await hatchet.cron.aio.delete(cron_trigger=cron_trigger.metadata.id)
     # !!
