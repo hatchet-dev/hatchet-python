@@ -139,7 +139,7 @@ class ActionListener:
     missed_heartbeats: int = field(default=0, init=False)
 
     def __post_init__(self):
-        self.client = DispatcherStub(new_conn(self.config))
+        self.client = DispatcherStub(new_conn(self.config, False))
         self.aio_client = DispatcherStub(new_conn(self.config, True))
         self.token = self.config.token
 

@@ -51,8 +51,8 @@ class WorkerActionListenerProcess:
     actions: List[str]
     max_runs: int
     config: ClientConfig
-    action_queue: Queue
-    event_queue: Queue
+    action_queue: Queue[Action]
+    event_queue: Queue[ActionEvent]
     handle_kill: bool = True
     debug: bool = False
     labels: dict = field(default_factory=dict)
@@ -112,7 +112,7 @@ class WorkerActionListenerProcess:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.event_queue.get)
 
-    async def start_event_send_loop(self):
+    async def start_event_send_loop(self) -> None:
         while True:
             event: ActionEvent = await self._get_event()
             if event == STOP_LOOP:
@@ -122,7 +122,7 @@ class WorkerActionListenerProcess:
             logger.debug(f"tx: event: {event.action.action_id}/{event.type}")
             asyncio.create_task(self.send_event(event))
 
-    async def start_blocked_main_loop(self):
+    async def start_blocked_main_loop(self) -> None:
         threshold = 1
         while not self.killing:
             count = 0
@@ -135,7 +135,7 @@ class WorkerActionListenerProcess:
                 logger.warning(f"{BLOCKED_THREAD_WARNING}: Waiting Steps {count}")
             await asyncio.sleep(1)
 
-    async def send_event(self, event: ActionEvent, retry_attempt: int = 1):
+    async def send_event(self, event: ActionEvent, retry_attempt: int = 1) -> None:
         try:
             match event.action.action_type:
                 # FIXME: all events sent from an execution of a function are of type ActionType.START_STEP_RUN since
@@ -185,10 +185,10 @@ class WorkerActionListenerProcess:
                 await exp_backoff_sleep(retry_attempt, 1)
                 await self.send_event(event, retry_attempt + 1)
 
-    def now(self):
+    def now(self) -> float:
         return time.time()
 
-    async def start_action_loop(self):
+    async def start_action_loop(self) -> None:
         try:
             async for action in self.listener:
                 if action is None:
@@ -241,7 +241,7 @@ class WorkerActionListenerProcess:
             if not self.killing:
                 await self.exit_gracefully(skip_unregister=True)
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         self.killing = True
 
         if self.listener is not None:
@@ -249,7 +249,7 @@ class WorkerActionListenerProcess:
 
         self.event_queue.put(STOP_LOOP)
 
-    async def exit_gracefully(self, skip_unregister=False):
+    async def exit_gracefully(self) -> None:
         if self.killing:
             return
 
@@ -262,12 +262,12 @@ class WorkerActionListenerProcess:
 
         logger.info("action listener closed")
 
-    def exit_forcefully(self):
+    def exit_forcefully(self) -> None:
         asyncio.run(self.cleanup())
         logger.debug("forcefully closing listener...")
 
 
-def worker_action_listener_process(*args, **kwargs):
+def worker_action_listener_process(*args: Any, **kwargs: Any) -> None:
     async def run():
         process = WorkerActionListenerProcess(*args, **kwargs)
         await process.start()

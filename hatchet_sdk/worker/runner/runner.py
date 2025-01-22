@@ -301,7 +301,7 @@ class Runner:
             # Find the corresponding action function from the registry
             action_func = self.action_registry.get(action_name)
 
-            context = self.create_context(action, action_func)
+            context = self.create_context(action)
 
             self.contexts[action.step_run_id] = context
 

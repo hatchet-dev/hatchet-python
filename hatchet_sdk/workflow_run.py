@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Coroutine, Generic, TypeVar
+from typing import Any, Coroutine, Generic, TypeVar, cast
 
 from hatchet_sdk.clients.run_event_listener import (
     RunEventListener,
@@ -37,11 +37,11 @@ class WorkflowRunRef:
             with EventLoopThread() as loop:
                 coro = self.workflow_listener.result(self.workflow_run_id)
                 future = asyncio.run_coroutine_threadsafe(coro, loop)
-                return future.result()
+                return cast(dict[str, Any], future.result())
         else:
             coro = self.workflow_listener.result(self.workflow_run_id)
             future = asyncio.run_coroutine_threadsafe(coro, loop)
-            return future.result()
+            return cast(dict[str, Any], future.result())
 
 
 T = TypeVar("T")

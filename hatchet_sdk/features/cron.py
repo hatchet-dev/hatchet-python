@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Union, cast
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -24,12 +24,13 @@ class CreateCronTriggerJSONSerializableDict(BaseModel):
         additional_metadata (dict[str, str]): Additional metadata associated with the cron trigger (e.g. {"key1": "value1", "key2": "value2"}).
     """
 
-    expression: str = None
+    expression: str
     input: JSONSerializableDict = Field(default_factory=dict)
     additional_metadata: JSONSerializableDict = Field(default_factory=dict)
 
     @field_validator("expression")
-    def validate_cron_expression(cls, v):
+    @classmethod
+    def validate_cron_expression(cls, v: str) -> str:
         """
         Validates the cron expression to ensure it adheres to the expected format.
 
@@ -122,10 +123,11 @@ class CronClient:
         Args:
             cron_trigger (Union[str, CronWorkflows]): The cron trigger ID or CronWorkflows instance to delete.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
-        self._client.rest.cron_delete(id_)
+        self._client.rest.cron_delete(
+            cron_trigger.metadata.id
+            if isinstance(cron_trigger, CronWorkflows)
+            else cron_trigger
+        )
 
     def list(
         self,
@@ -150,13 +152,16 @@ class CronClient:
         Returns:
             CronWorkflowsList: A list of cron workflows.
         """
-        return self._client.rest.cron_list(
-            offset=offset,
-            limit=limit,
-            workflow_id=workflow_id,
-            additional_metadata=additional_metadata,
-            order_by_field=order_by_field,
-            order_by_direction=order_by_direction,
+        return cast(
+            CronWorkflowsList,
+            self._client.rest.cron_list(
+                offset=offset,
+                limit=limit,
+                workflow_id=workflow_id,
+                additional_metadata=additional_metadata,
+                order_by_field=order_by_field,
+                order_by_direction=order_by_direction,
+            ),
         )
 
     def get(self, cron_trigger: Union[str, CronWorkflows]) -> CronWorkflows:
@@ -169,10 +174,14 @@ class CronClient:
         Returns:
             CronWorkflows: The requested cron workflow instance.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
-        return self._client.rest.cron_get(id_)
+        return cast(
+            CronWorkflows,
+            self._client.rest.cron_get(
+                cron_trigger.metadata.id
+                if isinstance(cron_trigger, CronWorkflows)
+                else cron_trigger
+            ),
+        )
 
 
 class CronClientAsync:
@@ -219,12 +228,15 @@ class CronClientAsync:
             expression=expression, input=input, additional_metadata=additional_metadata
         )
 
-        return await self._client.rest.aio.cron_create(
-            workflow_name=workflow_name,
-            cron_name=cron_name,
-            expression=validated_input.expression,
-            input=validated_input.input,
-            additional_metadata=validated_input.additional_metadata,
+        return cast(
+            CronWorkflows,
+            await self._client.rest.aio.cron_create(
+                workflow_name=workflow_name,
+                cron_name=cron_name,
+                expression=validated_input.expression,
+                input=validated_input.input,
+                additional_metadata=validated_input.additional_metadata,
+            ),
         )
 
     async def delete(self, cron_trigger: Union[str, CronWorkflows]) -> None:
@@ -234,10 +246,11 @@ class CronClientAsync:
         Args:
             cron_trigger (Union[str, CronWorkflows]): The cron trigger ID or CronWorkflows instance to delete.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
-        await self._client.rest.aio.cron_delete(id_)
+        await self._client.rest.aio.cron_delete(
+            cron_trigger.metadata.id
+            if isinstance(cron_trigger, CronWorkflows)
+            else cron_trigger
+        )
 
     async def list(
         self,
@@ -262,13 +275,16 @@ class CronClientAsync:
         Returns:
             CronWorkflowsList: A list of cron workflows.
         """
-        return await self._client.rest.aio.cron_list(
-            offset=offset,
-            limit=limit,
-            workflow_id=workflow_id,
-            additional_metadata=additional_metadata,
-            order_by_field=order_by_field,
-            order_by_direction=order_by_direction,
+        return cast(
+            CronWorkflowsList,
+            await self._client.rest.aio.cron_list(
+                offset=offset,
+                limit=limit,
+                workflow_id=workflow_id,
+                additional_metadata=additional_metadata,
+                order_by_field=order_by_field,
+                order_by_direction=order_by_direction,
+            ),
         )
 
     async def get(self, cron_trigger: Union[str, CronWorkflows]) -> CronWorkflows:
@@ -281,7 +297,12 @@ class CronClientAsync:
         Returns:
             CronWorkflows: The requested cron workflow instance.
         """
-        id_ = cron_trigger
-        if isinstance(cron_trigger, CronWorkflows):
-            id_ = cron_trigger.metadata.id
-        return await self._client.rest.aio.cron_get(id_)
+
+        return cast(
+            CronWorkflows,
+            await self._client.rest.aio.cron_get(
+                cron_trigger.metadata.id
+                if isinstance(cron_trigger, CronWorkflows)
+                else cron_trigger
+            ),
+        )

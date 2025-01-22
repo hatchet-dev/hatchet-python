@@ -360,6 +360,7 @@ class Worker:
 
         logger.debug(f"forcefully stopping worker: {self.name}")
 
+        ## TODO: `self.close` needs to be awaited / used
         self.close()
 
         if self.action_listener_process:

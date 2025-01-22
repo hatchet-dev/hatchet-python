@@ -4,7 +4,7 @@ import subprocess
 import time
 from io import BytesIO
 from threading import Thread
-from typing import AsyncGenerator, Callable, cast
+from typing import AsyncGenerator, Callable, Generator, cast
 
 import psutil
 import pytest
@@ -24,7 +24,9 @@ def hatchet() -> Hatchet:
 
 
 @pytest.fixture()
-def worker(request: pytest.FixtureRequest):
+def worker(
+    request: pytest.FixtureRequest,
+) -> Generator[subprocess.Popen[bytes], None, None]:
     example = cast(str, request.param)
 
     command = ["poetry", "run", example]

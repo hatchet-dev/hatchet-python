@@ -281,10 +281,8 @@ class AdminClientAioImpl(AdminClientBase):
             request = self._prepare_workflow_request(workflow_name, input_data, options)
             workflow_run_requests.append(request)
 
-        request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
-
         resp: BulkTriggerWorkflowResponse = await self.aio_client.BulkTriggerWorkflow(
-            request,
+            BulkTriggerWorkflowRequest(workflows=workflow_run_requests),
             metadata=get_metadata(self.token),
         )
 
@@ -364,7 +362,7 @@ class AdminClientAioImpl(AdminClientBase):
 
 class AdminClient(AdminClientBase):
     def __init__(self, config: ClientConfig):
-        conn = new_conn(config)
+        conn = new_conn(config, False)
         self.config = config
         self.client = WorkflowServiceStub(conn)  # type: ignore[no-untyped-call]
         self.aio = AdminClientAioImpl(config)
