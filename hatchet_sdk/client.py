@@ -16,14 +16,6 @@ from .loader import ClientConfig
 
 
 class Client:
-    admin: AdminClient
-    dispatcher: DispatcherClient
-    event: EventClient
-    rest: RestApi
-    workflow_listener: PooledWorkflowRunListener | None
-    logInterceptor: Logger
-    debug: bool = False
-
     @classmethod
     def from_environment(
         cls,
@@ -84,7 +76,7 @@ class Client:
         event_client: EventClient,
         admin_client: AdminClient,
         dispatcher_client: DispatcherClient,
-        workflow_listener: PooledWorkflowRunListener,
+        workflow_listener: PooledWorkflowRunListener | None,
         rest_client: RestApi,
         config: ClientConfig,
         debug: bool = False,
