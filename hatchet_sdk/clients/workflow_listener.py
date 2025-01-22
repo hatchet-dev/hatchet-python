@@ -34,7 +34,7 @@ class _Subscription:
     async def __aiter__(self) -> "_Subscription":
         return self
 
-    async def __anext__(self) -> WorkflowRunEvent:
+    async def __anext__(self) -> WorkflowRunEvent | None:
         return await self.queue.get()
 
     async def get(self) -> WorkflowRunEvent:
