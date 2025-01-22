@@ -1,6 +1,7 @@
 import asyncio
 import json
-from typing import AsyncGenerator
+from enum import Enum
+from typing import Any, AsyncGenerator, Callable, Generator, cast
 
 import grpc
 
@@ -21,7 +22,7 @@ DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
 DEFAULT_ACTION_LISTENER_RETRY_COUNT = 5
 
 
-class StepRunEventType:
+class StepRunEventType(str, Enum):
     STEP_RUN_EVENT_TYPE_STARTED = "STEP_RUN_EVENT_TYPE_STARTED"
     STEP_RUN_EVENT_TYPE_COMPLETED = "STEP_RUN_EVENT_TYPE_COMPLETED"
     STEP_RUN_EVENT_TYPE_FAILED = "STEP_RUN_EVENT_TYPE_FAILED"
@@ -30,7 +31,7 @@ class StepRunEventType:
     STEP_RUN_EVENT_TYPE_STREAM = "STEP_RUN_EVENT_TYPE_STREAM"
 
 
-class WorkflowRunEventType:
+class WorkflowRunEventType(str, Enum):
     WORKFLOW_RUN_EVENT_TYPE_STARTED = "WORKFLOW_RUN_EVENT_TYPE_STARTED"
     WORKFLOW_RUN_EVENT_TYPE_COMPLETED = "WORKFLOW_RUN_EVENT_TYPE_COMPLETED"
     WORKFLOW_RUN_EVENT_TYPE_FAILED = "WORKFLOW_RUN_EVENT_TYPE_FAILED"
@@ -62,14 +63,14 @@ class StepRunEvent:
         self.payload = payload
 
 
-def new_listener(config: ClientConfig):
+def new_listener(config: ClientConfig) -> "RunEventListenerClient":
     return RunEventListenerClient(config=config)
 
 
 class RunEventListener:
 
-    workflow_run_id: str = None
-    additional_meta_kv: tuple[str, str] = None
+    workflow_run_id: str | None = None
+    additional_meta_kv: tuple[str, str] | None = None
 
     def __init__(self, client: DispatcherStub, token: str):
         self.client = client
@@ -77,7 +78,9 @@ class RunEventListener:
         self.token = token
 
     @classmethod
-    def for_run_id(cls, workflow_run_id: str, client: DispatcherStub, token: str):
+    def for_run_id(
+        cls, workflow_run_id: str, client: DispatcherStub, token: str
+    ) -> "RunEventListener":
         listener = RunEventListener(client, token)
         listener.workflow_run_id = workflow_run_id
         return listener
@@ -85,21 +88,21 @@ class RunEventListener:
     @classmethod
     def for_additional_meta(
         cls, key: str, value: str, client: DispatcherStub, token: str
-    ):
+    ) -> "RunEventListener":
         listener = RunEventListener(client, token)
         listener.additional_meta_kv = (key, value)
         return listener
 
-    def abort(self):
+    def abort(self) -> None:
         self.stop_signal = True
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncGenerator[StepRunEvent, None]:
         return self._generator()
 
-    async def __anext__(self):
+    async def __anext__(self) -> StepRunEvent:
         return await self._generator().__anext__()
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[StepRunEvent, None, None]:
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError as e:
@@ -145,6 +148,7 @@ class RunEventListener:
 
                         try:
                             if workflow_event.eventPayload:
+                                ## TODO: Should this be `dumps` instead?
                                 payload = json.loads(workflow_event.eventPayload)
                         except Exception as e:
                             payload = workflow_event.eventPayload
@@ -194,7 +198,7 @@ class RunEventListener:
                     break
                 # Raise StopAsyncIteration to properly end the generator
 
-    async def retry_subscribe(self):
+    async def retry_subscribe(self) -> AsyncGenerator[WorkflowEvent, None]:
         retries = 0
 
         while retries < DEFAULT_ACTION_LISTENER_RETRY_COUNT:
@@ -203,11 +207,14 @@ class RunEventListener:
                     await asyncio.sleep(DEFAULT_ACTION_LISTENER_RETRY_INTERVAL)
 
                 if self.workflow_run_id is not None:
-                    return self.client.SubscribeToWorkflowEvents(
-                        SubscribeToWorkflowEventsRequest(
-                            workflowRunId=self.workflow_run_id,
+                    return cast(
+                        WorkflowEvent,
+                        self.client.SubscribeToWorkflowEvents(
+                            SubscribeToWorkflowEventsRequest(
+                                workflowRunId=self.workflow_run_id,
+                            ),
+                            metadata=get_metadata(self.token),
                         ),
-                        metadata=get_metadata(self.token),
                     )
                 elif self.additional_meta_kv is not None:
                     return self.client.SubscribeToWorkflowEvents(
@@ -226,6 +233,8 @@ class RunEventListener:
                 else:
                     raise ValueError(f"gRPC error: {e}")
 
+        raise Exception("Failed to subscribe to workflow events")
+
 
 class RunEventListenerClient:
     def __init__(self, config: ClientConfig):
@@ -233,10 +242,10 @@ class RunEventListenerClient:
         self.config = config
         self.client: DispatcherStub = None
 
-    def stream_by_run_id(self, workflow_run_id: str):
+    def stream_by_run_id(self, workflow_run_id: str) -> RunEventListener:
         return self.stream(workflow_run_id)
 
-    def stream(self, workflow_run_id: str):
+    def stream(self, workflow_run_id: str) -> RunEventListener:
         if not isinstance(workflow_run_id, str) and hasattr(workflow_run_id, "__str__"):
             workflow_run_id = str(workflow_run_id)
 
@@ -246,14 +255,16 @@ class RunEventListenerClient:
 
         return RunEventListener.for_run_id(workflow_run_id, self.client, self.token)
 
-    def stream_by_additional_metadata(self, key: str, value: str):
+    def stream_by_additional_metadata(self, key: str, value: str) -> RunEventListener:
         if not self.client:
             aio_conn = new_conn(self.config, True)
             self.client = DispatcherStub(aio_conn)
 
         return RunEventListener.for_additional_meta(key, value, self.client, self.token)
 
-    async def on(self, workflow_run_id: str, handler: callable = None):
+    async def on(
+        self, workflow_run_id: str, handler: Callable[[StepRunEvent], Any] | None = None
+    ) -> None:
         async for event in self.stream(workflow_run_id):
             # call the handler if provided
             if handler:

@@ -3,7 +3,7 @@ import functools
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from io import StringIO
-from typing import Any, Coroutine
+from typing import Any, Awaitable, Callable, Coroutine, ParamSpec, TypeVar
 
 from hatchet_sdk import logger
 from hatchet_sdk.clients.events import EventClient
@@ -25,9 +25,10 @@ def copy_context_vars(ctx_vars, func, *args, **kwargs):
 class InjectingFilter(logging.Filter):
     # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
     # otherwise we would use emit within the CustomLogHandler
-    def filter(self, record):
-        record.workflow_run_id = wr.get()
-        record.step_run_id = sr.get()
+    def filter(self, record) -> bool:
+        ## TODO: Change how we do this to not assign to the log record
+        record.workflow_run_id = wr.get()  # type: ignore
+        record.step_run_id = sr.get()  # type: ignore
         return True
 
 
@@ -50,16 +51,20 @@ class CustomLogHandler(logging.StreamHandler):
         super().emit(record)
 
         log_entry = self.format(record)
-        self.logger_thread_pool.submit(self._log, log_entry, record.step_run_id)
+
+        ## TODO: Change how we do this to not assign to the log record
+        self.logger_thread_pool.submit(self._log, log_entry, record.step_run_id)  # type: ignore
+
+
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 def capture_logs(
-    logger: logging.Logger,
-    event_client: EventClient,
-    func: Coroutine[Any, Any, Any],
-):
+    logger: logging.Logger, event_client: "EventClient", func: Callable[P, Awaitable[T]]
+) -> Callable[P, Awaitable[T]]:
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         if not logger:
             raise Exception("No logger configured on client")
 

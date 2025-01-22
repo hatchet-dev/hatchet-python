@@ -72,7 +72,7 @@ class RateLimit:
     limit: Union[int, str, None] = None
     duration: RateLimitDuration = RateLimitDuration.MINUTE
 
-    _req: CreateStepRateLimit = None
+    _req: CreateStepRateLimit | None = None
 
     def __post_init__(self) -> None:
         # juggle the key and key_expr fields

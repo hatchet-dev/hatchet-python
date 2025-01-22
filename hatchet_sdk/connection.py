@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 import grpc
 
@@ -16,7 +16,6 @@ def new_conn(config: "ClientConfig", aio: Literal[True]) -> grpc.aio.Channel: ..
 
 
 def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Channel:
-
     credentials: grpc.ChannelCredentials | None = None
 
     # load channel credentials
@@ -44,7 +43,7 @@ def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Chann
 
     start = grpc if not aio else grpc.aio
 
-    channel_options = [
+    channel_options: list[tuple[str, str | int]] = [
         ("grpc.max_send_message_length", config.grpc_max_send_message_length),
         ("grpc.max_receive_message_length", config.grpc_max_recv_message_length),
         ("grpc.keepalive_time_ms", 10 * 1000),
@@ -73,4 +72,8 @@ def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Chann
             credentials=credentials,
             options=channel_options,
         )
-    return conn
+
+    return cast(
+        grpc.Channel | grpc.aio.Channel,
+        conn,
+    )

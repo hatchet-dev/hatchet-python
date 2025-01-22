@@ -31,7 +31,7 @@ class _Subscription:
         self.workflow_run_id = workflow_run_id
         self.queue: asyncio.Queue[WorkflowRunEvent | None] = asyncio.Queue()
 
-    async def __aiter__(self):
+    async def __aiter__(self) -> "_Subscription":
         return self
 
     async def __anext__(self) -> WorkflowRunEvent:
@@ -45,10 +45,10 @@ class _Subscription:
 
         return event
 
-    async def put(self, item: WorkflowRunEvent):
+    async def put(self, item: WorkflowRunEvent) -> None:
         await self.queue.put(item)
 
-    async def close(self):
+    async def close(self) -> None:
         await self.queue.put(None)
 
 
@@ -187,8 +187,7 @@ class PooledWorkflowRunListener:
         del self.subscriptionsToWorkflows[subscription_id]
         del self.events[subscription_id]
 
-    async def subscribe(self, workflow_run_id: str):
-        init_producer: asyncio.Task = None
+    async def subscribe(self, workflow_run_id: str) -> WorkflowRunEvent:
         try:
             # create a new subscription id, place a mutex on the counter
             await self.subscription_counter_lock.acquire()
@@ -216,9 +215,7 @@ class PooledWorkflowRunListener:
             if not self.listener_task or self.listener_task.done():
                 self.listener_task = asyncio.create_task(self._init_producer())
 
-            event = await self.events[subscription_id].get()
-
-            return event
+            return await self.events[subscription_id].get()
         except asyncio.CancelledError:
             raise
         finally:
@@ -272,3 +269,5 @@ class PooledWorkflowRunListener:
                     retries = retries + 1
                 else:
                     raise ValueError(f"gRPC error: {e}")
+
+        raise ValueError("Failed to connect to workflow run listener")

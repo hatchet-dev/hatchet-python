@@ -9,7 +9,7 @@ class Event_ts(asyncio.Event):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        if self._loop is None:
+        if self._loop is None:  # type: ignore[has-type]
             self._loop = asyncio.get_event_loop()
 
     def set(self) -> None:
@@ -20,7 +20,7 @@ class Event_ts(asyncio.Event):
         self._loop.call_soon_threadsafe(super().clear)
 
 
-async def read_with_interrupt(listener: Any, interrupt: Event_ts):
+async def read_with_interrupt(listener: Any, interrupt: Event_ts) -> Any:
     try:
         result = await listener.read()
         return result
