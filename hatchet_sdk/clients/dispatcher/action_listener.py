@@ -24,7 +24,7 @@ from hatchet_sdk.contracts.dispatcher_pb2_grpc import DispatcherStub
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.backoff import exp_backoff_sleep
 from hatchet_sdk.utils.serialization import flatten
-from hatchet_sdk.utils.types import AdditionalMetadata
+from hatchet_sdk.utils.types import JSONSerializableDict
 
 from ...loader import ClientConfig
 from ...metadata import get_metadata
@@ -72,7 +72,7 @@ class Action:
     action_payload: str
     action_type: ActionType
     retry_count: int
-    additional_metadata: AdditionalMetadata = field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = field(default_factory=dict)
 
     child_workflow_index: int | None = None
     child_workflow_key: str | None = None

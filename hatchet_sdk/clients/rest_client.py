@@ -66,7 +66,7 @@ from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
     WorkflowRunsCancelRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
-from hatchet_sdk.utils.types import AdditionalMetadata, Input
+from hatchet_sdk.utils.types import JSONSerializableDict
 
 
 class AsyncRestApi:
@@ -212,7 +212,7 @@ class AsyncRestApi:
     async def workflow_run_create(
         self,
         workflow_id: str,
-        input: Input,
+        input: JSONSerializableDict,
         version: str | None = None,
         additional_metadata: list[str] | None = None,
     ) -> WorkflowRun:
@@ -230,8 +230,8 @@ class AsyncRestApi:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ):
         return await self.workflow_run_api.cron_workflow_trigger_create(
             tenant=self.tenant_id,
@@ -279,8 +279,8 @@ class AsyncRestApi:
         self,
         name: str,
         trigger_at: datetime.datetime,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ):
         return await self.workflow_run_api.scheduled_workflow_run_create(
             tenant=self.tenant_id,
@@ -471,7 +471,7 @@ class RestApi:
     def workflow_run_create(
         self,
         workflow_id: str,
-        input: Input,
+        input: JSONSerializableDict,
         version: str | None = None,
         additional_metadata: list[str] | None = None,
     ) -> WorkflowRun:
@@ -486,8 +486,8 @@ class RestApi:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ) -> CronWorkflows:
         return self._run_coroutine(
             self.aio.cron_create(
@@ -525,8 +525,8 @@ class RestApi:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ):
         return self._run_coroutine(
             self.aio.schedule_create(

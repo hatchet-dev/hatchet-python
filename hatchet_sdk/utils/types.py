@@ -8,5 +8,4 @@ class WorkflowValidator(BaseModel):
     step_output: Type[BaseModel] | None = None
 
 
-AdditionalMetadata = dict[str, Any]
-Input = dict[str, Any]
+JSONSerializableDict = dict[str, Any]

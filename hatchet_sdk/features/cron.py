@@ -11,10 +11,10 @@ from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
 )
-from hatchet_sdk.utils.types import AdditionalMetadata, Input
+from hatchet_sdk.utils.types import JSONSerializableDict
 
 
-class CreateCronTriggerInput(BaseModel):
+class CreateCronTriggerJSONSerializableDict(BaseModel):
     """
     Schema for creating a workflow run triggered by a cron.
 
@@ -25,8 +25,8 @@ class CreateCronTriggerInput(BaseModel):
     """
 
     expression: str = None
-    input: Input = Field(default_factory=dict)
-    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    input: JSONSerializableDict = Field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = Field(default_factory=dict)
 
     @field_validator("expression")
     def validate_cron_expression(cls, v):
@@ -87,8 +87,8 @@ class CronClient:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ) -> CronWorkflows:
         """
         Creates a new workflow cron trigger.
@@ -103,7 +103,7 @@ class CronClient:
         Returns:
             CronWorkflows: The created cron workflow instance.
         """
-        validated_input = CreateCronTriggerInput(
+        validated_input = CreateCronTriggerJSONSerializableDict(
             expression=expression, input=input, additional_metadata=additional_metadata
         )
 
@@ -199,8 +199,8 @@ class CronClientAsync:
         workflow_name: str,
         cron_name: str,
         expression: str,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ) -> CronWorkflows:
         """
         Asynchronously creates a new workflow cron trigger.
@@ -215,7 +215,7 @@ class CronClientAsync:
         Returns:
             CronWorkflows: The created cron workflow instance.
         """
-        validated_input = CreateCronTriggerInput(
+        validated_input = CreateCronTriggerJSONSerializableDict(
             expression=expression, input=input, additional_metadata=additional_metadata
         )
 

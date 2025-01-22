@@ -15,10 +15,10 @@ from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
 )
-from hatchet_sdk.utils.types import AdditionalMetadata, Input
+from hatchet_sdk.utils.types import JSONSerializableDict
 
 
-class CreateScheduledTriggerInput(BaseModel):
+class CreateScheduledTriggerJSONSerializableDict(BaseModel):
     """
     Schema for creating a scheduled workflow run.
 
@@ -28,8 +28,8 @@ class CreateScheduledTriggerInput(BaseModel):
         trigger_at (Optional[datetime.datetime]): The datetime when the run should be triggered.
     """
 
-    input: Input = Field(default_factory=dict)
-    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    input: JSONSerializableDict = Field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = Field(default_factory=dict)
     trigger_at: datetime.datetime | None = None
 
 
@@ -58,8 +58,8 @@ class ScheduledClient:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.
@@ -74,7 +74,7 @@ class ScheduledClient:
             ScheduledWorkflows: The created scheduled workflow instance.
         """
 
-        validated_input = CreateScheduledTriggerInput(
+        validated_input = CreateScheduledTriggerJSONSerializableDict(
             trigger_at=trigger_at, input=input, additional_metadata=additional_metadata
         )
 
@@ -168,8 +168,8 @@ class ScheduledClientAsync:
         self,
         workflow_name: str,
         trigger_at: datetime.datetime,
-        input: Input,
-        additional_metadata: AdditionalMetadata,
+        input: JSONSerializableDict,
+        additional_metadata: JSONSerializableDict,
     ) -> ScheduledWorkflows:
         """
         Creates a new scheduled workflow run asynchronously.

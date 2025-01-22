@@ -26,7 +26,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (  # type: ignore[attr-defined]
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.logger import logger
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.utils.types import Input
+from hatchet_sdk.utils.types import JSONSerializableDict
 from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.workflow_run import RunRef
 
@@ -177,7 +177,7 @@ class DurableContext(Context):
     def run(
         self,
         function: str | Callable[[Context], Any],
-        input: Input = {},
+        input: JSONSerializableDict = {},
         key: str | None = None,
         options: ChildTriggerWorkflowOptions | None = None,
     ) -> "RunRef[T]":

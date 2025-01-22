@@ -25,7 +25,7 @@ from hatchet_sdk.utils.tracing import (
     inject_carrier_into_metadata,
     parse_carrier_from_metadata,
 )
-from hatchet_sdk.utils.types import AdditionalMetadata
+from hatchet_sdk.utils.types import JSONSerializableDict
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
@@ -47,7 +47,7 @@ def proto_timestamp_now() -> timestamp_pb2.Timestamp:
 
 
 class PushEventOptions(BaseModel):
-    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = Field(default_factory=dict)
     namespace: str | None = None
 
 
@@ -59,7 +59,7 @@ class BulkPushEventOptions(BaseModel):
 class BulkPushEventWithMetadata(BaseModel):
     key: str
     payload: Any
-    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = Field(default_factory=dict)
 
 
 class EventClient:

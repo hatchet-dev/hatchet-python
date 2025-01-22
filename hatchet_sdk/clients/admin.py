@@ -31,7 +31,7 @@ from hatchet_sdk.utils.tracing import (
     inject_carrier_into_metadata,
     parse_carrier_from_metadata,
 )
-from hatchet_sdk.utils.types import AdditionalMetadata, Input
+from hatchet_sdk.utils.types import JSONSerializableDict
 from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 
 from ..loader import ClientConfig
@@ -52,26 +52,26 @@ class ScheduleTriggerWorkflowOptions(BaseModel):
 
 
 class ChildTriggerWorkflowOptions(BaseModel):
-    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = Field(default_factory=dict)
     sticky: bool | None = None
 
 
 class ChildWorkflowRunDict(BaseModel):
     workflow_name: str
-    input: Input
+    input: JSONSerializableDict
     options: ChildTriggerWorkflowOptions
     key: str | None = None
 
 
 class TriggerWorkflowOptions(ScheduleTriggerWorkflowOptions):
-    additional_metadata: AdditionalMetadata = Field(default_factory=dict)
+    additional_metadata: JSONSerializableDict = Field(default_factory=dict)
     desired_worker_id: str | None = None
     namespace: str | None = None
 
 
 class WorkflowRunDict(BaseModel):
     workflow_name: str
-    input: Input
+    input: JSONSerializableDict
     options: TriggerWorkflowOptions
 
 
@@ -133,7 +133,7 @@ class AdminClientBase:
         self,
         name: str,
         schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
-        input: Input = {},
+        input: JSONSerializableDict = {},
         options: ScheduleTriggerWorkflowOptions = ScheduleTriggerWorkflowOptions(),
     ) -> ScheduleWorkflowRequest:
         timestamp_schedules = []
@@ -175,7 +175,7 @@ class AdminClientAioImpl(AdminClientBase):
     async def run(
         self,
         function: Union[str, Callable[[Any], T]],
-        input: Input,
+        input: JSONSerializableDict,
         options: TriggerWorkflowOptions = TriggerWorkflowOptions(),
     ) -> "RunRef[T]":
         workflow_name = cast(
@@ -197,7 +197,7 @@ class AdminClientAioImpl(AdminClientBase):
     async def run_workflow(
         self,
         workflow_name: str,
-        input: Input,
+        input: JSONSerializableDict,
         options: TriggerWorkflowOptions = TriggerWorkflowOptions(),
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(options.additional_metadata)
@@ -335,7 +335,7 @@ class AdminClientAioImpl(AdminClientBase):
         self,
         name: str,
         schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
-        input: Input = {},
+        input: JSONSerializableDict = {},
         options: ScheduleTriggerWorkflowOptions = ScheduleTriggerWorkflowOptions(),
     ) -> WorkflowVersion:
         try:
@@ -410,7 +410,7 @@ class AdminClient(AdminClientBase):
         self,
         name: str,
         schedules: list[Union[datetime, timestamp_pb2.Timestamp]],
-        input: Input = {},
+        input: JSONSerializableDict = {},
         options: ScheduleTriggerWorkflowOptions = ScheduleTriggerWorkflowOptions(),
     ) -> WorkflowVersion:
         try:
@@ -442,7 +442,7 @@ class AdminClient(AdminClientBase):
     def run_workflow(
         self,
         workflow_name: str,
-        input: Input,
+        input: JSONSerializableDict,
         options: TriggerWorkflowOptions = TriggerWorkflowOptions(),
     ) -> WorkflowRunRef:
         ctx = parse_carrier_from_metadata(options.additional_metadata)
@@ -542,7 +542,7 @@ class AdminClient(AdminClientBase):
     def run(
         self,
         function: Union[str, Callable[[Any], T]],
-        input: Input,
+        input: JSONSerializableDict,
         options: TriggerWorkflowOptions = TriggerWorkflowOptions(),
     ) -> "RunRef[T]":
         workflow_name = cast(
