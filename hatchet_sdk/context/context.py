@@ -353,6 +353,16 @@ class Context(BaseContext):
     def parent_workflow_run_id(self) -> str | None:
         return self.action.parent_workflow_run_id
 
+    def step_run_errors(self) -> dict[str, str]:
+        errors = cast(dict[str, str], self.data.get("step_run_errors", {}))
+
+        if not errors:
+            logger.error(
+                "No step run errors found. `context.step_run_errors` is intended to be run in an on-failure step, and will only work on engine versions more recent than v0.53.10"
+            )
+
+        return errors
+
     def fetch_run_failures(self) -> list[dict[str, StrictStr]]:
         data = self.rest_client.workflow_run_get(self.action.workflow_run_id)
         other_job_runs = [

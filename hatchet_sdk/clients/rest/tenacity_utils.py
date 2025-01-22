@@ -28,8 +28,8 @@ def tenacity_alert_retry(retry_state: tenacity.RetryCallState) -> None:
 
 
 def tenacity_should_retry(ex: Exception) -> bool:
-    if isinstance(ex, grpc.aio.AioRpcError):
-        if ex.code in [
+    if isinstance(ex, (grpc.aio.AioRpcError, grpc.RpcError)):
+        if ex.code() in [
             grpc.StatusCode.UNIMPLEMENTED,
             grpc.StatusCode.NOT_FOUND,
         ]:
