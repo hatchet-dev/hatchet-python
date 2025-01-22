@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet, WorkerLabelComparator
+from hatchet_sdk.labels import DesiredWorkerLabel
 
 load_dotenv()
 
@@ -11,12 +12,12 @@ hatchet = Hatchet(debug=True)
 class AffinityWorkflow:
     @hatchet.step(
         desired_worker_labels={
-            "model": {"value": "fancy-ai-model-v2", "weight": 10},
-            "memory": {
-                "value": 256,
-                "required": True,
-                "comparator": WorkerLabelComparator.LESS_THAN,
-            },
+            "model": DesiredWorkerLabel(value="fancy-ai-model-v2", weight=10),
+            "memory": DesiredWorkerLabel(
+                value=256,
+                required=True,
+                comparator=WorkerLabelComparator.LESS_THAN,
+            ),
         },
     )
     async def step(self, context: Context) -> dict[str, str | None]:

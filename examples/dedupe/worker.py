@@ -4,7 +4,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet
 from hatchet_sdk.clients.admin import DedupeViolationErr
 from hatchet_sdk.loader import ClientConfig
 
@@ -29,7 +29,9 @@ class DedupeParent:
                             "DedupeChild",
                             {"a": str(i)},
                             key=f"child{i}",
-                            options={"additional_metadata": {"dedupe": "test"}},
+                            options=ChildTriggerWorkflowOptions(
+                                additional_metadata={"dedupe": "test"}
+                            ),
                         )
                     ).result()
                 )

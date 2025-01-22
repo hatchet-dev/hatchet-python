@@ -31,7 +31,7 @@ def main() -> None:
     workflowRun = hatchet.admin.run_workflow(
         "Parent",
         {"n": 2},
-        options={"additional_metadata": {streamKey: streamVal}},
+        options=TriggerWorkflowOptions(additional_metadata={streamKey: streamVal}),
     )
 
     # Stream all events for the additional meta key value

@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet, StickyStrategy
+from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet, StickyStrategy
 from hatchet_sdk.context.context import ContextAioImpl
 
 load_dotenv()
@@ -21,7 +21,7 @@ class StickyWorkflow:
     @hatchet.step(parents=["step1a", "step1b"])
     async def step2(self, context: ContextAioImpl) -> dict[str, str | None]:
         ref = await context.spawn_workflow(
-            "StickyChildWorkflow", {}, options={"sticky": True}
+            "StickyChildWorkflow", {}, options=ChildTriggerWorkflowOptions(sticky=True)
         )
 
         await ref.result()

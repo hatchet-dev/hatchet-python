@@ -6,6 +6,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, sync_to_async
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
 from hatchet_sdk.v2.hatchet import Hatchet
 
 os.environ["PYTHONASYNCIODEBUG"] = "1"
@@ -31,7 +32,9 @@ async def fanout_sync_async(context: Context) -> dict[str, Any]:
                     "Child",
                     {"a": str(i)},
                     key=f"child{i}",
-                    options={"additional_metadata": {"hello": "earth"}},
+                    options=ChildTriggerWorkflowOptions(
+                        additional_metadata={"hello": "earth"}
+                    ),
                 )
             ).result()
         )

@@ -1,10 +1,10 @@
-from typing import TypedDict
+from pydantic import BaseModel, ConfigDict
 
 
-class DesiredWorkerLabel(TypedDict, total=False):
+class DesiredWorkerLabel(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     value: str | int
-    required: bool | None = None
+    required: bool = False
     weight: int | None = None
-    comparator: int | None = (
-        None  # _ClassVar[WorkerLabelComparator] TODO figure out type
-    )
+    comparator: int | None = None

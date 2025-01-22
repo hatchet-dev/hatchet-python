@@ -41,6 +41,7 @@ prometheus-client = "^0.21.1"
 pytest = "^8.2.2"
 pytest-asyncio = "^0.23.8"
 psutil = "^6.0.0"
+grpc-stubs = "^1.53.0.5"
 
 [tool.poetry.group.lint.dependencies]
 mypy = "^1.14.0"
@@ -98,7 +99,9 @@ files = [
   "hatchet_sdk/context/worker_context.py",
   "hatchet_sdk/clients/dispatcher/dispatcher.py",
   "hatchet_sdk/loader.py",
-  "hatchet_sdk/token.py"
+  "hatchet_sdk/token.py",
+  "hatchet_sdk/clients/admin.py",
+  "hatchet_sdk/clients/events.py",
 ]
 follow_imports = "silent"
 disable_error_code = ["unused-coroutine"]
