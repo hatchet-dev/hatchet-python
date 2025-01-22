@@ -154,10 +154,12 @@ class RunEventListener:
                             payload = workflow_event.eventPayload
                             pass
 
+                        assert isinstance(payload, str)
+
                         yield StepRunEvent(type=eventType, payload=payload)
                     elif workflow_event.resourceType == RESOURCE_TYPE_WORKFLOW_RUN:
                         if workflow_event.eventType in workflow_run_event_type_mapping:
-                            eventType = workflow_run_event_type_mapping[
+                            workflowRunEventType = workflow_run_event_type_mapping[
                                 workflow_event.eventType
                             ]
                         else:
@@ -173,7 +175,9 @@ class RunEventListener:
                         except Exception as e:
                             pass
 
-                        yield StepRunEvent(type=eventType, payload=payload)
+                        assert isinstance(payload, str)
+
+                        yield StepRunEvent(type=workflowRunEventType, payload=payload)
 
                     if workflow_event.hangup:
                         listener = None
