@@ -7,9 +7,11 @@ if TYPE_CHECKING:
     from hatchet_sdk.loader import ClientConfig
 
 
+@overload
 def new_conn(config: "ClientConfig", aio: Literal[False]) -> grpc.Channel: ...
 
 
+@overload
 def new_conn(config: "ClientConfig", aio: Literal[True]) -> grpc.aio.Channel: ...
 
 
@@ -26,6 +28,10 @@ def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Chann
 
         credentials = grpc.ssl_channel_credentials(root_certificates=root)
     elif config.tls_config.tls_strategy == "mtls":
+        assert config.tls_config.ca_file
+        assert config.tls_config.key_file
+        assert config.tls_config.cert_file
+
         root = open(config.tls_config.ca_file, "rb").read()
         private_key = open(config.tls_config.key_file, "rb").read()
         certificate_chain = open(config.tls_config.cert_file, "rb").read()

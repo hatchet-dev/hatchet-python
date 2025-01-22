@@ -17,7 +17,7 @@ async def main() -> None:
     workflowRun = hatchet.admin.run_workflow(
         "ManualTriggerWorkflow",
         {"test": "test"},
-        options={"additional_metadata": {"hello": "moon"}},
+        options=TriggerWorkflowOptions(additional_metadata={"hello": "moon"}),
     )
 
     listener = workflowRun.stream()

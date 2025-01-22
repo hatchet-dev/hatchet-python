@@ -1,7 +1,7 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, cast
 
 import grpc
 from grpc._cython import cygrpc
@@ -224,7 +224,7 @@ class PooledWorkflowRunListener:
         finally:
             self.cleanup_subscription(subscription_id)
 
-    async def result(self, workflow_run_id: str):
+    async def result(self, workflow_run_id: str) -> dict[str, Any]:
         from hatchet_sdk.clients.admin import DedupeViolationErr
 
         event = await self.subscribe(workflow_run_id)
@@ -248,7 +248,7 @@ class PooledWorkflowRunListener:
 
         return results
 
-    async def _retry_subscribe(self):
+    async def _retry_subscribe(self) -> WorkflowRunEvent | None:
         retries = 0
 
         while retries < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
@@ -260,12 +260,13 @@ class PooledWorkflowRunListener:
                 if self.curr_requester != 0:
                     self.requests.put_nowait(self.curr_requester)
 
-                listener = self.client.SubscribeToWorkflowRuns(
-                    self._request(),
-                    metadata=get_metadata(self.token),
+                return cast(
+                    WorkflowRunEvent,
+                    self.client.SubscribeToWorkflowRuns(
+                        self._request(),
+                        metadata=get_metadata(self.token),
+                    ),
                 )
-
-                return listener
             except grpc.RpcError as e:
                 if e.code() == grpc.StatusCode.UNAVAILABLE:
                     retries = retries + 1

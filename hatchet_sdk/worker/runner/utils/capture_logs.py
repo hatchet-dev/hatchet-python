@@ -32,7 +32,7 @@ class InjectingFilter(logging.Filter):
 
 
 class CustomLogHandler(logging.StreamHandler):
-    def __init__(self, event_client: EventClient, stream=None):
+    def __init__(self, event_client: EventClient, stream: StringIO | None = None):
         super().__init__(stream)
         self.logger_thread_pool = ThreadPoolExecutor(max_workers=1)
         self.event_client = event_client
@@ -46,7 +46,7 @@ class CustomLogHandler(logging.StreamHandler):
         except Exception as e:
             logger.error(f"Error logging: {e}")
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         super().emit(record)
 
         log_entry = self.format(record)

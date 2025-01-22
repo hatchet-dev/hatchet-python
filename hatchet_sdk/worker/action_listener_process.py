@@ -77,7 +77,7 @@ class WorkerActionListenerProcess:
             signal.SIGQUIT, lambda: asyncio.create_task(self.exit_gracefully())
         )
 
-    async def start(self, retry_attempt=0):
+    async def start(self, retry_attempt: int = 0) -> None:
         if retry_attempt > 5:
             logger.error("could not start action listener")
             return
@@ -108,13 +108,13 @@ class WorkerActionListenerProcess:
         self.blocked_main_loop = asyncio.create_task(self.start_blocked_main_loop())
 
     # TODO move event methods to separate class
-    async def _get_event(self):
+    async def _get_event(self) -> ActionEvent:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.event_queue.get)
 
     async def start_event_send_loop(self) -> None:
         while True:
-            event: ActionEvent = await self._get_event()
+            event = await self._get_event()
             if event == STOP_LOOP:
                 logger.debug("stopping event send loop...")
                 break
@@ -126,7 +126,7 @@ class WorkerActionListenerProcess:
         threshold = 1
         while not self.killing:
             count = 0
-            for step_run_id, start_time in self.running_step_runs.items():
+            for _, start_time in self.running_step_runs.items():
                 diff = self.now() - start_time
                 if diff > threshold:
                     count += 1
