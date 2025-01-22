@@ -20,7 +20,7 @@ class Client:
     dispatcher: DispatcherClient
     event: EventClient
     rest: RestApi
-    workflow_listener: PooledWorkflowRunListener
+    workflow_listener: PooledWorkflowRunListener | None
     logInterceptor: Logger
     debug: bool = False
 

@@ -8,12 +8,12 @@ from typing import Any, List, Mapping, Optional
 
 import grpc
 
-from hatchet_sdk.clients.dispatcher.action_listener import Action
-from hatchet_sdk.clients.dispatcher.dispatcher import (
+from hatchet_sdk.clients.dispatcher.action_listener import (
+    Action,
     ActionListener,
     GetActionListenerRequest,
-    new_dispatcher,
 )
+from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_STARTED,
     STEP_EVENT_TYPE_STARTED,
@@ -41,7 +41,7 @@ BLOCKED_THREAD_WARNING = (
 )
 
 
-def noop_handler():
+def noop_handler() -> None:
     pass
 
 
@@ -55,18 +55,18 @@ class WorkerActionListenerProcess:
     event_queue: Queue[ActionEvent]
     handle_kill: bool = True
     debug: bool = False
-    labels: dict = field(default_factory=dict)
+    labels: dict[str, str | int] = field(default_factory=dict)
 
-    listener: ActionListener = field(init=False, default=None)
+    listener: ActionListener = field(init=False)
 
     killing: bool = field(init=False, default=False)
 
-    action_loop_task: asyncio.Task = field(init=False, default=None)
-    event_send_loop_task: asyncio.Task = field(init=False, default=None)
+    action_loop_task: asyncio.Task[None] | None = field(init=False, default=None)
+    event_send_loop_task: asyncio.Task[None] | None = field(init=False, default=None)
 
     running_step_runs: Mapping[str, float] = field(init=False, default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
@@ -239,7 +239,7 @@ class WorkerActionListenerProcess:
         finally:
             logger.info("action loop closed")
             if not self.killing:
-                await self.exit_gracefully(skip_unregister=True)
+                await self.exit_gracefully()
 
     async def cleanup(self) -> None:
         self.killing = True
@@ -268,7 +268,7 @@ class WorkerActionListenerProcess:
 
 
 def worker_action_listener_process(*args: Any, **kwargs: Any) -> None:
-    async def run():
+    async def run() -> None:
         process = WorkerActionListenerProcess(*args, **kwargs)
         await process.start()
         # Keep the process running

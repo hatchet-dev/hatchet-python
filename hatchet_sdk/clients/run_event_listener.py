@@ -251,14 +251,14 @@ class RunEventListenerClient:
 
         if not self.client:
             aio_conn = new_conn(self.config, True)
-            self.client = DispatcherStub(aio_conn)
+            self.client = DispatcherStub(aio_conn)  # type: ignore[no-untyped-call]
 
         return RunEventListener.for_run_id(workflow_run_id, self.client, self.token)
 
     def stream_by_additional_metadata(self, key: str, value: str) -> RunEventListener:
         if not self.client:
             aio_conn = new_conn(self.config, True)
-            self.client = DispatcherStub(aio_conn)
+            self.client = DispatcherStub(aio_conn)  # type: ignore[no-untyped-call]
 
         return RunEventListener.for_additional_meta(key, value, self.client, self.token)
 

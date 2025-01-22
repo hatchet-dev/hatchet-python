@@ -33,10 +33,10 @@ class WorkerActionRunLoopManager:
     debug: bool = False
     labels: dict[str, str | int] = field(default_factory=dict)
 
-    client: Client = field(init=False, default=None)
+    client: Client = field(init=False)
 
     killing: bool = field(init=False, default=False)
-    runner: Runner = field(init=False, default=None)
+    runner: Runner | None = field(init=False, default=None)
 
     def __post_init__(self) -> None:
         if self.debug:
