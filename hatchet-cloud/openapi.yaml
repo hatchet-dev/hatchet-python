@@ -1,0 +1,2056 @@
+openapi: 3.1.0
+servers:
+  - url: ""
+info:
+  version: 1.0.0
+  title: Hatchet API
+  description: The Hatchet API
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: hatchet
+  schemas:
+    APICloudMetadata:
+      type: object
+      properties:
+        canBill:
+          type: boolean
+          description: whether the tenant can be billed
+          example: true
+        canLinkGithub:
+          type: boolean
+          description: whether the tenant can link to GitHub
+          example: true
+        metricsEnabled:
+          type: boolean
+          description: whether metrics are enabled for the tenant
+          example: true
+    APIErrors:
+      x-go-type: externalRef0.APIErrors
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/APIError"
+      required:
+        - errors
+    APIError:
+      x-go-type: externalRef0.APIError
+      type: object
+      properties:
+        code:
+          type: integer
+          description: a custom Hatchet error code
+          format: uint64
+          example: 1400
+        field:
+          type: string
+          description: "the field that this error is associated with, if applicable"
+          example: name
+        description:
+          type: string
+          description: a description for this error
+          example: A descriptive error message
+        docs_link:
+          type: string
+          description: "a link to the documentation for this error, if it exists"
+          example: github.com/hatchet-dev/hatchet
+      required:
+        - description
+    PaginationResponse:
+      x-go-type: externalRef0.PaginationResponse
+      type: object
+      properties:
+        current_page:
+          type: integer
+          description: the current page
+          format: int64
+          example: 2
+        next_page:
+          type: integer
+          description: the next page
+          format: int64
+          example: 3
+        num_pages:
+          type: integer
+          description: the total number of pages for listing
+          format: int64
+          example: 10
+      example:
+        next_page: 3
+        num_pages: 10
+        current_page: 2
+    APIResourceMeta:
+      x-go-type: externalRef0.APIResourceMeta
+      type: object
+      properties:
+        id:
+          type: string
+          description: "the id of this resource, in UUID format"
+          example: bb214807-246e-43a5-a25d-41761d1cff9e
+          minLength: 36
+          maxLength: 36
+          format: uuid
+        createdAt:
+          type: string
+          description: the time that this resource was created
+          format: date-time
+          example: 2022-12-13T20:06:48.888Z
+        updatedAt:
+          type: string
+          description: the time that this resource was last updated
+          format: date-time
+          example: 2022-12-13T20:06:48.888Z
+      required:
+        - id
+        - createdAt
+        - updatedAt
+    GithubBranch:
+      type: object
+      properties:
+        branch_name:
+          type: string
+        is_default:
+          type: boolean
+      required:
+        - branch_name
+        - is_default
+    GithubRepo:
+      type: object
+      properties:
+        repo_owner:
+          type: string
+        repo_name:
+          type: string
+      required:
+        - repo_owner
+        - repo_name
+    GithubAppInstallation:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/APIResourceMeta"
+        installation_settings_url:
+          type: string
+        account_name:
+          type: string
+        account_avatar_url:
+          type: string
+      required:
+        - metadata
+        - installation_settings_url
+        - account_name
+        - account_avatar_url
+    ListGithubAppInstallationsResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/GithubAppInstallation"
+      required:
+        - pagination
+        - rows
+    ListGithubReposResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/GithubRepo"
+    ListGithubBranchesResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/GithubBranch"
+    ManagedWorker:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/APIResourceMeta"
+        name:
+          type: string
+        buildConfig:
+          $ref: "#/components/schemas/ManagedWorkerBuildConfig"
+        isIac:
+          type: boolean
+        envVars:
+          type: object
+          description: A map of environment variables to set for the worker
+          additionalProperties:
+            type: string
+        runtimeConfigs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManagedWorkerRuntimeConfig"
+      required:
+        - metadata
+        - name
+        - buildConfig
+        - isIac
+        - envVars
+    ManagedWorkerList:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManagedWorker"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+    ManagedWorkerBuildConfig:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/APIResourceMeta"
+        githubInstallationId:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+        githubRepository:
+          $ref: "#/components/schemas/GithubRepo"
+        githubRepositoryBranch:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildStep"
+      required:
+        - metadata
+        - githubInstallationId
+        - githubRepository
+        - githubRepositoryBranch
+    BuildStep:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/APIResourceMeta"
+        buildDir:
+          type: string
+          description: The relative path to the build directory
+        dockerfilePath:
+          type: string
+          description: The relative path from the build dir to the Dockerfile
+      required:
+        - metadata
+        - buildDir
+        - dockerfilePath
+    ManagedWorkerRuntimeConfig:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/APIResourceMeta"
+        numReplicas:
+          type: integer
+        cpuKind:
+          type: string
+          description: The kind of CPU to use for the worker
+        cpus:
+          type: integer
+          description: The number of CPUs to use for the worker
+        memoryMb:
+          type: integer
+          description: The amount of memory in MB to use for the worker
+        region:
+          $ref: "#/components/schemas/ManagedWorkerRegion"
+          description: The region that the worker is deployed to
+        actions:
+          type: array
+          description: A list of actions this runtime config corresponds to
+          items:
+            type: string
+      required:
+        - metadata
+        - numReplicas
+        - cpuKind
+        - cpus
+        - memoryMb
+        - region
+    ManagedWorkerEventStatus:
+      type: string
+      enum:
+        - IN_PROGRESS
+        - SUCCEEDED
+        - FAILED
+        - CANCELLED
+    ManagedWorkerEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        timeFirstSeen:
+          type: string
+          format: date-time
+        timeLastSeen:
+          type: string
+          format: date-time
+        managedWorkerId:
+          type: string
+        status:
+          $ref: "#/components/schemas/ManagedWorkerEventStatus"
+        message:
+          type: string
+        data:
+          type: object
+      required:
+        - id
+        - timeFirstSeen
+        - timeLastSeen
+        - managedWorkerId
+        - status
+        - message
+        - data
+    ManagedWorkerEventList:
+      properties:
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        rows:
+          items:
+            $ref: "#/components/schemas/ManagedWorkerEvent"
+          type: array
+    CreateManagedWorkerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: "required,hatchetName,min=1,max=256"
+        buildConfig:
+          $ref: "#/components/schemas/CreateManagedWorkerBuildConfigRequest"
+        envVars:
+          type: object
+          description: A map of environment variables to set for the worker
+          additionalProperties:
+            type: string
+        isIac:
+          type: boolean
+        runtimeConfig:
+          $ref: "#/components/schemas/CreateManagedWorkerRuntimeConfigRequest"
+      required:
+        - name
+        - buildConfig
+        - envVars
+        - isIac
+    InfraAsCodeRequest:
+      type: object
+      properties:
+        runtimeConfigs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateManagedWorkerRuntimeConfigRequest"
+      required:
+        - runtimeConfigs
+    RuntimeConfigActionsResponse:
+      type: object
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+      required:
+        - actions
+    CreateManagedWorkerBuildConfigRequest:
+      type: object
+      properties:
+        githubInstallationId:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+        githubRepositoryOwner:
+          type: string
+        githubRepositoryName:
+          type: string
+        githubRepositoryBranch:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateBuildStepRequest"
+      required:
+        - githubInstallationId
+        - githubRepositoryOwner
+        - githubRepositoryName
+        - githubRepositoryBranch
+        - steps
+    CreateBuildStepRequest:
+      type: object
+      properties:
+        buildDir:
+          type: string
+          description: The relative path to the build directory
+        dockerfilePath:
+          type: string
+          description: The relative path from the build dir to the Dockerfile
+      required:
+        - buildDir
+        - dockerfilePath
+    ManagedWorkerRegion:
+      enum:
+        - ams
+        - arn
+        - atl
+        - bog
+        - bos
+        - cdg
+        - den
+        - dfw
+        - ewr
+        - eze
+        - gdl
+        - gig
+        - gru
+        - hkg
+        - iad
+        - jnb
+        - lax
+        - lhr
+        - mad
+        - mia
+        - nrt
+        - ord
+        - otp
+        - phx
+        - qro
+        - scl
+        - sea
+        - sin
+        - sjc
+        - syd
+        - waw
+        - yul
+        - yyz
+      type: string
+    CreateManagedWorkerRuntimeConfigRequest:
+      type: object
+      properties:
+        numReplicas:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        region:
+          $ref: "#/components/schemas/ManagedWorkerRegion"
+          description: The region to deploy the worker to
+        cpuKind:
+          type: string
+          description: The kind of CPU to use for the worker
+        cpus:
+          type: integer
+          description: The number of CPUs to use for the worker
+          minimum: 1
+          maximum: 64
+        memoryMb:
+          type: integer
+          description: The amount of memory in MB to use for the worker
+          minimum: 1024
+          maximum: 65536
+        actions:
+          type: array
+          items:
+            type: string
+      required:
+        - numReplicas
+        - cpuKind
+        - cpus
+        - memoryMb
+        - actions
+    TenantBillingState:
+      properties:
+        paymentMethods:
+          type: array
+          items:
+            $ref: "#/components/schemas/TenantPaymentMethod"
+        subscription:
+          $ref: "#/components/schemas/TenantSubscription"
+          description: The subscription associated with this policy.
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubscriptionPlan"
+          description: A list of plans available for the tenant.
+        coupons:
+          type: array
+          items:
+            $ref: "#/components/schemas/Coupon"
+          description: A list of coupons applied to the tenant.
+      required:
+        - subscription
+      type: object
+    SubscriptionPlan:
+      properties:
+        plan_code:
+          type: string
+          description: The code of the plan.
+        name:
+          type: string
+          description: The name of the plan.
+        description:
+          type: string
+          description: The description of the plan.
+        amount_cents:
+          type: integer
+          description: The price of the plan.
+        period:
+          type: string
+          description: The period of the plan.
+      required:
+        - plan_code
+        - name
+        - description
+        - amount_cents
+      type: object
+    UpdateTenantSubscription:
+      properties:
+        plan:
+          type: string
+          description: The code of the plan.
+        period:
+          type: string
+          description: The period of the plan.
+      required:
+        - plan_code
+      type: object
+    TenantSubscription:
+      properties:
+        plan:
+          type: string
+          description: The plan code associated with the tenant subscription.
+        period:
+          type: string
+          description: The period associated with the tenant subscription.
+        status:
+          $ref: "#/components/schemas/TenantSubscriptionStatus"
+          description: The status of the tenant subscription.
+        note:
+          type: string
+          description: A note associated with the tenant subscription.
+    TenantPaymentMethod:
+      properties:
+        brand:
+          type: string
+          description: The brand of the payment method.
+        last4:
+          type: string
+          description: The last 4 digits of the card.
+        expiration:
+          type: string
+          description: The expiration date of the card.
+        description:
+          type: string
+          description: The description of the payment method.
+      required:
+        - brand
+    TenantSubscriptionStatus:
+      enum:
+        - active
+        - pending
+        - terminated
+        - canceled
+      type: string
+    Coupon:
+      properties:
+        name:
+          type: string
+          description: The name of the coupon.
+        amount_cents:
+          type: integer
+          description: The amount off of the coupon.
+        amount_cents_remaining:
+          type: integer
+          description: The amount remaining on the coupon.
+        amount_currency:
+          type: string
+          description: The currency of the coupon.
+        frequency:
+          $ref: "#/components/schemas/CouponFrequency"
+          description: The frequency of the coupon.
+        frequency_duration:
+          type: integer
+          description: The frequency duration of the coupon.
+        frequency_duration_remaining:
+          type: integer
+          description: The frequency duration remaining of the coupon.
+        percent:
+          type: number
+          description: The percentage off of the coupon.
+      required:
+        - name
+        - frequency
+    CouponFrequency:
+      enum:
+        - once
+        - recurring
+      type: string
+    VectorPushRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/EventObject"
+    EventObject:
+      type: object
+      properties:
+        event:
+          type: object
+          properties:
+            provider:
+              type: string
+        fly:
+          type: object
+          properties:
+            app:
+              type: object
+              properties:
+                instance:
+                  type: string
+                name:
+                  type: string
+            region:
+              type: string
+        host:
+          type: string
+        log:
+          type: object
+          properties:
+            level:
+              type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    LogLine:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        instance:
+          type: string
+        line:
+          type: string
+      required:
+        - timestamp
+        - instance
+        - line
+    LogLineList:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/LogLine"
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+    Matrix:
+      type: array
+      items:
+        $ref: "#/components/schemas/SampleStream"
+    SampleStream:
+      type: object
+      properties:
+        metric:
+          $ref: "#/components/schemas/Metric"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/SamplePair"
+        histograms:
+          type: array
+          items:
+            $ref: "#/components/schemas/SampleHistogramPair"
+    SamplePair:
+      type: array
+      prefixItems:
+        - $ref: "#/components/schemas/Time"
+        - $ref: "#/components/schemas/SampleValue"
+    SampleValue:
+      type: number
+      format: float
+    SampleHistogramPair:
+      type: object
+      properties:
+        timestamp:
+          $ref: "#/components/schemas/Time"
+        histogram:
+          $ref: "#/components/schemas/SampleHistogram"
+    SampleHistogram:
+      type: object
+      properties:
+        count:
+          $ref: "#/components/schemas/FloatString"
+        sum:
+          $ref: "#/components/schemas/FloatString"
+        buckets:
+          $ref: "#/components/schemas/HistogramBuckets"
+    FloatString:
+      type: number
+      format: float
+    HistogramBuckets:
+      type: array
+      items:
+        $ref: "#/components/schemas/HistogramBucket"
+    HistogramBucket:
+      type: object
+      properties:
+        boundaries:
+          type: integer
+          format: int32
+        lower:
+          $ref: "#/components/schemas/FloatString"
+        upper:
+          $ref: "#/components/schemas/FloatString"
+        count:
+          $ref: "#/components/schemas/FloatString"
+    Metric:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/LabelValue"
+    LabelSet:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/LabelValue"
+    LabelName:
+      type: string
+    LabelValue:
+      type: string
+    Time:
+      type: integer
+    Build:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/APIResourceMeta"
+        status:
+          type: string
+        statusDetail:
+          type: string
+        createTime:
+          type: string
+          format: date-time
+        startTime:
+          type: string
+          format: date-time
+        finishTime:
+          type: string
+          format: date-time
+        buildConfigId:
+          type: string
+          format: uuid
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - status
+        - createTime
+        - buildConfigId
+    Instance:
+      properties:
+        instanceId:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+        state:
+          type: string
+        cpuKind:
+          type: string
+        cpus:
+          type: integer
+        memoryMb:
+          type: integer
+        diskGb:
+          type: integer
+        commitSha:
+          type: string
+      required:
+        - instanceId
+        - name
+        - region
+        - state
+        - cpuKind
+        - cpus
+        - memoryMb
+        - diskGb
+        - commitSha
+    InstanceList:
+      properties:
+        pagination:
+          $ref: "#/components/schemas/PaginationResponse"
+        rows:
+          items:
+            $ref: "#/components/schemas/Instance"
+          type: array
+    FeatureFlags:
+      type: object
+      additionalProperties:
+        type: string
+      description: a map of feature flags for the tenant
+      example:
+        flag1: value1
+        flag2: value2
+    WorkflowRunEventsMetric:
+      type: object
+      properties:
+        time:
+          type: string
+          format: date-time
+        PENDING:
+          type: integer
+        RUNNING:
+          type: integer
+        SUCCEEDED:
+          type: integer
+        FAILED:
+          type: integer
+        QUEUED:
+          type: integer
+      required:
+        - time
+        - PENDING
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - QUEUED
+    WorkflowRunEventsMetricsCounts:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/WorkflowRunEventsMetric"
+paths:
+  /api/v1/cloud/metadata:
+    get:
+      description: Gets metadata for the Hatchet instance
+      operationId: "metadata:get"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APICloudMetadata"
+          description: Successfully retrieved the metadata
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+      security: []
+      x-security-optional: true
+      summary: Get metadata
+      tags:
+        - Metadata
+  /api/v1/cloud/users/github-app/start:
+    get:
+      description: Starts the OAuth flow
+      operationId: "user:update:github-app-oauth-start"
+      responses:
+        "302":
+          description: Successfully started the OAuth flow
+          headers:
+            location:
+              schema:
+                type: string
+      security:
+        - cookieAuth: []
+      summary: Start OAuth flow
+      tags:
+        - User
+  /api/v1/cloud/users/github-app/callback:
+    get:
+      description: Completes the OAuth flow
+      operationId: "user:update:github-app-oauth-callback"
+      responses:
+        "302":
+          description: Successfully completed the OAuth flow
+          headers:
+            location:
+              schema:
+                type: string
+      security:
+        - cookieAuth: []
+      summary: Complete OAuth flow
+      tags:
+        - User
+  /api/v1/cloud/github/webhook:
+    post:
+      description: Github App global webhook
+      operationId: "github:update:global-webhook"
+      responses:
+        "200":
+          description: Successfully processed webhook
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Unauthorized
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Method not allowed
+      security: []
+      summary: Github app global webhook
+      tags:
+        - Github
+  "/api/v1/cloud/github/webhook/{webhook}":
+    post:
+      description: Github App tenant webhook
+      operationId: "github:update:tenant-webhook"
+      parameters:
+        - description: The webhook id
+          in: path
+          name: webhook
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          description: Successfully processed webhook
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Unauthorized
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Method not allowed
+      security: []
+      summary: Github app tenant webhook
+      tags:
+        - Github
+  /api/v1/cloud/github-app/installations:
+    get:
+      description: List Github App installations
+      operationId: "github-app:list:installations"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListGithubAppInstallationsResponse"
+          description: Successfully retrieved the installations
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Unauthorized
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Method not allowed
+      security:
+        - cookieAuth: []
+      summary: List Github App installations
+      tags:
+        - Github
+  "/api/v1/cloud/github-app/installations/{gh-installation}/repos":
+    get:
+      description: List Github App repositories
+      operationId: "github-app:list:repos"
+      x-resources:
+        - gh-installation
+      parameters:
+        - description: The installation id
+          in: path
+          name: gh-installation
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListGithubReposResponse"
+          description: Successfully retrieved the repositories
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Unauthorized
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Method not allowed
+      security:
+        - cookieAuth: []
+      summary: List Github App repositories
+      tags:
+        - Github
+  "/api/v1/cloud/github-app/installations/{gh-installation}/repos/{gh-repo-owner}/{gh-repo-name}/branches":
+    get:
+      description: List Github App branches
+      operationId: "github-app:list:branches"
+      x-resources:
+        - gh-installation
+      parameters:
+        - description: The installation id
+          in: path
+          name: gh-installation
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+        - description: The repository owner
+          in: path
+          name: gh-repo-owner
+          required: true
+          schema:
+            type: string
+        - description: The repository name
+          in: path
+          name: gh-repo-name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListGithubBranchesResponse"
+          description: Successfully retrieved the branches
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Unauthorized
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Method not allowed
+      security:
+        - cookieAuth: []
+      summary: List Github App branches
+      tags:
+        - Github
+  "/api/v1/cloud/tenants/{tenant}/managed-worker":
+    get:
+      x-resources:
+        - tenant
+      description: Get all managed workers for the tenant
+      operationId: "managed-worker:list"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedWorkerList"
+          description: Successfully retrieved the managed workers
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: List Managed Workers
+      tags:
+        - Managed Worker
+    post:
+      x-resources:
+        - tenant
+      description: Create a managed worker for the tenant
+      operationId: "managed-worker:create"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateManagedWorkerRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedWorker"
+          description: Successfully created the managed worker
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Create Managed Worker
+      tags:
+        - Managed Worker
+  "/api/v1/cloud/managed-worker/{managed-worker}":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Get a managed worker for the tenant
+      operationId: "managed-worker:get"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedWorker"
+          description: Successfully retrieved the managed worker
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: The managed worker was not found
+      summary: Get Managed Worker
+      tags:
+        - Managed Worker
+    post:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Update a managed worker for the tenant
+      operationId: "managed-worker:update"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateManagedWorkerRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedWorker"
+          description: Successfully updated the managed worker
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: The managed worker was not found
+      summary: Update Managed Worker
+      tags:
+        - Managed Worker
+    delete:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Delete a managed worker for the tenant
+      operationId: "managed-worker:delete"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedWorker"
+          description: Successfully deleted the managed worker
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: The managed worker was not found
+      summary: Delete Managed Worker
+      tags:
+        - Managed Worker
+  "/api/v1/cloud/infra-as-code/{infra-as-code-request}":
+    post:
+      x-resources:
+        - tenant
+        - infra-as-code-request
+      description: Registers runtime configs via infra-as-code
+      operationId: "infra-as-code:create"
+      parameters:
+        - description: The infra as code request id
+          in: path
+          name: infra-as-code-request
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InfraAsCodeRequest"
+      responses:
+        "200":
+          description: Successfully created the managed worker
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Create Infra as Code
+      tags:
+        - Managed Worker
+  "/api/v1/cloud/runtime-config/{runtime-config}/actions":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+        - runtime-config
+      description: Get a list of runtime config actions for a managed worker
+      operationId: "runtime-config:list:actions"
+      parameters:
+        - description: The runtime config id
+          in: path
+          name: runtime-config
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuntimeConfigActionsResponse"
+          description: Successfully retrieved the runtime config actions
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get Runtime Config Actions
+      tags:
+        - Managed Worker
+  "/api/v1/cloud/managed-worker/{managed-worker}/metrics/cpu":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Get CPU metrics for a managed worker
+      operationId: "metrics-cpu:get"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+        - description: When the metrics should start
+          in: query
+          name: after
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - description: When the metrics should end
+          in: query
+          name: before
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Matrix"
+          description: Successfully retrieved the CPU metrics
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get CPU Metrics
+      tags:
+        - Metrics
+  "/api/v1/cloud/managed-worker/{managed-worker}/metrics/memory":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Get memory metrics for a managed worker
+      operationId: "metrics-memory:get"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+        - description: When the metrics should start
+          in: query
+          name: after
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - description: When the metrics should end
+          in: query
+          name: before
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Matrix"
+          description: Successfully retrieved the memory metrics
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get Memory Metrics
+      tags:
+        - Metrics
+  "/api/v1/cloud/managed-worker/{managed-worker}/metrics/disk":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Get disk metrics for a managed worker
+      operationId: "metrics-disk:get"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+        - description: When the metrics should start
+          in: query
+          name: after
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - description: When the metrics should end
+          in: query
+          name: before
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Matrix"
+          description: Successfully retrieved the disk metrics
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get Disk Metrics
+      tags:
+        - Metrics
+  "/api/v1/cloud/managed-worker/{managed-worker}/logs":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Lists logs for a managed worker
+      operationId: "log:list"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+        - description: When the logs should start
+          in: query
+          name: after
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - description: When the logs should end
+          in: query
+          name: before
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - description: The search query to filter for
+          in: query
+          name: search
+          required: false
+          schema:
+            type: string
+        - description: The direction to sort the logs
+          in: query
+          name: direction
+          required: false
+          schema:
+            type: string
+            enum:
+              - forward
+              - backward
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogLineList"
+          description: Successfully listed the logs
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: List Logs
+      tags:
+        - Log
+  "/api/v1/cloud/managed-worker/{managed-worker}/instances":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Get all instances for a managed worker
+      operationId: "managed-worker-instances:list"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceList"
+          description: Successfully retrieved the instances
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: List Instances
+      tags:
+        - Managed Worker
+  "/api/v1/cloud/build/{build}":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+        - build
+      description: Get a build
+      operationId: "build:get"
+      parameters:
+        - description: The build id
+          in: path
+          name: build
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Build"
+          description: Successfully retrieved the build
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get Build
+      tags:
+        - Build
+  "/api/v1/cloud/build/{build}/logs":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+        - build
+      description: Get the build logs for a specific build of a managed worker
+      operationId: "build-logs:list"
+      parameters:
+        - description: The build id
+          in: path
+          name: build
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogLineList"
+          description: Successfully retrieved the build logs
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get Build Logs
+      tags:
+        - Log
+  "/api/v1/cloud/managed-worker/{managed-worker}/events":
+    get:
+      x-resources:
+        - tenant
+        - managed-worker
+      description: Get events for a managed worker
+      operationId: "managed-worker-events:list"
+      parameters:
+        - description: The managed worker id
+          in: path
+          name: managed-worker
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedWorkerEventList"
+          description: Successfully retrieved the events
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get Managed Worker Events
+      tags:
+        - Managed Worker
+  /api/v1/billing/lago/webhook:
+    post:
+      description: Receive a webhook message from Lago
+      operationId: "lagoMessage:create"
+      responses:
+        "200":
+          description: Successfully received webhook
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      security: []
+      summary: Receive a webhook message from Lago
+      tags:
+        - Billing
+  "/api/v1/billing/tenants/{tenant}":
+    get:
+      x-resources:
+        - tenant
+      description: Gets the billing state for a tenant
+      operationId: "tenant-billing-state:get"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantBillingState"
+          description: Successfully retrieved the tenant billing state
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+          description: Forbidden
+        "405":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Method not allowed
+      summary: Get the billing state for a tenant
+      tags:
+        - Tenant
+  "/api/v1/billing/tenants/{tenant}/subscription":
+    patch:
+      x-resources:
+        - tenant
+      description: Update a subscription
+      operationId: "subscription:upsert"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantSubscription"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantSubscription"
+          description: Successfully created the subscription
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Create a new subscription
+      tags:
+        - Billing
+  "/api/v1/billing/tenants/{tenant}/billing-portal-link":
+    get:
+      x-resources:
+        - tenant
+      description: Get the billing portal link
+      operationId: "billing-portal-link:get"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  url:
+                    type: string
+                    description: The url to the billing portal
+          description: Successfully created the portal link
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Create a link to the billing portal
+      tags:
+        - Billing
+  "/api/v1/cloud/tenants/{tenant}/logs":
+    post:
+      x-resources:
+        - tenant
+      description: Push a log entry for the tenant
+      operationId: "log:create"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VectorPushRequest"
+      responses:
+        "200":
+          description: Successfully pushed the log entry
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Push Log Entry
+      security:
+        - bearerAuth: []
+      tags:
+        - Log
+  "/api/v1/cloud/tenants/{tenant}/feature-flags":
+    get:
+      x-resources:
+        - tenant
+      description: Get all feature flags for the tenant
+      operationId: "feature-flags:list"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureFlags"
+          description: Successfully retrieved the managed workers
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: List Feature Flags
+      tags:
+        - Feature Flags
+  "/api/v1/cloud/tenants/{tenant}/runs-metrics":
+    get:
+      x-resources:
+        - tenant
+      description: Get a minute by minute breakdown of workflow run metrics for a tenant
+      operationId: "workflow-run-events:get:metrics"
+      parameters:
+        - description: The tenant id
+          in: path
+          name: tenant
+          required: true
+          schema:
+            type: string
+            format: uuid
+            minLength: 36
+            maxLength: 36
+        - description: The time after the workflow run was created
+          in: query
+          name: createdAfter
+          example: "2021-01-01T00:00:00Z"
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - description: The time before the workflow run was completed
+          in: query
+          name: finishedBefore
+          example: "2021-01-01T00:00:00Z"
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowRunEventsMetricsCounts"
+          description: Successfully retrieved the workflow runs metrics
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: A malformed or bad request
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIErrors"
+          description: Forbidden
+      summary: Get workflow runs
+      tags:
+        - Workflow
