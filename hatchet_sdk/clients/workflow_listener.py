@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from typing import Any, AsyncGenerator, cast
 
 import grpc
-from grpc._cython import cygrpc
+from grpc._cython import cygrpc  # type: ignore[attr-defined]
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.connection import new_conn
@@ -64,8 +64,8 @@ class PooledWorkflowRunListener:
 
     requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
 
-    listener: AsyncGenerator[WorkflowRunEvent, None] = None
-    listener_task: asyncio.Task[None] = None
+    listener: AsyncGenerator[WorkflowRunEvent, None] | None = None
+    listener_task: asyncio.Task[None] | None = None
 
     curr_requester: int = 0
 
@@ -76,7 +76,7 @@ class PooledWorkflowRunListener:
 
     def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)
-        self.client = DispatcherStub(conn)
+        self.client = DispatcherStub(conn)  # type: ignore[no-untyped-call]
         self.token = config.token
         self.config = config
 

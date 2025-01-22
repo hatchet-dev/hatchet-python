@@ -208,7 +208,7 @@ class RunEventListener:
 
                 if self.workflow_run_id is not None:
                     return cast(
-                        WorkflowEvent,
+                        AsyncGenerator[WorkflowEvent, None],
                         self.client.SubscribeToWorkflowEvents(
                             SubscribeToWorkflowEventsRequest(
                                 workflowRunId=self.workflow_run_id,
@@ -217,12 +217,15 @@ class RunEventListener:
                         ),
                     )
                 elif self.additional_meta_kv is not None:
-                    return self.client.SubscribeToWorkflowEvents(
-                        SubscribeToWorkflowEventsRequest(
-                            additionalMetaKey=self.additional_meta_kv[0],
-                            additionalMetaValue=self.additional_meta_kv[1],
+                    return cast(
+                        AsyncGenerator[WorkflowEvent, None],
+                        self.client.SubscribeToWorkflowEvents(
+                            SubscribeToWorkflowEventsRequest(
+                                additionalMetaKey=self.additional_meta_kv[0],
+                                additionalMetaValue=self.additional_meta_kv[1],
+                            ),
+                            metadata=get_metadata(self.token),
                         ),
-                        metadata=get_metadata(self.token),
                     )
                 else:
                     raise Exception("no listener method provided")
@@ -240,7 +243,7 @@ class RunEventListenerClient:
     def __init__(self, config: ClientConfig):
         self.token = config.token
         self.config = config
-        self.client: DispatcherStub = None
+        self.client: DispatcherStub | None = None
 
     def stream_by_run_id(self, workflow_run_id: str) -> RunEventListener:
         return self.stream(workflow_run_id)

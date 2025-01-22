@@ -393,7 +393,7 @@ class ActionListener:
 
         return listener
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.run_heartbeat = False
         self.heartbeat_task.cancel()
 

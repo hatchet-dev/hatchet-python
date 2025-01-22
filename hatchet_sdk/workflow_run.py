@@ -48,7 +48,7 @@ T = TypeVar("T")
 
 
 class RunRef(WorkflowRunRef, Generic[T]):
-    async def result(self) -> T:
+    async def result(self) -> Any | dict[str, Any]:
         res = await self.workflow_listener.result(self.workflow_run_id)
 
         if len(res) == 1:

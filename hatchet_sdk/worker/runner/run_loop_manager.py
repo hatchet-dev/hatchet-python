@@ -2,7 +2,7 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Callable, TypeVar
+from typing import Callable, Literal, TypeVar
 
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
@@ -14,7 +14,8 @@ from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
-STOP_LOOP = "STOP_LOOP"
+STOP_LOOP_TYPE = Literal["STOP_LOOP"]
+STOP_LOOP: STOP_LOOP_TYPE = "STOP_LOOP"
 
 T = TypeVar("T")
 
@@ -26,7 +27,7 @@ class WorkerActionRunLoopManager:
     validator_registry: dict[str, WorkflowValidator]
     max_runs: int | None
     config: ClientConfig
-    action_queue: Queue[Action]
+    action_queue: Queue[Action | STOP_LOOP_TYPE]
     event_queue: Queue[ActionEvent]
     loop: asyncio.AbstractEventLoop
     handle_kill: bool = True
@@ -94,7 +95,7 @@ class WorkerActionRunLoopManager:
             self.runner.run(action)
         logger.debug("action runner loop stopped")
 
-    async def _get_action(self) -> Action:
+    async def _get_action(self) -> Action | STOP_LOOP_TYPE:
         return await self.loop.run_in_executor(None, self.action_queue.get)
 
     async def exit_gracefully(self) -> None:

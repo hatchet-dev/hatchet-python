@@ -307,10 +307,7 @@ class Runner:
 
             if action_func:
                 self.event_queue.put(
-                    ActionEvent(
-                        action=action,
-                        type=STEP_EVENT_TYPE_STARTED,
-                    )
+                    ActionEvent(action=action, type=STEP_EVENT_TYPE_STARTED, payload="")
                 )
 
                 loop = asyncio.get_event_loop()
@@ -360,8 +357,7 @@ class Runner:
                 # send an event that the group key run has started
                 self.event_queue.put(
                     ActionEvent(
-                        action=action,
-                        type=GROUP_KEY_EVENT_TYPE_STARTED,
+                        action=action, type=GROUP_KEY_EVENT_TYPE_STARTED, payload=""
                     )
                 )
 

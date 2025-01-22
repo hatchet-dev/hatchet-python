@@ -4,7 +4,7 @@ import signal
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Literal, Mapping, Optional
 
 import grpc
 
@@ -30,10 +30,11 @@ ACTION_EVENT_RETRY_COUNT = 5
 class ActionEvent:
     action: Action
     type: Any  # TODO type
-    payload: Optional[str] = None
+    payload: str
 
 
-STOP_LOOP = "STOP_LOOP"  # Sentinel object to stop the loop
+STOP_LOOP_TYPE = Literal["STOP_LOOP"]
+STOP_LOOP: STOP_LOOP_TYPE = "STOP_LOOP"  # Sentinel object to stop the loop
 
 # TODO link to a block post
 BLOCKED_THREAD_WARNING = (
@@ -52,7 +53,7 @@ class WorkerActionListenerProcess:
     max_runs: int
     config: ClientConfig
     action_queue: Queue[Action]
-    event_queue: Queue[ActionEvent]
+    event_queue: Queue[ActionEvent | STOP_LOOP_TYPE]
     handle_kill: bool = True
     debug: bool = False
     labels: dict[str, str | int] = field(default_factory=dict)
@@ -64,7 +65,7 @@ class WorkerActionListenerProcess:
     action_loop_task: asyncio.Task[None] | None = field(init=False, default=None)
     event_send_loop_task: asyncio.Task[None] | None = field(init=False, default=None)
 
-    running_step_runs: Mapping[str, float] = field(init=False, default_factory=dict)
+    running_step_runs: dict[str, float] = field(init=False, default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.debug:
@@ -108,7 +109,7 @@ class WorkerActionListenerProcess:
         self.blocked_main_loop = asyncio.create_task(self.start_blocked_main_loop())
 
     # TODO move event methods to separate class
-    async def _get_event(self) -> ActionEvent:
+    async def _get_event(self) -> ActionEvent | STOP_LOOP_TYPE:
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, self.event_queue.get)
 
@@ -201,6 +202,7 @@ class WorkerActionListenerProcess:
                             ActionEvent(
                                 action=action,
                                 type=STEP_EVENT_TYPE_STARTED,  # TODO ack type
+                                payload="",
                             )
                         )
                         logger.info(
@@ -220,6 +222,7 @@ class WorkerActionListenerProcess:
                             ActionEvent(
                                 action=action,
                                 type=GROUP_KEY_EVENT_TYPE_STARTED,  # TODO ack type
+                                payload="",
                             )
                         )
                         logger.info(

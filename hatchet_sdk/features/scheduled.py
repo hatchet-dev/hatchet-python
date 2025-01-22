@@ -12,6 +12,9 @@ from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflo
 from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
     ScheduledWorkflowsList,
 )
+from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import (
+    ScheduledWorkflowsOrderByField,
+)
 from hatchet_sdk.clients.rest.models.workflow_run_order_by_direction import (
     WorkflowRunOrderByDirection,
 )
@@ -220,7 +223,7 @@ class ScheduledClientAsync:
         limit: Optional[int] = None,
         workflow_id: Optional[str] = None,
         additional_metadata: Optional[List[str]] = None,
-        order_by_field: Optional[CronWorkflowsOrderByField] = None,
+        order_by_field: Optional[ScheduledWorkflowsOrderByField] = None,
         order_by_direction: Optional[WorkflowRunOrderByDirection] = None,
     ) -> ScheduledWorkflowsList:
         """

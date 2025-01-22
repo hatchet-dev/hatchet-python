@@ -6,8 +6,8 @@ from contextvars import ContextVar
 from io import StringIO
 from typing import Any, Awaitable, Callable, Coroutine, ItemsView, ParamSpec, TypeVar
 
-from hatchet_sdk import logger
 from hatchet_sdk.clients.events import EventClient
+from hatchet_sdk.logger import logger
 
 wr: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "workflow_run_id", default=None
@@ -35,7 +35,7 @@ def copy_context_vars(
 class InjectingFilter(logging.Filter):
     # For some reason, only the InjectingFilter has access to the contextvars method sr.get(),
     # otherwise we would use emit within the CustomLogHandler
-    def filter(self, record) -> bool:
+    def filter(self, record: logging.LogRecord) -> bool:
         ## TODO: Change how we do this to not assign to the log record
         record.workflow_run_id = wr.get()
         record.step_run_id = sr.get()
