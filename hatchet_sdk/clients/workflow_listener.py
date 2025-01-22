@@ -62,7 +62,7 @@ class PooledWorkflowRunListener:
     subscription_counter: int = 0
     subscription_counter_lock: asyncio.Lock = asyncio.Lock()
 
-    requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
+    requests: asyncio.Queue[SubscribeToWorkflowRunsRequest | int] = asyncio.Queue()
 
     listener: AsyncGenerator[WorkflowRunEvent, None] | None = None
     listener_task: asyncio.Task[None] | None = None
