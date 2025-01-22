@@ -284,7 +284,7 @@ class AsyncRestApi:
         return await self.workflow_run_api.scheduled_workflow_run_create(
             tenant=self.tenant_id,
             workflow=name,
-            create_schedule_workflow_trigger_request=ScheduleWorkflowRunRequest(
+            schedule_workflow_run_request=ScheduleWorkflowRunRequest(
                 triggerAt=trigger_at,
                 input=input,
                 additional_metadata=additional_metadata,
