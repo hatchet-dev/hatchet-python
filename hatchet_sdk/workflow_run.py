@@ -34,7 +34,7 @@ class WorkflowRunRef:
     def sync_result(self) -> dict[str, Any]:
         loop = get_active_event_loop()
         if loop is None:
-            with EventLoopThread() as loop:
+            with EventLoopThread() as loop:  # type: ignore[call-arg]
                 coro = self.workflow_listener.result(self.workflow_run_id)
                 future = asyncio.run_coroutine_threadsafe(coro, loop)
                 return future.result()
