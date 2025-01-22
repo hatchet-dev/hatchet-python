@@ -119,7 +119,7 @@ class PooledWorkflowRunListener:
 
                                 t.cancel()
                                 if self.listener:
-                                    self.listener.cancel() # type: ignore[attr-defined]
+                                    self.listener.cancel()  # type: ignore[attr-defined]
                                 await asyncio.sleep(
                                     DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL
                                 )
