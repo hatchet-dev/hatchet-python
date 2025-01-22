@@ -84,27 +84,14 @@ extend_exclude = "hatchet_sdk/contracts/"
 [tool.mypy]
 strict = true
 files = [
-  "hatchet_sdk/hatchet.py",
-  "hatchet_sdk/worker/worker.py",
-  "hatchet_sdk/context/context.py",
-  "hatchet_sdk/worker/runner/runner.py",
-  "hatchet_sdk/workflow.py",
-  "hatchet_sdk/utils/serialization.py",
-  "hatchet_sdk/utils/tracing.py",
-  "hatchet_sdk/utils/types.py",
-  "hatchet_sdk/utils/backoff.py",
-  "examples/**/*.py",
-  "hatchet_sdk/clients/rest/models/workflow_list.py",
-  "hatchet_sdk/clients/rest/models/workflow_run.py",
-  "hatchet_sdk/context/worker_context.py",
-  "hatchet_sdk/clients/dispatcher/dispatcher.py",
-  "hatchet_sdk/loader.py",
-  "hatchet_sdk/token.py",
-  "hatchet_sdk/clients/admin.py",
-  "hatchet_sdk/clients/events.py",
+  "."
+]
+exclude = [
+  "hatchet_sdk/clients/rest",
+  "hatchet_sdk/clients/dispatcher",
+  "hatchet_sdk/contracts",
 ]
 follow_imports = "silent"
-disable_error_code = ["unused-coroutine"]
 explicit_package_bases = true
 
 [tool.poetry.scripts]
