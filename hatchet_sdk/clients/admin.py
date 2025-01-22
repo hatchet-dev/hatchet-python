@@ -267,12 +267,12 @@ class AdminClientAioImpl(AdminClientBase):
 
         namespace = options.namespace or self.namespace
 
-        workflow_run_requests: TriggerWorkflowRequest = []
+        workflow_run_requests: list[TriggerWorkflowRequest] = []
 
         for workflow in workflows:
-            workflow_name = workflow["workflow_name"]
-            input_data = workflow["input"]
-            options = workflow["options"]
+            workflow_name = workflow.workflow_name
+            input_data = workflow.input
+            options = workflow.options
 
             if namespace != "" and not workflow_name.startswith(self.namespace):
                 workflow_name = f"{namespace}{workflow_name}"

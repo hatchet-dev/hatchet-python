@@ -3,8 +3,7 @@ from typing import TypedDict
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context
-from hatchet_sdk.v2.hatchet import Hatchet
+from hatchet_sdk import Context, Hatchet
 
 load_dotenv()
 

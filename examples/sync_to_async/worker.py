@@ -5,9 +5,8 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, sync_to_async
+from hatchet_sdk import Context, Hatchet, sync_to_async
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions
-from hatchet_sdk.v2.hatchet import Hatchet
 
 os.environ["PYTHONASYNCIODEBUG"] = "1"
 load_dotenv()

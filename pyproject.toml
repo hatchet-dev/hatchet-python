@@ -48,6 +48,7 @@ mypy = "^1.14.0"
 types-protobuf = "^5.28.3.20241030"
 black = "^24.10.0"
 isort = "^5.13.2"
+types-psutil = "^6.1.0.20241221"
 
 [tool.poetry.group.test.dependencies]
 pytest-timeout = "^2.3.1"
@@ -117,4 +118,4 @@ existing_loop = "examples.worker_existing_loop.worker:main"
 bulk_fanout = "examples.bulk_fanout.worker:main"
 retries_with_backoff = "examples.retries_with_backoff.worker:main"
 pydantic = "examples.pydantic.worker:main"
-v2_simple = "examples.v2.simple.worker:main"
+

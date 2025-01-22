@@ -24,8 +24,6 @@ from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
-from hatchet_sdk.v2.callable import HatchetCallable
-from hatchet_sdk.v2.concurrency import ConcurrencyFunction
 from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
 from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
 from hatchet_sdk.workflow import WorkflowInterface
@@ -371,22 +369,3 @@ class Worker:
         sys.exit(
             1
         )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
-
-
-def register_on_worker(callable: HatchetCallable[T], worker: Worker) -> None:
-    worker.register_function(callable.get_action_name(), callable)
-
-    if callable.function_on_failure is not None:
-        worker.register_function(
-            callable.function_on_failure.get_action_name(), callable.function_on_failure
-        )
-
-    if callable.function_concurrency is not None:
-        worker.register_function(
-            callable.function_concurrency.get_action_name(),
-            callable.function_concurrency,
-        )
-
-    opts = callable.to_workflow_opts()
-
-    worker.register_workflow_from_opts(opts.name, opts)
