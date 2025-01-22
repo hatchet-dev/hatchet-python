@@ -246,7 +246,7 @@ class PooledWorkflowRunListener:
 
         return results
 
-    async def _retry_subscribe(self) -> WorkflowRunEvent | None:
+    async def _retry_subscribe(self) -> AsyncGenerator[WorkflowRunEvent, None]:
         retries = 0
 
         while retries < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
@@ -259,7 +259,7 @@ class PooledWorkflowRunListener:
                     self.requests.put_nowait(self.curr_requester)
 
                 return cast(
-                    WorkflowRunEvent,
+                    AsyncGenerator[WorkflowRunEvent, None],
                     self.client.SubscribeToWorkflowRuns(
                         self._request(),
                         metadata=get_metadata(self.token),
