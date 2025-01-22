@@ -129,8 +129,8 @@ class EventClient:
             span.add_event("Pushing event", attributes={"key": namespaced_event_key})
 
             return cast(
-                    Event, self.client.Push(request, metadata=get_metadata(self.token))
-                )
+                Event, self.client.Push(request, metadata=get_metadata(self.token))
+            )
 
     @tenacity_retry
     def bulk_push(
@@ -183,9 +183,9 @@ class EventClient:
         response = self.client.BulkPush(bulk_request, metadata=get_metadata(self.token))
 
         return cast(
-                list[Event],
-                response.events,
-            )
+            list[Event],
+            response.events,
+        )
 
     def log(self, message: str, step_run_id: str) -> None:
         try:
