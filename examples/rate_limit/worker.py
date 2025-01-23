@@ -23,3 +23,7 @@ def main() -> None:
     worker.register_workflow(RateLimitWorkflow())
 
     worker.start()
+
+
+if __name__ == "__main__":
+    main()
