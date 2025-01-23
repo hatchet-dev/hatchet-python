@@ -27,8 +27,8 @@ class WorkerActionRunLoopManager:
     validator_registry: dict[str, WorkflowValidator]
     max_runs: int | None
     config: ClientConfig
-    action_queue: Queue[Action | STOP_LOOP_TYPE]
-    event_queue: Queue[ActionEvent]
+    action_queue: "Queue[Action | STOP_LOOP_TYPE]"
+    event_queue: "Queue[ActionEvent]"
     loop: asyncio.AbstractEventLoop
     handle_kill: bool = True
     debug: bool = False

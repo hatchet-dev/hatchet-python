@@ -52,8 +52,8 @@ class WorkerActionListenerProcess:
     actions: List[str]
     max_runs: int
     config: ClientConfig
-    action_queue: Queue[Action]
-    event_queue: Queue[ActionEvent | STOP_LOOP_TYPE]
+    action_queue: "Queue[Action]"
+    event_queue: "Queue[ActionEvent | STOP_LOOP_TYPE]"
     handle_kill: bool = True
     debug: bool = False
     labels: dict[str, str | int] = field(default_factory=dict)
