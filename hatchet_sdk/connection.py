@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 import grpc
 
@@ -7,8 +7,15 @@ if TYPE_CHECKING:
     from hatchet_sdk.loader import ClientConfig
 
 
-def new_conn(config: "ClientConfig", aio=False):
+@overload
+def new_conn(config: "ClientConfig", aio: Literal[False]) -> grpc.Channel: ...
 
+
+@overload
+def new_conn(config: "ClientConfig", aio: Literal[True]) -> grpc.aio.Channel: ...
+
+
+def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Channel:
     credentials: grpc.ChannelCredentials | None = None
 
     # load channel credentials
@@ -20,6 +27,10 @@ def new_conn(config: "ClientConfig", aio=False):
 
         credentials = grpc.ssl_channel_credentials(root_certificates=root)
     elif config.tls_config.tls_strategy == "mtls":
+        assert config.tls_config.ca_file
+        assert config.tls_config.key_file
+        assert config.tls_config.cert_file
+
         root = open(config.tls_config.ca_file, "rb").read()
         private_key = open(config.tls_config.key_file, "rb").read()
         certificate_chain = open(config.tls_config.cert_file, "rb").read()
@@ -32,7 +43,7 @@ def new_conn(config: "ClientConfig", aio=False):
 
     start = grpc if not aio else grpc.aio
 
-    channel_options = [
+    channel_options: list[tuple[str, str | int]] = [
         ("grpc.max_send_message_length", config.grpc_max_send_message_length),
         ("grpc.max_receive_message_length", config.grpc_max_recv_message_length),
         ("grpc.keepalive_time_ms", 10 * 1000),
@@ -61,4 +72,8 @@ def new_conn(config: "ClientConfig", aio=False):
             credentials=credentials,
             options=channel_options,
         )
-    return conn
+
+    return cast(
+        grpc.Channel | grpc.aio.Channel,
+        conn,
+    )

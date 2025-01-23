@@ -1857,6 +1857,18 @@ files = [
 ]
 
 [[package]]
+name = "types-psutil"
+version = "6.1.0.20241221"
+description = "Typing stubs for psutil"
+optional = false
+python-versions = ">=3.8"
+groups = ["lint"]
+files = [
+    {file = "types_psutil-6.1.0.20241221-py3-none-any.whl", hash = "sha256:8498dbe13285a9ba7d4b2fa934c569cc380efc74e3dacdb34ae16d2cdf389ec3"},
+    {file = "types_psutil-6.1.0.20241221.tar.gz", hash = "sha256:600f5a36bd5e0eb8887f0e3f3ff2cf154d90690ad8123c8a707bba4ab94d3185"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -2097,4 +2109,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "59a1e9a4aafe7da78bfd9b85af64531167192e56dd0a46dc4c2e40e147cad40d"
+content-hash = "e59b746d16c418856dbf00015dfb396a703e13961b53e0196bb511c530920e47"

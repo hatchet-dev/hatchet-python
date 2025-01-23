@@ -1,10 +1,10 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, cast
 
 import grpc
-from grpc._cython import cygrpc
+from grpc._cython import cygrpc  # type: ignore[attr-defined]
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.connection import new_conn
@@ -31,10 +31,10 @@ class _Subscription:
         self.workflow_run_id = workflow_run_id
         self.queue: asyncio.Queue[WorkflowRunEvent | None] = asyncio.Queue()
 
-    async def __aiter__(self):
+    async def __aiter__(self) -> "_Subscription":
         return self
 
-    async def __anext__(self) -> WorkflowRunEvent:
+    async def __anext__(self) -> WorkflowRunEvent | None:
         return await self.queue.get()
 
     async def get(self) -> WorkflowRunEvent:
@@ -45,10 +45,10 @@ class _Subscription:
 
         return event
 
-    async def put(self, item: WorkflowRunEvent):
+    async def put(self, item: WorkflowRunEvent) -> None:
         await self.queue.put(item)
 
-    async def close(self):
+    async def close(self) -> None:
         await self.queue.put(None)
 
 
@@ -62,25 +62,25 @@ class PooledWorkflowRunListener:
     subscription_counter: int = 0
     subscription_counter_lock: asyncio.Lock = asyncio.Lock()
 
-    requests: asyncio.Queue[SubscribeToWorkflowRunsRequest] = asyncio.Queue()
+    requests: asyncio.Queue[SubscribeToWorkflowRunsRequest | int] = asyncio.Queue()
 
-    listener: AsyncGenerator[WorkflowRunEvent, None] = None
-    listener_task: asyncio.Task = None
+    listener: AsyncGenerator[WorkflowRunEvent, None] | None = None
+    listener_task: asyncio.Task[None] | None = None
 
     curr_requester: int = 0
 
     # events have keys of the format workflow_run_id + subscription_id
     events: dict[int, _Subscription] = {}
 
-    interrupter: asyncio.Task = None
+    interrupter: asyncio.Task[None] | None = None
 
     def __init__(self, config: ClientConfig):
         conn = new_conn(config, True)
-        self.client = DispatcherStub(conn)
+        self.client = DispatcherStub(conn)  # type: ignore[no-untyped-call]
         self.token = config.token
         self.config = config
 
-    async def _interrupter(self):
+    async def _interrupter(self) -> None:
         """
         _interrupter runs in a separate thread and interrupts the listener according to a configurable duration.
         """
@@ -89,7 +89,7 @@ class PooledWorkflowRunListener:
         if self.interrupt is not None:
             self.interrupt.set()
 
-    async def _init_producer(self):
+    async def _init_producer(self) -> None:
         try:
             if not self.listener:
                 while True:
@@ -118,7 +118,8 @@ class PooledWorkflowRunListener:
                                 )
 
                                 t.cancel()
-                                self.listener.cancel()
+                                if self.listener:
+                                    self.listener.cancel()  # type: ignore[attr-defined]
                                 await asyncio.sleep(
                                     DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL
                                 )
@@ -178,7 +179,7 @@ class PooledWorkflowRunListener:
             yield request
             self.requests.task_done()
 
-    def cleanup_subscription(self, subscription_id: int):
+    def cleanup_subscription(self, subscription_id: int) -> None:
         workflow_run_id = self.subscriptionsToWorkflows[subscription_id]
 
         if workflow_run_id in self.workflowsToSubscriptions:
@@ -187,8 +188,7 @@ class PooledWorkflowRunListener:
         del self.subscriptionsToWorkflows[subscription_id]
         del self.events[subscription_id]
 
-    async def subscribe(self, workflow_run_id: str):
-        init_producer: asyncio.Task = None
+    async def subscribe(self, workflow_run_id: str) -> WorkflowRunEvent:
         try:
             # create a new subscription id, place a mutex on the counter
             await self.subscription_counter_lock.acquire()
@@ -216,15 +216,13 @@ class PooledWorkflowRunListener:
             if not self.listener_task or self.listener_task.done():
                 self.listener_task = asyncio.create_task(self._init_producer())
 
-            event = await self.events[subscription_id].get()
-
-            return event
+            return await self.events[subscription_id].get()
         except asyncio.CancelledError:
             raise
         finally:
             self.cleanup_subscription(subscription_id)
 
-    async def result(self, workflow_run_id: str):
+    async def result(self, workflow_run_id: str) -> dict[str, Any]:
         from hatchet_sdk.clients.admin import DedupeViolationErr
 
         event = await self.subscribe(workflow_run_id)
@@ -248,7 +246,7 @@ class PooledWorkflowRunListener:
 
         return results
 
-    async def _retry_subscribe(self):
+    async def _retry_subscribe(self) -> AsyncGenerator[WorkflowRunEvent, None]:
         retries = 0
 
         while retries < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
@@ -260,14 +258,17 @@ class PooledWorkflowRunListener:
                 if self.curr_requester != 0:
                     self.requests.put_nowait(self.curr_requester)
 
-                listener = self.client.SubscribeToWorkflowRuns(
-                    self._request(),
-                    metadata=get_metadata(self.token),
+                return cast(
+                    AsyncGenerator[WorkflowRunEvent, None],
+                    self.client.SubscribeToWorkflowRuns(
+                        self._request(),
+                        metadata=get_metadata(self.token),
+                    ),
                 )
-
-                return listener
             except grpc.RpcError as e:
                 if e.code() == grpc.StatusCode.UNAVAILABLE:
                     retries = retries + 1
                 else:
                     raise ValueError(f"gRPC error: {e}")
+
+        raise ValueError("Failed to connect to workflow run listener")

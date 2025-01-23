@@ -19,7 +19,6 @@ from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.v2.callable import HatchetCallable
 
 from .client import Client, new_client, new_client_raw
 from .clients.admin import AdminClient

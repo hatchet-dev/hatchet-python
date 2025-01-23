@@ -16,21 +16,13 @@ from .loader import ClientConfig
 
 
 class Client:
-    admin: AdminClient
-    dispatcher: DispatcherClient
-    event: EventClient
-    rest: RestApi
-    workflow_listener: PooledWorkflowRunListener
-    logInterceptor: Logger
-    debug: bool = False
-
     @classmethod
     def from_environment(
         cls,
         defaults: ClientConfig = ClientConfig(),
         debug: bool = False,
         *opts_functions: Callable[[ClientConfig], None],
-    ):
+    ) -> "Client":
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -47,7 +39,7 @@ class Client:
         cls,
         config: ClientConfig = ClientConfig(),
         debug: bool = False,
-    ):
+    ) -> "Client":
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -60,7 +52,7 @@ class Client:
         if config.host_port is None:
             raise ValueError("Host and port are required")
 
-        conn: grpc.Channel = new_conn(config)
+        conn: grpc.Channel = new_conn(config, False)
 
         # Instantiate clients
         event_client = new_event(conn, config)
@@ -84,7 +76,7 @@ class Client:
         event_client: EventClient,
         admin_client: AdminClient,
         dispatcher_client: DispatcherClient,
-        workflow_listener: PooledWorkflowRunListener,
+        workflow_listener: PooledWorkflowRunListener | None,
         rest_client: RestApi,
         config: ClientConfig,
         debug: bool = False,
@@ -104,14 +96,6 @@ class Client:
         self.workflow_listener = workflow_listener
         self.logInterceptor = config.logger
         self.debug = debug
-
-
-def with_host_port(host: str, port: int):
-    def with_host_port_impl(config: ClientConfig):
-        config.host = host
-        config.port = port
-
-    return with_host_port_impl
 
 
 new_client = Client.from_environment

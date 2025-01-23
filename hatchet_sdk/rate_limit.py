@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Union
 
-from celpy import CELEvalError, Environment
+from celpy import CELEvalError, Environment  # type: ignore
 
 from hatchet_sdk.contracts.workflows_pb2 import CreateStepRateLimit
 
@@ -15,7 +16,7 @@ def validate_cel_expression(expr: str) -> bool:
         return False
 
 
-class RateLimitDuration:
+class RateLimitDuration(str, Enum):
     SECOND = "SECOND"
     MINUTE = "MINUTE"
     HOUR = "HOUR"
@@ -71,9 +72,9 @@ class RateLimit:
     limit: Union[int, str, None] = None
     duration: RateLimitDuration = RateLimitDuration.MINUTE
 
-    _req: CreateStepRateLimit = None
+    _req: CreateStepRateLimit | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # juggle the key and key_expr fields
         key = self.static_key
         key_expression = self.dynamic_key

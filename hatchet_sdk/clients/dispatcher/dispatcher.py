@@ -41,7 +41,7 @@ class DispatcherClient:
     config: ClientConfig
 
     def __init__(self, config: ClientConfig):
-        conn = new_conn(config)
+        conn = new_conn(config, False)
         self.client = DispatcherStub(conn)  # type: ignore[no-untyped-call]
 
         aio_conn = new_conn(config, True)
