@@ -45,6 +45,7 @@ class ClientConfig:
         otel_exporter_oltp_protocol: str | None = None,
         worker_healthcheck_port: int | None = None,
         worker_healthcheck_enabled: bool | None = None,
+        worker_preset_labels: dict[str, str] = {},
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -61,6 +62,7 @@ class ClientConfig:
         self.otel_exporter_oltp_protocol = otel_exporter_oltp_protocol
         self.worker_healthcheck_port = worker_healthcheck_port
         self.worker_healthcheck_enabled = worker_healthcheck_enabled
+        self.worker_preset_labels = worker_preset_labels
 
         if not self.logInterceptor:
             self.logInterceptor = getLogger()
@@ -184,6 +186,16 @@ class ConfigLoader:
             == "True"
         )
 
+        #  Add preset labels to the worker config
+        worker_preset_labels: dict[str, str] = defaults.worker_preset_labels
+
+        autoscaling_target = get_config_value(
+            "autoscaling_target", "HATCHET_CLIENT_AUTOSCALING_TARGET"
+        )
+
+        if autoscaling_target:
+            worker_preset_labels["hatchet-autoscaling-target"] = autoscaling_target
+
         return ClientConfig(
             tenant_id=tenant_id,
             tls_config=tls_config,
@@ -201,6 +213,7 @@ class ConfigLoader:
             otel_exporter_oltp_protocol=otel_exporter_oltp_protocol,
             worker_healthcheck_port=worker_healthcheck_port,
             worker_healthcheck_enabled=worker_healthcheck_enabled,
+            worker_preset_labels=worker_preset_labels,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
