@@ -2,11 +2,10 @@ import asyncio
 import atexit
 import datetime
 import threading
-from typing import Any, Coroutine, List, TypeVar, cast
+from typing import Coroutine, TypeVar
 
 from pydantic import StrictInt
 
-from hatchet_sdk.clients.rest import CronWorkflowsList, ScheduledWorkflowsList
 from hatchet_sdk.clients.rest.api.event_api import EventApi
 from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
@@ -15,11 +14,11 @@ from hatchet_sdk.clients.rest.api.workflow_run_api import WorkflowRunApi
 from hatchet_sdk.clients.rest.api.workflow_runs_api import WorkflowRunsApi
 from hatchet_sdk.clients.rest.api_client import ApiClient
 from hatchet_sdk.clients.rest.configuration import Configuration
-from hatchet_sdk.clients.rest.models import TriggerWorkflowRunRequest
 from hatchet_sdk.clients.rest.models.create_cron_workflow_trigger_request import (
     CreateCronWorkflowTriggerRequest,
 )
 from hatchet_sdk.clients.rest.models.cron_workflows import CronWorkflows
+from hatchet_sdk.clients.rest.models.cron_workflows_list import CronWorkflowsList
 from hatchet_sdk.clients.rest.models.cron_workflows_order_by_field import (
     CronWorkflowsOrderByField,
 )
@@ -48,8 +47,14 @@ from hatchet_sdk.clients.rest.models.schedule_workflow_run_request import (
     ScheduleWorkflowRunRequest,
 )
 from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
+from hatchet_sdk.clients.rest.models.scheduled_workflows_list import (
+    ScheduledWorkflowsList,
+)
 from hatchet_sdk.clients.rest.models.scheduled_workflows_order_by_field import (
     ScheduledWorkflowsOrderByField,
+)
+from hatchet_sdk.clients.rest.models.trigger_workflow_run_request import (
+    TriggerWorkflowRunRequest,
 )
 from hatchet_sdk.clients.rest.models.workflow import Workflow
 from hatchet_sdk.clients.rest.models.workflow_kind import WorkflowKind

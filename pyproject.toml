@@ -89,6 +89,10 @@ exclude = [
     "hatchet_sdk/clients/rest/api/*",
     "hatchet_sdk/clients/rest/models/*",
     "hatchet_sdk/contracts",
+    "hatchet_sdk/clients/rest/api_client.py",
+    "hatchet_sdk/clients/rest/configuration.py",
+    "hatchet_sdk/clients/rest/exceptions.py",
+    "hatchet_sdk/clients/rest/rest.py",
 ]
 
 explicit_package_bases = true
@@ -115,19 +119,19 @@ warn_return_any = true
 [[tool.mypy.overrides]]
 module = ["hatchet_sdk/contracts/*", "hatchet_sdk/clients/rest/*"]
 
-warn_unused_ignores = false
+warn_unused_ignores = true
 
-strict_equality = false
+strict_equality = true
 
-disallow_subclassing_any = false
-disallow_untyped_decorators = false
-disallow_any_generics = false
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
 
 disallow_untyped_calls = false
 disallow_incomplete_defs = false
 disallow_untyped_defs = false
 
-no_implicit_reexport = false
+no_implicit_reexport = true
 
 warn_return_any = false
 
