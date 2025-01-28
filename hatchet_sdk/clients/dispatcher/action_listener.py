@@ -2,10 +2,11 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator, AsyncIterable, AsyncIterator, Optional, cast
 
 import grpc
-from grpc._cython import cygrpc
+import grpc.aio
+from grpc._cython import cygrpc  # type: ignore[attr-defined]
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
 from hatchet_sdk.clients.run_event_listener import (
@@ -40,14 +41,14 @@ DEFAULT_ACTION_LISTENER_RETRY_COUNT = 15
 @dataclass
 class GetActionListenerRequest:
     worker_name: str
-    services: List[str]
-    actions: List[str]
+    services: list[str]
+    actions: list[str]
     max_runs: Optional[int] = None
     _labels: dict[str, str | int] = field(default_factory=dict)
 
     labels: dict[str, WorkerLabels] = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.labels = {}
 
         for key, value in self._labels.items():
@@ -78,7 +79,7 @@ class Action:
     child_workflow_key: str | None = None
     parent_workflow_run_id: str | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.additional_metadata, str) and self.additional_metadata != "":
             try:
                 self.additional_metadata = json.loads(self.additional_metadata)
@@ -114,11 +115,6 @@ class Action:
         )
 
 
-START_STEP_RUN = 0
-CANCEL_STEP_RUN = 1
-START_GET_GROUP_KEY = 2
-
-
 @dataclass
 class ActionListener:
     config: ClientConfig
@@ -131,22 +127,22 @@ class ActionListener:
     last_connection_attempt: float = field(default=0, init=False)
     last_heartbeat_succeeded: bool = field(default=True, init=False)
     time_last_hb_succeeded: float = field(default=9999999999999, init=False)
-    heartbeat_task: Optional[asyncio.Task] = field(default=None, init=False)
+    heartbeat_task: Optional[asyncio.Task[None]] = field(default=None, init=False)
     run_heartbeat: bool = field(default=True, init=False)
     listen_strategy: str = field(default="v2", init=False)
     stop_signal: bool = field(default=False, init=False)
 
     missed_heartbeats: int = field(default=0, init=False)
 
-    def __post_init__(self):
-        self.client = DispatcherStub(new_conn(self.config, False))
-        self.aio_client = DispatcherStub(new_conn(self.config, True))
+    def __post_init__(self) -> None:
+        self.client = DispatcherStub(new_conn(self.config, False))  # type: ignore[no-untyped-call]
+        self.aio_client = DispatcherStub(new_conn(self.config, True))  # type: ignore[no-untyped-call]
         self.token = self.config.token
 
-    def is_healthy(self):
+    def is_healthy(self) -> bool:
         return self.last_heartbeat_succeeded
 
-    async def heartbeat(self):
+    async def heartbeat(self) -> None:
         # send a heartbeat every 4 seconds
         heartbeat_delay = 4
 
@@ -206,7 +202,7 @@ class ActionListener:
                     break
             await asyncio.sleep(heartbeat_delay)
 
-    async def start_heartbeater(self):
+    async def start_heartbeater(self) -> None:
         if self.heartbeat_task is not None:
             return
 
@@ -220,10 +216,10 @@ class ActionListener:
                 raise e
         self.heartbeat_task = loop.create_task(self.heartbeat())
 
-    def __aiter__(self):
+    def __aiter__(self) -> AsyncGenerator[Action | None, None]:
         return self._generator()
 
-    async def _generator(self) -> AsyncGenerator[Action, None]:
+    async def _generator(self) -> AsyncGenerator[Action | None, None]:
         listener = None
 
         while not self.stop_signal:
@@ -239,6 +235,10 @@ class ActionListener:
             try:
                 while not self.stop_signal:
                     self.interrupt = Event_ts()
+
+                    if listener is None:
+                        continue
+
                     t = asyncio.create_task(
                         read_with_interrupt(listener, self.interrupt)
                     )
@@ -251,7 +251,10 @@ class ActionListener:
                         )
 
                         t.cancel()
-                        listener.cancel()
+
+                        if listener:
+                            listener.cancel()
+
                         break
 
                     assigned_action = t.result()
@@ -261,10 +264,9 @@ class ActionListener:
                         break
 
                     self.retries = 0
-                    assigned_action: AssignedAction
 
                     # Process the received action
-                    action_type = self.map_action_type(assigned_action.actionType)
+                    action_type = assigned_action.actionType
 
                     if (
                         assigned_action.actionPayload is None
@@ -287,7 +289,8 @@ class ActionListener:
                         step_id=assigned_action.stepId,
                         step_run_id=assigned_action.stepRunId,
                         action_id=assigned_action.actionId,
-                        action_payload=action_payload,
+                        ## TODO: Figure out this type - maybe needs to be dumped to JSON?
+                        action_payload=action_payload,  # type: ignore[arg-type]
                         action_type=action_type,
                         retry_count=assigned_action.retryCount,
                         additional_metadata=assigned_action.additional_metadata,
@@ -324,25 +327,15 @@ class ActionListener:
 
                     self.retries = self.retries + 1
 
-    def parse_action_payload(self, payload: str):
+    def parse_action_payload(self, payload: str) -> JSONSerializableDict:
         try:
-            payload_data = json.loads(payload)
+            return cast(JSONSerializableDict, json.loads(payload))
         except json.JSONDecodeError as e:
             raise ValueError(f"Error decoding payload: {e}")
-        return payload_data
 
-    def map_action_type(self, action_type):
-        if action_type == ActionType.START_STEP_RUN:
-            return START_STEP_RUN
-        elif action_type == ActionType.CANCEL_STEP_RUN:
-            return CANCEL_STEP_RUN
-        elif action_type == ActionType.START_GET_GROUP_KEY:
-            return START_GET_GROUP_KEY
-        else:
-            # logger.error(f"Unknown action type: {action_type}")
-            return None
-
-    async def get_listen_client(self):
+    async def get_listen_client(
+        self,
+    ) -> grpc.aio.UnaryStreamCall[WorkerListenRequest, AssignedAction]:
         current_time = int(time.time())
 
         if (
@@ -370,7 +363,8 @@ class ActionListener:
                 f"action listener connection interrupted, retrying... ({self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT})"
             )
 
-        self.aio_client = DispatcherStub(new_conn(self.config, True))
+        ## TODO: Figure out how to get type support for these
+        self.aio_client = DispatcherStub(new_conn(self.config, True))  # type: ignore[no-untyped-call]
 
         if self.listen_strategy == "v2":
             # we should await for the listener to be established before
@@ -391,11 +385,14 @@ class ActionListener:
 
         self.last_connection_attempt = current_time
 
-        return listener
+        return cast(
+            grpc.aio.UnaryStreamCall[WorkerListenRequest, AssignedAction], listener
+        )
 
     def cleanup(self) -> None:
         self.run_heartbeat = False
-        self.heartbeat_task.cancel()
+        if self.heartbeat_task is not None:
+            self.heartbeat_task.cancel()
 
         try:
             self.unregister()
@@ -405,9 +402,11 @@ class ActionListener:
         if self.interrupt:
             self.interrupt.set()
 
-    def unregister(self):
+    def unregister(self) -> WorkerUnsubscribeRequest:
         self.run_heartbeat = False
-        self.heartbeat_task.cancel()
+
+        if self.heartbeat_task is not None:
+            self.heartbeat_task.cancel()
 
         try:
             req = self.aio_client.Unsubscribe(
@@ -417,6 +416,6 @@ class ActionListener:
             )
             if self.interrupt is not None:
                 self.interrupt.set()
-            return req
+            return cast(WorkerUnsubscribeRequest, req)
         except grpc.RpcError as e:
             raise Exception(f"Failed to unsubscribe: {e}")

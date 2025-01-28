@@ -2,10 +2,11 @@ import asyncio
 import atexit
 import datetime
 import threading
-from typing import Any, Coroutine, List
+from typing import Any, Coroutine, List, TypeVar, cast
 
 from pydantic import StrictInt
 
+from hatchet_sdk.clients.rest import CronWorkflowsList, ScheduledWorkflowsList
 from hatchet_sdk.clients.rest.api.event_api import EventApi
 from hatchet_sdk.clients.rest.api.log_api import LogApi
 from hatchet_sdk.clients.rest.api.step_run_api import StepRunApi
@@ -27,6 +28,9 @@ from hatchet_sdk.clients.rest.models.event_order_by_direction import (
     EventOrderByDirection,
 )
 from hatchet_sdk.clients.rest.models.event_order_by_field import EventOrderByField
+from hatchet_sdk.clients.rest.models.event_update_cancel200_response import (
+    EventUpdateCancel200Response,
+)
 from hatchet_sdk.clients.rest.models.log_line_level import LogLineLevel
 from hatchet_sdk.clients.rest.models.log_line_list import LogLineList
 from hatchet_sdk.clients.rest.models.log_line_order_by_direction import (
@@ -68,6 +72,17 @@ from hatchet_sdk.clients.rest.models.workflow_runs_cancel_request import (
 from hatchet_sdk.clients.rest.models.workflow_version import WorkflowVersion
 from hatchet_sdk.utils.types import JSONSerializableDict
 
+## Type variables to use with coroutines.
+## See https://stackoverflow.com/questions/73240620/the-right-way-to-type-hint-a-coroutine-function
+## Return type
+R = TypeVar("R")
+
+## Yield type
+Y = TypeVar("Y")
+
+## Send type
+S = TypeVar("S")
+
 
 class AsyncRestApi:
     def __init__(self, host: str, api_key: str, tenant_id: str):
@@ -78,50 +93,50 @@ class AsyncRestApi:
             access_token=api_key,
         )
 
-        self._api_client = None
-        self._workflow_api = None
-        self._workflow_run_api = None
-        self._step_run_api = None
-        self._event_api = None
-        self._log_api = None
+        self._api_client: ApiClient | None = None
+        self._workflow_api: WorkflowApi | None = None
+        self._workflow_run_api: WorkflowRunApi | None = None
+        self._step_run_api: StepRunApi | None = None
+        self._event_api: EventApi | None = None
+        self._log_api: LogApi | None = None
 
     @property
-    def api_client(self):
+    def api_client(self) -> ApiClient:
         if self._api_client is None:
             self._api_client = ApiClient(configuration=self.config)
         return self._api_client
 
     @property
-    def workflow_api(self):
+    def workflow_api(self) -> WorkflowApi:
         if self._workflow_api is None:
             self._workflow_api = WorkflowApi(self.api_client)
         return self._workflow_api
 
     @property
-    def workflow_run_api(self):
+    def workflow_run_api(self) -> WorkflowRunApi:
         if self._workflow_run_api is None:
             self._workflow_run_api = WorkflowRunApi(self.api_client)
         return self._workflow_run_api
 
     @property
-    def step_run_api(self):
+    def step_run_api(self) -> StepRunApi:
         if self._step_run_api is None:
             self._step_run_api = StepRunApi(self.api_client)
         return self._step_run_api
 
     @property
-    def event_api(self):
+    def event_api(self) -> EventApi:
         if self._event_api is None:
             self._event_api = EventApi(self.api_client)
         return self._event_api
 
     @property
-    def log_api(self):
+    def log_api(self) -> LogApi:
         if self._log_api is None:
             self._log_api = LogApi(self.api_client)
         return self._log_api
 
-    async def close(self):
+    async def close(self) -> None:
         # Ensure the aiohttp client session is closed
         if self._api_client is not None:
             await self._api_client.close()
@@ -185,13 +200,13 @@ class AsyncRestApi:
         return await self.workflow_run_api.workflow_run_update_replay(
             tenant=self.tenant_id,
             replay_workflow_runs_request=ReplayWorkflowRunsRequest(
-                workflow_run_ids=workflow_run_ids,
+                workflowRunIds=workflow_run_ids,
             ),
         )
 
     async def workflow_run_cancel(
         self, workflow_run_id: str
-    ) -> WorkflowRunCancel200Response:
+    ) -> EventUpdateCancel200Response:
         return await self.workflow_run_api.workflow_run_cancel(
             tenant=self.tenant_id,
             workflow_runs_cancel_request=WorkflowRunsCancelRequest(
@@ -201,7 +216,7 @@ class AsyncRestApi:
 
     async def workflow_run_bulk_cancel(
         self, workflow_run_ids: list[str]
-    ) -> WorkflowRunCancel200Response:
+    ) -> EventUpdateCancel200Response:
         return await self.workflow_run_api.workflow_run_cancel(
             tenant=self.tenant_id,
             workflow_runs_cancel_request=WorkflowRunsCancelRequest(
@@ -219,9 +234,10 @@ class AsyncRestApi:
         return await self.workflow_run_api.workflow_run_create(
             workflow=workflow_id,
             version=version,
+            ## TODO: Fix this type error - maybe a list of strings is okay since it's still JSON?
             trigger_workflow_run_request=TriggerWorkflowRunRequest(
                 input=input,
-                additional_metadata=additional_metadata,
+                additionalMetadata=additional_metadata,  # type: ignore[arg-type]
             ),
         )
 
@@ -232,7 +248,7 @@ class AsyncRestApi:
         expression: str,
         input: JSONSerializableDict,
         additional_metadata: JSONSerializableDict,
-    ):
+    ) -> CronWorkflows:
         return await self.workflow_run_api.cron_workflow_trigger_create(
             tenant=self.tenant_id,
             workflow=workflow_name,
@@ -240,12 +256,12 @@ class AsyncRestApi:
                 cronName=cron_name,
                 cronExpression=expression,
                 input=input,
-                additional_metadata=additional_metadata,
+                additionalMetadata=additional_metadata,
             ),
         )
 
-    async def cron_delete(self, cron_trigger_id: str):
-        return await self.workflow_api.workflow_cron_delete(
+    async def cron_delete(self, cron_trigger_id: str) -> None:
+        await self.workflow_api.workflow_cron_delete(
             tenant=self.tenant_id,
             cron_workflow=cron_trigger_id,
         )
@@ -258,7 +274,7 @@ class AsyncRestApi:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> CronWorkflowsList:
         return await self.workflow_api.cron_workflow_list(
             tenant=self.tenant_id,
             offset=offset,
@@ -269,7 +285,7 @@ class AsyncRestApi:
             order_by_direction=order_by_direction,
         )
 
-    async def cron_get(self, cron_trigger_id: str):
+    async def cron_get(self, cron_trigger_id: str) -> CronWorkflows:
         return await self.workflow_api.workflow_cron_get(
             tenant=self.tenant_id,
             cron_workflow=cron_trigger_id,
@@ -281,19 +297,19 @@ class AsyncRestApi:
         trigger_at: datetime.datetime,
         input: JSONSerializableDict,
         additional_metadata: JSONSerializableDict,
-    ):
+    ) -> ScheduledWorkflows:
         return await self.workflow_run_api.scheduled_workflow_run_create(
             tenant=self.tenant_id,
             workflow=name,
             schedule_workflow_run_request=ScheduleWorkflowRunRequest(
                 triggerAt=trigger_at,
                 input=input,
-                additional_metadata=additional_metadata,
+                additionalMetadata=additional_metadata,
             ),
         )
 
-    async def schedule_delete(self, scheduled_trigger_id: str):
-        return await self.workflow_api.workflow_scheduled_delete(
+    async def schedule_delete(self, scheduled_trigger_id: str) -> None:
+        await self.workflow_api.workflow_scheduled_delete(
             tenant=self.tenant_id,
             scheduled_workflow_run=scheduled_trigger_id,
         )
@@ -308,7 +324,7 @@ class AsyncRestApi:
         parent_step_run_id: str | None = None,
         order_by_field: ScheduledWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> ScheduledWorkflowsList:
         return await self.workflow_api.workflow_scheduled_list(
             tenant=self.tenant_id,
             offset=offset,
@@ -321,7 +337,7 @@ class AsyncRestApi:
             order_by_direction=order_by_direction,
         )
 
-    async def schedule_get(self, scheduled_trigger_id: str):
+    async def schedule_get(self, scheduled_trigger_id: str) -> ScheduledWorkflows:
         return await self.workflow_api.workflow_scheduled_get(
             tenant=self.tenant_id,
             scheduled_workflow_run=scheduled_trigger_id,
@@ -374,9 +390,10 @@ class AsyncRestApi:
 
     async def events_replay(self, event_ids: list[str] | EventList) -> EventList:
         if isinstance(event_ids, EventList):
-            event_ids = [r.metadata.id for r in event_ids.rows]
+            rows = event_ids.rows or []
+            event_ids = [r.metadata.id for r in rows]
 
-        return self.event_api.event_update_replay(
+        return await self.event_api.event_update_replay(
             tenant=self.tenant_id,
             replay_event_request=ReplayEventRequest(eventIds=event_ids),
         )
@@ -394,7 +411,7 @@ class RestApi:
         # Register the cleanup method to be called on exit
         atexit.register(self._cleanup)
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """
         Stop the running thread and clean up the event loop.
         """
@@ -402,14 +419,14 @@ class RestApi:
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join()
 
-    def _run_event_loop(self):
+    def _run_event_loop(self) -> None:
         """
         Run the asyncio event loop in a separate thread.
         """
         asyncio.set_event_loop(self._loop)
         self._loop.run_forever()
 
-    def _run_coroutine(self, coro) -> Any:
+    def _run_coroutine(self, coro: Coroutine[Y, S, R]) -> R:
         """
         Execute a coroutine in the event loop and return the result.
         """
@@ -460,12 +477,12 @@ class RestApi:
     def workflow_run_get(self, workflow_run_id: str) -> WorkflowRun:
         return self._run_coroutine(self.aio.workflow_run_get(workflow_run_id))
 
-    def workflow_run_cancel(self, workflow_run_id: str) -> WorkflowRunCancel200Response:
+    def workflow_run_cancel(self, workflow_run_id: str) -> EventUpdateCancel200Response:
         return self._run_coroutine(self.aio.workflow_run_cancel(workflow_run_id))
 
     def workflow_run_bulk_cancel(
         self, workflow_run_ids: list[str]
-    ) -> WorkflowRunCancel200Response:
+    ) -> EventUpdateCancel200Response:
         return self._run_coroutine(self.aio.workflow_run_bulk_cancel(workflow_run_ids))
 
     def workflow_run_create(
@@ -495,8 +512,8 @@ class RestApi:
             )
         )
 
-    def cron_delete(self, cron_trigger_id: str):
-        return self._run_coroutine(self.aio.cron_delete(cron_trigger_id))
+    def cron_delete(self, cron_trigger_id: str) -> None:
+        self._run_coroutine(self.aio.cron_delete(cron_trigger_id))
 
     def cron_list(
         self,
@@ -506,7 +523,7 @@ class RestApi:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> CronWorkflowsList:
         return self._run_coroutine(
             self.aio.cron_list(
                 offset,
@@ -518,7 +535,7 @@ class RestApi:
             )
         )
 
-    def cron_get(self, cron_trigger_id: str):
+    def cron_get(self, cron_trigger_id: str) -> CronWorkflows:
         return self._run_coroutine(self.aio.cron_get(cron_trigger_id))
 
     def schedule_create(
@@ -527,15 +544,15 @@ class RestApi:
         trigger_at: datetime.datetime,
         input: JSONSerializableDict,
         additional_metadata: JSONSerializableDict,
-    ):
+    ) -> ScheduledWorkflows:
         return self._run_coroutine(
             self.aio.schedule_create(
                 workflow_name, trigger_at, input, additional_metadata
             )
         )
 
-    def schedule_delete(self, scheduled_trigger_id: str):
-        return self._run_coroutine(self.aio.schedule_delete(scheduled_trigger_id))
+    def schedule_delete(self, scheduled_trigger_id: str) -> None:
+        self._run_coroutine(self.aio.schedule_delete(scheduled_trigger_id))
 
     def schedule_list(
         self,
@@ -545,7 +562,7 @@ class RestApi:
         additional_metadata: list[str] | None = None,
         order_by_field: CronWorkflowsOrderByField | None = None,
         order_by_direction: WorkflowRunOrderByDirection | None = None,
-    ):
+    ) -> ScheduledWorkflowsList:
         return self._run_coroutine(
             self.aio.schedule_list(
                 offset,
@@ -557,7 +574,7 @@ class RestApi:
             )
         )
 
-    def schedule_get(self, scheduled_trigger_id: str):
+    def schedule_get(self, scheduled_trigger_id: str) -> ScheduledWorkflows:
         return self._run_coroutine(self.aio.schedule_get(scheduled_trigger_id))
 
     def list_logs(
