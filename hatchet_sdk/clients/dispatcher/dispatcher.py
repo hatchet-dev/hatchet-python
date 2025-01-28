@@ -52,7 +52,7 @@ class DispatcherClient:
     async def get_action_listener(
         self, req: GetActionListenerRequest
     ) -> ActionListener:
-        
+
         # Override labels with the preset labels
         preset_labels = self.config.worker_preset_labels
 

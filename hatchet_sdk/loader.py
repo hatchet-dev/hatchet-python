@@ -186,7 +186,6 @@ class ConfigLoader:
             == "True"
         )
 
-
         #  Add preset labels to the worker config
         worker_preset_labels: dict[str, str] = defaults.worker_preset_labels
 
