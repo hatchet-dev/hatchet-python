@@ -10,11 +10,11 @@ include = ["hatchet_sdk/py.typed"]
 python = "^3.10"
 grpcio = [
     { version = ">=1.64.1, !=1.68.*", markers = "python_version < '3.13'" },
-    { version = ">=1.69.0", markers = "python_version >= '3.13'" }
+    { version = ">=1.69.0", markers = "python_version >= '3.13'" },
 ]
 grpcio-tools = [
     { version = ">=1.64.1, !=1.68.*", markers = "python_version < '3.13'" },
-    { version = ">=1.69.0", markers = "python_version >= '3.13'" }
+    { version = ">=1.69.0", markers = "python_version >= '3.13'" },
 ]
 python-dotenv = "^1.0.0"
 protobuf = "^5.29.1"
@@ -67,15 +67,15 @@ env = [
 [tool.isort]
 profile = "black"
 known_third_party = [
-  "grpcio",
-  "grpcio_tools",
-  "loguru",
-  "protobuf",
-  "pydantic",
-  "python_dotenv",
-  "python_dateutil",
-  "pyyaml",
-  "urllib3",
+    "grpcio",
+    "grpcio_tools",
+    "loguru",
+    "protobuf",
+    "pydantic",
+    "python_dotenv",
+    "python_dateutil",
+    "pyyaml",
+    "urllib3",
 ]
 extend_skip = ["hatchet_sdk/contracts/"]
 
@@ -83,17 +83,53 @@ extend_skip = ["hatchet_sdk/contracts/"]
 extend_exclude = "hatchet_sdk/contracts/"
 
 [tool.mypy]
-strict = true
-files = [
-  "."
-]
-exclude = [
-  "hatchet_sdk/clients/rest",
-  "hatchet_sdk/clients/dispatcher",
-  "hatchet_sdk/contracts",
-]
+files = ["."]
 follow_imports = "silent"
+exclude = [
+    "hatchet_sdk/clients/rest/api/*",
+    "hatchet_sdk/clients/rest/models/*",
+    "hatchet_sdk/contracts",
+]
+
 explicit_package_bases = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+strict_equality = true
+
+check_untyped_defs = true
+
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = true
+
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+no_implicit_reexport = true
+
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = ["hatchet_sdk/contracts/*", "hatchet_sdk/clients/rest/*"]
+
+warn_unused_ignores = false
+
+strict_equality = false
+
+disallow_subclassing_any = false
+disallow_untyped_decorators = false
+disallow_any_generics = false
+
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+
+no_implicit_reexport = false
+
+warn_return_any = false
 
 [tool.poetry.scripts]
 api = "examples.api.api:main"
@@ -118,4 +154,3 @@ existing_loop = "examples.worker_existing_loop.worker:main"
 bulk_fanout = "examples.bulk_fanout.worker:main"
 retries_with_backoff = "examples.retries_with_backoff.worker:main"
 pydantic = "examples.pydantic.worker:main"
-
