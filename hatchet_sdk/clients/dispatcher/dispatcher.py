@@ -1,5 +1,6 @@
 from typing import Any, cast
 
+import grpc.aio
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from hatchet_sdk.clients.dispatcher.action_listener import (
@@ -69,7 +70,7 @@ class DispatcherClient:
 
     async def send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
-    ) -> Any:
+    ) -> grpc.aio.UnaryUnaryCall[StepActionEvent, ActionEventResponse] | None:
         try:
             return await self._try_send_step_action_event(action, event_type, payload)
         except Exception as e:
@@ -84,12 +85,12 @@ class DispatcherClient:
                     "Failed to send finished event: " + str(e),
                 )
 
-            return
+            return None
 
     @tenacity_retry
     async def _try_send_step_action_event(
         self, action: Action, event_type: StepActionEventType, payload: str
-    ) -> Any:
+    ) -> grpc.aio.UnaryUnaryCall[StepActionEvent, ActionEventResponse]:
         eventTimestamp = Timestamp()
         eventTimestamp.GetCurrentTime()
 
@@ -105,15 +106,17 @@ class DispatcherClient:
             eventPayload=payload,
         )
 
-        ## TODO: What does this return?
-        return await self.aio_client.SendStepActionEvent(
-            event,
-            metadata=get_metadata(self.token),
+        return cast(
+            grpc.aio.UnaryUnaryCall[StepActionEvent, ActionEventResponse],
+            await self.aio_client.SendStepActionEvent(
+                event,
+                metadata=get_metadata(self.token),
+            ),
         )
 
     async def send_group_key_action_event(
         self, action: Action, event_type: GroupKeyActionEventType, payload: str
-    ) -> Any:
+    ) -> grpc.aio.UnaryUnaryCall[GroupKeyActionEvent, ActionEventResponse]:
         eventTimestamp = Timestamp()
         eventTimestamp.GetCurrentTime()
 
@@ -128,9 +131,12 @@ class DispatcherClient:
         )
 
         ## TODO: What does this return?
-        return await self.aio_client.SendGroupKeyActionEvent(
-            event,
-            metadata=get_metadata(self.token),
+        return cast(
+            grpc.aio.UnaryUnaryCall[GroupKeyActionEvent, ActionEventResponse],
+            await self.aio_client.SendGroupKeyActionEvent(
+                event,
+                metadata=get_metadata(self.token),
+            ),
         )
 
     def put_overrides_data(self, data: OverridesData) -> ActionEventResponse:
