@@ -34,6 +34,7 @@ class WorkflowRunStatus(str, Enum):
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
     QUEUED = "QUEUED"
+    BACKOFF = "BACKOFF"
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

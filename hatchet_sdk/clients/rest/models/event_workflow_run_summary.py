@@ -43,12 +43,16 @@ class EventWorkflowRunSummary(BaseModel):
     failed: Optional[StrictInt] = Field(
         default=None, description="The number of failed runs."
     )
+    cancelled: Optional[StrictInt] = Field(
+        default=None, description="The number of cancelled runs."
+    )
     __properties: ClassVar[List[str]] = [
         "pending",
         "running",
         "queued",
         "succeeded",
         "failed",
+        "cancelled",
     ]
 
     model_config = ConfigDict(
@@ -106,6 +110,7 @@ class EventWorkflowRunSummary(BaseModel):
                 "queued": obj.get("queued"),
                 "succeeded": obj.get("succeeded"),
                 "failed": obj.get("failed"),
+                "cancelled": obj.get("cancelled"),
             }
         )
         return _obj
