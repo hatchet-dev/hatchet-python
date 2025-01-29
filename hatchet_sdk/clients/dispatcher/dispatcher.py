@@ -110,6 +110,7 @@ class DispatcherClient:
             eventTimestamp=eventTimestamp,
             eventType=event_type,
             eventPayload=payload,
+            retryCount=action.retry_count,
         )
 
         ## TODO: What does this return?

@@ -33,12 +33,14 @@ class WorkflowRunsMetricsCounts(BaseModel):
     succeeded: Optional[StrictInt] = Field(default=None, alias="SUCCEEDED")
     failed: Optional[StrictInt] = Field(default=None, alias="FAILED")
     queued: Optional[StrictInt] = Field(default=None, alias="QUEUED")
+    cancelled: Optional[StrictInt] = Field(default=None, alias="CANCELLED")
     __properties: ClassVar[List[str]] = [
         "PENDING",
         "RUNNING",
         "SUCCEEDED",
         "FAILED",
         "QUEUED",
+        "CANCELLED",
     ]
 
     model_config = ConfigDict(
@@ -96,6 +98,7 @@ class WorkflowRunsMetricsCounts(BaseModel):
                 "SUCCEEDED": obj.get("SUCCEEDED"),
                 "FAILED": obj.get("FAILED"),
                 "QUEUED": obj.get("QUEUED"),
+                "CANCELLED": obj.get("CANCELLED"),
             }
         )
         return _obj
