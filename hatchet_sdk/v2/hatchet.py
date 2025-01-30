@@ -1,34 +1,12 @@
 import asyncio
 import logging
-from enum import Enum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Optional,
-    ParamSpec,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
 
-from pydantic import BaseModel, ConfigDict
 from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.context.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import (
-    ConcurrencyLimitStrategy,
-    CreateStepRateLimit,
-    CreateWorkflowJobOpts,
-    CreateWorkflowStepOpts,
-    CreateWorkflowVersionOpts,
-    DesiredWorkerLabels,
-    StickyStrategy,
-    WorkflowConcurrencyOpts,
-    WorkflowKind,
-)
+from hatchet_sdk.contracts.workflows_pb2 import DesiredWorkerLabels
 from hatchet_sdk.features.cron import CronClient
 from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
@@ -46,21 +24,6 @@ from ..logger import logger
 if TYPE_CHECKING:
     from hatchet_sdk.worker.worker import Worker
 R = TypeVar("R")
-
-
-class HatchetRest:
-    """
-    Main client for interacting with the Hatchet API.
-
-    This class provides access to various client interfaces and utility methods
-    for working with Hatchet via the REST API,
-
-    Attributes:
-        rest (RestApi): Interface for REST API operations.
-    """
-
-    def __init__(self, config: ClientConfig = ClientConfig()):
-        self.rest = RestApi(config.server_url, config.token, config.tenant_id)
 
 
 def transform_desired_worker_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
