@@ -234,15 +234,14 @@ class AsyncRestApi:
         workflow_id: str,
         input: JSONSerializableDict,
         version: str | None = None,
-        additional_metadata: list[str] | None = None,
+        additional_metadata: JSONSerializableDict = {},
     ) -> WorkflowRun:
         return await self.workflow_run_api.workflow_run_create(
             workflow=workflow_id,
             version=version,
-            ## TODO: Fix this type error - maybe a list of strings is okay since it's still JSON?
             trigger_workflow_run_request=TriggerWorkflowRunRequest(
                 input=input,
-                additionalMetadata=additional_metadata,  # type: ignore[arg-type]
+                additionalMetadata=additional_metadata,
             ),
         )
 
@@ -495,7 +494,7 @@ class RestApi:
         workflow_id: str,
         input: JSONSerializableDict,
         version: str | None = None,
-        additional_metadata: list[str] | None = None,
+        additional_metadata: JSONSerializableDict = {},
     ) -> WorkflowRun:
         return self._run_coroutine(
             self.aio.workflow_run_create(

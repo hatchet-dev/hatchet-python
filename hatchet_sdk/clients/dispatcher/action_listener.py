@@ -366,7 +366,6 @@ class ActionListener:
                 f"action listener connection interrupted, retrying... ({self.retries}/{DEFAULT_ACTION_LISTENER_RETRY_COUNT})"
             )
 
-        ## TODO: Figure out how to get type support for these
         self.aio_client = DispatcherStub(new_conn(self.config, True))  # type: ignore[no-untyped-call]
 
         if self.listen_strategy == "v2":
