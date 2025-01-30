@@ -80,11 +80,13 @@ class Step:
         parents: list[str] = [],
         retries: int = 0,
         rate_limits: list[CreateStepRateLimit] = [],
-        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+        desired_worker_labels: dict[str, DesiredWorkerLabels] = {},
         backoff_factor: float | None = None,
         backoff_max_seconds: int | None = None,
     ) -> None:
         self.fn = fn
+        self.is_async_function = bool(asyncio.iscoroutinefunction(fn))
+
         self.type = type
         self.timeout = timeout
         self.name = name
@@ -223,7 +225,7 @@ class Workflow:
                 parents=[x for x in step.parents],
                 retries=step.retries,
                 rate_limits=step.rate_limits,
-                worker_labels=step.desired_worker_labels,  # type: ignore[arg-type]
+                worker_labels=step.desired_worker_labels,
                 backoff_factor=step.backoff_factor,
                 backoff_max_seconds=step.backoff_max_seconds,
             )
