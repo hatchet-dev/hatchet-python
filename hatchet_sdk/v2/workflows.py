@@ -11,15 +11,15 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    overload,
 )
 
 from pydantic import BaseModel, ConfigDict
 
-from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
-    ConcurrencyLimitStrategy,
+    ConcurrencyLimitStrategy as ConcurrencyLimitStrategyProto,
+)
+from hatchet_sdk.contracts.workflows_pb2 import (
     CreateStepRateLimit,
     CreateWorkflowJobOpts,
     CreateWorkflowStepOpts,
@@ -28,14 +28,30 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 )
 from hatchet_sdk.contracts.workflows_pb2 import StickyStrategy as StickyStrategyProto
 from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, WorkflowKind
-
-from ..logger import logger
+from hatchet_sdk.logger import logger
 
 R = TypeVar("R")
 P = ParamSpec("P")
 
 
-class ConcurrencyExpression:
+class EmptyModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class StickyStrategy(str, Enum):
+    SOFT = "SOFT"
+    HARD = "HARD"
+
+
+class ConcurrencyLimitStrategy(str, Enum):
+    CANCEL_IN_PROGRESS = "CANCEL_IN_PROGRESS"
+    DROP_NEWEST = "DROP_NEWEST"
+    QUEUE_NEWEST = "QUEUE_NEWEST"
+    GROUP_ROUND_ROBIN = "GROUP_ROUND_ROBIN"
+    CANCEL_NEWEST = "CANCEL_NEWEST"
+
+
+class ConcurrencyExpression(BaseModel):
     """
     Defines concurrency limits for a workflow using a CEL expression.
 
@@ -48,21 +64,9 @@ class ConcurrencyExpression:
         ConcurrencyExpression("input.user_id", 5, ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS)
     """
 
-    def __init__(
-        self, expression: str, max_runs: int, limit_strategy: ConcurrencyLimitStrategy
-    ):
-        self.expression = expression
-        self.max_runs = max_runs
-        self.limit_strategy = limit_strategy
-
-
-class EmptyModel(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-
-class StickyStrategy(str, Enum):
-    SOFT = "SOFT"
-    HARD = "HARD"
+    expression: str
+    max_runs: int
+    limit_strategy: ConcurrencyLimitStrategy
 
 
 class WorkflowConfig(BaseModel):
@@ -204,7 +208,10 @@ class Workflow:
             return WorkflowConcurrencyOpts(
                 action=service_name + ":" + action.name,
                 max_runs=action.concurrency__max_runs,
-                limit_strategy=action.concurrency__limit_strategy,
+                limit_strategy=cast(
+                    str | None,
+                    self.validate_concurrency(action.concurrency__limit_strategy),
+                ),
             )
 
         if self.config.concurrency:
@@ -252,6 +259,22 @@ class Workflow:
 
         return validated_priority
 
+    def validate_concurrency(
+        self, concurrency: ConcurrencyLimitStrategy | None
+    ) -> int | None:
+        if not concurrency:
+            return None
+
+        names = [item.name for item in ConcurrencyLimitStrategyProto.DESCRIPTOR.values]
+
+        for name in names:
+            if name == concurrency.name:
+                return StickyStrategyProto.Value(concurrency.name)
+
+        raise ValueError(
+            f"Concurrency limit strategy must be one of {names}. Got: {concurrency}"
+        )
+
     def validate_sticky(self, sticky: StickyStrategy | None) -> int | None:
         if not sticky:
             return None
@@ -298,7 +321,7 @@ class Workflow:
             event_triggers=event_triggers,
             cron_triggers=self.config.on_crons,
             schedule_timeout=self.config.schedule_timeout,
-            sticky=cast(str, self.validate_sticky(self.config.sticky)),
+            sticky=cast(str | None, self.validate_sticky(self.config.sticky)),
             jobs=[
                 CreateWorkflowJobOpts(
                     name=name,
