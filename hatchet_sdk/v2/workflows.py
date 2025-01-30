@@ -1,10 +1,8 @@
 import asyncio
-import logging
 from enum import Enum
-from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar, Union
+from typing import Any, Callable, Concatenate, ParamSpec, Type, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict
-from typing_extensions import deprecated
 
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.context.context import Context
@@ -16,35 +14,38 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
     StickyStrategy,
-    WorkerLabelComparator,
     WorkflowConcurrencyOpts,
     WorkflowKind,
 )
-from hatchet_sdk.features.cron import CronClient
-from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
-from .client import Client, new_client, new_client_raw
-from .clients.admin import AdminClient
-from .clients.dispatcher.dispatcher import DispatcherClient
-from .clients.events import EventClient
-from .clients.run_event_listener import RunEventListenerClient
-from .logger import logger
-from .worker.worker import Worker
-from .workflow import (
-    ConcurrencyExpression,
-    WorkflowInterface,
-    WorkflowMeta,
-    WorkflowStepProtocol,
-)
+from ..logger import logger
 
-T = TypeVar("T", bound=BaseModel)
 R = TypeVar("R")
 P = ParamSpec("P")
 
-TWorkflow = TypeVar("TWorkflow", bound=object)
+
+class ConcurrencyExpression:
+    """
+    Defines concurrency limits for a workflow using a CEL expression.
+
+    Args:
+        expression (str): CEL expression to determine concurrency grouping. (i.e. "input.user_id")
+        max_runs (int): Maximum number of concurrent workflow runs.
+        limit_strategy (ConcurrencyLimitStrategy): Strategy for handling limit violations.
+
+    Example:
+        ConcurrencyExpression("input.user_id", 5, ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS)
+    """
+
+    def __init__(
+        self, expression: str, max_runs: int, limit_strategy: ConcurrencyLimitStrategy
+    ):
+        self.expression = expression
+        self.max_runs = max_runs
+        self.limit_strategy = limit_strategy
 
 
 class EmptyModel(BaseModel):
@@ -52,6 +53,7 @@ class EmptyModel(BaseModel):
 
 
 class WorkflowConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
     name: str = ""
     on_events: list[str] = []
     on_crons: list[str] = []
@@ -73,7 +75,7 @@ class StepType(str, Enum):
 class Step:
     def __init__(
         self,
-        fn: Callable[[Context], R],
+        fn: Callable[[Any, Context], R],
         type: StepType,
         name: str = "",
         timeout: str = "60m",
@@ -106,32 +108,24 @@ class Workflow:
     def get_service_name(self, namespace: str) -> str:
         return f"{namespace}{self.config.name.lower()}"
 
+    def _get_steps_by_type(self, step_type: StepType) -> list[Step]:
+        return [
+            attr
+            for _, attr in self.__class__.__dict__.items()
+            if isinstance(attr, Step) and attr.type == step_type
+        ]
+
     @property
     def on_failure_steps(self) -> list[Step]:
-        return [
-            inst
-            for attr in dir(self)
-            if isinstance(inst := getattr(self, attr), Step)
-            and inst.type == StepType.ON_FAILURE
-        ]
+        return self._get_steps_by_type(StepType.ON_FAILURE)
 
     @property
     def concurrency_actions(self) -> list[Step]:
-        return [
-            inst
-            for attr in dir(self)
-            if isinstance(inst := getattr(self, attr), Step)
-            and inst.type == StepType.CONCURRENCY
-        ]
+        return self._get_steps_by_type(StepType.CONCURRENCY)
 
     @property
     def default_steps(self) -> list[Step]:
-        return [
-            inst
-            for attr in dir(self)
-            if isinstance(inst := getattr(self, attr), Step)
-            and inst.type == StepType.DEFAULT
-        ]
+        return self._get_steps_by_type(StepType.DEFAULT)
 
     @property
     def steps(self) -> list[Step]:
@@ -267,64 +261,39 @@ def transform_desired_worker_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels
     )
 
 
-def step(
-    name: str = "",
-    timeout: str = "60m",
-    parents: list[str] = [],
-    retries: int = 0,
-    rate_limits: list[RateLimit] = [],
-    desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
-    backoff_factor: float | None = None,
-    backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[[Context], R]], Step]:
-    def inner(func: Callable[[Context], R]) -> Step:
-        return Step(
-            fn=func,
-            type=StepType.DEFAULT,
-            name=name.lower() or str(func.__name__).lower(),
-            timeout=timeout,
-            parents=parents,
-            retries=retries,
-            rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
-            desired_worker_labels={
-                key: transform_desired_worker_label(d)
-                for key, d in desired_worker_labels.items()
-            },
-            backoff_factor=backoff_factor,
-            backoff_max_seconds=backoff_max_seconds,
-        )
+def step_factory(
+    type: StepType,
+) -> Callable[..., Callable[[Callable[[Any, Context], R]], Step]]:
+    def _step(
+        name: str = "",
+        timeout: str = "60m",
+        parents: list[str] = [],
+        retries: int = 0,
+        rate_limits: list[RateLimit] = [],
+        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+        backoff_factor: float | None = None,
+        backoff_max_seconds: int | None = None,
+    ) -> Callable[[Callable[[Any, Context], R]], Step]:
+        def inner(func: Callable[[Any, Context], R]) -> Step:
+            return Step(
+                fn=func,
+                type=type,
+                name=name.lower() or str(func.__name__).lower(),
+                timeout=timeout,
+                parents=parents,
+                retries=retries,
+                rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
+                desired_worker_labels={
+                    key: transform_desired_worker_label(d)
+                    for key, d in desired_worker_labels.items()
+                },
+                backoff_factor=backoff_factor,
+                backoff_max_seconds=backoff_max_seconds,
+            )
 
-    return inner
+        return inner
 
-
-def on_failure_step(
-    name: str = "",
-    timeout: str = "60m",
-    parents: list[str] = [],
-    retries: int = 0,
-    rate_limits: list[RateLimit] = [],
-    desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
-    backoff_factor: float | None = None,
-    backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[[Context], R]], Step]:
-    def inner(func: Callable[[Context], R]) -> Step:
-        return Step(
-            fn=func,
-            type=StepType.ON_FAILURE,
-            name=name.lower() or str(func.__name__).lower(),
-            timeout=timeout,
-            parents=parents,
-            retries=retries,
-            rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
-            desired_worker_labels={
-                key: transform_desired_worker_label(d)
-                for key, d in desired_worker_labels.items()
-            },
-            backoff_factor=backoff_factor,
-            backoff_max_seconds=backoff_max_seconds,
-        )
-
-    return inner
+    return _step
 
 
 class HatchetRest:
@@ -340,114 +309,3 @@ class HatchetRest:
 
     def __init__(self, config: ClientConfig = ClientConfig()):
         self.rest = RestApi(config.server_url, config.token, config.tenant_id)
-
-
-class Hatchet:
-    """
-    Main client for interacting with the Hatchet SDK.
-
-    This class provides access to various client interfaces and utility methods
-    for working with Hatchet workers, workflows, and steps.
-
-    Attributes:
-        cron (CronClient): Interface for cron trigger operations.
-
-        admin (AdminClient): Interface for administrative operations.
-        dispatcher (DispatcherClient): Interface for dispatching operations.
-        event (EventClient): Interface for event-related operations.
-        rest (RestApi): Interface for REST API operations.
-    """
-
-    _client: Client
-    cron: CronClient
-    scheduled: ScheduledClient
-
-    @classmethod
-    def from_environment(
-        cls, defaults: ClientConfig = ClientConfig(), **kwargs: Any
-    ) -> "Hatchet":
-        return cls(client=new_client(defaults), **kwargs)
-
-    @classmethod
-    def from_config(cls, config: ClientConfig, **kwargs: Any) -> "Hatchet":
-        return cls(client=new_client_raw(config), **kwargs)
-
-    def __init__(
-        self,
-        debug: bool = False,
-        client: Optional[Client] = None,
-        config: ClientConfig = ClientConfig(),
-    ):
-        """
-        Initialize a new Hatchet instance.
-
-        Args:
-            debug (bool, optional): Enable debug logging. Defaults to False.
-            client (Optional[Client], optional): A pre-configured Client instance. Defaults to None.
-            config (ClientConfig, optional): Configuration for creating a new Client. Defaults to ClientConfig().
-        """
-        if client is not None:
-            self._client = client
-        else:
-            self._client = new_client(config, debug)
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
-
-        self.cron = CronClient(self._client)
-        self.scheduled = ScheduledClient(self._client)
-
-    @property
-    @deprecated(
-        "Direct access to client is deprecated and will be removed in a future version. Use specific client properties (Hatchet.admin, Hatchet.dispatcher, Hatchet.event, Hatchet.rest) instead. [0.32.0]",
-    )
-    def client(self) -> Client:
-        return self._client
-
-    @property
-    def admin(self) -> AdminClient:
-        return self._client.admin
-
-    @property
-    def dispatcher(self) -> DispatcherClient:
-        return self._client.dispatcher
-
-    @property
-    def event(self) -> EventClient:
-        return self._client.event
-
-    @property
-    def rest(self) -> RestApi:
-        return self._client.rest
-
-    @property
-    def listener(self) -> RunEventListenerClient:
-        return self._client.listener
-
-    @property
-    def config(self) -> ClientConfig:
-        return self._client.config
-
-    @property
-    def tenant_id(self) -> str:
-        return self._client.config.tenant_id
-
-    step = staticmethod(step)
-    on_failure_step = staticmethod(on_failure_step)
-
-    def worker(
-        self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    ) -> Worker:
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        return Worker(
-            name=name,
-            max_runs=max_runs,
-            labels=labels,
-            config=self._client.config,
-            debug=self._client.debug,
-            owned_loop=loop is None,
-        )
