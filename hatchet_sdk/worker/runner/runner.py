@@ -225,7 +225,7 @@ class Runner:
         return inner_callback
 
     ## TODO: Stricter type hinting here
-    def thread_action_func(self, context: Context, step: Step[T], action: Action) -> T:
+    def thread_action_func(self, context: Context, step: "Step[T]", action: Action) -> T:
         if action.step_run_id is not None and action.step_run_id != "":
             self.threads[action.step_run_id] = current_thread()
         elif (
@@ -241,7 +241,7 @@ class Runner:
     async def async_wrapped_action_func(
         self,
         context: Context,
-        step: Step[T],
+        step: "Step[T]",
         action: Action,
         run_id: str,
     ) -> T:
