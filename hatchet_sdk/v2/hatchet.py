@@ -1,21 +1,6 @@
 import asyncio
 import logging
-from enum import Enum
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Generic,
-    Optional,
-    ParamSpec,
-    Type,
-    TypeGuard,
-    TypeVar,
-    Union,
-    cast,
-)
-
-from pydantic import BaseModel, ConfigDict
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, cast
 
 from hatchet_sdk.client import Client, new_client, new_client_raw
 from hatchet_sdk.clients.admin import AdminClient
@@ -41,7 +26,9 @@ from hatchet_sdk.v2.workflows import (
     WorkflowConfig,
     WorkflowDeclaration,
 )
-from hatchet_sdk.worker.worker import Worker
+
+if TYPE_CHECKING:
+    from hatchet_sdk.worker.worker import Worker
 
 R = TypeVar("R")
 
@@ -203,6 +190,8 @@ class Hatchet:
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
     ) -> "Worker":
+        from hatchet_sdk.worker.worker import Worker
+
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
