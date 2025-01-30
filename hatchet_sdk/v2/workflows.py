@@ -1,6 +1,6 @@
 import asyncio
 from enum import Enum
-from typing import Any, Callable, Concatenate, ParamSpec, Type, TypeVar, Union
+from typing import Any, Callable, ParamSpec, Type, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -18,7 +18,6 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowKind,
 )
 from hatchet_sdk.labels import DesiredWorkerLabel
-from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 
 from ..logger import logger
@@ -61,7 +60,7 @@ class WorkflowConfig(BaseModel):
     timeout: str = "60m"
     schedule_timeout: str = "5m"
     sticky: Union[StickyStrategy, None] = None
-    default_priority: int = 0
+    default_priority: int = 1
     concurrency: ConcurrencyExpression | None = None
     input_validator: Type[BaseModel] = EmptyModel
 
@@ -101,6 +100,9 @@ class Step:
         self.concurrency__max_runs = 1
         self.concurrency__limit_strategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS
 
+    def __call__(self, *args: Any, **kwargs: Any) -> R:
+        return self.fn(*args, **kwargs)
+
 
 class Workflow:
     config: WorkflowConfig = WorkflowConfig()
@@ -131,10 +133,8 @@ class Workflow:
     def steps(self) -> list[Step]:
         return self.default_steps + self.concurrency_actions + self.on_failure_steps
 
-    def get_actions(self, namespace: str) -> list[str]:
-        service_name = self.get_service_name(namespace)
-
-        return [service_name + ":" + step.name for step in self.steps]
+    def create_action_name(self, namespace: str, step: Step) -> str:
+        return self.get_service_name(namespace) + ":" + step.name
 
     def __init__(self) -> None:
         self.config.name = self.config.name or str(self.__class__.__name__)
@@ -294,18 +294,3 @@ def step_factory(
         return inner
 
     return _step
-
-
-class HatchetRest:
-    """
-    Main client for interacting with the Hatchet API.
-
-    This class provides access to various client interfaces and utility methods
-    for working with Hatchet via the REST API,
-
-    Attributes:
-        rest (RestApi): Interface for REST API operations.
-    """
-
-    def __init__(self, config: ClientConfig = ClientConfig()):
-        self.rest = RestApi(config.server_url, config.token, config.tenant_id)

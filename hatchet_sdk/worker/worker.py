@@ -10,7 +10,7 @@ from enum import Enum
 from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
-from typing import Any, Callable, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, get_type_hints
 
 from aiohttp import web
 from aiohttp.web_request import Request
@@ -33,7 +33,10 @@ from hatchet_sdk.worker.runner.run_loop_manager import (
     STOP_LOOP_TYPE,
     WorkerActionRunLoopManager,
 )
-from hatchet_sdk.workflow import WorkflowInterface
+
+if TYPE_CHECKING:
+    from hatchet_sdk.v2 import Workflow
+    from hatchet_sdk.v2.workflows import Step
 
 T = TypeVar("T")
 
@@ -48,9 +51,6 @@ class WorkerStatus(Enum):
 @dataclass
 class WorkerStartOptions:
     loop: asyncio.AbstractEventLoop | None = field(default=None)
-
-
-TWorkflow = TypeVar("TWorkflow", bound=object)
 
 
 class Worker:
@@ -113,10 +113,8 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-    def register_workflow(self, workflow) -> None:
+    def register_workflow(self, workflow: Union["Workflow", Any]) -> None:
         namespace = self.client.config.namespace
-
-        print(f"registering workflow: {workflow}", workflow.steps)
 
         try:
             self.client.admin.put_workflow(
@@ -128,24 +126,22 @@ class Worker:
             sys.exit(1)
 
         def create_action_function(
-            action_func: Callable[..., T]
+            action_func: "Step"
         ) -> Callable[[Context], T]:
             def action_function(context: Context) -> T:
                 return action_func(workflow, context)
 
-            if asyncio.iscoroutinefunction(action_func):
-                setattr(action_function, "is_coroutine", True)
-            else:
-                setattr(action_function, "is_coroutine", False)
+            setattr(action_function, "is_coroutine", action_func.is_async_function)
 
             return action_function
 
-        for action_name, action_func in workflow.get_actions(namespace):
-            self.action_registry[action_name] = create_action_function(action_func)
-            return_type = get_type_hints(action_func).get("return")
+        for step in workflow.steps:
+            action_name = workflow.create_action_name(namespace, step)
+            self.action_registry[action_name] = create_action_function(step)
+            return_type = get_type_hints(step.fn).get("return")
 
             self.validator_registry[action_name] = WorkflowValidator(
-                workflow_input=workflow.input_validator,
+                workflow_input=workflow.config.input_validator,
                 step_output=return_type if is_basemodel_subclass(return_type) else None,
             )
 
