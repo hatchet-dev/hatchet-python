@@ -1,28 +1,24 @@
 import asyncio
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
-from typing_extensions import deprecated
-
+from hatchet_sdk.client import Client, new_client, new_client_raw
+from hatchet_sdk.clients.admin import AdminClient
+from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
+from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.rest_client import RestApi
+from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import DesiredWorkerLabels
 from hatchet_sdk.features.cron import CronClient
 from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
+from hatchet_sdk.logger import logger
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.workflows import Step, StepType
+from hatchet_sdk.worker.worker import Worker
 
-from ..client import Client, new_client, new_client_raw
-from ..clients.admin import AdminClient
-from ..clients.dispatcher.dispatcher import DispatcherClient
-from ..clients.events import EventClient
-from ..clients.run_event_listener import RunEventListenerClient
-from ..logger import logger
-
-if TYPE_CHECKING:
-    from hatchet_sdk.worker.worker import Worker
 R = TypeVar("R")
 
 
@@ -91,13 +87,6 @@ class Hatchet:
 
         self.cron = CronClient(self._client)
         self.scheduled = ScheduledClient(self._client)
-
-    @property
-    @deprecated(
-        "Direct access to client is deprecated and will be removed in a future version. Use specific client properties (Hatchet.admin, Hatchet.dispatcher, Hatchet.event, Hatchet.rest) instead. [0.32.0]",
-    )
-    def client(self) -> Client:
-        return self._client
 
     @property
     def admin(self) -> AdminClient:
@@ -190,8 +179,6 @@ class Hatchet:
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
     ) -> "Worker":
-        from hatchet_sdk.worker.worker import Worker
-
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
