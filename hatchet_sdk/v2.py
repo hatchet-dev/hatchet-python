@@ -1,9 +1,18 @@
 import asyncio
+from hatchet_sdk.contracts.workflows_pb2 import (
+    CreateWorkflowJobOpts,
+    CreateWorkflowStepOpts,
+    CreateWorkflowVersionOpts,
+    StickyStrategy,
+    WorkflowConcurrencyOpts,
+    WorkflowKind,
+)
 import logging
 from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing_extensions import deprecated
+from enum import Enum
 
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.context.context import Context
@@ -40,45 +49,195 @@ P = ParamSpec("P")
 
 TWorkflow = TypeVar("TWorkflow", bound=object)
 
+class EmptyModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
 
-def workflow(
-    name: str = "",
-    on_events: list[str] | None = None,
-    on_crons: list[str] | None = None,
-    version: str = "",
-    timeout: str = "60m",
-    schedule_timeout: str = "5m",
-    sticky: Union[StickyStrategy, None] = None,
-    default_priority: int | None = None,
-    concurrency: ConcurrencyExpression | None = None,
-    input_validator: Type[T] | None = None,
-) -> Callable[[Type[TWorkflow]], WorkflowMeta]:
-    on_events = on_events or []
-    on_crons = on_crons or []
 
-    def inner(cls: Type[TWorkflow]) -> WorkflowMeta:
-        nonlocal name
-        name = name or str(cls.__name__)
+class WorkflowConfig(BaseModel):
+    name: str = ""
+    on_events: list[str] = []
+    on_crons: list[str] = []
+    version: str = ""
+    timeout: str = "60m"
+    schedule_timeout: str = "5m"
+    sticky: Union[StickyStrategy, None] = None
+    default_priority: int = 0
+    concurrency: ConcurrencyExpression | None = None
+    input_validator: Type[BaseModel] = EmptyModel
 
-        setattr(cls, "on_events", on_events)
-        setattr(cls, "on_crons", on_crons)
-        setattr(cls, "name", name)
-        setattr(cls, "version", version)
-        setattr(cls, "timeout", timeout)
-        setattr(cls, "schedule_timeout", schedule_timeout)
-        setattr(cls, "sticky", sticky)
-        setattr(cls, "default_priority", default_priority)
-        setattr(cls, "concurrency_expression", concurrency)
+class StepType(str, Enum):
+    DEFAULT = "default"
+    CONCURRENCY = "concurrency"
+    ON_FAILURE = "on_failure"
 
-        # Define a new class with the same name and bases as the original, but
-        # with WorkflowMeta as its metaclass
 
-        ## TODO: Figure out how to type this metaclass correctly
-        setattr(cls, "input_validator", input_validator)
+class Step:
+    def __init__(self) -> None:
+        self.type = StepType.DEFAULT
+        self.timeout = "60s"
+        self.name = "name"
+        self.parents: list[Step] = []
+        self.retries: int = 0
+        self.rate_limits: list[RateLimit] = []
+        self.desired_worker_labels: dict[str, DesiredWorkerLabel] = {}
+        self.backoff_factor: float | None = None
+        self.backoff_max_seconds: int | None = None
+        self.concurrency__max_runs = 1
+        self.concurrency__limit_strategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS
 
-        return WorkflowMeta(name, cls.__bases__, dict(cls.__dict__))
 
-    return inner
+class Workflow:
+    config: WorkflowConfig = WorkflowConfig()
+
+    def get_service_name(self, namespace: str) -> str:
+        return f"{namespace}{self.config.name.lower()}"
+
+    @property
+    def on_failure_steps(self) -> list[Step]:
+        return [
+            inst
+            for attr in dir(self)
+            if isinstance(inst := getattr(self, attr), Step) and inst.type == StepType.ON_FAILURE
+        ]
+
+    @property
+    def concurrency_actions(self) -> list[Step]:
+        return [
+            inst
+            for attr in dir(self)
+            if isinstance(inst := getattr(self, attr), Step) and inst.type == StepType.CONCURRENCY
+        ]
+
+    @property
+    def default_steps(self) -> list[Step]:
+        return [
+            inst
+            for attr in dir(self)
+            if isinstance(inst := getattr(self, attr), Step) and inst.type == StepType.DEFAULT
+        ]
+
+
+    @property
+    def steps(self) -> list[Step]:
+        return  self.default_steps + self.concurrency_actions + self.on_failure_steps
+
+
+    @property
+    def actions(self, namespace: str) -> list[Step]:
+        service_name = self.get_service_name(namespace)
+
+        return [
+            service_name + ":" + step
+            for step in self.steps
+        ]
+
+
+    def __init__(self) -> None:
+        self.config.name = self.config.name or str(self.__class__.__name__)
+
+    def get_name(self, namespace: str) -> str:
+        return namespace + self.config.name
+
+    def validate_concurrency_actions(self, service_name: str) -> WorkflowConcurrencyOpts | None:
+        if len(self.concurrency_actions) > 0 and self.config.concurrency:
+            raise ValueError(
+                "Error: Both concurrencyActions and concurrency_expression are defined. Please use only one concurrency configuration method."
+            )
+
+        if len(self.concurrency_actions) > 0:
+            action = self.concurrency_actions[0]
+
+            return WorkflowConcurrencyOpts(
+                action=service_name + ":" + action.name,
+                max_runs=action.concurrency__max_runs,
+                limit_strategy=action.concurrency__limit_strategy,
+            )
+
+        if self.config.concurrency:
+            return WorkflowConcurrencyOpts(
+                expression=self.config.concurrency.expression,
+                max_runs=self.config.concurrency.max_runs,
+                limit_strategy=self.config.concurrency.limit_strategy,
+            )
+
+    def validate_on_failure_steps(self, name: str, service_name: str) -> CreateWorkflowJobOpts | None:
+        if not self.on_failure_steps:
+            return None
+
+        on_failure_step = next(iter(self.on_failure_steps))
+
+        return CreateWorkflowJobOpts(
+            name=name + "-on-failure",
+            steps=[
+                CreateWorkflowStepOpts(
+                    readable_id=on_failure_step.name,
+                    action=service_name + ":" + on_failure_step.name,
+                    timeout=on_failure_step.timeout or "60s",
+                    inputs="{}",
+                    parents=[],
+                    retries=on_failure_step.retries,
+                    rate_limits=on_failure_step.rate_limits,  # type: ignore[arg-type]
+                    backoff_factor=on_failure_step.backoff_factor,
+                    backoff_max_seconds=on_failure_step.backoff_max_seconds,
+                )
+            ],
+        )
+
+    def validate_priority(self, default_priority: int | None) -> int | None:
+        validated_priority = (
+            max(1, min(3, default_priority)) if default_priority else None
+        )
+        if validated_priority != default_priority:
+            logger.warning(
+                "Warning: Default Priority Must be between 1 and 3 -- inclusively. Adjusted to be within the range."
+            )
+
+        return validated_priority
+
+    def get_create_opts(self, namespace: str) -> CreateWorkflowVersionOpts:
+        service_name = self.get_service_name(namespace)
+
+        name = self.get_name(namespace)
+        event_triggers = [namespace + event for event in self.config.on_events]
+
+        create_step_opts = [
+            CreateWorkflowStepOpts(
+                readable_id=step.name,
+                action=service_name + ":" + step.name,
+                timeout=step.timeout or "60s",
+                inputs="{}",
+                parents=[x for x in step.parents],
+                retries=step.retries,
+                rate_limits=step.rate_limits,  # type: ignore[arg-type]
+                worker_labels=step.desired_worker_labels,  # type: ignore[arg-type]
+                backoff_factor=step.backoff_factor,
+                backoff_max_seconds=step.backoff_max_seconds,
+            )
+            for step in self.steps
+        ]
+
+        concurrency = self.validate_concurrency_actions(service_name)
+        on_failure_job = self.validate_on_failure_steps(name, service_name)
+        validated_priority = self.validate_priority(self.config.default_priority)
+
+        return CreateWorkflowVersionOpts(
+            name=name,
+            kind=WorkflowKind.DAG,
+            version=self.config.version,
+            event_triggers=event_triggers,
+            cron_triggers=self.config.on_crons,
+            schedule_timeout=self.config.schedule_timeout,
+            sticky=self.config.sticky,
+            jobs=[
+                CreateWorkflowJobOpts(
+                    name=name,
+                    steps=create_step_opts,
+                )
+            ],
+            on_failure_job=on_failure_job,
+            concurrency=concurrency,
+            default_priority=validated_priority,
+        )
 
 
 def step(
