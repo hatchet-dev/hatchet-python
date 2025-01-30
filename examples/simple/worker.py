@@ -1,30 +1,36 @@
 import time
 
-from dotenv import load_dotenv
+from hatchet_sdk import Context
+from hatchet_sdk.v2 import Hatchet, Workflow, WorkflowConfig
 
-from hatchet_sdk import Context, Hatchet
+# from dotenv import load_dotenv
+# load_dotenv()
 
-load_dotenv()
+# import os
+
+# print(os.environ)
+
+
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["user:create"])
-class MyWorkflow:
+class MyWorkflow(Workflow):
+    config = WorkflowConfig(name="foobar", on_events=["user:create"])
+
     @hatchet.step(timeout="11s", retries=3)
     def step1(self, context: Context) -> dict[str, str]:
         print("executed step1")
-        time.sleep(10)
-        # raise Exception("test")
         return {
             "step1": "step1",
         }
 
 
 def main() -> None:
-    workflow = MyWorkflow()
+    wf = MyWorkflow()
+
     worker = hatchet.worker("test-worker", max_runs=1)
-    worker.register_workflow(workflow)
+    worker.register_workflow(wf)
     worker.start()
 
 
