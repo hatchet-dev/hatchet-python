@@ -12,6 +12,7 @@ class ClientTLSConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="HATCHET_CLIENT_TLS_",
         env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
+        extra="ignore",
     )
 
     strategy: str = "tls"
@@ -21,13 +22,37 @@ class ClientTLSConfig(BaseSettings):
     server_name: str = "localhost"
 
 
+class OTELConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="HATCHET_CLIENT_OTEL_",
+        env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
+        extra="ignore",
+    )
+
+    service_name: str | None = None
+    exporter_otlp_endpoint: str | None = None
+    exporter_otlp_headers: str | None = None
+    exporter_otlp_protocol: str | None = None
+
+
+class HealthcheckConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="HATCHET_CLIENT_WORKER_HEALTHCHECK_",
+        env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
+        extra="ignore",
+    )
+
+    port: int = 8001
+    enabled: bool = False
+
+
 DEFAULT_HOST_PORT = "localhost:7070"
 
 
 class ClientConfig(BaseSettings):
     model_config = SettingsConfigDict(
         arbitrary_types_allowed=True,
-        extra="allow",
+        extra="ignore",
         env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
         env_prefix="HATCHET_CLIENT_",
     )
@@ -41,6 +66,8 @@ class ClientConfig(BaseSettings):
     namespace: str = ""
 
     tls_config: ClientTLSConfig = Field(default_factory=lambda: ClientTLSConfig())
+    otel: OTELConfig = Field(default_factory=lambda: OTELConfig())
+    healthcheck: HealthcheckConfig = Field(default_factory=lambda: HealthcheckConfig())
 
     listener_v2_timeout: int | None = None
     grpc_max_recv_message_length: int = Field(
@@ -49,12 +76,6 @@ class ClientConfig(BaseSettings):
     grpc_max_send_message_length: int = Field(
         default=4 * 1024 * 1024, description="4MB default"
     )
-    otel_exporter_oltp_endpoint: str | None = None
-    otel_service_name: str | None = None
-    otel_exporter_oltp_headers: str | None = None
-    otel_exporter_oltp_protocol: str | None = None
-    worker_healthcheck_port: int = 8001
-    worker_healthcheck_enabled: bool = False
 
     worker_preset_labels: dict[str, str] = Field(default_factory=dict)
 
