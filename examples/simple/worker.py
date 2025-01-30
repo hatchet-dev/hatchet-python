@@ -11,7 +11,6 @@ from hatchet_sdk.v2 import Hatchet, Workflow, WorkflowConfig
 # print(os.environ)
 
 
-
 hatchet = Hatchet(debug=True)
 
 

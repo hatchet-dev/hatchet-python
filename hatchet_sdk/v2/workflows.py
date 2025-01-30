@@ -1,6 +1,6 @@
 import asyncio
 from enum import Enum
-from typing import Any, Callable, ParamSpec, Type, TypeVar, Union
+from typing import Any, Callable, Generic, ParamSpec, Type, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -71,7 +71,7 @@ class StepType(str, Enum):
     ON_FAILURE = "on_failure"
 
 
-class Step:
+class Step(Generic[R]):
     def __init__(
         self,
         fn: Callable[[Any, Context], R],
@@ -100,8 +100,8 @@ class Step:
         self.concurrency__max_runs = 1
         self.concurrency__limit_strategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS
 
-    def __call__(self, *args: Any, **kwargs: Any) -> R:
-        return self.fn(*args, **kwargs)
+    def __call__(self, ctx: Context) -> R:
+        return self.fn(None, ctx)
 
 
 class Workflow:
@@ -110,7 +110,7 @@ class Workflow:
     def get_service_name(self, namespace: str) -> str:
         return f"{namespace}{self.config.name.lower()}"
 
-    def _get_steps_by_type(self, step_type: StepType) -> list[Step]:
+    def _get_steps_by_type(self, step_type: StepType) -> list[Step[Any]]:
         return [
             attr
             for _, attr in self.__class__.__dict__.items()
@@ -118,22 +118,22 @@ class Workflow:
         ]
 
     @property
-    def on_failure_steps(self) -> list[Step]:
+    def on_failure_steps(self) -> list[Step[Any]]:
         return self._get_steps_by_type(StepType.ON_FAILURE)
 
     @property
-    def concurrency_actions(self) -> list[Step]:
+    def concurrency_actions(self) -> list[Step[Any]]:
         return self._get_steps_by_type(StepType.CONCURRENCY)
 
     @property
-    def default_steps(self) -> list[Step]:
+    def default_steps(self) -> list[Step[Any]]:
         return self._get_steps_by_type(StepType.DEFAULT)
 
     @property
-    def steps(self) -> list[Step]:
+    def steps(self) -> list[Step[Any]]:
         return self.default_steps + self.concurrency_actions + self.on_failure_steps
 
-    def create_action_name(self, namespace: str, step: Step) -> str:
+    def create_action_name(self, namespace: str, step: Step[Any]) -> str:
         return self.get_service_name(namespace) + ":" + step.name
 
     def __init__(self) -> None:
@@ -248,49 +248,3 @@ class Workflow:
             concurrency=concurrency,
             default_priority=validated_priority,
         )
-
-
-def transform_desired_worker_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
-    value = d.value
-    return DesiredWorkerLabels(
-        strValue=value if not isinstance(value, int) else None,
-        intValue=value if isinstance(value, int) else None,
-        required=d.required,
-        weight=d.weight,
-        comparator=d.comparator,  # type: ignore[arg-type]
-    )
-
-
-def step_factory(
-    type: StepType,
-) -> Callable[..., Callable[[Callable[[Any, Context], R]], Step]]:
-    def _step(
-        name: str = "",
-        timeout: str = "60m",
-        parents: list[str] = [],
-        retries: int = 0,
-        rate_limits: list[RateLimit] = [],
-        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
-        backoff_factor: float | None = None,
-        backoff_max_seconds: int | None = None,
-    ) -> Callable[[Callable[[Any, Context], R]], Step]:
-        def inner(func: Callable[[Any, Context], R]) -> Step:
-            return Step(
-                fn=func,
-                type=type,
-                name=name.lower() or str(func.__name__).lower(),
-                timeout=timeout,
-                parents=parents,
-                retries=retries,
-                rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
-                desired_worker_labels={
-                    key: transform_desired_worker_label(d)
-                    for key, d in desired_worker_labels.items()
-                },
-                backoff_factor=backoff_factor,
-                backoff_max_seconds=backoff_max_seconds,
-            )
-
-        return inner
-
-    return _step

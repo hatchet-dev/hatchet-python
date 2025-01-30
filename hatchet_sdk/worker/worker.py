@@ -74,7 +74,7 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, Callable[[Context], Any]] = {}
+        self.action_registry: dict[str, Step[Any]] = {}
         self.validator_registry: dict[str, WorkflowValidator] = {}
 
         self.killing: bool = False
@@ -100,9 +100,6 @@ class Worker:
             "hatchet_worker_status", "Current status of the Hatchet worker"
         )
 
-    def register_function(self, action: str, func: Callable[[Context], Any]) -> None:
-        self.action_registry[action] = func
-
     def register_workflow_from_opts(
         self, name: str, opts: CreateWorkflowVersionOpts
     ) -> None:
@@ -125,19 +122,9 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-        def create_action_function(
-            action_func: "Step"
-        ) -> Callable[[Context], T]:
-            def action_function(context: Context) -> T:
-                return action_func(workflow, context)
-
-            setattr(action_function, "is_coroutine", action_func.is_async_function)
-
-            return action_function
-
         for step in workflow.steps:
             action_name = workflow.create_action_name(namespace, step)
-            self.action_registry[action_name] = create_action_function(step)
+            self.action_registry[action_name] = step
             return_type = get_type_hints(step.fn).get("return")
 
             self.validator_registry[action_name] = WorkflowValidator(

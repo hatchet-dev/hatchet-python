@@ -8,7 +8,17 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Literal,
+    Type,
+    TypeVar,
+    cast,
+    overload,
+)
 
 from opentelemetry.trace import StatusCode
 from pydantic import BaseModel
@@ -37,6 +47,9 @@ from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
 
+if TYPE_CHECKING:
+    from hatchet_sdk.v2.workflows import Step
+
 
 class WorkerStatus(Enum):
     INITIALIZED = 1
@@ -52,7 +65,7 @@ class Runner:
         event_queue: "Queue[Any]",
         max_runs: int | None = None,
         handle_kill: bool = True,
-        action_registry: dict[str, Callable[..., Any]] = {},
+        action_registry: dict[str, "Step[Any]"] = {},
         validator_registry: dict[str, WorkflowValidator] = {},
         config: ClientConfig = ClientConfig(),
         labels: dict[str, str | int] = {},
@@ -64,7 +77,7 @@ class Runner:
         self.max_runs = max_runs
         self.tasks: dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
         self.contexts: dict[str, Context] = {}  # Store run ids and contexts
-        self.action_registry: dict[str, Callable[..., Any]] = action_registry
+        self.action_registry: dict[str, "Step[Any]"] = action_registry
         self.validator_registry = validator_registry
 
         self.event_queue = event_queue
