@@ -3,13 +3,9 @@ import time
 from hatchet_sdk import Context
 from hatchet_sdk.v2 import Hatchet, Workflow, WorkflowConfig
 
-# from dotenv import load_dotenv
-# load_dotenv()
+from dotenv import load_dotenv
 
-# import os
-
-# print(os.environ)
-
+load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
