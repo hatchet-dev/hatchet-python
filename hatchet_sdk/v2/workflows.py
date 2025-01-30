@@ -1,6 +1,6 @@
 import asyncio
 from enum import Enum
-from typing import Any, Callable, Generic, ParamSpec, Type, TypeVar, Union
+from typing import Any, Callable, Generic, ParamSpec, Type, TypeVar, Union, cast
 
 from pydantic import BaseModel, ConfigDict
 
@@ -63,7 +63,7 @@ class WorkflowConfig(BaseModel):
     version: str = ""
     timeout: str = "60m"
     schedule_timeout: str = "5m"
-    sticky: Union[StickyStrategy, None] = None
+    sticky: StickyStrategy | None = None
     default_priority: int = 1
     concurrency: ConcurrencyExpression | None = None
     input_validator: Type[BaseModel] = EmptyModel
@@ -208,12 +208,17 @@ class Workflow:
 
         return validated_priority
 
-    def validate_sticky(
-        self, sticky: Union[StickyStrategy, None]
-    ) -> StickyStrategyProto | None:
-        if sticky:
-            return StickyStrategyProto(sticky)
-        return None
+    def validate_sticky(self, sticky: StickyStrategy | None) -> int | None:
+        if not sticky:
+            return None
+
+        names = [item.name for item in StickyStrategyProto.DESCRIPTOR.values]
+
+        for name in names:
+            if name == sticky.name:
+                return StickyStrategyProto.Value(sticky.name)
+
+        raise ValueError(f"Sticky strategy must be one of {names}. Got: {sticky}")
 
     def get_create_opts(self, namespace: str) -> CreateWorkflowVersionOpts:
         service_name = self.get_service_name(namespace)
@@ -249,7 +254,7 @@ class Workflow:
             event_triggers=event_triggers,
             cron_triggers=self.config.on_crons,
             schedule_timeout=self.config.schedule_timeout,
-            sticky=self.validate_sticky(self.config.sticky),
+            sticky=cast(str, self.validate_sticky(self.config.sticky)),
             jobs=[
                 CreateWorkflowJobOpts(
                     name=name,
