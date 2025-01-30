@@ -1,6 +1,7 @@
 import asyncio
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -29,6 +30,9 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 from hatchet_sdk.contracts.workflows_pb2 import StickyStrategy as StickyStrategyProto
 from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, WorkflowKind
 from hatchet_sdk.logger import logger
+
+if TYPE_CHECKING:
+    from hatchet_sdk.v2 import Hatchet
 
 R = TypeVar("R")
 P = ParamSpec("P")
@@ -67,6 +71,9 @@ class ConcurrencyExpression(BaseModel):
     expression: str
     max_runs: int
     limit_strategy: ConcurrencyLimitStrategy
+
+
+TWorkflowInput = TypeVar("TWorkflowInput", bound=BaseModel, default=EmptyModel)
 
 
 class WorkflowConfig(BaseModel):
@@ -158,8 +165,25 @@ class Step(Generic[R]):
         raise TypeError(f"{self.name} is not an async function. Use `call` instead.")
 
 
-class Workflow:
-    config: WorkflowConfig = WorkflowConfig()
+class WorkflowDeclaration(Generic[TWorkflowInput]):
+    def __init__(self, config: WorkflowConfig, hatchet: "Hatchet"):
+        self.config = config
+        self.hatchet = hatchet
+
+    def run(self, input: TWorkflowInput | None = None) -> Any:
+        return self.hatchet.admin.run_workflow(
+            workflow_name=self.config.name, input=input.model_dump() if input else {}
+        )
+
+
+class BaseWorkflowImpl:
+    """
+    A Hatchet workflow implementation base. This class should be inherited by all workflow implementations.
+
+    Configuration is passed to the workflow implementation via the `config` attribute.
+    """
+
+    declaration: WorkflowDeclaration
 
     def get_service_name(self, namespace: str) -> str:
         return f"{namespace}{self.config.name.lower()}"
@@ -191,6 +215,7 @@ class Workflow:
         return self.get_service_name(namespace) + ":" + step.name
 
     def __init__(self) -> None:
+        self.config = self.declaration.config
         self.config.name = self.config.name or str(self.__class__.__name__)
 
     def get_name(self, namespace: str) -> str:

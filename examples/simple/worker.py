@@ -1,17 +1,18 @@
-import time
-
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context
-from hatchet_sdk.v2 import Hatchet, Workflow, WorkflowConfig
+from hatchet_sdk.v2 import BaseWorkflowImpl, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-class MyWorkflow(Workflow):
-    config = WorkflowConfig(name="foobar", on_events=["user:create"])
+class MyWorkflow(BaseWorkflowImpl):
+    declaration = hatchet.declare_workflow(
+        name="foobar",
+        on_events=["user:create"],
+    )
 
     @hatchet.step(timeout="11s", retries=3)
     def step1(self, context: Context) -> dict[str, str]:

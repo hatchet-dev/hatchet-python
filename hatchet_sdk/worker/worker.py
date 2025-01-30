@@ -36,7 +36,7 @@ from hatchet_sdk.worker.runner.run_loop_manager import (
 )
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2 import Workflow
+    from hatchet_sdk.v2 import BaseWorkflowImpl
 
 T = TypeVar("T")
 
@@ -110,7 +110,7 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-    def register_workflow(self, workflow: Union["Workflow", Any]) -> None:
+    def register_workflow(self, workflow: Union["BaseWorkflowImpl", Any]) -> None:
         namespace = self.client.config.namespace
 
         try:

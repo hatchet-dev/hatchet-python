@@ -1,6 +1,21 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, TypeVar
+from enum import Enum
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    Optional,
+    ParamSpec,
+    Type,
+    TypeGuard,
+    TypeVar,
+    Union,
+    cast,
+)
+
+from pydantic import BaseModel, ConfigDict
 
 from hatchet_sdk.client import Client, new_client, new_client_raw
 from hatchet_sdk.clients.admin import AdminClient
@@ -16,7 +31,16 @@ from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.rate_limit import RateLimit
-from hatchet_sdk.v2.workflows import Step, StepType
+from hatchet_sdk.v2.workflows import (
+    ConcurrencyExpression,
+    EmptyModel,
+    Step,
+    StepType,
+    StickyStrategy,
+    TWorkflowInput,
+    WorkflowConfig,
+    WorkflowDeclaration,
+)
 from hatchet_sdk.worker.worker import Worker
 
 R = TypeVar("R")
@@ -191,4 +215,34 @@ class Hatchet:
             config=self._client.config,
             debug=self._client.debug,
             owned_loop=loop is None,
+        )
+
+    def declare_workflow(
+        self,
+        name: str = "",
+        on_events: list[str] = [],
+        on_crons: list[str] = [],
+        version: str = "",
+        timeout: str = "60m",
+        schedule_timeout: str = "5m",
+        sticky: StickyStrategy | None = None,
+        default_priority: int = 1,
+        concurrency: ConcurrencyExpression | None = None,
+        input_validator: Type[TWorkflowInput] | None = None,
+    ) -> WorkflowDeclaration[TWorkflowInput]:
+        return WorkflowDeclaration[TWorkflowInput](
+            WorkflowConfig(
+                name=name,
+                on_events=on_events,
+                on_crons=on_crons,
+                version=version,
+                timeout=timeout,
+                schedule_timeout=schedule_timeout,
+                sticky=sticky,
+                default_priority=default_priority,
+                concurrency=concurrency,
+                input_validator=input_validator
+                or cast(Type[TWorkflowInput], EmptyModel),
+            ),
+            self,
         )
