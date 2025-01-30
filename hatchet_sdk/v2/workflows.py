@@ -178,6 +178,9 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
             workflow_name=self.config.name, input=input.model_dump() if input else {}
         )
 
+    def workflow_input(self, ctx: Context) -> TWorkflowInput:
+        return cast(TWorkflowInput, ctx.workflow_input())
+
 
 class BaseWorkflowImpl:
     """
@@ -186,9 +189,10 @@ class BaseWorkflowImpl:
     Configuration is passed to the workflow implementation via the `config` attribute.
     """
 
-    declaration: WorkflowDeclaration = WorkflowDeclaration(
-        config=WorkflowConfig(), hatchet=None
-    )
+    config: WorkflowConfig = WorkflowConfig()
+
+    def __init__(self) -> None:
+        self.config.name = self.config.name or str(self.__class__.__name__)
 
     def get_service_name(self, namespace: str) -> str:
         return f"{namespace}{self.config.name.lower()}"
@@ -218,10 +222,6 @@ class BaseWorkflowImpl:
 
     def create_action_name(self, namespace: str, step: Step[Any]) -> str:
         return self.get_service_name(namespace) + ":" + step.name
-
-    def __init__(self) -> None:
-        self.config = self.declaration.config
-        self.config.name = self.config.name or str(self.__class__.__name__)
 
     def get_name(self, namespace: str) -> str:
         return namespace + self.config.name
