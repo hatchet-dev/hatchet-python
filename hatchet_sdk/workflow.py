@@ -93,7 +93,7 @@ class WorkflowInterface(Protocol):
     version: str
     timeout: str
     schedule_timeout: str
-    sticky: Union[StickyStrategy.Value, None]  # type: ignore[name-defined]
+    sticky: Union[StickyStrategy, None]
     default_priority: int | None
     concurrency_expression: ConcurrencyExpression | None
     input_validator: Type[BaseModel] | None

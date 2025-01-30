@@ -170,6 +170,8 @@ class Context(BaseContext):
             namespace,
         )
 
+        self.data: dict[str, Any]
+
         # Check the type of action.action_payload before attempting to load it as JSON
         if isinstance(action.action_payload, (str, bytes, bytearray)):
             try:
@@ -180,16 +182,14 @@ class Context(BaseContext):
                 self.data: dict[str, Any] = {}  # type: ignore[no-redef]
         else:
             # Directly assign the payload to self.data if it's already a dict
-            self.data = (
-                action.action_payload if isinstance(action.action_payload, dict) else {}
-            )
+            self.data = action.action_payload
 
         self.action = action
 
         # FIXME: stepRunId is a legacy field, we should remove it
         self.stepRunId = action.step_run_id
 
-        self.step_run_id = action.step_run_id
+        self.step_run_id: str = action.step_run_id
         self.exit_flag = False
         self.dispatcher_client = dispatcher_client
         self.admin_client = admin_client

@@ -97,7 +97,7 @@ class ApiClient:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
-    async def close(self):
+    async def close(self) -> None:
         await self.rest_client.close()
 
     @property

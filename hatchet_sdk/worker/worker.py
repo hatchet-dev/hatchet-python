@@ -19,13 +19,20 @@ from prometheus_client import CONTENT_TYPE_LATEST, Gauge, generate_latest
 
 from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
+from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
-from hatchet_sdk.worker.action_listener_process import worker_action_listener_process
-from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManager
+from hatchet_sdk.worker.action_listener_process import (
+    ActionEvent,
+    worker_action_listener_process,
+)
+from hatchet_sdk.worker.runner.run_loop_manager import (
+    STOP_LOOP_TYPE,
+    WorkerActionRunLoopManager,
+)
 from hatchet_sdk.workflow import WorkflowInterface
 
 T = TypeVar("T")
@@ -74,13 +81,13 @@ class Worker:
         self._status: WorkerStatus
 
         self.action_listener_process: BaseProcess
-        self.action_listener_health_check: asyncio.Task[Any]
+        self.action_listener_health_check: asyncio.Task[None]
         self.action_runner: WorkerActionRunLoopManager
 
         self.ctx = multiprocessing.get_context("spawn")
 
-        self.action_queue: "Queue[Any]" = self.ctx.Queue()
-        self.event_queue: "Queue[Any]" = self.ctx.Queue()
+        self.action_queue: "Queue[Action | STOP_LOOP_TYPE]" = self.ctx.Queue()
+        self.event_queue: "Queue[ActionEvent]" = self.ctx.Queue()
 
         self.loop: asyncio.AbstractEventLoop
 
@@ -193,12 +200,10 @@ class Worker:
 
         logger.info(f"healthcheck server running on port {port}")
 
-    def start(
-        self, options: WorkerStartOptions = WorkerStartOptions()
-    ) -> Future[asyncio.Task[Any] | None]:
+    def start(self, options: WorkerStartOptions = WorkerStartOptions()) -> None:
         self.owned_loop = self.setup_loop(options.loop)
 
-        f = asyncio.run_coroutine_threadsafe(
+        asyncio.run_coroutine_threadsafe(
             self.async_start(options, _from_start=True), self.loop
         )
 
@@ -209,14 +214,12 @@ class Worker:
             if self.handle_kill:
                 sys.exit(0)
 
-        return f
-
     ## Start methods
     async def async_start(
         self,
         options: WorkerStartOptions = WorkerStartOptions(),
         _from_start: bool = False,
-    ) -> Any | None:
+    ) -> None:
         main_pid = os.getpid()
         logger.info("------------------------------------------")
         logger.info("STARTING HATCHET...")
@@ -245,7 +248,7 @@ class Worker:
             self._check_listener_health()
         )
 
-        return await self.action_listener_health_check
+        await self.action_listener_health_check
 
     def _run_action_runner(self) -> WorkerActionRunLoopManager:
         # Retrieve the shared queue

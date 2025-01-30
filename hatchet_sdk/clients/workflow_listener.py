@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from typing import Any, AsyncGenerator, cast
 
 import grpc
+import grpc.aio
 from grpc._cython import cygrpc  # type: ignore[attr-defined]
 
 from hatchet_sdk.clients.event_ts import Event_ts, read_with_interrupt
@@ -64,7 +65,10 @@ class PooledWorkflowRunListener:
 
     requests: asyncio.Queue[SubscribeToWorkflowRunsRequest | int] = asyncio.Queue()
 
-    listener: AsyncGenerator[WorkflowRunEvent, None] | None = None
+    listener: (
+        grpc.aio.UnaryStreamCall[SubscribeToWorkflowRunsRequest, WorkflowRunEvent]
+        | None
+    ) = None
     listener_task: asyncio.Task[None] | None = None
 
     curr_requester: int = 0
@@ -106,6 +110,9 @@ class PooledWorkflowRunListener:
 
                         while True:
                             self.interrupt = Event_ts()
+                            if self.listener is None:
+                                continue
+
                             t = asyncio.create_task(
                                 read_with_interrupt(self.listener, self.interrupt)
                             )
@@ -119,7 +126,7 @@ class PooledWorkflowRunListener:
 
                                 t.cancel()
                                 if self.listener:
-                                    self.listener.cancel()  # type: ignore[attr-defined]
+                                    self.listener.cancel()
                                 await asyncio.sleep(
                                     DEFAULT_WORKFLOW_LISTENER_RETRY_INTERVAL
                                 )
@@ -246,7 +253,9 @@ class PooledWorkflowRunListener:
 
         return results
 
-    async def _retry_subscribe(self) -> AsyncGenerator[WorkflowRunEvent, None]:
+    async def _retry_subscribe(
+        self,
+    ) -> grpc.aio.UnaryStreamCall[SubscribeToWorkflowRunsRequest, WorkflowRunEvent]:
         retries = 0
 
         while retries < DEFAULT_WORKFLOW_LISTENER_RETRY_COUNT:
@@ -259,7 +268,9 @@ class PooledWorkflowRunListener:
                     self.requests.put_nowait(self.curr_requester)
 
                 return cast(
-                    AsyncGenerator[WorkflowRunEvent, None],
+                    grpc.aio.UnaryStreamCall[
+                        SubscribeToWorkflowRunsRequest, WorkflowRunEvent
+                    ],
                     self.client.SubscribeToWorkflowRuns(
                         self._request(),
                         metadata=get_metadata(self.token),

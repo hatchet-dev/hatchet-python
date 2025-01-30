@@ -81,14 +81,11 @@ class ScheduledClient:
             trigger_at=trigger_at, input=input, additional_metadata=additional_metadata
         )
 
-        return cast(
-            ScheduledWorkflows,
-            self._client.rest.schedule_create(
-                workflow_name,
-                validated_input.trigger_at,
-                validated_input.input,
-                validated_input.additional_metadata,
-            ),
+        return self._client.rest.schedule_create(
+            workflow_name,
+            validated_input.trigger_at,
+            validated_input.input,
+            validated_input.additional_metadata,
         )
 
     def delete(self, scheduled: Union[str, ScheduledWorkflows]) -> None:
@@ -127,16 +124,13 @@ class ScheduledClient:
         Returns:
             List[ScheduledWorkflows]: A list of scheduled workflows matching the criteria.
         """
-        return cast(
-            ScheduledWorkflowsList,
-            self._client.rest.schedule_list(
-                offset=offset,
-                limit=limit,
-                workflow_id=workflow_id,
-                additional_metadata=additional_metadata,
-                order_by_field=order_by_field,
-                order_by_direction=order_by_direction,
-            ),
+        return self._client.rest.schedule_list(
+            offset=offset,
+            limit=limit,
+            workflow_id=workflow_id,
+            additional_metadata=additional_metadata,
+            order_by_field=order_by_field,
+            order_by_direction=order_by_direction,
         )
 
     def get(self, scheduled: Union[str, ScheduledWorkflows]) -> ScheduledWorkflows:
@@ -149,13 +143,10 @@ class ScheduledClient:
         Returns:
             ScheduledWorkflows: The requested scheduled workflow instance.
         """
-        return cast(
-            ScheduledWorkflows,
-            self._client.rest.schedule_get(
-                scheduled.metadata.id
-                if isinstance(scheduled, ScheduledWorkflows)
-                else scheduled
-            ),
+        return self._client.rest.schedule_get(
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
         )
 
 
@@ -197,11 +188,8 @@ class ScheduledClientAsync:
         Returns:
             ScheduledWorkflows: The created scheduled workflow instance.
         """
-        return cast(
-            ScheduledWorkflows,
-            await self._client.rest.aio.schedule_create(
-                workflow_name, trigger_at, input, additional_metadata
-            ),
+        return await self._client.rest.aio.schedule_create(
+            workflow_name, trigger_at, input, additional_metadata
         )
 
     async def delete(self, scheduled: Union[str, ScheduledWorkflows]) -> None:
@@ -240,16 +228,13 @@ class ScheduledClientAsync:
         Returns:
             ScheduledWorkflowsList: A list of scheduled workflows matching the criteria.
         """
-        return cast(
-            ScheduledWorkflowsList,
-            await self._client.rest.aio.schedule_list(
-                offset=offset,
-                limit=limit,
-                workflow_id=workflow_id,
-                additional_metadata=additional_metadata,
-                order_by_field=order_by_field,
-                order_by_direction=order_by_direction,
-            ),
+        return await self._client.rest.aio.schedule_list(
+            offset=offset,
+            limit=limit,
+            workflow_id=workflow_id,
+            additional_metadata=additional_metadata,
+            order_by_field=order_by_field,
+            order_by_direction=order_by_direction,
         )
 
     async def get(
@@ -264,11 +249,8 @@ class ScheduledClientAsync:
         Returns:
             ScheduledWorkflows: The requested scheduled workflow instance.
         """
-        return cast(
-            ScheduledWorkflows,
-            await self._client.rest.aio.schedule_get(
-                scheduled.metadata.id
-                if isinstance(scheduled, ScheduledWorkflows)
-                else scheduled
-            ),
+        return await self._client.rest.aio.schedule_get(
+            scheduled.metadata.id
+            if isinstance(scheduled, ScheduledWorkflows)
+            else scheduled
         )
