@@ -1,27 +1,24 @@
 import asyncio
-from hatchet_sdk.contracts.workflows_pb2 import (
-    CreateWorkflowJobOpts,
-    CreateWorkflowStepOpts,
-    CreateWorkflowVersionOpts,
-    StickyStrategy,
-    WorkflowConcurrencyOpts,
-    WorkflowKind,
-)
 import logging
+from enum import Enum
 from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict
 from typing_extensions import deprecated
-from enum import Enum
 
 from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateStepRateLimit,
+    CreateWorkflowJobOpts,
+    CreateWorkflowStepOpts,
+    CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
     StickyStrategy,
     WorkerLabelComparator,
+    WorkflowConcurrencyOpts,
+    WorkflowKind,
 )
 from hatchet_sdk.features.cron import CronClient
 from hatchet_sdk.features.scheduled import ScheduledClient
@@ -49,6 +46,7 @@ P = ParamSpec("P")
 
 TWorkflow = TypeVar("TWorkflow", bound=object)
 
+
 class EmptyModel(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -65,6 +63,7 @@ class WorkflowConfig(BaseModel):
     concurrency: ConcurrencyExpression | None = None
     input_validator: Type[BaseModel] = EmptyModel
 
+
 class StepType(str, Enum):
     DEFAULT = "default"
     CONCURRENCY = "concurrency"
@@ -72,16 +71,29 @@ class StepType(str, Enum):
 
 
 class Step:
-    def __init__(self) -> None:
-        self.type = StepType.DEFAULT
-        self.timeout = "60s"
-        self.name = "name"
-        self.parents: list[Step] = []
-        self.retries: int = 0
-        self.rate_limits: list[RateLimit] = []
-        self.desired_worker_labels: dict[str, DesiredWorkerLabel] = {}
-        self.backoff_factor: float | None = None
-        self.backoff_max_seconds: int | None = None
+    def __init__(
+        self,
+        fn: Callable[[Context], R],
+        type: StepType,
+        name: str = "",
+        timeout: str = "60m",
+        parents: list[str] = [],
+        retries: int = 0,
+        rate_limits: list[CreateStepRateLimit] = [],
+        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+        backoff_factor: float | None = None,
+        backoff_max_seconds: int | None = None,
+    ) -> None:
+        self.fn = fn
+        self.type = type
+        self.timeout = timeout
+        self.name = name
+        self.parents = parents
+        self.retries = retries
+        self.rate_limits = rate_limits
+        self.desired_worker_labels = desired_worker_labels
+        self.backoff_factor = backoff_factor
+        self.backoff_max_seconds = backoff_max_seconds
         self.concurrency__max_runs = 1
         self.concurrency__limit_strategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS
 
@@ -97,7 +109,8 @@ class Workflow:
         return [
             inst
             for attr in dir(self)
-            if isinstance(inst := getattr(self, attr), Step) and inst.type == StepType.ON_FAILURE
+            if isinstance(inst := getattr(self, attr), Step)
+            and inst.type == StepType.ON_FAILURE
         ]
 
     @property
@@ -105,7 +118,8 @@ class Workflow:
         return [
             inst
             for attr in dir(self)
-            if isinstance(inst := getattr(self, attr), Step) and inst.type == StepType.CONCURRENCY
+            if isinstance(inst := getattr(self, attr), Step)
+            and inst.type == StepType.CONCURRENCY
         ]
 
     @property
@@ -113,24 +127,18 @@ class Workflow:
         return [
             inst
             for attr in dir(self)
-            if isinstance(inst := getattr(self, attr), Step) and inst.type == StepType.DEFAULT
+            if isinstance(inst := getattr(self, attr), Step)
+            and inst.type == StepType.DEFAULT
         ]
-
 
     @property
     def steps(self) -> list[Step]:
-        return  self.default_steps + self.concurrency_actions + self.on_failure_steps
+        return self.default_steps + self.concurrency_actions + self.on_failure_steps
 
-
-    @property
-    def actions(self, namespace: str) -> list[Step]:
+    def get_actions(self, namespace: str) -> list[str]:
         service_name = self.get_service_name(namespace)
 
-        return [
-            service_name + ":" + step
-            for step in self.steps
-        ]
-
+        return [service_name + ":" + step.name for step in self.steps]
 
     def __init__(self) -> None:
         self.config.name = self.config.name or str(self.__class__.__name__)
@@ -138,7 +146,9 @@ class Workflow:
     def get_name(self, namespace: str) -> str:
         return namespace + self.config.name
 
-    def validate_concurrency_actions(self, service_name: str) -> WorkflowConcurrencyOpts | None:
+    def validate_concurrency_actions(
+        self, service_name: str
+    ) -> WorkflowConcurrencyOpts | None:
         if len(self.concurrency_actions) > 0 and self.config.concurrency:
             raise ValueError(
                 "Error: Both concurrencyActions and concurrency_expression are defined. Please use only one concurrency configuration method."
@@ -160,7 +170,11 @@ class Workflow:
                 limit_strategy=self.config.concurrency.limit_strategy,
             )
 
-    def validate_on_failure_steps(self, name: str, service_name: str) -> CreateWorkflowJobOpts | None:
+        return None
+
+    def validate_on_failure_steps(
+        self, name: str, service_name: str
+    ) -> CreateWorkflowJobOpts | None:
         if not self.on_failure_steps:
             return None
 
@@ -176,7 +190,7 @@ class Workflow:
                     inputs="{}",
                     parents=[],
                     retries=on_failure_step.retries,
-                    rate_limits=on_failure_step.rate_limits,  # type: ignore[arg-type]
+                    rate_limits=on_failure_step.rate_limits,
                     backoff_factor=on_failure_step.backoff_factor,
                     backoff_max_seconds=on_failure_step.backoff_max_seconds,
                 )
@@ -208,7 +222,7 @@ class Workflow:
                 inputs="{}",
                 parents=[x for x in step.parents],
                 retries=step.retries,
-                rate_limits=step.rate_limits,  # type: ignore[arg-type]
+                rate_limits=step.rate_limits,
                 worker_labels=step.desired_worker_labels,  # type: ignore[arg-type]
                 backoff_factor=step.backoff_factor,
                 backoff_max_seconds=step.backoff_max_seconds,
@@ -240,97 +254,73 @@ class Workflow:
         )
 
 
+def transform_desired_worker_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
+    value = d.value
+    return DesiredWorkerLabels(
+        strValue=value if not isinstance(value, int) else None,
+        intValue=value if isinstance(value, int) else None,
+        required=d.required,
+        weight=d.weight,
+        comparator=d.comparator,  # type: ignore[arg-type]
+    )
+
+
 def step(
     name: str = "",
-    timeout: str = "",
-    parents: list[str] | None = None,
+    timeout: str = "60m",
+    parents: list[str] = [],
     retries: int = 0,
-    rate_limits: list[RateLimit] | None = None,
+    rate_limits: list[RateLimit] = [],
     desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    parents = parents or []
-
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
-        limits = None
-        if rate_limits:
-            limits = [rate_limit._req for rate_limit in rate_limits or []]
-
-        setattr(func, "_step_name", name.lower() or str(func.__name__).lower())
-        setattr(func, "_step_parents", parents)
-        setattr(func, "_step_timeout", timeout)
-        setattr(func, "_step_retries", retries)
-        setattr(func, "_step_rate_limits", limits)
-        setattr(func, "_step_backoff_factor", backoff_factor)
-        setattr(func, "_step_backoff_max_seconds", backoff_max_seconds)
-
-        def create_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
-            value = d.value
-            return DesiredWorkerLabels(
-                strValue=value if not isinstance(value, int) else None,
-                intValue=value if isinstance(value, int) else None,
-                required=d.required,
-                weight=d.weight,
-                comparator=d.comparator,  # type: ignore[arg-type]
-            )
-
-        setattr(
-            func,
-            "_step_desired_worker_labels",
-            {key: create_label(d) for key, d in desired_worker_labels.items()},
+) -> Callable[[Callable[[Context], R]], Step]:
+    def inner(func: Callable[[Context], R]) -> Step:
+        return Step(
+            fn=func,
+            type=StepType.DEFAULT,
+            name=name.lower() or str(func.__name__).lower(),
+            timeout=timeout,
+            parents=parents,
+            retries=retries,
+            rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
+            desired_worker_labels={
+                key: transform_desired_worker_label(d)
+                for key, d in desired_worker_labels.items()
+            },
+            backoff_factor=backoff_factor,
+            backoff_max_seconds=backoff_max_seconds,
         )
-
-        return func
 
     return inner
 
 
 def on_failure_step(
     name: str = "",
-    timeout: str = "",
+    timeout: str = "60m",
+    parents: list[str] = [],
     retries: int = 0,
-    rate_limits: list[RateLimit] | None = None,
+    rate_limits: list[RateLimit] = [],
+    desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
     backoff_factor: float | None = None,
     backoff_max_seconds: int | None = None,
-) -> Callable[..., Any]:
-    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
-        limits = None
-        if rate_limits:
-            limits = [
-                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)  # type: ignore[arg-type]
-                for rate_limit in rate_limits or []
-            ]
-
-        setattr(
-            func, "_on_failure_step_name", name.lower() or str(func.__name__).lower()
+) -> Callable[[Callable[[Context], R]], Step]:
+    def inner(func: Callable[[Context], R]) -> Step:
+        return Step(
+            fn=func,
+            type=StepType.ON_FAILURE,
+            name=name.lower() or str(func.__name__).lower(),
+            timeout=timeout,
+            parents=parents,
+            retries=retries,
+            rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
+            desired_worker_labels={
+                key: transform_desired_worker_label(d)
+                for key, d in desired_worker_labels.items()
+            },
+            backoff_factor=backoff_factor,
+            backoff_max_seconds=backoff_max_seconds,
         )
-        setattr(func, "_on_failure_step_timeout", timeout)
-        setattr(func, "_on_failure_step_retries", retries)
-        setattr(func, "_on_failure_step_rate_limits", limits)
-        setattr(func, "_on_failure_step_backoff_factor", backoff_factor)
-        setattr(func, "_on_failure_step_backoff_max_seconds", backoff_max_seconds)
-
-        return func
-
-    return inner
-
-
-def concurrency(
-    name: str = "",
-    max_runs: int = 1,
-    limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-) -> Callable[..., Any]:
-    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
-        setattr(
-            func,
-            "_concurrency_fn_name",
-            name.lower() or str(func.__name__).lower(),
-        )
-        setattr(func, "_concurrency_max_runs", max_runs)
-        setattr(func, "_concurrency_limit_strategy", limit_strategy)
-
-        return func
 
     return inner
 
@@ -440,12 +430,7 @@ class Hatchet:
     def tenant_id(self) -> str:
         return self._client.config.tenant_id
 
-    concurrency = staticmethod(concurrency)
-
-    workflow = staticmethod(workflow)
-
     step = staticmethod(step)
-
     on_failure_step = staticmethod(on_failure_step)
 
     def worker(
