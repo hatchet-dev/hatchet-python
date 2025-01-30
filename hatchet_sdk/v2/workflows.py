@@ -166,11 +166,14 @@ class Step(Generic[R]):
 
 
 class WorkflowDeclaration(Generic[TWorkflowInput]):
-    def __init__(self, config: WorkflowConfig, hatchet: "Hatchet"):
+    def __init__(self, config: WorkflowConfig, hatchet: Union["Hatchet", None]):
         self.config = config
         self.hatchet = hatchet
 
     def run(self, input: TWorkflowInput | None = None) -> Any:
+        if not self.hatchet:
+            raise ValueError("Hatchet client is not initialized.")
+
         return self.hatchet.admin.run_workflow(
             workflow_name=self.config.name, input=input.model_dump() if input else {}
         )
@@ -183,7 +186,9 @@ class BaseWorkflowImpl:
     Configuration is passed to the workflow implementation via the `config` attribute.
     """
 
-    declaration: WorkflowDeclaration
+    declaration: WorkflowDeclaration = WorkflowDeclaration(
+        config=WorkflowConfig(), hatchet=None
+    )
 
     def get_service_name(self, namespace: str) -> str:
         return f"{namespace}{self.config.name.lower()}"
