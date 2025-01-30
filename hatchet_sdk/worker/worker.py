@@ -25,6 +25,7 @@ from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
+from hatchet_sdk.v2.workflows import Step, StepType
 from hatchet_sdk.worker.action_listener_process import (
     ActionEvent,
     worker_action_listener_process,
@@ -36,7 +37,6 @@ from hatchet_sdk.worker.runner.run_loop_manager import (
 
 if TYPE_CHECKING:
     from hatchet_sdk.v2 import Workflow
-    from hatchet_sdk.v2.workflows import Step
 
 T = TypeVar("T")
 

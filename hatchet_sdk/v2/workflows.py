@@ -13,10 +13,9 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     CreateWorkflowStepOpts,
     CreateWorkflowVersionOpts,
     DesiredWorkerLabels,
-    StickyStrategy,
-    WorkflowConcurrencyOpts,
-    WorkflowKind,
 )
+from hatchet_sdk.contracts.workflows_pb2 import StickyStrategy as StickyStrategyProto
+from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, WorkflowKind
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.rate_limit import RateLimit
 
@@ -49,6 +48,11 @@ class ConcurrencyExpression:
 
 class EmptyModel(BaseModel):
     model_config = ConfigDict(extra="allow")
+
+
+class StickyStrategy(str, Enum):
+    SOFT = "SOFT"
+    HARD = "HARD"
 
 
 class WorkflowConfig(BaseModel):
@@ -204,6 +208,13 @@ class Workflow:
 
         return validated_priority
 
+    def validate_sticky(
+        self, sticky: Union[StickyStrategy, None]
+    ) -> StickyStrategyProto | None:
+        if sticky:
+            return StickyStrategyProto(sticky)
+        return None
+
     def get_create_opts(self, namespace: str) -> CreateWorkflowVersionOpts:
         service_name = self.get_service_name(namespace)
 
@@ -224,6 +235,7 @@ class Workflow:
                 backoff_max_seconds=step.backoff_max_seconds,
             )
             for step in self.steps
+            if step.type == StepType.DEFAULT
         ]
 
         concurrency = self.validate_concurrency_actions(service_name)
@@ -237,7 +249,7 @@ class Workflow:
             event_triggers=event_triggers,
             cron_triggers=self.config.on_crons,
             schedule_timeout=self.config.schedule_timeout,
-            sticky=self.config.sticky,
+            sticky=self.validate_sticky(self.config.sticky),
             jobs=[
                 CreateWorkflowJobOpts(
                     name=name,

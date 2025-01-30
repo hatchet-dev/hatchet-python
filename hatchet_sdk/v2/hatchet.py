@@ -35,7 +35,6 @@ from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.rate_limit import RateLimit
 from hatchet_sdk.v2.workflows import Step, StepType
-from hatchet_sdk.worker.worker import Worker
 
 from ..client import Client, new_client, new_client_raw
 from ..clients.admin import AdminClient
@@ -44,6 +43,8 @@ from ..clients.events import EventClient
 from ..clients.run_event_listener import RunEventListenerClient
 from ..logger import logger
 
+if TYPE_CHECKING:
+    from hatchet_sdk.worker.worker import Worker
 R = TypeVar("R")
 
 
@@ -206,7 +207,7 @@ class Hatchet:
     ) -> Callable[[Callable[[Any, Context], Any]], Step[R]]:
         def inner(func: Callable[[Any, Context], R]) -> Step[R]:
             return Step(
-                fn=func,  # The Step class will handle the self parameter
+                fn=func,
                 type=StepType.ON_FAILURE,
                 name=name.lower() or str(func.__name__).lower(),
                 timeout=timeout,
@@ -225,7 +226,9 @@ class Hatchet:
 
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    ) -> Worker:
+    ) -> "Worker":
+        from hatchet_sdk.worker.worker import Worker
+
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
