@@ -70,9 +70,9 @@ class Action:
     step_id: str
     step_run_id: str
     action_id: str
-    action_payload: str
     action_type: ActionType
     retry_count: int
+    action_payload: JSONSerializableDict = field(default_factory=dict)
     additional_metadata: JSONSerializableDict = field(default_factory=dict)
 
     child_workflow_index: int | None = None
@@ -268,15 +268,19 @@ class ActionListener:
                     # Process the received action
                     action_type = assigned_action.actionType
 
-                    if (
-                        assigned_action.actionPayload is None
-                        or assigned_action.actionPayload == ""
-                    ):
-                        action_payload = None
-                    else:
-                        action_payload = self.parse_action_payload(
-                            assigned_action.actionPayload
+                    action_payload = (
+                        {}
+                        if not assigned_action.actionPayload
+                        else self.parse_action_payload(assigned_action.actionPayload)
+                    )
+
+                    try:
+                        additional_metadata = cast(
+                            dict[str, Any],
+                            json.loads(assigned_action.additional_metadata),
                         )
+                    except json.JSONDecodeError:
+                        additional_metadata = {}
 
                     action = Action(
                         tenant_id=assigned_action.tenantId,
@@ -289,11 +293,10 @@ class ActionListener:
                         step_id=assigned_action.stepId,
                         step_run_id=assigned_action.stepRunId,
                         action_id=assigned_action.actionId,
-                        ## TODO: Figure out this type - maybe needs to be dumped to JSON?
-                        action_payload=action_payload,  # type: ignore[arg-type]
+                        action_payload=action_payload,
                         action_type=action_type,
                         retry_count=assigned_action.retryCount,
-                        additional_metadata=assigned_action.additional_metadata,
+                        additional_metadata=additional_metadata,
                         child_workflow_index=assigned_action.child_workflow_index,
                         child_workflow_key=assigned_action.child_workflow_key,
                         parent_workflow_run_id=assigned_action.parent_workflow_run_id,
