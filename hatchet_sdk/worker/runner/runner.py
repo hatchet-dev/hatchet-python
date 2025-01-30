@@ -8,17 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Literal,
-    Type,
-    TypeVar,
-    cast,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Callable, Dict, TypeVar, cast
 
 from opentelemetry.trace import StatusCode
 from pydantic import BaseModel
