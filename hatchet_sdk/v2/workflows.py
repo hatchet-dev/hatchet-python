@@ -1,6 +1,18 @@
 import asyncio
 from enum import Enum
-from typing import Any, Callable, Generic, ParamSpec, Type, TypeVar, Union, cast
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    ParamSpec,
+    Type,
+    TypeGuard,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 from pydantic import BaseModel, ConfigDict
 
@@ -16,8 +28,6 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 )
 from hatchet_sdk.contracts.workflows_pb2 import StickyStrategy as StickyStrategyProto
 from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, WorkflowKind
-from hatchet_sdk.labels import DesiredWorkerLabel
-from hatchet_sdk.rate_limit import RateLimit
 
 from ..logger import logger
 
@@ -57,6 +67,7 @@ class StickyStrategy(str, Enum):
 
 class WorkflowConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+
     name: str = ""
     on_events: list[str] = []
     on_crons: list[str] = []
@@ -75,10 +86,23 @@ class StepType(str, Enum):
     ON_FAILURE = "on_failure"
 
 
+AsyncFunc = Callable[[Any, Context], Awaitable[R]]
+SyncFunc = Callable[[Any, Context], R]
+StepFunc = Union[AsyncFunc[R], SyncFunc[R]]
+
+
+def is_async_fn(fn: StepFunc[R]) -> TypeGuard[AsyncFunc[R]]:
+    return asyncio.iscoroutinefunction(fn)
+
+
+def is_sync_fn(fn: StepFunc[R]) -> TypeGuard[SyncFunc[R]]:
+    return not asyncio.iscoroutinefunction(fn)
+
+
 class Step(Generic[R]):
     def __init__(
         self,
-        fn: Callable[[Any, Context], R],
+        fn: Callable[[Any, Context], R] | Callable[[Any, Context], Awaitable[R]],
         type: StepType,
         name: str = "",
         timeout: str = "60m",
@@ -90,7 +114,7 @@ class Step(Generic[R]):
         backoff_max_seconds: int | None = None,
     ) -> None:
         self.fn = fn
-        self.is_async_function = bool(asyncio.iscoroutinefunction(fn))
+        self.is_async_function = is_async_fn(fn)
 
         self.type = type
         self.timeout = timeout
@@ -104,8 +128,28 @@ class Step(Generic[R]):
         self.concurrency__max_runs = 1
         self.concurrency__limit_strategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS
 
-    def __call__(self, ctx: Context) -> R:
-        return self.fn(None, ctx)
+    def call(self, ctx: Context) -> R:
+        if self.is_async_function:
+            raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
+
+        sync_fn = self.fn
+        if is_sync_fn(sync_fn):
+            return sync_fn(None, ctx)
+
+        raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
+
+    async def acall(self, ctx: Context) -> R:
+        if not self.is_async_function:
+            raise TypeError(
+                f"{self.name} is not an async function. Use `call` instead."
+            )
+
+        async_fn = self.fn
+
+        if is_async_fn(async_fn):
+            return await async_fn(None, ctx)
+
+        raise TypeError(f"{self.name} is not an async function. Use `call` instead.")
 
 
 class Workflow:

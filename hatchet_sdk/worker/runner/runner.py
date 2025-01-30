@@ -47,6 +47,8 @@ from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.worker.action_listener_process import ActionEvent
 from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, wr
 
+T = TypeVar("T")
+
 if TYPE_CHECKING:
     from hatchet_sdk.v2.workflows import Step
 
@@ -65,7 +67,7 @@ class Runner:
         event_queue: "Queue[Any]",
         max_runs: int | None = None,
         handle_kill: bool = True,
-        action_registry: dict[str, "Step[Any]"] = {},
+        action_registry: dict[str, "Step[T]"] = {},
         validator_registry: dict[str, WorkflowValidator] = {},
         config: ClientConfig = ClientConfig(),
         labels: dict[str, str | int] = {},
@@ -77,7 +79,7 @@ class Runner:
         self.max_runs = max_runs
         self.tasks: dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
         self.contexts: dict[str, Context] = {}  # Store run ids and contexts
-        self.action_registry: dict[str, "Step[Any]"] = action_registry
+        self.action_registry: dict[str, "Step[T]"] = action_registry
         self.validator_registry = validator_registry
 
         self.event_queue = event_queue
@@ -223,9 +225,7 @@ class Runner:
         return inner_callback
 
     ## TODO: Stricter type hinting here
-    def thread_action_func(
-        self, context: Context, action_func: Callable[..., Any], action: Action
-    ) -> Any:
+    def thread_action_func(self, context: Context, step: Step[T], action: Action) -> T:
         if action.step_run_id is not None and action.step_run_id != "":
             self.threads[action.step_run_id] = current_thread()
         elif (
@@ -234,25 +234,23 @@ class Runner:
         ):
             self.threads[action.get_group_key_run_id] = current_thread()
 
-        return action_func(context)
+        return step.call(context)
 
     ## TODO: Stricter type hinting here
     # We wrap all actions in an async func
     async def async_wrapped_action_func(
         self,
         context: Context,
-        action_func: Callable[..., Any],
+        step: Step[T],
         action: Action,
         run_id: str,
-    ) -> Any:
+    ) -> T:
         wr.set(context.workflow_run_id())
         sr.set(context.step_run_id)
 
         try:
-            if (
-                hasattr(action_func, "is_coroutine") and action_func.is_coroutine
-            ) or asyncio.iscoroutinefunction(action_func):
-                return await action_func(context)
+            if step.is_async_function:
+                return await step.acall(context)
             else:
                 pfunc = functools.partial(
                     # we must copy the context vars to the new thread, as only asyncio natively supports
@@ -261,7 +259,7 @@ class Runner:
                     contextvars.copy_context().items(),
                     self.thread_action_func,
                     context,
-                    action_func,
+                    step,
                     action,
                 )
 
