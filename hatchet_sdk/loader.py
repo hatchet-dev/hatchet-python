@@ -9,12 +9,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from hatchet_sdk.token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
 
-def create_settings_config(env_prefix: str, **kwargs: Any) -> SettingsConfigDict:
+def create_settings_config(env_prefix: str) -> SettingsConfigDict:
     return SettingsConfigDict(
         env_prefix=env_prefix,
         env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
         extra="ignore",
-        **kwargs,
     )
 
 
@@ -55,8 +54,7 @@ DEFAULT_HOST_PORT = "localhost:7070"
 
 class ClientConfig(BaseSettings):
     model_config = create_settings_config(
-        extra="ignore",
-        arbitrary_types_allowed=True,
+        env_prefix="HATCHET_CLIENT_",
     )
 
     token: str = ""
@@ -100,6 +98,10 @@ class ClientConfig(BaseSettings):
 
         if not self.tls_config.server_name:
             self.tls_config.server_name = self.host_port.split(":")[0]
+
+        if not self.tls_config.server_name:
+            self.tls_config.server_name = "localhost"
+
         return self
 
     @field_validator("listener_v2_timeout")
