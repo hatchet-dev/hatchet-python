@@ -18,8 +18,8 @@ class ClientTLSConfig(BaseSettings):
     strategy: str = "tls"
     cert_file: str | None = None
     key_file: str | None = None
-    ca_file: str | None = Field(default=None, alias="root_ca_file")
-    server_name: str = "localhost"
+    root_ca_file: str | None = None
+    server_name: str = ""
 
 
 class OTELConfig(BaseSettings):
@@ -96,7 +96,8 @@ class ClientConfig(BaseSettings):
             self.host_port = grpc_broadcast_address
             self.server_url = server_url
 
-        self.tls_config.server_name = self.host_port.split(":")[0]
+        if not self.tls_config.server_name:
+            self.tls_config.server_name = self.host_port.split(":")[0]
         return self
 
     @field_validator("listener_v2_timeout")
