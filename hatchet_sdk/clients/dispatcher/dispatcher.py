@@ -53,6 +53,13 @@ class DispatcherClient:
     async def get_action_listener(
         self, req: GetActionListenerRequest
     ) -> ActionListener:
+
+        # Override labels with the preset labels
+        preset_labels = self.config.worker_preset_labels
+
+        for key, value in preset_labels.items():
+            req.labels[key] = WorkerLabels(strValue=str(value))
+
         # Register the worker
         response: WorkerRegisterResponse = await self.aio_client.Register(
             WorkerRegisterRequest(
@@ -104,6 +111,7 @@ class DispatcherClient:
             eventTimestamp=eventTimestamp,
             eventType=event_type,
             eventPayload=payload,
+            retryCount=action.retry_count,
         )
 
         return cast(

@@ -69,8 +69,13 @@ class OverridesWorkflow:
         }
 
 
-workflow = OverridesWorkflow()
-worker = hatchet.worker("overrides-worker")
-worker.register_workflow(workflow)
+def main() -> None:
+    workflow = OverridesWorkflow()
+    worker = hatchet.worker("overrides-worker")
+    worker.register_workflow(workflow)
 
-worker.start()
+    worker.start()
+
+
+if __name__ == "__main__":
+    main()

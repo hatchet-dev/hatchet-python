@@ -3,7 +3,7 @@ import os
 from logging import Logger, getLogger
 from typing import cast
 
-from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 
 from hatchet_sdk.token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
@@ -84,6 +84,8 @@ class ClientConfig(BaseModel):
     worker_healthcheck_enabled: bool = (
         os.getenv("HATCHET_CLIENT_WORKER_HEALTHCHECK_ENABLED", "False") == "True"
     )
+
+    worker_preset_labels: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("token", mode="after")
     @classmethod

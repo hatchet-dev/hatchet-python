@@ -33,8 +33,13 @@ class ConcurrencyDemoWorkflowRR:
         pass
 
 
-workflow = ConcurrencyDemoWorkflowRR()
-worker = hatchet.worker("concurrency-demo-worker-rr", max_runs=10)
-worker.register_workflow(workflow)
+def main() -> None:
+    workflow = ConcurrencyDemoWorkflowRR()
+    worker = hatchet.worker("concurrency-demo-worker-rr", max_runs=10)
+    worker.register_workflow(workflow)
 
-worker.start()
+    worker.start()
+
+
+if __name__ == "__main__":
+    main()
