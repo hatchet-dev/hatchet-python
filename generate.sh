@@ -58,9 +58,17 @@ cp $tmp_dir/hatchet_sdk/clients/rest/api/__init__.py $dst_dir/api/__init__.py
 # remove tmp folder
 rm -rf $tmp_dir
 
+
+MIN_GRPCIO_VERSION=$(grep -A 1 'grpcio =' pyproject.toml | grep 'version' | sed -E 's/.*">=([0-9]+\.[0-9]+\.[0-9]+).*/\1/' | sort -V | head -n 1
+)
+
+poetry add "grpcio@$MIN_GRPCIO_VERSION" "grpcio-tools@$MIN_GRPCIO_VERSION"
+
 poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/dispatcher --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts dispatcher.proto
 poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/events --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts events.proto
 poetry run python -m grpc_tools.protoc --proto_path=../oss/api-contracts/workflows --python_out=./hatchet_sdk/contracts --pyi_out=./hatchet_sdk/contracts --grpc_python_out=./hatchet_sdk/contracts workflows.proto
+
+git restore pyproject.toml poetry.lock
 
 # Fix relative imports in _grpc.py files
 if [[ "$OSTYPE" == "darwin"* ]]; then
