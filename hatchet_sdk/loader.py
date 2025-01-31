@@ -1,5 +1,6 @@
 import json
 from logging import Logger, getLogger
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
 from pydantic import Field, field_validator, model_validator
@@ -8,11 +9,18 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from hatchet_sdk.token import get_addresses_from_jwt, get_tenant_id_from_jwt
 
 
-class ClientTLSConfig(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_prefix="HATCHET_CLIENT_TLS_",
+def create_settings_config(env_prefix: str, **kwargs: Any) -> SettingsConfigDict:
+    return SettingsConfigDict(
+        env_prefix=env_prefix,
         env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
         extra="ignore",
+        **kwargs,
+    )
+
+
+class ClientTLSConfig(BaseSettings):
+    model_config = create_settings_config(
+        env_prefix="HATCHET_CLIENT_TLS_",
     )
 
     strategy: str = "tls"
@@ -23,10 +31,8 @@ class ClientTLSConfig(BaseSettings):
 
 
 class OTELConfig(BaseSettings):
-    model_config = SettingsConfigDict(
+    model_config = create_settings_config(
         env_prefix="HATCHET_CLIENT_OTEL_",
-        env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
-        extra="ignore",
     )
 
     service_name: str | None = None
@@ -36,10 +42,8 @@ class OTELConfig(BaseSettings):
 
 
 class HealthcheckConfig(BaseSettings):
-    model_config = SettingsConfigDict(
+    model_config = create_settings_config(
         env_prefix="HATCHET_CLIENT_WORKER_HEALTHCHECK_",
-        env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
-        extra="ignore",
     )
 
     port: int = 8001
@@ -50,11 +54,9 @@ DEFAULT_HOST_PORT = "localhost:7070"
 
 
 class ClientConfig(BaseSettings):
-    model_config = SettingsConfigDict(
-        arbitrary_types_allowed=True,
+    model_config = create_settings_config(
         extra="ignore",
-        env_file=(".env", ".env.hatchet", ".env.dev", ".env.local"),
-        env_prefix="HATCHET_CLIENT_",
+        arbitrary_types_allowed=True,
     )
 
     token: str = ""
