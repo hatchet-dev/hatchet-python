@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hatchet-sdk"
-version = "0.45.2"
+version = "0.45.3"
 description = ""
 authors = ["Alexander Belanger <alexander@hatchet.run>"]
 readme = "README.md"
@@ -31,8 +31,8 @@ tenacity = ">=8.4.1"
 cel-python = "^0.1.5"
 opentelemetry-api = "^1.28.0"
 opentelemetry-sdk = "^1.28.0"
-opentelemetry-instrumentation = ">=0.49b0"
-opentelemetry-distro = ">=0.49b0"
+opentelemetry-instrumentation = ">=0.43b0"
+opentelemetry-distro = ">=0.43b0"
 opentelemetry-exporter-otlp = "^1.28.0"
 opentelemetry-exporter-otlp-proto-http = "^1.28.0"
 prometheus-client = "^0.21.1"
