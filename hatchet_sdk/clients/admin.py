@@ -95,7 +95,10 @@ class AdminClientBase:
                     else options["additional_metadata"]
                 )
                 if meta is not None:
-                    options["additional_metadata"] = json.dumps(meta).encode("utf-8")
+                    options = {
+                        **options,
+                        "additional_metadata": json.dumps(meta).encode("utf-8"),
+                    }
             except json.JSONDecodeError as e:
                 raise ValueError(f"Error encoding payload: {e}")
 
