@@ -116,7 +116,6 @@ class Step(Generic[R]):
         self,
         fn: Callable[[Any, Context], R] | Callable[[Any, Context], Awaitable[R]],
         type: StepType,
-        workflow: Union["BaseWorkflow", None] = None,
         name: str = "",
         timeout: str = "60m",
         parents: list[str] = [],
@@ -130,7 +129,7 @@ class Step(Generic[R]):
     ) -> None:
         self.fn = fn
         self.is_async_function = is_async_fn(fn)
-        self.workflow = workflow
+        self.workflow: Union["BaseWorkflow", None] = None
 
         self.type = type
         self.timeout = timeout
@@ -146,7 +145,9 @@ class Step(Generic[R]):
 
     def call(self, ctx: Context) -> R:
         if not self.is_registered:
-            raise ValueError("Only steps that have been registered can be called.")
+            raise ValueError(
+                "Only steps that have been registered can be called. To register this step, instantiate its corresponding workflow."
+            )
 
         if self.is_async_function:
             raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
@@ -159,7 +160,9 @@ class Step(Generic[R]):
 
     async def acall(self, ctx: Context) -> R:
         if not self.is_registered:
-            raise ValueError("Only steps that have been registered can be called.")
+            raise ValueError(
+                "Only steps that have been registered can be called. To register this step, instantiate its corresponding workflow."
+            )
 
         if not self.is_async_function:
             raise TypeError(
@@ -206,6 +209,9 @@ class BaseWorkflow:
 
     def __init__(self) -> None:
         self.config.name = self.config.name or str(self.__class__.__name__)
+
+        for step in self.steps:
+            step.workflow = self
 
     def get_service_name(self, namespace: str) -> str:
         return f"{namespace}{self.config.name.lower()}"

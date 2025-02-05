@@ -123,8 +123,6 @@ class Worker:
             sys.exit(1)
 
         for step in workflow.steps:
-            step.workflow = workflow
-
             action_name = workflow.create_action_name(namespace, step)
             self.action_registry[action_name] = step
             return_type = get_type_hints(step.fn).get("return")
