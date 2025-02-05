@@ -25,7 +25,7 @@ from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
-from hatchet_sdk.v2.workflows import RegisteredStep, StepType
+from hatchet_sdk.v2.workflows import Step, StepType
 from hatchet_sdk.worker.action_listener_process import (
     ActionEvent,
     worker_action_listener_process,
@@ -74,7 +74,7 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, RegisteredStep[Any]] = {}
+        self.action_registry: dict[str, Step[Any]] = {}
         self.validator_registry: dict[str, WorkflowValidator] = {}
 
         self.killing: bool = False
@@ -123,10 +123,10 @@ class Worker:
             sys.exit(1)
 
         for step in workflow.steps:
+            step.workflow = workflow
+
             action_name = workflow.create_action_name(namespace, step)
-            self.action_registry[action_name] = RegisteredStep(
-                workflow=workflow, step=step
-            )
+            self.action_registry[action_name] = step
             return_type = get_type_hints(step.fn).get("return")
 
             self.validator_registry[action_name] = WorkflowValidator(

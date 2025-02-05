@@ -116,6 +116,7 @@ class Step(Generic[R]):
         self,
         fn: Callable[[Any, Context], R] | Callable[[Any, Context], Awaitable[R]],
         type: StepType,
+        workflow: Union["BaseWorkflow", None] = None,
         name: str = "",
         timeout: str = "60m",
         parents: list[str] = [],
@@ -129,6 +130,7 @@ class Step(Generic[R]):
     ) -> None:
         self.fn = fn
         self.is_async_function = is_async_fn(fn)
+        self.workflow = workflow
 
         self.type = type
         self.timeout = timeout
@@ -142,44 +144,38 @@ class Step(Generic[R]):
         self.concurrency__max_runs = concurrency__max_runs
         self.concurrency__limit_strategy = concurrency__limit_strategy
 
-
-class RegisteredStep(Generic[R]):
-    def __init__(
-        self,
-        workflow: "BaseWorkflow",
-        step: Step[R],
-    ) -> None:
-        self.workflow = workflow
-        self.step = step
-
     def call(self, ctx: Context) -> R:
-        if self.step.is_async_function:
-            raise TypeError(
-                f"{self.step.name} is not a sync function. Use `acall` instead."
-            )
+        if not self.is_registered:
+            raise ValueError("Only steps that have been registered can be called.")
 
-        sync_fn = self.step.fn
+        if self.is_async_function:
+            raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
+
+        sync_fn = self.fn
         if is_sync_fn(sync_fn):
             return sync_fn(self.workflow, ctx)
 
-        raise TypeError(
-            f"{self.step.name} is not a sync function. Use `acall` instead."
-        )
+        raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
 
     async def acall(self, ctx: Context) -> R:
-        if not self.step.is_async_function:
+        if not self.is_registered:
+            raise ValueError("Only steps that have been registered can be called.")
+
+        if not self.is_async_function:
             raise TypeError(
-                f"{self.step.name} is not an async function. Use `call` instead."
+                f"{self.name} is not an async function. Use `call` instead."
             )
 
-        async_fn = self.step.fn
+        async_fn = self.fn
 
         if is_async_fn(async_fn):
             return await async_fn(self.workflow, ctx)
 
-        raise TypeError(
-            f"{self.step.name} is not an async function. Use `call` instead."
-        )
+        raise TypeError(f"{self.name} is not an async function. Use `call` instead.")
+
+    @property
+    def is_registered(self) -> bool:
+        return self.workflow is not None
 
 
 class WorkflowDeclaration(Generic[TWorkflowInput]):

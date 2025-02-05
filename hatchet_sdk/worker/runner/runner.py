@@ -40,7 +40,7 @@ from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, 
 T = TypeVar("T")
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2.workflows import RegisteredStep
+    from hatchet_sdk.v2.workflows import Step
 
 
 class WorkerStatus(Enum):
@@ -57,7 +57,7 @@ class Runner:
         event_queue: "Queue[Any]",
         max_runs: int | None = None,
         handle_kill: bool = True,
-        action_registry: dict[str, "RegisteredStep[T]"] = {},
+        action_registry: dict[str, "Step[T]"] = {},
         validator_registry: dict[str, WorkflowValidator] = {},
         config: ClientConfig = ClientConfig(),
         labels: dict[str, str | int] = {},
@@ -69,7 +69,7 @@ class Runner:
         self.max_runs = max_runs
         self.tasks: dict[str, asyncio.Task[Any]] = {}  # Store run ids and futures
         self.contexts: dict[str, Context] = {}  # Store run ids and contexts
-        self.action_registry: dict[str, "RegisteredStep[T]"] = action_registry
+        self.action_registry: dict[str, "Step[T]"] = action_registry
         self.validator_registry = validator_registry
 
         self.event_queue = event_queue
@@ -216,7 +216,7 @@ class Runner:
 
     ## TODO: Stricter type hinting here
     def thread_action_func(
-        self, context: Context, step: "RegisteredStep[T]", action: Action
+        self, context: Context, step: "Step[T]", action: Action
     ) -> T:
         if action.step_run_id is not None and action.step_run_id != "":
             self.threads[action.step_run_id] = current_thread()
@@ -233,7 +233,7 @@ class Runner:
     async def async_wrapped_action_func(
         self,
         context: Context,
-        step: "RegisteredStep[T]",
+        step: "Step[T]",
         action: Action,
         run_id: str,
     ) -> T:
@@ -241,7 +241,7 @@ class Runner:
         sr.set(context.step_run_id)
 
         try:
-            if step.step.is_async_function:
+            if step.is_async_function:
                 return await step.acall(context)
             else:
                 pfunc = functools.partial(

@@ -15,7 +15,7 @@ from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2.workflows import RegisteredStep
+    from hatchet_sdk.v2.workflows import Step
 
 STOP_LOOP_TYPE = Literal["STOP_LOOP"]
 STOP_LOOP: STOP_LOOP_TYPE = "STOP_LOOP"
@@ -27,7 +27,7 @@ from typing import Any
 @dataclass
 class WorkerActionRunLoopManager:
     name: str
-    action_registry: dict[str, "RegisteredStep[Any]"]
+    action_registry: dict[str, "Step[Any]"]
     validator_registry: dict[str, WorkflowValidator]
     max_runs: int | None
     config: ClientConfig
