@@ -1,4 +1,5 @@
 import asyncio
+from abc import abstractmethod
 from enum import Enum
 from typing import (
     TYPE_CHECKING,
@@ -141,13 +142,23 @@ class Step(Generic[R]):
         self.concurrency__max_runs = concurrency__max_runs
         self.concurrency__limit_strategy = concurrency__limit_strategy
 
+
+class RegisteredStep(Step[R]):
+    def __init__(
+        self,
+        workflow: "BaseWorkflowImpl",
+        step: Step[R],
+    ) -> None:
+        self.workflow = workflow
+        self.step = step
+
     def call(self, ctx: Context) -> R:
         if self.is_async_function:
             raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
 
         sync_fn = self.fn
         if is_sync_fn(sync_fn):
-            return sync_fn(None, ctx)
+            return sync_fn(self.workflow, ctx)
 
         raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
 
@@ -160,7 +171,7 @@ class Step(Generic[R]):
         async_fn = self.fn
 
         if is_async_fn(async_fn):
-            return await async_fn(None, ctx)
+            return await async_fn(self.workflow, ctx)
 
         raise TypeError(f"{self.name} is not an async function. Use `call` instead.")
 
