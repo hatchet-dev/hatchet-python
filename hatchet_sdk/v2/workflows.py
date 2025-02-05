@@ -143,7 +143,7 @@ class Step(Generic[R]):
         self.concurrency__limit_strategy = concurrency__limit_strategy
 
 
-class RegisteredStep(Step[R]):
+class RegisteredStep(Generic[R]):
     def __init__(
         self,
         workflow: "BaseWorkflow",
@@ -153,27 +153,33 @@ class RegisteredStep(Step[R]):
         self.step = step
 
     def call(self, ctx: Context) -> R:
-        if self.is_async_function:
-            raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
+        if self.step.is_async_function:
+            raise TypeError(
+                f"{self.step.name} is not a sync function. Use `acall` instead."
+            )
 
-        sync_fn = self.fn
+        sync_fn = self.step.fn
         if is_sync_fn(sync_fn):
             return sync_fn(self.workflow, ctx)
 
-        raise TypeError(f"{self.name} is not a sync function. Use `acall` instead.")
+        raise TypeError(
+            f"{self.step.name} is not a sync function. Use `acall` instead."
+        )
 
     async def acall(self, ctx: Context) -> R:
-        if not self.is_async_function:
+        if not self.step.is_async_function:
             raise TypeError(
-                f"{self.name} is not an async function. Use `call` instead."
+                f"{self.step.name} is not an async function. Use `call` instead."
             )
 
-        async_fn = self.fn
+        async_fn = self.step.fn
 
         if is_async_fn(async_fn):
             return await async_fn(self.workflow, ctx)
 
-        raise TypeError(f"{self.name} is not an async function. Use `call` instead.")
+        raise TypeError(
+            f"{self.step.name} is not an async function. Use `call` instead."
+        )
 
 
 class WorkflowDeclaration(Generic[TWorkflowInput]):

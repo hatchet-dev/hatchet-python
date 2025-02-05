@@ -241,7 +241,7 @@ class Runner:
         sr.set(context.step_run_id)
 
         try:
-            if step.is_async_function:
+            if step.step.is_async_function:
                 return await step.acall(context)
             else:
                 pfunc = functools.partial(
