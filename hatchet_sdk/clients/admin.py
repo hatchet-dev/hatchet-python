@@ -91,6 +91,8 @@ class AdminClientBase:
             payload_data = json.dumps(input)
             _options = options.model_dump()
 
+            _options.pop("namespace")
+
             try:
                 _options["additional_metadata"] = json.dumps(
                     options.additional_metadata

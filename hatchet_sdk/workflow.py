@@ -7,7 +7,6 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    get_type_hints,
     runtime_checkable,
 )
 
@@ -23,7 +22,6 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowKind,
 )
 from hatchet_sdk.logger import logger
-from hatchet_sdk.utils.typing import is_basemodel_subclass
 
 
 class WorkflowStepProtocol(Protocol):

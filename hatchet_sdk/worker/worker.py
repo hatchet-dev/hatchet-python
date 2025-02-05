@@ -10,7 +10,7 @@ from enum import Enum
 from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
-from typing import Any, Callable, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, get_type_hints
 
 from aiohttp import web
 from aiohttp.web_request import Request
@@ -25,6 +25,7 @@ from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
 from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.utils.typing import is_basemodel_subclass
+from hatchet_sdk.v2.workflows import Step, StepType
 from hatchet_sdk.worker.action_listener_process import (
     ActionEvent,
     worker_action_listener_process,
@@ -33,7 +34,9 @@ from hatchet_sdk.worker.runner.run_loop_manager import (
     STOP_LOOP_TYPE,
     WorkerActionRunLoopManager,
 )
-from hatchet_sdk.workflow import WorkflowInterface
+
+if TYPE_CHECKING:
+    from hatchet_sdk.v2 import BaseWorkflow
 
 T = TypeVar("T")
 
@@ -48,9 +51,6 @@ class WorkerStatus(Enum):
 @dataclass
 class WorkerStartOptions:
     loop: asyncio.AbstractEventLoop | None = field(default=None)
-
-
-TWorkflow = TypeVar("TWorkflow", bound=object)
 
 
 class Worker:
@@ -74,7 +74,7 @@ class Worker:
 
         self.client: Client
 
-        self.action_registry: dict[str, Callable[[Context], Any]] = {}
+        self.action_registry: dict[str, Step[Any]] = {}
         self.validator_registry: dict[str, WorkflowValidator] = {}
 
         self.killing: bool = False
@@ -100,9 +100,6 @@ class Worker:
             "hatchet_worker_status", "Current status of the Hatchet worker"
         )
 
-    def register_function(self, action: str, func: Callable[[Context], Any]) -> None:
-        self.action_registry[action] = func
-
     def register_workflow_from_opts(
         self, name: str, opts: CreateWorkflowVersionOpts
     ) -> None:
@@ -113,10 +110,7 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-    def register_workflow(self, workflow: TWorkflow) -> None:
-        ## Hack for typing
-        assert isinstance(workflow, WorkflowInterface)
-
+    def register_workflow(self, workflow: Union["BaseWorkflow", Any]) -> None:
         namespace = self.client.config.namespace
 
         try:
@@ -128,25 +122,13 @@ class Worker:
             logger.error(e)
             sys.exit(1)
 
-        def create_action_function(
-            action_func: Callable[..., T]
-        ) -> Callable[[Context], T]:
-            def action_function(context: Context) -> T:
-                return action_func(workflow, context)
-
-            if asyncio.iscoroutinefunction(action_func):
-                setattr(action_function, "is_coroutine", True)
-            else:
-                setattr(action_function, "is_coroutine", False)
-
-            return action_function
-
-        for action_name, action_func in workflow.get_actions(namespace):
-            self.action_registry[action_name] = create_action_function(action_func)
-            return_type = get_type_hints(action_func).get("return")
+        for step in workflow.steps:
+            action_name = workflow.create_action_name(namespace, step)
+            self.action_registry[action_name] = step
+            return_type = get_type_hints(step.fn).get("return")
 
             self.validator_registry[action_name] = WorkflowValidator(
-                workflow_input=workflow.input_validator,
+                workflow_input=workflow.config.input_validator,
                 step_output=return_type if is_basemodel_subclass(return_type) else None,
             )
 
