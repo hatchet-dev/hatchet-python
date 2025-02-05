@@ -94,9 +94,10 @@ class AdminClientBase:
             _options.pop("namespace")
 
             try:
-                _options["additional_metadata"] = json.dumps(
-                    options.additional_metadata
-                ).encode("utf-8")
+                _options = {
+                        **_options,
+                        "additional_metadata": json.dumps(options.additional_metadata).encode("utf-8"),
+                    }
             except json.JSONDecodeError as e:
                 raise ValueError(f"Error encoding payload: {e}")
 
