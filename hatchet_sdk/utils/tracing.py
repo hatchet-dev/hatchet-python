@@ -30,14 +30,14 @@ def parse_headers(headers: str | None) -> dict[str, str]:
 def create_tracer(config: ClientConfig) -> Tracer:
     ## TODO: Figure out how to specify protocol here
     resource = Resource(
-        attributes={SERVICE_NAME: config.otel_service_name or "hatchet.run"}
+        attributes={SERVICE_NAME: config.otel.service_name or "hatchet.run"}
     )
 
-    if config.otel_exporter_oltp_endpoint and config.otel_exporter_oltp_headers:
+    if config.otel.exporter_otlp_endpoint and config.otel.exporter_otlp_headers:
         processor = BatchSpanProcessor(
             OTLPSpanExporter(
-                endpoint=config.otel_exporter_oltp_endpoint,
-                headers=parse_headers(config.otel_exporter_oltp_headers),
+                endpoint=config.otel.exporter_otlp_endpoint,
+                headers=parse_headers(config.otel.exporter_otlp_headers),
             ),
         )
 

@@ -19,19 +19,19 @@ def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Chann
     credentials: grpc.ChannelCredentials | None = None
 
     # load channel credentials
-    if config.tls_config.tls_strategy == "tls":
+    if config.tls_config.strategy == "tls":
         root: Any | None = None
 
-        if config.tls_config.ca_file:
-            root = open(config.tls_config.ca_file, "rb").read()
+        if config.tls_config.root_ca_file:
+            root = open(config.tls_config.root_ca_file, "rb").read()
 
         credentials = grpc.ssl_channel_credentials(root_certificates=root)
-    elif config.tls_config.tls_strategy == "mtls":
-        assert config.tls_config.ca_file
+    elif config.tls_config.strategy == "mtls":
+        assert config.tls_config.root_ca_file
         assert config.tls_config.key_file
         assert config.tls_config.cert_file
 
-        root = open(config.tls_config.ca_file, "rb").read()
+        root = open(config.tls_config.root_ca_file, "rb").read()
         private_key = open(config.tls_config.key_file, "rb").read()
         certificate_chain = open(config.tls_config.cert_file, "rb").read()
 
@@ -57,7 +57,7 @@ def new_conn(config: "ClientConfig", aio: bool) -> grpc.Channel | grpc.aio.Chann
     # When steps execute via os.fork, we see `TSI_DATA_CORRUPTED` errors.
     os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "False"
 
-    if config.tls_config.tls_strategy == "none":
+    if config.tls_config.strategy == "none":
         conn = start.insecure_channel(
             target=config.host_port,
             options=channel_options,

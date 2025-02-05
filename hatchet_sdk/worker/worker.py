@@ -160,7 +160,7 @@ class Worker:
         return web.Response(body=generate_latest(), content_type="text/plain")
 
     async def start_health_server(self) -> None:
-        port = self.config.worker_healthcheck_port or 8001
+        port = self.config.healthcheck.port
 
         app = web.Application()
         app.add_routes(
@@ -219,7 +219,7 @@ class Worker:
         if not _from_start:
             self.setup_loop(options.loop)
 
-        if self.config.worker_healthcheck_enabled:
+        if self.config.healthcheck.enabled:
             await self.start_health_server()
 
         self.action_listener_process = self._start_listener()
