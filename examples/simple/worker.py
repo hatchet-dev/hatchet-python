@@ -1,14 +1,14 @@
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context
-from hatchet_sdk.v2 import BaseWorkflowImpl, Hatchet
+from hatchet_sdk.v2 import BaseWorkflow, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-class MyWorkflow(BaseWorkflowImpl):
+class MyWorkflow(BaseWorkflow):
     @hatchet.step(timeout="11s", retries=3)
     def step1(self, context: Context) -> dict[str, str]:
         print("executed step1")

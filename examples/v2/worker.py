@@ -1,9 +1,9 @@
 from examples.v2.workflows import example_workflow, hatchet
 from hatchet_sdk import Context
-from hatchet_sdk.v2 import BaseWorkflowImpl
+from hatchet_sdk.v2 import BaseWorkflow
 
 
-class ExampleV2Workflow(BaseWorkflowImpl):
+class ExampleV2Workflow(BaseWorkflow):
     config = example_workflow.config
 
     @hatchet.step(timeout="11s", retries=3)

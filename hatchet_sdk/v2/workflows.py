@@ -146,7 +146,7 @@ class Step(Generic[R]):
 class RegisteredStep(Step[R]):
     def __init__(
         self,
-        workflow: "BaseWorkflowImpl",
+        workflow: "BaseWorkflow",
         step: Step[R],
     ) -> None:
         self.workflow = workflow
@@ -193,7 +193,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
         return cast(TWorkflowInput, ctx.workflow_input())
 
 
-class BaseWorkflowImpl:
+class BaseWorkflow:
     """
     A Hatchet workflow implementation base. This class should be inherited by all workflow implementations.
 
