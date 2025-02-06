@@ -1,5 +1,3 @@
-from logging import getLogger
-
 from examples.logger.client import hatchet
 from examples.logger.workflow import LoggingWorkflow
 

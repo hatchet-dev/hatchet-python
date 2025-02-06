@@ -1,7 +1,7 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import Any, AsyncGenerator, cast
+from typing import Any, cast
 
 import grpc
 import grpc.aio

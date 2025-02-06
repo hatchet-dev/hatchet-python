@@ -1,6 +1,4 @@
-import os
-
-from hatchet_sdk.loader import DEFAULT_HOST_PORT, ClientConfig
+from hatchet_sdk.loader import ClientConfig
 
 
 def test_client_initialization_from_defaults() -> None:

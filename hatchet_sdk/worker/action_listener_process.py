@@ -4,7 +4,7 @@ import signal
 import time
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import Any, List, Literal, Mapping, Optional
+from typing import Any, List, Literal
 
 import grpc
 

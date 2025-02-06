@@ -4,20 +4,18 @@ import multiprocessing.context
 import os
 import signal
 import sys
-from concurrent.futures import Future
 from dataclasses import dataclass, field
 from enum import Enum
 from multiprocessing import Queue
 from multiprocessing.process import BaseProcess
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, get_type_hints
+from typing import TYPE_CHECKING, Any, TypeVar, Union, get_type_hints
 
 from aiohttp import web
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
-from prometheus_client import CONTENT_TYPE_LATEST, Gauge, generate_latest
+from prometheus_client import Gauge, generate_latest
 
-from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.contracts.workflows_pb2 import CreateWorkflowVersionOpts
@@ -33,7 +31,7 @@ from hatchet_sdk.worker.runner.run_loop_manager import (
     STOP_LOOP_TYPE,
     WorkerActionRunLoopManager,
 )
-from hatchet_sdk.workflow import Step, StepType
+from hatchet_sdk.workflow import Step
 
 if TYPE_CHECKING:
     from hatchet_sdk.workflow import BaseWorkflow

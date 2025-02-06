@@ -1,5 +1,4 @@
 import asyncio
-import random
 from typing import Any
 
 from hatchet_sdk import BaseWorkflow, ChildTriggerWorkflowOptions, Context, Hatchet
@@ -53,7 +52,7 @@ class DedupeChild(BaseWorkflow):
     async def process(self, context: Context) -> dict[str, str]:
         await asyncio.sleep(3)
 
-        print(f"child process")
+        print("child process")
         return {"status": "success"}
 
     @hatchet.step()

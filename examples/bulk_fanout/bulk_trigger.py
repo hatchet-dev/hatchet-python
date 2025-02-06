@@ -1,13 +1,7 @@
 import asyncio
-import base64
-import json
-import os
-from typing import Any
 
 from hatchet_sdk import new_client
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions, WorkflowRunDict
-from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
-from hatchet_sdk.clients.run_event_listener import StepRunEventType
 
 
 async def main() -> None:

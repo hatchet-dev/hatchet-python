@@ -1,5 +1,3 @@
-import time
-
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)

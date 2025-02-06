@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 from hatchet_sdk import Hatchet
-from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
 
 hatchet = Hatchet()
 
@@ -19,7 +18,7 @@ async def create_scheduled() -> None:
         },
     )
 
-    id = scheduled_run.metadata.id  # the id of the scheduled run trigger
+    scheduled_run.metadata.id  # the id of the scheduled run trigger
     # !!
 
     # ❓ Delete
@@ -27,7 +26,7 @@ async def create_scheduled() -> None:
     # !!
 
     # ❓ List
-    scheduled_runs = await hatchet.scheduled.aio.list()
+    await hatchet.scheduled.aio.list()
     # !!
 
     # ❓ Get

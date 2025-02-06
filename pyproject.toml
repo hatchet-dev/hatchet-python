@@ -94,6 +94,17 @@ exclude = [
 ]
 strict = true
 
+[tool.ruff]
+exclude = [
+    "hatchet_sdk/clients/rest/api/*",
+    "hatchet_sdk/clients/rest/models/*",
+    "hatchet_sdk/contracts",
+    "hatchet_sdk/clients/rest/api_client.py",
+    "hatchet_sdk/clients/rest/configuration.py",
+    "hatchet_sdk/clients/rest/exceptions.py",
+    "hatchet_sdk/clients/rest/rest.py",
+]
+
 [tool.poetry.scripts]
 api = "examples.api.api:main"
 async = "examples.async.worker:main"
