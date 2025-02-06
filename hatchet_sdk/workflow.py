@@ -232,7 +232,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
             )
             for spawn_input in spawn_inputs
         ]
-        return await ctx.aspawn_workflows(inputs)
+        return await ctx.spawn_workflows(inputs)
 
     async def spawn_one(
         self,
@@ -241,7 +241,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
         key: str | None = None,
         options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
     ) -> WorkflowRunRef:
-        return await ctx.aspawn_workflow(
+        return await ctx.spawn_workflow(
             workflow_name=self.config.name,
             input=input.model_dump(),
             key=key,

@@ -301,7 +301,7 @@ class Context:
         ]
 
     @tenacity_retry
-    async def aspawn_workflow(
+    async def spawn_workflow(
         self,
         workflow_name: str,
         input: JSONSerializableDict = {},
@@ -317,7 +317,7 @@ class Context:
         )
 
     @tenacity_retry
-    async def aspawn_workflows(
+    async def spawn_workflows(
         self, child_workflow_runs: list[ChildWorkflowRunDict]
     ) -> list[WorkflowRunRef]:
 

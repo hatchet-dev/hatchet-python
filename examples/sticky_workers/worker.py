@@ -26,7 +26,7 @@ class StickyWorkflow(BaseWorkflow):
 
     @hatchet.step(parents=["step1a", "step1b"])
     async def step2(self, context: Context) -> dict[str, str | None]:
-        ref = await context.aspawn_workflow(
+        ref = await context.spawn_workflow(
             "StickyChildWorkflow", {}, options=ChildTriggerWorkflowOptions(sticky=True)
         )
 
