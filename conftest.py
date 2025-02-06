@@ -14,8 +14,8 @@ from hatchet_sdk import ClientConfig, Hatchet
 from hatchet_sdk.loader import ClientTLSConfig
 
 
-@pytest.fixture(scope="session")
-def token() -> str:
+@pytest.fixture(scope="session", autouse=True)
+def token() -> None:
     result = subprocess.run(
         [
             "docker",
@@ -35,22 +35,23 @@ def token() -> str:
         text=True,
     )
 
-    return result.stdout.strip()
+    token = result.stdout.strip()
+
+    os.environ["HATCHET_CLIENT_TLS_STRATEGY"] = "none"
+    os.environ["HATCHET_CLIENT_TOKEN"] = token
 
 
 @pytest_asyncio.fixture(scope="session")
-async def aiohatchet(token: str) -> AsyncGenerator[Hatchet, None]:
+async def aiohatchet() -> AsyncGenerator[Hatchet, None]:
     yield Hatchet(
         debug=True,
-        config=ClientConfig(token=token, tls_config=ClientTLSConfig(strategy="none")),
     )
 
 
 @pytest.fixture(scope="session")
-def hatchet(token: str) -> Hatchet:
+def hatchet() -> Hatchet:
     return Hatchet(
         debug=True,
-        config=ClientConfig(token=token, tls_config=ClientTLSConfig(strategy="none")),
     )
 
 
