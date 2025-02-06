@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import (
     TYPE_CHECKING,
@@ -182,11 +183,14 @@ class Step(Generic[R]):
         return self.workflow is not None
 
 
-class SpawnWorkflowInput(BaseModel, Generic[TWorkflowInput]):
+@dataclass
+class SpawnWorkflowInput(Generic[TWorkflowInput]):
     workflow_name: str
     input: TWorkflowInput
     key: str | None = None
-    options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions()
+    options: ChildTriggerWorkflowOptions = field(
+        default_factory=ChildTriggerWorkflowOptions
+    )
 
 
 class WorkflowDeclaration(Generic[TWorkflowInput]):
