@@ -10,17 +10,48 @@ import psutil
 import pytest
 import pytest_asyncio
 
-from hatchet_sdk import Hatchet
-
-
-@pytest_asyncio.fixture(scope="session")
-async def aiohatchet() -> AsyncGenerator[Hatchet, None]:
-    yield Hatchet(debug=True)
+from hatchet_sdk import ClientConfig, Hatchet
+from hatchet_sdk.loader import ClientTLSConfig
 
 
 @pytest.fixture(scope="session")
-def hatchet() -> Hatchet:
-    return Hatchet(debug=True)
+def token() -> str:
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "run",
+            "--no-deps",
+            "setup-config",
+            "/hatchet/hatchet-admin",
+            "token",
+            "create",
+            "--config",
+            "/hatchet/config",
+            "--tenant-id",
+            "707d0855-80ab-4e1f-a156-f1c4546cbf52",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    return result.stdout.strip()
+
+
+@pytest_asyncio.fixture(scope="session")
+async def aiohatchet(token: str) -> AsyncGenerator[Hatchet, None]:
+    yield Hatchet(
+        debug=True,
+        config=ClientConfig(token=token, tls_config=ClientTLSConfig(strategy="none")),
+    )
+
+
+@pytest.fixture(scope="session")
+def hatchet(token: str) -> Hatchet:
+    return Hatchet(
+        debug=True,
+        config=ClientConfig(token=token, tls_config=ClientTLSConfig(strategy="none")),
+    )
 
 
 @pytest.fixture()
