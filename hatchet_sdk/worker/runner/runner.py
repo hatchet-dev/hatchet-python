@@ -40,7 +40,7 @@ from hatchet_sdk.worker.runner.utils.capture_logs import copy_context_vars, sr, 
 T = TypeVar("T")
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2.workflows import Step
+    from hatchet_sdk.workflow import Step
 
 
 class WorkerStatus(Enum):

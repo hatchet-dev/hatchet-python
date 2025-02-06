@@ -1,194 +1,47 @@
 import asyncio
 import logging
-from typing import Any, Callable, Optional, ParamSpec, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Type, TypeVar, cast
 
-from pydantic import BaseModel
-from typing_extensions import deprecated
-
+from hatchet_sdk.client import Client, new_client, new_client_raw
+from hatchet_sdk.clients.admin import AdminClient
+from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
+from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.clients.rest_client import RestApi
+from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.context.context import Context
-from hatchet_sdk.contracts.workflows_pb2 import (
-    ConcurrencyLimitStrategy,
-    CreateStepRateLimit,
-    DesiredWorkerLabels,
-    StickyStrategy,
-    WorkerLabelComparator,
-)
+from hatchet_sdk.contracts.workflows_pb2 import DesiredWorkerLabels
 from hatchet_sdk.features.cron import CronClient
 from hatchet_sdk.features.scheduled import ScheduledClient
 from hatchet_sdk.labels import DesiredWorkerLabel
 from hatchet_sdk.loader import ClientConfig
+from hatchet_sdk.logger import logger
 from hatchet_sdk.rate_limit import RateLimit
-
-from .client import Client, new_client, new_client_raw
-from .clients.admin import AdminClient
-from .clients.dispatcher.dispatcher import DispatcherClient
-from .clients.events import EventClient
-from .clients.run_event_listener import RunEventListenerClient
-from .logger import logger
-from .worker.worker import Worker
-from .workflow import (
+from hatchet_sdk.workflow import (
     ConcurrencyExpression,
-    WorkflowInterface,
-    WorkflowMeta,
-    WorkflowStepProtocol,
+    EmptyModel,
+    Step,
+    StepType,
+    StickyStrategy,
+    TWorkflowInput,
+    WorkflowConfig,
+    WorkflowDeclaration,
 )
 
-T = TypeVar("T", bound=BaseModel)
+if TYPE_CHECKING:
+    from hatchet_sdk.worker.worker import Worker
+
 R = TypeVar("R")
-P = ParamSpec("P")
-
-TWorkflow = TypeVar("TWorkflow", bound=object)
 
 
-def workflow(
-    name: str = "",
-    on_events: list[str] | None = None,
-    on_crons: list[str] | None = None,
-    version: str = "",
-    timeout: str = "60m",
-    schedule_timeout: str = "5m",
-    sticky: Union[StickyStrategy, None] = None,
-    default_priority: int | None = None,
-    concurrency: ConcurrencyExpression | None = None,
-    input_validator: Type[T] | None = None,
-) -> Callable[[Type[TWorkflow]], WorkflowMeta]:
-    on_events = on_events or []
-    on_crons = on_crons or []
-
-    def inner(cls: Type[TWorkflow]) -> WorkflowMeta:
-        nonlocal name
-        name = name or str(cls.__name__)
-
-        setattr(cls, "on_events", on_events)
-        setattr(cls, "on_crons", on_crons)
-        setattr(cls, "name", name)
-        setattr(cls, "version", version)
-        setattr(cls, "timeout", timeout)
-        setattr(cls, "schedule_timeout", schedule_timeout)
-        setattr(cls, "sticky", sticky)
-        setattr(cls, "default_priority", default_priority)
-        setattr(cls, "concurrency_expression", concurrency)
-
-        # Define a new class with the same name and bases as the original, but
-        # with WorkflowMeta as its metaclass
-
-        ## TODO: Figure out how to type this metaclass correctly
-        setattr(cls, "input_validator", input_validator)
-
-        return WorkflowMeta(name, cls.__bases__, dict(cls.__dict__))
-
-    return inner
-
-
-def step(
-    name: str = "",
-    timeout: str = "",
-    parents: list[str] | None = None,
-    retries: int = 0,
-    rate_limits: list[RateLimit] | None = None,
-    desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
-    backoff_factor: float | None = None,
-    backoff_max_seconds: int | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    parents = parents or []
-
-    def inner(func: Callable[P, R]) -> Callable[P, R]:
-        limits = None
-        if rate_limits:
-            limits = [rate_limit._req for rate_limit in rate_limits or []]
-
-        setattr(func, "_step_name", name.lower() or str(func.__name__).lower())
-        setattr(func, "_step_parents", parents)
-        setattr(func, "_step_timeout", timeout)
-        setattr(func, "_step_retries", retries)
-        setattr(func, "_step_rate_limits", limits)
-        setattr(func, "_step_backoff_factor", backoff_factor)
-        setattr(func, "_step_backoff_max_seconds", backoff_max_seconds)
-
-        def create_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
-            value = d.value
-            return DesiredWorkerLabels(
-                strValue=value if not isinstance(value, int) else None,
-                intValue=value if isinstance(value, int) else None,
-                required=d.required,
-                weight=d.weight,
-                comparator=d.comparator,  # type: ignore[arg-type]
-            )
-
-        setattr(
-            func,
-            "_step_desired_worker_labels",
-            {key: create_label(d) for key, d in desired_worker_labels.items()},
-        )
-
-        return func
-
-    return inner
-
-
-def on_failure_step(
-    name: str = "",
-    timeout: str = "",
-    retries: int = 0,
-    rate_limits: list[RateLimit] | None = None,
-    backoff_factor: float | None = None,
-    backoff_max_seconds: int | None = None,
-) -> Callable[..., Any]:
-    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
-        limits = None
-        if rate_limits:
-            limits = [
-                CreateStepRateLimit(key=rate_limit.static_key, units=rate_limit.units)  # type: ignore[arg-type]
-                for rate_limit in rate_limits or []
-            ]
-
-        setattr(
-            func, "_on_failure_step_name", name.lower() or str(func.__name__).lower()
-        )
-        setattr(func, "_on_failure_step_timeout", timeout)
-        setattr(func, "_on_failure_step_retries", retries)
-        setattr(func, "_on_failure_step_rate_limits", limits)
-        setattr(func, "_on_failure_step_backoff_factor", backoff_factor)
-        setattr(func, "_on_failure_step_backoff_max_seconds", backoff_max_seconds)
-
-        return func
-
-    return inner
-
-
-def concurrency(
-    name: str = "",
-    max_runs: int = 1,
-    limit_strategy: ConcurrencyLimitStrategy = ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
-) -> Callable[..., Any]:
-    def inner(func: Callable[[Context], Any]) -> Callable[[Context], Any]:
-        setattr(
-            func,
-            "_concurrency_fn_name",
-            name.lower() or str(func.__name__).lower(),
-        )
-        setattr(func, "_concurrency_max_runs", max_runs)
-        setattr(func, "_concurrency_limit_strategy", limit_strategy)
-
-        return func
-
-    return inner
-
-
-class HatchetRest:
-    """
-    Main client for interacting with the Hatchet API.
-
-    This class provides access to various client interfaces and utility methods
-    for working with Hatchet via the REST API,
-
-    Attributes:
-        rest (RestApi): Interface for REST API operations.
-    """
-
-    def __init__(self, config: ClientConfig = ClientConfig()):
-        self.rest = RestApi(config.server_url, config.token, config.tenant_id)
+def transform_desired_worker_label(d: DesiredWorkerLabel) -> DesiredWorkerLabels:
+    value = d.value
+    return DesiredWorkerLabels(
+        strValue=value if not isinstance(value, int) else None,
+        intValue=value if isinstance(value, int) else None,
+        required=d.required,
+        weight=d.weight,
+        comparator=d.comparator,  # type: ignore[arg-type]
+    )
 
 
 class Hatchet:
@@ -247,13 +100,6 @@ class Hatchet:
         self.scheduled = ScheduledClient(self._client)
 
     @property
-    @deprecated(
-        "Direct access to client is deprecated and will be removed in a future version. Use specific client properties (Hatchet.admin, Hatchet.dispatcher, Hatchet.event, Hatchet.rest) instead. [0.32.0]",
-    )
-    def client(self) -> Client:
-        return self._client
-
-    @property
     def admin(self) -> AdminClient:
         return self._client.admin
 
@@ -281,17 +127,71 @@ class Hatchet:
     def tenant_id(self) -> str:
         return self._client.config.tenant_id
 
-    concurrency = staticmethod(concurrency)
+    def step(
+        self,
+        name: str = "",
+        timeout: str = "60m",
+        parents: list[str] = [],
+        retries: int = 0,
+        rate_limits: list[RateLimit] = [],
+        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+        backoff_factor: float | None = None,
+        backoff_max_seconds: int | None = None,
+    ) -> Callable[[Callable[[Any, Context], Any]], Step[R]]:
+        def inner(func: Callable[[Any, Context], R]) -> Step[R]:
+            return Step(
+                fn=func,
+                type=StepType.DEFAULT,
+                name=name.lower() or str(func.__name__).lower(),
+                timeout=timeout,
+                parents=parents,
+                retries=retries,
+                rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
+                desired_worker_labels={
+                    key: transform_desired_worker_label(d)
+                    for key, d in desired_worker_labels.items()
+                },
+                backoff_factor=backoff_factor,
+                backoff_max_seconds=backoff_max_seconds,
+            )
 
-    workflow = staticmethod(workflow)
+        return inner
 
-    step = staticmethod(step)
+    def on_failure_step(
+        self,
+        name: str = "",
+        timeout: str = "60m",
+        parents: list[str] = [],
+        retries: int = 0,
+        rate_limits: list[RateLimit] = [],
+        desired_worker_labels: dict[str, DesiredWorkerLabel] = {},
+        backoff_factor: float | None = None,
+        backoff_max_seconds: int | None = None,
+    ) -> Callable[[Callable[[Any, Context], Any]], Step[R]]:
+        def inner(func: Callable[[Any, Context], R]) -> Step[R]:
+            return Step(
+                fn=func,
+                type=StepType.ON_FAILURE,
+                name=name.lower() or str(func.__name__).lower(),
+                timeout=timeout,
+                parents=parents,
+                retries=retries,
+                rate_limits=[r for rate_limit in rate_limits if (r := rate_limit._req)],
+                desired_worker_labels={
+                    key: transform_desired_worker_label(d)
+                    for key, d in desired_worker_labels.items()
+                },
+                backoff_factor=backoff_factor,
+                backoff_max_seconds=backoff_max_seconds,
+            )
 
-    on_failure_step = staticmethod(on_failure_step)
+        return inner
 
     def worker(
         self, name: str, max_runs: int | None = None, labels: dict[str, str | int] = {}
-    ) -> Worker:
+    ) -> "Worker":
+        from hatchet_sdk.worker.worker import Worker
+
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -304,4 +204,34 @@ class Hatchet:
             config=self._client.config,
             debug=self._client.debug,
             owned_loop=loop is None,
+        )
+
+    def declare_workflow(
+        self,
+        name: str = "",
+        on_events: list[str] = [],
+        on_crons: list[str] = [],
+        version: str = "",
+        timeout: str = "60m",
+        schedule_timeout: str = "5m",
+        sticky: StickyStrategy | None = None,
+        default_priority: int = 1,
+        concurrency: ConcurrencyExpression | None = None,
+        input_validator: Type[TWorkflowInput] | None = None,
+    ) -> WorkflowDeclaration[TWorkflowInput]:
+        return WorkflowDeclaration[TWorkflowInput](
+            WorkflowConfig(
+                name=name,
+                on_events=on_events,
+                on_crons=on_crons,
+                version=version,
+                timeout=timeout,
+                schedule_timeout=schedule_timeout,
+                sticky=sticky,
+                default_priority=default_priority,
+                concurrency=concurrency,
+                input_validator=input_validator
+                or cast(Type[TWorkflowInput], EmptyModel),
+            ),
+            self,
         )
