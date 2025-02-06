@@ -216,7 +216,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
             workflow_name=self.config.name, input=input, key=key, options=options
         )
 
-    async def spawn_workflows(
+    async def spawn_many(
         self, ctx: Context, spawn_inputs: list[SpawnWorkflowInput[TWorkflowInput]]
     ) -> list[WorkflowRunRef]:
         inputs = [
@@ -230,16 +230,15 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
         ]
         return await ctx.aspawn_workflows(inputs)
 
-    async def spawn_workflow(
+    async def spawn_one(
         self,
         ctx: Context,
-        workflow_name: str,
         input: TWorkflowInput,
         key: str | None = None,
         options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
     ) -> WorkflowRunRef:
         return await ctx.aspawn_workflow(
-            workflow_name=workflow_name,
+            workflow_name=self.config.name,
             input=input.model_dump(),
             key=key,
             options=options,

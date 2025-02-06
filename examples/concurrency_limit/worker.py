@@ -1,6 +1,8 @@
 import time
 from typing import Any, cast
 
+from pydantic import BaseModel
+
 from hatchet_sdk import (
     BaseWorkflow,
     ConcurrencyExpression,
@@ -11,6 +13,12 @@ from hatchet_sdk import (
 
 hatchet = Hatchet(debug=True)
 
+
+class WorkflowInput(BaseModel):
+    run: int
+    group: str
+
+
 wf = hatchet.declare_workflow(
     on_events=["concurrency-test"],
     concurrency=ConcurrencyExpression(
@@ -18,6 +26,7 @@ wf = hatchet.declare_workflow(
         max_runs=5,
         limit_strategy=ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
     ),
+    input_validator=WorkflowInput,
 )
 
 
@@ -27,10 +36,10 @@ class ConcurrencyDemoWorkflow(BaseWorkflow):
 
     @hatchet.step()
     def step1(self, context: Context) -> dict[str, Any]:
-        input = cast(dict[str, Any], context.workflow_input)
+        input = wf.get_workflow_input(context)
         time.sleep(3)
         print("executed step1")
-        return {"run": input["run"]}
+        return {"run": input.run}
 
 
 def main() -> None:

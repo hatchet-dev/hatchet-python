@@ -51,9 +51,7 @@ class BulkParent(BaseWorkflow):
         if len(child_workflow_runs) == 0:
             return {}
 
-        spawn_results = await bulk_child_wf.spawn_workflows(
-            context, child_workflow_runs
-        )
+        spawn_results = await bulk_child_wf.spawn_many(context, child_workflow_runs)
 
         results = await asyncio.gather(
             *[workflowRunRef.result() for workflowRunRef in spawn_results],
