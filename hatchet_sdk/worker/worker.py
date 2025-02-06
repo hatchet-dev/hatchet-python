@@ -36,7 +36,7 @@ from hatchet_sdk.worker.runner.run_loop_manager import (
 from hatchet_sdk.workflow import Step, StepType
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2 import BaseWorkflow
+    from hatchet_sdk.workflow import BaseWorkflow
 
 T = TypeVar("T")
 

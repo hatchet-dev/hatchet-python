@@ -19,12 +19,12 @@ class Parent:
         context.put_stream("spawning...")
         results = []
 
-        n = context.workflow_input().get("n", 100)
+        n = context.workflow_input.get("n", 100)
 
         for i in range(n):
             results.append(
                 (
-                    await context.aio.spawn_workflow(
+                    await context.aspawn_workflow(
                         "Child",
                         {"a": str(i)},
                         key=f"child{i}",
@@ -45,7 +45,7 @@ class Parent:
 class Child:
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = context.workflow_input()["a"]
+        a = context.workflow_input["a"]
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}

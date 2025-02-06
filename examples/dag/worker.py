@@ -46,7 +46,7 @@ class DagWorkflow:
         print(
             "executed step4",
             time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
+            context.workflow_input,
             context.step_output("step1"),
             context.step_output("step3"),
         )

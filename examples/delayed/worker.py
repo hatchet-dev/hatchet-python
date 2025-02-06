@@ -19,7 +19,7 @@ class PrintSchedule:
         print(f"scheduling for \t {future_time.strftime('%H:%M:%S')}")
 
         hatchet.admin.schedule_workflow(
-            "PrintPrinter", [future_time], context.workflow_input()
+            "PrintPrinter", [future_time], context.workflow_input
         )
 
 
@@ -29,7 +29,7 @@ class PrintPrinter:
     def step1(self, context: Context) -> None:
         now = datetime.now()
         print(f"printed at \t {now.strftime('%H:%M:%S')}")
-        print(f"message \t {context.workflow_input()['message']}")
+        print(f"message \t {context.workflow_input['message']}")
 
 
 def main() -> None:

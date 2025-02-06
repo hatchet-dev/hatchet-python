@@ -22,9 +22,9 @@ class Parent:
     async def spawn(self, context: Context) -> dict[str, str]:
         ## Use `typing.cast` to cast your `workflow_input`
         ## to the type of your `input_validator`
-        input = cast(ParentInput, context.workflow_input())  ## This is a `ParentInput`
+        input = cast(ParentInput, context.workflow_input)  ## This is a `ParentInput`
 
-        child = await context.aio.spawn_workflow(
+        child = await context.aspawn_workflow(
             "Child",
             {"a": 1, "b": "10"},
         )
@@ -46,7 +46,7 @@ class Child:
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:
         ## This is an instance `ChildInput`
-        input = cast(ChildInput, context.workflow_input())
+        input = cast(ChildInput, context.workflow_input)
 
         return StepResponse(status="success")
 

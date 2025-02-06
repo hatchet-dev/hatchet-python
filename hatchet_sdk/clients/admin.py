@@ -36,7 +36,6 @@ from hatchet_sdk.workflow_run import RunRef, WorkflowRunRef
 
 from ..loader import ClientConfig
 from ..metadata import get_metadata
-from ..workflow import WorkflowMeta
 
 
 def new_admin(config: ClientConfig) -> "AdminClient":
@@ -112,7 +111,7 @@ class AdminClientBase:
     def _prepare_put_workflow_request(
         self,
         name: str,
-        workflow: CreateWorkflowVersionOpts | WorkflowMeta,
+        workflow: CreateWorkflowVersionOpts,
         overrides: CreateWorkflowVersionOpts | None = None,
     ) -> PutWorkflowRequest:
         try:
@@ -121,7 +120,7 @@ class AdminClientBase:
             if isinstance(workflow, CreateWorkflowVersionOpts):
                 opts = workflow
             else:
-                opts = workflow.get_create_opts(self.client.config.namespace)  # type: ignore[attr-defined]
+                opts = workflow.get_create_opts(self.client.config.namespace)
 
             if overrides is not None:
                 opts.MergeFrom(overrides)
@@ -304,7 +303,7 @@ class AdminClientAioImpl(AdminClientBase):
     async def put_workflow(
         self,
         name: str,
-        workflow: CreateWorkflowVersionOpts | WorkflowMeta,
+        workflow: CreateWorkflowVersionOpts,
         overrides: CreateWorkflowVersionOpts | None = None,
     ) -> WorkflowVersion:
         opts = self._prepare_put_workflow_request(name, workflow, overrides)
@@ -380,7 +379,7 @@ class AdminClient(AdminClientBase):
     def put_workflow(
         self,
         name: str,
-        workflow: CreateWorkflowVersionOpts | WorkflowMeta,
+        workflow: CreateWorkflowVersionOpts,
         overrides: CreateWorkflowVersionOpts | None = None,
     ) -> WorkflowVersion:
         opts = self._prepare_put_workflow_request(name, workflow, overrides)

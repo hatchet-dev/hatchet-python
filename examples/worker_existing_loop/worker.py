@@ -4,14 +4,14 @@ from contextlib import suppress
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
+from hatchet_sdk.workflow import BaseWorkflow
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(name="MyWorkflow")
-class MyWorkflow:
+class MyWorkflow(BaseWorkflow):
     @hatchet.step()
     async def step(self, context: Context) -> dict[str, str]:
         print("started")

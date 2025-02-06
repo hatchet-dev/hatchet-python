@@ -24,7 +24,7 @@ class ConcurrencyDemoWorkflow:
 
     @hatchet.step()
     def step1(self, context: Context) -> dict[str, Any]:
-        input = context.workflow_input()
+        input = context.workflow_input
         time.sleep(3)
         print("executed step1")
         return {"run": input["run"]}

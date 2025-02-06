@@ -121,9 +121,9 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy,
     CreateWorkflowVersionOpts,
     RateLimitDuration,
-    StickyStrategy,
     WorkerLabelComparator,
 )
+from hatchet_sdk.hatchet import Hatchet
 from hatchet_sdk.utils.aio_utils import sync_to_async
 
 from .client import new_client
@@ -137,10 +137,14 @@ from .clients.events import PushEventOptions
 from .clients.run_event_listener import StepRunEventType, WorkflowRunEventType
 from .context.context import Context
 from .context.worker_context import WorkerContext
-from .hatchet import Hatchet, concurrency, on_failure_step, step, workflow
 from .loader import ClientConfig
 from .worker.worker import Worker, WorkerStartOptions, WorkerStatus
-from .workflow import ConcurrencyExpression
+from .workflow import (
+    BaseWorkflow,
+    ConcurrencyExpression,
+    StickyStrategy,
+    WorkflowConfig,
+)
 
 __all__ = [
     "AcceptInviteRequest",
@@ -245,4 +249,6 @@ __all__ = [
     "WorkerStartOptions",
     "WorkerStatus",
     "ConcurrencyExpression",
+    "BaseWorkflow",
+    "WorkflowConfig",
 ]

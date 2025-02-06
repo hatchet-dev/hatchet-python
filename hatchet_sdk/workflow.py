@@ -32,7 +32,7 @@ from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, Workflo
 from hatchet_sdk.logger import logger
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2 import Hatchet
+    from hatchet_sdk import Hatchet
 
 R = TypeVar("R")
 P = ParamSpec("P")
@@ -194,7 +194,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
         )
 
     def workflow_input(self, ctx: Context) -> TWorkflowInput:
-        return cast(TWorkflowInput, ctx.workflow_input())
+        return cast(TWorkflowInput, ctx.workflow_input)
 
 
 class BaseWorkflow:

@@ -20,7 +20,7 @@ class BulkParent:
         context.put_stream("spawning...")
         results = []
 
-        n = context.workflow_input().get("n", 100)
+        n = context.workflow_input.get("n", 100)
 
         child_workflow_runs = [
             ChildWorkflowRunDict(
@@ -37,7 +37,7 @@ class BulkParent:
         if len(child_workflow_runs) == 0:
             return {}
 
-        spawn_results = await context.aio.spawn_workflows(child_workflow_runs)
+        spawn_results = await context.aspawn_workflows(child_workflow_runs)
 
         results = await asyncio.gather(
             *[workflowRunRef.result() for workflowRunRef in spawn_results],
@@ -59,7 +59,7 @@ class BulkParent:
 class BulkChild:
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = context.workflow_input()["a"]
+        a = context.workflow_input["a"]
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}

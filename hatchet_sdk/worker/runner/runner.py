@@ -237,7 +237,7 @@ class Runner:
         action: Action,
         run_id: str,
     ) -> T:
-        wr.set(context.workflow_run_id())
+        wr.set(context.workflow_run_id)
         sr.set(context.step_run_id)
 
         try:
