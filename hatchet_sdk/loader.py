@@ -101,6 +101,8 @@ class ClientConfig(BaseSettings):
             server_url, grpc_broadcast_address = get_addresses_from_jwt(self.token)
             self.host_port = grpc_broadcast_address
             self.server_url = server_url
+        else:
+            self.server_url = self.host_port
 
         if not self.tls_config.server_name:
             self.tls_config.server_name = self.host_port.split(":")[0]
