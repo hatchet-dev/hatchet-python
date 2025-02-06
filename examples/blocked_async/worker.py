@@ -1,11 +1,7 @@
 import hashlib
 import time
 
-from dotenv import load_dotenv
-
-from hatchet_sdk import Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
@@ -15,9 +11,12 @@ hatchet = Hatchet(debug=True)
 #
 # You do not want to run long sync functions in an async def function
 
+wf = hatchet.declare_workflow(on_events=["user:create"])
 
-@hatchet.workflow(on_events=["user:create"])
-class Blocked:
+
+class Blocked(BaseWorkflow):
+    config = wf.config
+
     @hatchet.step(timeout="11s", retries=3)
     async def step1(self, context: Context) -> dict[str, str | int | float]:
         print("Executing step1")
@@ -43,9 +42,8 @@ class Blocked:
 
 
 def main() -> None:
-    workflow = Blocked()
     worker = hatchet.worker("blocked-worker", max_runs=3)
-    worker.register_workflow(workflow)
+    worker.register_workflow(Blocked())
     worker.start()
 
 

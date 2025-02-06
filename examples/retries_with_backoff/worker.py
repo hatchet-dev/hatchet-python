@@ -1,11 +1,10 @@
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
 
 # ❓ Backoff
-@hatchet.workflow()
-class BackoffWorkflow:
+class BackoffWorkflow(BaseWorkflow):
     # 👀 Backoff configuration
     @hatchet.step(
         retries=10,
@@ -16,7 +15,7 @@ class BackoffWorkflow:
         backoff_factor=2.0,
     )
     def step1(self, context: Context) -> dict[str, str]:
-        if context.retry_count() < 3:
+        if context.retry_count < 3:
             raise Exception("step1 failed")
 
         return {"status": "success"}
@@ -26,9 +25,8 @@ class BackoffWorkflow:
 
 
 def main() -> None:
-    workflow = BackoffWorkflow()
     worker = hatchet.worker("backoff-worker", max_runs=4)
-    worker.register_workflow(workflow)
+    worker.register_workflow(BackoffWorkflow())
 
     worker.start()
 

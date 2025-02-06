@@ -1,15 +1,12 @@
-from dotenv import load_dotenv
-
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 from hatchet_sdk.rate_limit import RateLimit, RateLimitDuration
 
-load_dotenv()
-
 hatchet = Hatchet(debug=True)
+wf = hatchet.declare_workflow(on_events=["rate_limit:create"])
 
 
-@hatchet.workflow(on_events=["rate_limit:create"])
-class RateLimitWorkflow:
+class RateLimitWorkflow(BaseWorkflow):
+    config = wf.config
 
     @hatchet.step(rate_limits=[RateLimit(key="test-limit", units=1)])
     def step1(self, context: Context) -> None:

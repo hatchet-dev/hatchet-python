@@ -1,15 +1,14 @@
-from dotenv import load_dotenv
-
-from hatchet_sdk import Context, Hatchet, WorkerLabelComparator
+from hatchet_sdk import BaseWorkflow, Context, Hatchet, WorkerLabelComparator
 from hatchet_sdk.labels import DesiredWorkerLabel
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+wf = hatchet.declare_workflow(on_events=["affinity:run"])
 
-@hatchet.workflow(on_events=["affinity:run"])
-class AffinityWorkflow:
+
+class AffinityWorkflow(BaseWorkflow):
+    config = wf.config
+
     @hatchet.step(
         desired_worker_labels={
             "model": DesiredWorkerLabel(value="fancy-ai-model-v2", weight=10),

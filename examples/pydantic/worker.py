@@ -1,11 +1,8 @@
 from typing import cast
 
-from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from hatchet_sdk import Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
@@ -16,37 +13,40 @@ class ParentInput(BaseModel):
     x: str
 
 
-@hatchet.workflow(input_validator=ParentInput)
-class Parent:
+class ChildInput(BaseModel):
+    a: int
+    b: int
+
+
+parent_workflow = hatchet.declare_workflow(input_validator=ParentInput)
+child_workflow = hatchet.declare_workflow(input_validator=ChildInput)
+
+
+class Parent(BaseWorkflow):
+    config = parent_workflow.config
+
     @hatchet.step(timeout="5m")
     async def spawn(self, context: Context) -> dict[str, str]:
         ## Use `typing.cast` to cast your `workflow_input`
         ## to the type of your `input_validator`
-        input = cast(ParentInput, context.workflow_input())  ## This is a `ParentInput`
+        input = parent_workflow.get_workflow_input(context)  ## This is a `ParentInput`
 
-        child = await context.aio.spawn_workflow(
-            "Child",
-            {"a": 1, "b": "10"},
-        )
+        child = await child_workflow.spawn_one(ctx=context, input=ChildInput(a=1, b=10))
 
         return cast(dict[str, str], await child.result())
-
-
-class ChildInput(BaseModel):
-    a: int
-    b: int
 
 
 class StepResponse(BaseModel):
     status: str
 
 
-@hatchet.workflow(input_validator=ChildInput)
-class Child:
+class Child(BaseWorkflow):
+    config = child_workflow.config
+
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:
         ## This is an instance `ChildInput`
-        input = cast(ChildInput, context.workflow_input())
+        input = child_workflow.get_workflow_input(context)
 
         return StepResponse(status="success")
 

@@ -15,7 +15,7 @@ from hatchet_sdk.worker.runner.runner import Runner
 from hatchet_sdk.worker.runner.utils.capture_logs import capture_logs
 
 if TYPE_CHECKING:
-    from hatchet_sdk.v2.workflows import Step
+    from hatchet_sdk.workflow import Step
 
 STOP_LOOP_TYPE = Literal["STOP_LOOP"]
 STOP_LOOP: STOP_LOOP_TYPE = "STOP_LOOP"

@@ -2,19 +2,17 @@ import asyncio
 import random
 from typing import Any
 
-from dotenv import load_dotenv
-
-from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet
+from hatchet_sdk import BaseWorkflow, ChildTriggerWorkflowOptions, Context, Hatchet
 from hatchet_sdk.clients.admin import DedupeViolationErr
-from hatchet_sdk.loader import ClientConfig
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+dedupe_parent_wf = hatchet.declare_workflow(on_events=["parent:create"])
 
-@hatchet.workflow(on_events=["parent:create"])
-class DedupeParent:
+
+class DedupeParent(BaseWorkflow):
+    config = dedupe_parent_wf.config
+
     @hatchet.step(timeout="1m")
     async def spawn(self, context: Context) -> dict[str, list[Any]]:
         print("spawning child")
@@ -25,7 +23,7 @@ class DedupeParent:
             try:
                 results.append(
                     (
-                        await context.aio.spawn_workflow(
+                        await context.spawn_workflow(
                             "DedupeChild",
                             {"a": str(i)},
                             key=f"child{i}",
@@ -45,8 +43,12 @@ class DedupeParent:
         return {"results": result}
 
 
-@hatchet.workflow(on_events=["child:create"])
-class DedupeChild:
+dedupe_child_wf = hatchet.declare_workflow(on_events=["child:create"])
+
+
+class DedupeChild(BaseWorkflow):
+    config = dedupe_child_wf.config
+
     @hatchet.step()
     async def process(self, context: Context) -> dict[str, str]:
         await asyncio.sleep(3)

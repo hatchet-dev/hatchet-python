@@ -1,51 +1,66 @@
 import asyncio
-from typing import Any
+from typing import Any, cast
 
-from dotenv import load_dotenv
+from pydantic import BaseModel
 
-from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk import BaseWorkflow, ChildTriggerWorkflowOptions, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(on_events=["parent:create"])
-class Parent:
+class ParentInput(BaseModel):
+    n: int = 100
+
+
+class ChildInput(BaseModel):
+    a: str
+
+
+parent_wf = hatchet.declare_workflow(
+    on_events=["parent:create"], input_validator=ParentInput
+)
+child_wf = hatchet.declare_workflow(
+    on_events=["child:create"], input_validator=ChildInput
+)
+
+
+class Parent(BaseWorkflow):
+    config = parent_wf.config
+
     @hatchet.step(timeout="5m")
     async def spawn(self, context: Context) -> dict[str, Any]:
         print("spawning child")
 
         context.put_stream("spawning...")
-        results = []
 
-        n = context.workflow_input().get("n", 100)
+        n = parent_wf.get_workflow_input(context).n
 
-        for i in range(n):
-            results.append(
-                (
-                    await context.aio.spawn_workflow(
-                        "Child",
-                        {"a": str(i)},
-                        key=f"child{i}",
-                        options=ChildTriggerWorkflowOptions(
-                            additional_metadata={"hello": "earth"}
-                        ),
-                    )
-                ).result()
-            )
+        children = await asyncio.gather(
+            *[
+                child_wf.spawn_one(
+                    ctx=context,
+                    input=ChildInput(a=str(i)),
+                    key=f"child{i}",
+                    options=ChildTriggerWorkflowOptions(
+                        additional_metadata={"hello": "earth"}
+                    ),
+                )
+                for i in range(n)
+            ]
+        )
 
-        result = await asyncio.gather(*results)
+        result = await asyncio.gather(*[child.result() for child in children])
         print(f"results {result}")
 
         return {"results": result}
 
 
-@hatchet.workflow(on_events=["child:create"])
-class Child:
+class Child(BaseWorkflow):
+    config = child_wf.config
+
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = context.workflow_input()["a"]
+        a = child_wf.get_workflow_input(context).a
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}

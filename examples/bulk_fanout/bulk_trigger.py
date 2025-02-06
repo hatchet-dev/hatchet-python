@@ -4,8 +4,6 @@ import json
 import os
 from typing import Any
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import new_client
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions, WorkflowRunDict
 from hatchet_sdk.clients.rest.models.workflow_run import WorkflowRun
@@ -13,7 +11,7 @@ from hatchet_sdk.clients.run_event_listener import StepRunEventType
 
 
 async def main() -> None:
-    load_dotenv()
+
     hatchet = new_client()
 
     workflow_runs = [

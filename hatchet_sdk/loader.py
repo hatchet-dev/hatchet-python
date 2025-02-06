@@ -2,8 +2,14 @@ import json
 from logging import Logger, getLogger
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
-from pydantic import Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hatchet_sdk.token import get_addresses_from_jwt, get_tenant_id_from_jwt
@@ -95,6 +101,8 @@ class ClientConfig(BaseSettings):
             server_url, grpc_broadcast_address = get_addresses_from_jwt(self.token)
             self.host_port = grpc_broadcast_address
             self.server_url = server_url
+        else:
+            self.server_url = self.host_port
 
         if not self.tls_config.server_name:
             self.tls_config.server_name = self.host_port.split(":")[0]

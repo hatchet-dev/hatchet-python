@@ -1,16 +1,15 @@
 import asyncio
 
-from dotenv import load_dotenv
-
-from hatchet_sdk import Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
+wf = hatchet.declare_workflow(on_events=["user:create"])
 
-@hatchet.workflow(on_events=["user:create"])
-class CancelWorkflow:
+
+class CancelWorkflow(BaseWorkflow):
+    config = wf.config
+
     @hatchet.step(timeout="10s", retries=1)
     async def step1(self, context: Context) -> None:
         i = 0
@@ -24,9 +23,8 @@ class CancelWorkflow:
 
 
 def main() -> None:
-    workflow = CancelWorkflow()
     worker = hatchet.worker("cancellation-worker", max_runs=4)
-    worker.register_workflow(workflow)
+    worker.register_workflow(CancelWorkflow())
 
     worker.start()
 

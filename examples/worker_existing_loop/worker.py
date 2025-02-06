@@ -1,17 +1,13 @@
 import asyncio
 from contextlib import suppress
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk.workflow import BaseWorkflow
 
 hatchet = Hatchet(debug=True)
 
 
-@hatchet.workflow(name="MyWorkflow")
-class MyWorkflow:
+class MyWorkflow(BaseWorkflow):
     @hatchet.step()
     async def step(self, context: Context) -> dict[str, str]:
         print("started")

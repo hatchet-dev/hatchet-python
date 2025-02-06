@@ -1,15 +1,21 @@
-from dotenv import load_dotenv
-
-from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet, StickyStrategy
-from hatchet_sdk.context.context import ContextAioImpl
-
-load_dotenv()
+from hatchet_sdk import (
+    BaseWorkflow,
+    ChildTriggerWorkflowOptions,
+    Context,
+    Hatchet,
+    StickyStrategy,
+)
 
 hatchet = Hatchet(debug=True)
 
+sticky_workflow = hatchet.declare_workflow(
+    on_events=["sticky:parent"], sticky=StickyStrategy.SOFT
+)
 
-@hatchet.workflow(on_events=["sticky:parent"], sticky=StickyStrategy.SOFT)
-class StickyWorkflow:
+
+class StickyWorkflow(BaseWorkflow):
+    config = sticky_workflow.config
+
     @hatchet.step()
     def step1a(self, context: Context) -> dict[str, str | None]:
         return {"worker": context.worker.id()}
@@ -19,7 +25,7 @@ class StickyWorkflow:
         return {"worker": context.worker.id()}
 
     @hatchet.step(parents=["step1a", "step1b"])
-    async def step2(self, context: ContextAioImpl) -> dict[str, str | None]:
+    async def step2(self, context: Context) -> dict[str, str | None]:
         ref = await context.spawn_workflow(
             "StickyChildWorkflow", {}, options=ChildTriggerWorkflowOptions(sticky=True)
         )
@@ -29,8 +35,14 @@ class StickyWorkflow:
         return {"worker": context.worker.id()}
 
 
-@hatchet.workflow(on_events=["sticky:child"], sticky=StickyStrategy.SOFT)
-class StickyChildWorkflow:
+sticky_child_workflow = hatchet.declare_workflow(
+    on_events=["sticky:child"], sticky=StickyStrategy.SOFT
+)
+
+
+class StickyChildWorkflow(BaseWorkflow):
+    config = sticky_child_workflow.config
+
     @hatchet.step()
     def child(self, context: Context) -> dict[str, str | None]:
         return {"worker": context.worker.id()}

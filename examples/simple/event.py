@@ -1,13 +1,9 @@
-from dotenv import load_dotenv
-
 from hatchet_sdk import new_client
 from hatchet_sdk.clients.events import (
     BulkPushEventOptions,
     BulkPushEventWithMetadata,
     PushEventOptions,
 )
-
-load_dotenv()
 
 client = new_client()
 

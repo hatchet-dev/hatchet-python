@@ -1,10 +1,6 @@
-from dotenv import load_dotenv
+from hatchet_sdk.hatchet import Hatchet
 
-from hatchet_sdk.hatchet import HatchetRest
-
-load_dotenv()
-
-hatchet = HatchetRest()
+hatchet = Hatchet()
 
 
 def main() -> None:

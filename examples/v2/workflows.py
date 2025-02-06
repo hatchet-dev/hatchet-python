@@ -1,9 +1,6 @@
-from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from hatchet_sdk.v2 import Hatchet
-
-load_dotenv()
+from hatchet_sdk import Hatchet
 
 hatchet = Hatchet(debug=True)
 

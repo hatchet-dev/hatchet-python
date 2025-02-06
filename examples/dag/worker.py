@@ -2,17 +2,15 @@ import random
 import time
 from typing import Any, cast
 
-from dotenv import load_dotenv
-
-from hatchet_sdk import Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
+wf = hatchet.declare_workflow(on_events=["dag:create"], schedule_timeout="10m")
 
-@hatchet.workflow(on_events=["dag:create"], schedule_timeout="10m")
-class DagWorkflow:
+
+class DagWorkflow(BaseWorkflow):
+    config = wf.config
 
     @hatchet.step(timeout="5s")
     def step1(self, context: Context) -> dict[str, int]:
@@ -46,7 +44,7 @@ class DagWorkflow:
         print(
             "executed step4",
             time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
+            context.workflow_input,
             context.step_output("step1"),
             context.step_output("step3"),
         )
@@ -56,9 +54,8 @@ class DagWorkflow:
 
 
 def main() -> None:
-    workflow = DagWorkflow()
     worker = hatchet.worker("dag-worker")
-    worker.register_workflow(workflow)
+    worker.register_workflow(DagWorkflow())
 
     worker.start()
 

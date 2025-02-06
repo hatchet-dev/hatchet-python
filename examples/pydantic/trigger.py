@@ -1,12 +1,10 @@
 import asyncio
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import new_client
 
 
 async def main() -> None:
-    load_dotenv()
+
     hatchet = new_client()
 
     hatchet.admin.run_workflow(

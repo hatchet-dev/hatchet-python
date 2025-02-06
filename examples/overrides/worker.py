@@ -1,16 +1,15 @@
 import time
 
-from dotenv import load_dotenv
-
-from hatchet_sdk import Context, Hatchet
-
-load_dotenv()
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
+wf = hatchet.declare_workflow(on_events=["overrides:create"], schedule_timeout="10m")
 
-@hatchet.workflow(on_events=["overrides:create"], schedule_timeout="10m")
-class OverridesWorkflow:
+
+class OverridesWorkflow(BaseWorkflow):
+    config = wf.config
+
     def __init__(self) -> None:
         self.my_value = "test"
 
@@ -19,7 +18,7 @@ class OverridesWorkflow:
         print(
             "starting step1",
             time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
+            context.workflow_input,
         )
         overrideValue = context.playground("prompt", "You are an AI assistant...")
         time.sleep(3)
@@ -34,7 +33,7 @@ class OverridesWorkflow:
         print(
             "starting step2",
             time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
+            context.workflow_input,
         )
         time.sleep(5)
         print("executed step2", time.strftime("%H:%M:%S", time.localtime()))
@@ -47,7 +46,7 @@ class OverridesWorkflow:
         print(
             "executed step3",
             time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
+            context.workflow_input,
             context.step_output("step1"),
             context.step_output("step2"),
         )
@@ -60,7 +59,7 @@ class OverridesWorkflow:
         print(
             "executed step4",
             time.strftime("%H:%M:%S", time.localtime()),
-            context.workflow_input(),
+            context.workflow_input,
             context.step_output("step1"),
             context.step_output("step3"),
         )
