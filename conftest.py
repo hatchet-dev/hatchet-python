@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import subprocess
@@ -15,7 +16,7 @@ from hatchet_sdk.loader import ClientTLSConfig
 
 
 @pytest.fixture(scope="session", autouse=True)
-def token() -> None:
+def token() -> str:
     result = subprocess.run(
         [
             "docker",
@@ -37,21 +38,30 @@ def token() -> None:
 
     token = result.stdout.strip()
 
-    os.environ["HATCHET_CLIENT_TLS_STRATEGY"] = "none"
     os.environ["HATCHET_CLIENT_TOKEN"] = token
+
+    return token
 
 
 @pytest_asyncio.fixture(scope="session")
-async def aiohatchet() -> AsyncGenerator[Hatchet, None]:
+async def aiohatchet(token: str) -> AsyncGenerator[Hatchet, None]:
     yield Hatchet(
         debug=True,
+        config=ClientConfig(
+            token=token,
+            tls_config=ClientTLSConfig(strategy="none"),
+        ),
     )
 
 
 @pytest.fixture(scope="session")
-def hatchet() -> Hatchet:
+def hatchet(token: str) -> Hatchet:
     return Hatchet(
         debug=True,
+        config=ClientConfig(
+            token=token,
+            tls_config=ClientTLSConfig(strategy="none"),
+        ),
     )
 
 
@@ -64,7 +74,10 @@ def worker(
     command = ["poetry", "run", example]
 
     logging.info(f"Starting background worker: {' '.join(command)}")
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    proc = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=os.environ.copy()
+    )
 
     # Check if the process is still running
     if proc.poll() is not None:

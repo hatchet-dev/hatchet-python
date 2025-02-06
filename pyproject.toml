@@ -61,6 +61,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 log_cli = true
+env = ["HATCHET_CLIENT_TLS_STRATEGY=none"]
 
 [tool.isort]
 profile = "black"
