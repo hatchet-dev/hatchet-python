@@ -1,12 +1,28 @@
 import asyncio
 from typing import Any, cast
 
+from pydantic import BaseModel
+
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions, ChildWorkflowRunDict
 
 hatchet = Hatchet(debug=True)
 
-bulk_parent_wf = hatchet.declare_workflow(on_events=["parent:create"])
+
+class ParentInput(BaseModel):
+    n: int = 100
+
+
+class ChildInput(BaseModel):
+    a: str
+
+
+bulk_parent_wf = hatchet.declare_workflow(
+    on_events=["parent:create"], input_validator=ParentInput
+)
+bulk_child_wf = hatchet.declare_workflow(
+    on_events=["child:create"], input_validator=ChildInput
+)
 
 
 class BulkParent(BaseWorkflow):
@@ -19,12 +35,11 @@ class BulkParent(BaseWorkflow):
         context.put_stream("spawning...")
         results = []
 
-        n = cast(dict[str, Any], context.workflow_input).get("n", 100)
+        n = bulk_parent_wf.get_workflow_input(context).n
 
         child_workflow_runs = [
-            ChildWorkflowRunDict(
-                workflow_name="BulkChild",
-                input={"a": str(i)},
+            bulk_child_wf.construct_spawn_workflow_input(
+                input=ChildInput(a=str(i)),
                 key=f"child{i}",
                 options=ChildTriggerWorkflowOptions(
                     additional_metadata={"hello": "earth"}
@@ -36,7 +51,9 @@ class BulkParent(BaseWorkflow):
         if len(child_workflow_runs) == 0:
             return {}
 
-        spawn_results = await context.aspawn_workflows(child_workflow_runs)
+        spawn_results = await bulk_child_wf.spawn_workflows(
+            context, child_workflow_runs
+        )
 
         results = await asyncio.gather(
             *[workflowRunRef.result() for workflowRunRef in spawn_results],
@@ -54,15 +71,12 @@ class BulkParent(BaseWorkflow):
         return {"results": results}
 
 
-bulk_child_wf = hatchet.declare_workflow(on_events=["child:create"])
-
-
 class BulkChild(BaseWorkflow):
     config = bulk_child_wf.config
 
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = cast(dict[str, Any], context.workflow_input)["a"]
+        a = bulk_child_wf.get_workflow_input(context).a
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}

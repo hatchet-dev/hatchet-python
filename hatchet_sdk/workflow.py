@@ -16,6 +16,7 @@ from typing import (
 
 from pydantic import BaseModel, ConfigDict
 
+from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions, ChildWorkflowRunDict
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy as ConcurrencyLimitStrategyProto,
@@ -30,6 +31,7 @@ from hatchet_sdk.contracts.workflows_pb2 import (
 from hatchet_sdk.contracts.workflows_pb2 import StickyStrategy as StickyStrategyProto
 from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, WorkflowKind
 from hatchet_sdk.logger import logger
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 if TYPE_CHECKING:
     from hatchet_sdk import Hatchet
@@ -180,7 +182,15 @@ class Step(Generic[R]):
         return self.workflow is not None
 
 
+class SpawnWorkflowInput(BaseModel, Generic[TWorkflowInput]):
+    workflow_name: str
+    input: TWorkflowInput
+    key: str | None = None
+    options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions()
+
+
 class WorkflowDeclaration(Generic[TWorkflowInput]):
+
     def __init__(self, config: WorkflowConfig, hatchet: Union["Hatchet", None]):
         self.config = config
         self.hatchet = hatchet
@@ -195,6 +205,45 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
 
     def get_workflow_input(self, ctx: Context) -> TWorkflowInput:
         return cast(TWorkflowInput, ctx.workflow_input)
+
+    def construct_spawn_workflow_input(
+        self,
+        input: TWorkflowInput,
+        key: str | None = None,
+        options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
+    ) -> SpawnWorkflowInput[TWorkflowInput]:
+        return SpawnWorkflowInput[TWorkflowInput](
+            workflow_name=self.config.name, input=input, key=key, options=options
+        )
+
+    async def spawn_workflows(
+        self, ctx: Context, spawn_inputs: list[SpawnWorkflowInput[TWorkflowInput]]
+    ) -> list[WorkflowRunRef]:
+        inputs = [
+            ChildWorkflowRunDict(
+                workflow_name=spawn_input.workflow_name,
+                input=spawn_input.input.model_dump(),
+                key=spawn_input.key,
+                options=spawn_input.options,
+            )
+            for spawn_input in spawn_inputs
+        ]
+        return await ctx.aspawn_workflows(inputs)
+
+    async def spawn_workflow(
+        self,
+        ctx: Context,
+        workflow_name: str,
+        input: TWorkflowInput,
+        key: str | None = None,
+        options: ChildTriggerWorkflowOptions = ChildTriggerWorkflowOptions(),
+    ) -> WorkflowRunRef:
+        return await ctx.aspawn_workflow(
+            workflow_name=workflow_name,
+            input=input.model_dump(),
+            key=key,
+            options=options,
+        )
 
 
 class BaseWorkflow:
