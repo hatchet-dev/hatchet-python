@@ -4,7 +4,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import ContextVar
 from io import StringIO
-from typing import Any, Awaitable, Callable, Coroutine, ItemsView, ParamSpec, TypeVar
+from typing import Any, Awaitable, Callable, ItemsView, ParamSpec, TypeVar
 
 from hatchet_sdk.clients.events import EventClient
 from hatchet_sdk.logger import logger

@@ -12,7 +12,7 @@ class RateLimitWorkflow(BaseWorkflow):
     @hatchet.step(
         rate_limits=[
             RateLimit(
-                dynamic_key=f'"LIMIT:"+input.group',
+                dynamic_key='"LIMIT:"+input.group',
                 units="input.units",
                 limit="input.limit",
             )

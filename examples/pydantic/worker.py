@@ -29,7 +29,7 @@ class Parent(BaseWorkflow):
     async def spawn(self, context: Context) -> dict[str, str]:
         ## Use `typing.cast` to cast your `workflow_input`
         ## to the type of your `input_validator`
-        input = parent_workflow.get_workflow_input(context)  ## This is a `ParentInput`
+        parent_workflow.get_workflow_input(context)  ## This is a `ParentInput`
 
         child = await child_workflow.spawn_one(ctx=context, input=ChildInput(a=1, b=10))
 
@@ -46,14 +46,14 @@ class Child(BaseWorkflow):
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:
         ## This is an instance `ChildInput`
-        input = child_workflow.get_workflow_input(context)
+        child_workflow.get_workflow_input(context)
 
         return StepResponse(status="success")
 
     @hatchet.step(parents=["process"])
     def process2(self, context: Context) -> StepResponse:
         ## This is an instance of `StepResponse`
-        process_output = cast(StepResponse, context.step_output("process"))
+        cast(StepResponse, context.step_output("process"))
 
         return {"status": "step 2 - success"}  # type: ignore[return-value]
 
@@ -63,7 +63,7 @@ class Child(BaseWorkflow):
         ## response of `process2` was a dictionary. Note that
         ## Hatchet will attempt to parse that dictionary into
         ## an object of type `StepResponse`
-        process_2_output = cast(StepResponse, context.step_output("process2"))
+        cast(StepResponse, context.step_output("process2"))
 
         return StepResponse(status="step 3 - success")
 

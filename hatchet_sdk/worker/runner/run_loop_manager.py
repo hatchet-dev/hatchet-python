@@ -2,9 +2,8 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from multiprocessing import Queue
-from typing import TYPE_CHECKING, Callable, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
-from hatchet_sdk import Context
 from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.loader import ClientConfig
@@ -21,7 +20,6 @@ STOP_LOOP_TYPE = Literal["STOP_LOOP"]
 STOP_LOOP: STOP_LOOP_TYPE = "STOP_LOOP"
 
 T = TypeVar("T")
-from typing import Any
 
 
 @dataclass
@@ -50,7 +48,7 @@ class WorkerActionRunLoopManager:
         self.start()
 
     def start(self, retry_count: int = 1) -> None:
-        k = self.loop.create_task(self.async_start(retry_count))
+        k = self.loop.create_task(self.async_start(retry_count))  # noqa: F841
 
     async def async_start(self, retry_count: int = 1) -> None:
         await capture_logs(

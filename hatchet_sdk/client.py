@@ -1,5 +1,4 @@
 import asyncio
-from logging import Logger
 from typing import Callable
 
 import grpc

@@ -17,11 +17,11 @@ async def create_cron() -> None:
         },
     )
 
-    id = cron_trigger.metadata.id  # the id of the cron trigger
+    cron_trigger.metadata.id  # the id of the cron trigger
     # !!
 
     # ❓ List
-    cron_triggers = await hatchet.cron.aio.list()
+    await hatchet.cron.aio.list()
     # !!
 
     # ❓ Get

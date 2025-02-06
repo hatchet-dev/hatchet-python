@@ -2,7 +2,7 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, AsyncIterable, AsyncIterator, Optional, cast
+from typing import Any, AsyncGenerator, Optional, cast
 
 import grpc
 import grpc.aio
@@ -32,9 +32,6 @@ from ...metadata import get_metadata
 from ..events import proto_timestamp_now
 
 DEFAULT_ACTION_TIMEOUT = 600  # seconds
-
-
-DEFAULT_ACTION_LISTENER_RETRY_INTERVAL = 5  # seconds
 DEFAULT_ACTION_LISTENER_RETRY_COUNT = 15
 
 
