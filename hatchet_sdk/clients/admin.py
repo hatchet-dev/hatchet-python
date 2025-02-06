@@ -95,9 +95,11 @@ class AdminClientBase:
 
             try:
                 _options = {
-                        **_options,
-                        "additional_metadata": json.dumps(options.additional_metadata).encode("utf-8"),
-                    }
+                    **_options,
+                    "additional_metadata": json.dumps(
+                        options.additional_metadata
+                    ).encode("utf-8"),
+                }
             except json.JSONDecodeError as e:
                 raise ValueError(f"Error encoding payload: {e}")
 
