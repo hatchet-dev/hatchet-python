@@ -1,6 +1,5 @@
 from examples.v2.workflows import example_workflow, hatchet
-from hatchet_sdk import Context
-from hatchet_sdk.v2 import BaseWorkflow
+from hatchet_sdk import BaseWorkflow, Context
 
 
 class ExampleV2Workflow(BaseWorkflow):

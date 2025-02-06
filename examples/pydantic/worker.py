@@ -3,7 +3,7 @@ from typing import cast
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 load_dotenv()
 
@@ -16,8 +16,12 @@ class ParentInput(BaseModel):
     x: str
 
 
-@hatchet.workflow(input_validator=ParentInput)
-class Parent:
+parent_workflow = hatchet.declare_workflow(input_validator=ParentInput)
+
+
+class Parent(BaseWorkflow):
+    config = parent_workflow.config
+
     @hatchet.step(timeout="5m")
     async def spawn(self, context: Context) -> dict[str, str]:
         ## Use `typing.cast` to cast your `workflow_input`
@@ -41,8 +45,12 @@ class StepResponse(BaseModel):
     status: str
 
 
-@hatchet.workflow(input_validator=ChildInput)
-class Child:
+child_workflow = hatchet.declare_workflow(input_validator=ChildInput)
+
+
+class Child(BaseWorkflow):
+    config = child_workflow.config
+
     @hatchet.step()
     def process(self, context: Context) -> StepResponse:
         ## This is an instance `ChildInput`

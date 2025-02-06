@@ -3,6 +3,7 @@ import time
 from dotenv import load_dotenv
 
 from hatchet_sdk import (
+    BaseWorkflow,
     ConcurrencyExpression,
     ConcurrencyLimitStrategy,
     Context,
@@ -13,8 +14,7 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
-@hatchet.workflow(
+wf = hatchet.declare_workflow(
     on_events=["concurrency-test"],
     schedule_timeout="10m",
     concurrency=ConcurrencyExpression(
@@ -23,7 +23,10 @@ hatchet = Hatchet(debug=True)
         limit_strategy=ConcurrencyLimitStrategy.GROUP_ROUND_ROBIN,
     ),
 )
-class ConcurrencyDemoWorkflowRR:
+
+
+class ConcurrencyDemoWorkflowRR(BaseWorkflow):
+    config = wf.config
 
     @hatchet.step()
     def step1(self, context: Context) -> None:
@@ -34,9 +37,8 @@ class ConcurrencyDemoWorkflowRR:
 
 
 def main() -> None:
-    workflow = ConcurrencyDemoWorkflowRR()
     worker = hatchet.worker("concurrency-demo-worker-rr", max_runs=10)
-    worker.register_workflow(workflow)
+    worker.register_workflow(ConcurrencyDemoWorkflowRR())
 
     worker.start()
 

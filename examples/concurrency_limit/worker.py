@@ -1,18 +1,21 @@
 import time
-from typing import Any
+from typing import Any, cast
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
-from hatchet_sdk.contracts.workflows_pb2 import ConcurrencyLimitStrategy
-from hatchet_sdk.workflow import ConcurrencyExpression
+from hatchet_sdk import (
+    BaseWorkflow,
+    ConcurrencyExpression,
+    ConcurrencyLimitStrategy,
+    Context,
+    Hatchet,
+)
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-
-@hatchet.workflow(
+wf = hatchet.declare_workflow(
     on_events=["concurrency-test"],
     concurrency=ConcurrencyExpression(
         expression="input.group",
@@ -20,20 +23,23 @@ hatchet = Hatchet(debug=True)
         limit_strategy=ConcurrencyLimitStrategy.CANCEL_IN_PROGRESS,
     ),
 )
-class ConcurrencyDemoWorkflow:
+
+
+class ConcurrencyDemoWorkflow(BaseWorkflow):
+
+    config = wf.config
 
     @hatchet.step()
     def step1(self, context: Context) -> dict[str, Any]:
-        input = context.workflow_input
+        input = cast(dict[str, Any], context.workflow_input)
         time.sleep(3)
         print("executed step1")
         return {"run": input["run"]}
 
 
 def main() -> None:
-    workflow = ConcurrencyDemoWorkflow()
     worker = hatchet.worker("concurrency-demo-worker", max_runs=10)
-    worker.register_workflow(workflow)
+    worker.register_workflow(ConcurrencyDemoWorkflow())
 
     worker.start()
 

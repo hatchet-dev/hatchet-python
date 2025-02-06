@@ -2,15 +2,18 @@ import time
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+wf = hatchet.declare_workflow(on_events=["overrides:create"], schedule_timeout="10m")
 
-@hatchet.workflow(on_events=["overrides:create"], schedule_timeout="10m")
-class OverridesWorkflow:
+
+class OverridesWorkflow(BaseWorkflow):
+    config = wf.config
+
     def __init__(self) -> None:
         self.my_value = "test"
 

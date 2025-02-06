@@ -2,7 +2,7 @@ import json
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 load_dotenv()
 
@@ -12,9 +12,12 @@ hatchet = Hatchet(debug=True)
 # This workflow will fail because the step will throw an error
 # we define an onFailure step to handle this case
 
+on_failure_wf = hatchet.declare_workflow(on_events=["user:create"])
 
-@hatchet.workflow(on_events=["user:create"])
-class OnFailureWorkflow:
+
+class OnFailureWorkflow(BaseWorkflow):
+    config = on_failure_wf.config
+
     @hatchet.step(timeout="1s")
     def step1(self, context: Context) -> None:
         # 👀 this step will always raise an exception
@@ -27,7 +30,7 @@ class OnFailureWorkflow:
         # or notify a user here
 
         # 👀 Fetch the errors from upstream step runs from the context
-        print(context.step_run_errors())
+        print(context.step_run_errors)
 
         return {"status": "success"}
 
@@ -38,8 +41,13 @@ class OnFailureWorkflow:
 # ❓ OnFailure With Details
 # We can access the failure details in the onFailure step
 # via the context method
-@hatchet.workflow(on_events=["user:create"])
-class OnFailureWorkflowWithDetails:
+
+on_failure_wf_with_details = hatchet.declare_workflow(on_events=["user:create"])
+
+
+class OnFailureWorkflowWithDetails(BaseWorkflow):
+    config = on_failure_wf_with_details.config
+
     # ... defined as above
     @hatchet.step(timeout="1s")
     def step1(self, context: Context) -> None:
@@ -62,11 +70,9 @@ class OnFailureWorkflowWithDetails:
 
 
 def main() -> None:
-    workflow = OnFailureWorkflow()
-    workflow2 = OnFailureWorkflowWithDetails()
     worker = hatchet.worker("on-failure-worker", max_runs=4)
-    worker.register_workflow(workflow)
-    worker.register_workflow(workflow2)
+    worker.register_workflow(OnFailureWorkflow())
+    worker.register_workflow(OnFailureWorkflowWithDetails())
 
     worker.start()
 

@@ -4,15 +4,18 @@ import time
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+wf = hatchet.declare_workflow(on_events=["man:create"])
 
-@hatchet.workflow(on_events=["man:create"])
-class ManualTriggerWorkflow:
+
+class ManualTriggerWorkflow(BaseWorkflow):
+    config = wf.config
+
     @hatchet.step()
     def step1(self, context: Context) -> dict[str, str]:
         res = context.playground("res", "HELLO")
@@ -48,9 +51,8 @@ class ManualTriggerWorkflow:
 
 
 def main() -> None:
-    workflow = ManualTriggerWorkflow()
     worker = hatchet.worker("manual-worker", max_runs=4)
-    worker.register_workflow(workflow)
+    worker.register_workflow(ManualTriggerWorkflow())
 
     worker.start()
 

@@ -1,17 +1,20 @@
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import ChildTriggerWorkflowOptions, Context, Hatchet
+from hatchet_sdk import BaseWorkflow, ChildTriggerWorkflowOptions, Context, Hatchet
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+parent_wf = hatchet.declare_workflow(on_events=["parent:create"])
 
-@hatchet.workflow(on_events=["parent:create"])
-class Parent:
+
+class Parent(BaseWorkflow):
+    config = parent_wf.config
+
     @hatchet.step(timeout="5m")
     async def spawn(self, context: Context) -> dict[str, Any]:
         print("spawning child")
@@ -19,7 +22,7 @@ class Parent:
         context.put_stream("spawning...")
         results = []
 
-        n = context.workflow_input.get("n", 100)
+        n = cast(dict[str, Any], context.workflow_input).get("n", 100)
 
         for i in range(n):
             results.append(
@@ -41,11 +44,15 @@ class Parent:
         return {"results": result}
 
 
-@hatchet.workflow(on_events=["child:create"])
-class Child:
+child_wf = hatchet.declare_workflow(on_events=["child:create"])
+
+
+class Child(BaseWorkflow):
+    config = child_wf.config
+
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = context.workflow_input["a"]
+        a = cast(dict[str, Any], context.workflow_input)["a"]
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}

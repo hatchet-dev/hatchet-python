@@ -1,18 +1,21 @@
 import asyncio
-from typing import Any
+from typing import Any, cast
 
 from dotenv import load_dotenv
 
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import BaseWorkflow, Context, Hatchet
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions, ChildWorkflowRunDict
 
 load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
+bulk_parent_wf = hatchet.declare_workflow(on_events=["parent:create"])
 
-@hatchet.workflow(on_events=["parent:create"])
-class BulkParent:
+
+class BulkParent(BaseWorkflow):
+    config = bulk_parent_wf.config
+
     @hatchet.step(timeout="5m")
     async def spawn(self, context: Context) -> dict[str, list[Any]]:
         print("spawning child")
@@ -20,7 +23,7 @@ class BulkParent:
         context.put_stream("spawning...")
         results = []
 
-        n = context.workflow_input.get("n", 100)
+        n = cast(dict[str, Any], context.workflow_input).get("n", 100)
 
         child_workflow_runs = [
             ChildWorkflowRunDict(
@@ -55,11 +58,15 @@ class BulkParent:
         return {"results": results}
 
 
-@hatchet.workflow(on_events=["child:create"])
-class BulkChild:
+bulk_child_wf = hatchet.declare_workflow(on_events=["child:create"])
+
+
+class BulkChild(BaseWorkflow):
+    config = bulk_child_wf.config
+
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = context.workflow_input["a"]
+        a = cast(dict[str, Any], context.workflow_input)["a"]
         print(f"child process {a}")
         context.put_stream("child 1...")
         return {"status": "success " + a}

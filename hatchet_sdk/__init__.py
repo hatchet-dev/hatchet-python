@@ -118,7 +118,6 @@ from hatchet_sdk.clients.rest.models.workflow_version_definition import (
 )
 from hatchet_sdk.clients.rest.models.workflow_version_meta import WorkflowVersionMeta
 from hatchet_sdk.contracts.workflows_pb2 import (
-    ConcurrencyLimitStrategy,
     CreateWorkflowVersionOpts,
     RateLimitDuration,
     WorkerLabelComparator,
@@ -142,6 +141,7 @@ from .worker.worker import Worker, WorkerStartOptions, WorkerStatus
 from .workflow import (
     BaseWorkflow,
     ConcurrencyExpression,
+    ConcurrencyLimitStrategy,
     StickyStrategy,
     WorkflowConfig,
 )
