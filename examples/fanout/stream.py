@@ -4,15 +4,13 @@ import json
 import os
 import random
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import Hatchet, new_client
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.run_event_listener import StepRunEventType
 
 
 async def main() -> None:
-    load_dotenv()
+
     hatchet = Hatchet()
 
     # Generate a random stream key to use to track all

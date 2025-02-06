@@ -2,12 +2,8 @@ import asyncio
 import random
 from typing import Any
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import BaseWorkflow, ChildTriggerWorkflowOptions, Context, Hatchet
 from hatchet_sdk.clients.admin import DedupeViolationErr
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

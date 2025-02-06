@@ -1,11 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, cast
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

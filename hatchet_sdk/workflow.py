@@ -193,7 +193,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
             workflow_name=self.config.name, input=input.model_dump() if input else {}
         )
 
-    def workflow_input(self, ctx: Context) -> TWorkflowInput:
+    def get_workflow_input(self, ctx: Context) -> TWorkflowInput:
         return cast(TWorkflowInput, ctx.workflow_input)
 
 

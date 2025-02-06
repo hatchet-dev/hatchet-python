@@ -1,8 +1,4 @@
-from dotenv import load_dotenv
-
 from hatchet_sdk.hatchet import Hatchet
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

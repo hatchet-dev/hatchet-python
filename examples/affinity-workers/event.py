@@ -1,9 +1,5 @@
-from dotenv import load_dotenv
-
 from hatchet_sdk.clients.events import PushEventOptions
 from hatchet_sdk.hatchet import Hatchet
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

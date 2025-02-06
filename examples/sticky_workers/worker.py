@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-
 from hatchet_sdk import (
     BaseWorkflow,
     ChildTriggerWorkflowOptions,
@@ -7,8 +5,6 @@ from hatchet_sdk import (
     Hatchet,
     StickyStrategy,
 )
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

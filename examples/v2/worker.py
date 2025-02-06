@@ -7,7 +7,7 @@ class ExampleV2Workflow(BaseWorkflow):
 
     @hatchet.step(timeout="11s", retries=3)
     def step1(self, context: Context) -> None:
-        input = example_workflow.workflow_input(context)
+        input = example_workflow.get_workflow_input(context)
 
         print(input.message)
 

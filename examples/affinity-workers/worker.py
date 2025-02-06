@@ -1,9 +1,5 @@
-from dotenv import load_dotenv
-
 from hatchet_sdk import BaseWorkflow, Context, Hatchet, WorkerLabelComparator
 from hatchet_sdk.labels import DesiredWorkerLabel
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

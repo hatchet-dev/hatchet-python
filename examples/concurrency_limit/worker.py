@@ -1,8 +1,6 @@
 import time
 from typing import Any, cast
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import (
     BaseWorkflow,
     ConcurrencyExpression,
@@ -10,8 +8,6 @@ from hatchet_sdk import (
     Context,
     Hatchet,
 )
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

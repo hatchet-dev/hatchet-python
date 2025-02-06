@@ -1,10 +1,6 @@
 import asyncio
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

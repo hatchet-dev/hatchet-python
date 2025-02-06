@@ -1,11 +1,7 @@
 import asyncio
 from typing import cast
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import Hatchet, WorkflowList
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

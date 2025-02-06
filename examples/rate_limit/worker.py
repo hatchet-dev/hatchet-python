@@ -1,9 +1,5 @@
-from dotenv import load_dotenv
-
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
 from hatchet_sdk.rate_limit import RateLimit, RateLimitDuration
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 wf = hatchet.declare_workflow(on_events=["rate_limit:create"])

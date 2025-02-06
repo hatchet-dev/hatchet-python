@@ -1,12 +1,8 @@
 import asyncio
 from typing import Any, cast
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
 from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions, ChildWorkflowRunDict
-
-load_dotenv()
 
 hatchet = Hatchet(debug=True)
 

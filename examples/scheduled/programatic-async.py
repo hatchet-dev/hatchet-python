@@ -1,11 +1,7 @@
 from datetime import datetime, timedelta
 
-from dotenv import load_dotenv
-
 from hatchet_sdk import Hatchet
 from hatchet_sdk.clients.rest.models.scheduled_workflows import ScheduledWorkflows
-
-load_dotenv()
 
 hatchet = Hatchet()
 
