@@ -1,15 +1,19 @@
 from importlib.metadata import version
-from typing import Callable, Collection, Coroutine, Never, cast
+from typing import Any, Callable, Collection, Coroutine, Never, cast
 
+from opentelemetry.context import Context
 from opentelemetry.instrumentation.instrumentor import (  # type: ignore[attr-defined]
     BaseInstrumentor,
 )
 from opentelemetry.metrics import MeterProvider, get_meter
 from opentelemetry.trace import StatusCode, TracerProvider, get_tracer
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
 
 import hatchet_sdk
 from hatchet_sdk.clients.dispatcher.action_listener import Action
+from hatchet_sdk.clients.events import EventClient, PushEventOptions
+from hatchet_sdk.contracts.events_pb2 import Event
 from hatchet_sdk.worker.runner.runner import Runner
 
 hatchet_sdk_version = version("hatchet-sdk")
@@ -18,6 +22,37 @@ InstrumentKwargs = TracerProvider | MeterProvider | None
 
 
 class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
+    OTEL_TRACEPARENT_KEY = "traceparent"
+
+    def create_traceparent(self) -> str | None:
+        carrier: dict[str, str] = {}
+        TraceContextTextMapPropagator().inject(carrier)
+
+        return carrier.get("traceparent")
+
+    def parse_carrier_from_metadata(
+        self, metadata: dict[str, str] | None
+    ) -> Context | None:
+        if not metadata:
+            return None
+
+        traceparent = metadata.get(self.OTEL_TRACEPARENT_KEY)
+
+        if not traceparent:
+            return None
+
+        return TraceContextTextMapPropagator().extract(
+            {self.OTEL_TRACEPARENT_KEY: traceparent}
+        )
+
+    def inject_traceparent_into_metadata(
+        self, metadata: dict[str, str], traceparent: str | None
+    ) -> dict[str, str]:
+        if traceparent:
+            metadata[self.OTEL_TRACEPARENT_KEY] = traceparent
+
+        return metadata
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return tuple()
 
@@ -44,6 +79,12 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             self._wrap_handle_cancel_action,
         )
 
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "clients.events.EventClient.push",
+            self._wrap_push_event,
+        )
+
     async def _wrap_handle_start_step_run(
         self,
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
@@ -52,10 +93,12 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         kwargs: Never,
     ) -> Exception | None:
         action = args[0]
+        traceparent = self.parse_carrier_from_metadata(action.additional_metadata)
 
         with self._tracer.start_as_current_span(
             "hatchet.start_step_run",
             attributes=action.otel_attributes,
+            context=traceparent,
         ) as span:
             result = await wrapped(*args, **kwargs)
 
@@ -100,6 +143,22 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             },
         ):
             return await wrapped(*args, **kwargs)
+
+    def _wrap_push_event(
+        self,
+        wrapped: Callable[[str, dict[str, Any], PushEventOptions | None], Event],
+        instance: EventClient,
+        args: tuple[
+            str,
+            dict[str, Any],
+            PushEventOptions | None,
+        ],
+        kwargs: dict[str, str | dict[str, Any] | PushEventOptions | None],
+    ) -> Event:
+        with self._tracer.start_as_current_span(
+            "hatchet.push_event",
+        ):
+            return wrapped(*args, **kwargs)
 
     def _uninstrument(self, **kwargs: InstrumentKwargs) -> None:
         pass
