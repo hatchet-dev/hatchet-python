@@ -1,70 +1,39 @@
-import json
-from functools import cache
-from typing import Any
+from typing import Collection
 
-from opentelemetry import trace
-from opentelemetry.context import Context
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.trace import NoOpTracerProvider, Tracer
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 
-from hatchet_sdk.loader import ClientConfig
+_instruments = tuple()
+from importlib.metadata import version
 
-OTEL_CARRIER_KEY = "__otel_carrier"
+from opentelemetry.metrics import get_meter
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
+
+import hatchet_sdk
+
+hatchet_sdk_version = version("hatchet-sdk")
 
 
-@cache
-def create_tracer(config: ClientConfig) -> Tracer:
-    ## TODO: Figure out how to specify protocol here
-    resource = Resource(
-        attributes={SERVICE_NAME: config.otel_service_name or "hatchet.run"}
-    )
+class HatchetInstrumentor(BaseInstrumentor):
+    def instrumentation_dependencies(self) -> Collection[str]:
+        return _instruments
 
-    if config.otel_exporter_oltp_endpoint and config.otel_exporter_oltp_headers:
-        processor = BatchSpanProcessor(
-            OTLPSpanExporter(
-                endpoint=config.otel_exporter_oltp_endpoint,
-                headers=config.otel_exporter_oltp_headers,
-            ),
+    def _instrument(self, **kwargs):
+        self._tracer = get_tracer(
+            __name__, hatchet_sdk_version, kwargs.get("tracer_provider")
+        )
+        self._meter = get_meter(
+            __name__, hatchet_sdk_version, kwargs.get("meter_provider")
         )
 
-        ## If tracer provider is already set, we don't need to override it
-        if not isinstance(trace.get_tracer_provider(), TracerProvider):
-            trace_provider = TracerProvider(resource=resource)
-            trace_provider.add_span_processor(processor)
-            trace.set_tracer_provider(trace_provider)
-    else:
-        if not isinstance(trace.get_tracer_provider(), NoOpTracerProvider):
-            trace.set_tracer_provider(NoOpTracerProvider())
+        wrap_function_wrapper(
+            hatchet_sdk, "worker.runner.runner.Runner.handle_start_step_run", self._wrap_start_step_run
+        )
 
-    return trace.get_tracer(__name__)
+    def _wrap_start_step_run(self, wrapped, instance, args, kwargs):
+        with self._tracer.start_as_current_span("hatchet.start_step_run"):
+            return wrapped(*args, **kwargs)
 
-
-def create_carrier() -> dict[str, str]:
-    carrier: dict[str, str] = {}
-    TraceContextTextMapPropagator().inject(carrier)
-
-    return carrier
-
-
-def inject_carrier_into_metadata(
-    metadata: dict[Any, Any], carrier: dict[str, str]
-) -> dict[Any, Any]:
-    if carrier:
-        metadata[OTEL_CARRIER_KEY] = carrier
-
-    return metadata
-
-
-def parse_carrier_from_metadata(metadata: dict[str, Any] | None) -> Context | None:
-    if not metadata:
-        return None
-
-    return (
-        TraceContextTextMapPropagator().extract(_ctx)
-        if (_ctx := metadata.get(OTEL_CARRIER_KEY))
-        else None
-    )
+    def _uninstrument(self, **kwargs):
+        self._meter = None
+        self._tracer = None

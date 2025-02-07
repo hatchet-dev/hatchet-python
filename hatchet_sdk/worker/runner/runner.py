@@ -32,7 +32,6 @@ from hatchet_sdk.contracts.dispatcher_pb2 import (
 )
 from hatchet_sdk.loader import ClientConfig
 from hatchet_sdk.logger import logger
-from hatchet_sdk.utils.tracing import create_tracer, parse_carrier_from_metadata
 from hatchet_sdk.utils.types import WorkflowValidator
 from hatchet_sdk.v2.callable import DurableContext
 from hatchet_sdk.worker.action_listener_process import ActionEvent
@@ -88,43 +87,29 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
-        self.otel_tracer = create_tracer(config=config)
-
     def create_workflow_run_url(self, action: Action) -> str:
         return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"
 
     def run(self, action: Action) -> None:
-        ctx = parse_carrier_from_metadata(action.additional_metadata)
+        if self.worker_context.id() is None:
+            self.worker_context._worker_id = action.worker_id
 
-        with self.otel_tracer.start_as_current_span(
-            f"hatchet.worker.run.{action.step_id}", context=ctx
-        ) as span:
-            if self.worker_context.id() is None:
-                self.worker_context._worker_id = action.worker_id
-
-            span.set_attributes(action.otel_attributes)
-            span.set_attribute("workflow_run_url", self.create_workflow_run_url(action))
-
-            match action.action_type:
-                case ActionType.START_STEP_RUN:
-                    log = f"run: start step: {action.action_id}/{action.step_run_id}"
-                    span.add_event(log)
-                    logger.info(log)
-                    asyncio.create_task(self.handle_start_step_run(action))
-                case ActionType.CANCEL_STEP_RUN:
-                    log = f"cancel: step run:  {action.action_id}/{action.step_run_id}"
-                    span.add_event(log)
-                    logger.info(log)
-                    asyncio.create_task(self.handle_cancel_action(action.step_run_id))
-                case ActionType.START_GET_GROUP_KEY:
-                    log = f"run: get group key:  {action.action_id}/{action.get_group_key_run_id}"
-                    span.add_event(log)
-                    logger.info(log)
-                    asyncio.create_task(self.handle_start_group_key_run(action))
-                case _:
-                    log = f"unknown action type: {action.action_type}"
-                    span.add_event(log)
-                    logger.error(log)
+        match action.action_type:
+            case ActionType.START_STEP_RUN:
+                log = f"run: start step: {action.action_id}/{action.step_run_id}"
+                logger.info(log)
+                asyncio.create_task(self.handle_start_step_run(action))
+            case ActionType.CANCEL_STEP_RUN:
+                log = f"cancel: step run:  {action.action_id}/{action.step_run_id}"
+                logger.info(log)
+                asyncio.create_task(self.handle_cancel_action(action.step_run_id))
+            case ActionType.START_GET_GROUP_KEY:
+                log = f"run: get group key:  {action.action_id}/{action.get_group_key_run_id}"
+                logger.info(log)
+                asyncio.create_task(self.handle_start_group_key_run(action))
+            case _:
+                log = f"unknown action type: {action.action_type}"
+                logger.error(log)
 
     def step_run_callback(self, action: Action) -> Callable[[asyncio.Task[Any]], None]:
         def inner_callback(task: asyncio.Task[Any]) -> None:
@@ -307,100 +292,81 @@ class Runner:
         )
 
     async def handle_start_step_run(self, action: Action) -> None:
-        with self.otel_tracer.start_as_current_span(
-            f"hatchet.worker.handle_start_step_run.{action.step_id}",
-        ) as span:
-            span.add_event("Starting step run")
-            span.set_attributes(action.otel_attributes)
+        action_name = action.action_id
 
-            action_name = action.action_id
+        # Find the corresponding action function from the registry
+        action_func = self.action_registry.get(action_name)
 
-            # Find the corresponding action function from the registry
-            action_func = self.action_registry.get(action_name)
+        context = self.create_context(action, action_func)
 
-            context = self.create_context(action, action_func)
+        self.contexts[action.step_run_id] = context
 
-            self.contexts[action.step_run_id] = context
-
-            if action_func:
-                self.event_queue.put(
-                    ActionEvent(
-                        action=action,
-                        type=STEP_EVENT_TYPE_STARTED,
-                    )
+        if action_func:
+            self.event_queue.put(
+                ActionEvent(
+                    action=action,
+                    type=STEP_EVENT_TYPE_STARTED,
                 )
-
-                loop = asyncio.get_event_loop()
-                task = loop.create_task(
-                    self.async_wrapped_action_func(
-                        context, action_func, action, action.step_run_id
-                    )
-                )
-
-                task.add_done_callback(self.step_run_callback(action))
-                self.tasks[action.step_run_id] = task
-
-                try:
-                    await task
-                    span.set_status(StatusCode.OK)
-                except Exception as e:
-                    # do nothing, this should be caught in the callback
-                    span.set_status(StatusCode.ERROR)
-                    span.record_exception(e)
-
-            span.add_event("Finished step run")
-
-    async def handle_start_group_key_run(self, action: Action) -> None:
-        with self.otel_tracer.start_as_current_span(
-            f"hatchet.worker.handle_start_step_run.{action.step_id}"
-        ) as span:
-            span.add_event("Starting group key run")
-            action_name = action.action_id
-            context = Context(
-                action,
-                self.dispatcher_client,
-                self.admin_client,
-                self.client.event,
-                self.client.rest,
-                self.client.workflow_listener,
-                self.workflow_run_event_listener,
-                self.worker_context,
-                self.client.config.namespace,
             )
 
-            self.contexts[action.get_group_key_run_id] = context
-
-            # Find the corresponding action function from the registry
-            action_func = self.action_registry.get(action_name)
-
-            if action_func:
-                # send an event that the group key run has started
-                self.event_queue.put(
-                    ActionEvent(
-                        action=action,
-                        type=GROUP_KEY_EVENT_TYPE_STARTED,
-                    )
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(
+                self.async_wrapped_action_func(
+                    context, action_func, action, action.step_run_id
                 )
+            )
 
-                loop = asyncio.get_event_loop()
-                task = loop.create_task(
-                    self.async_wrapped_action_func(
-                        context, action_func, action, action.get_group_key_run_id
-                    )
+            task.add_done_callback(self.step_run_callback(action))
+            self.tasks[action.step_run_id] = task
+
+            try:
+                await task
+            except Exception as e:
+                pass
+
+    async def handle_start_group_key_run(self, action: Action) -> None:
+        action_name = action.action_id
+        context = Context(
+            action,
+            self.dispatcher_client,
+            self.admin_client,
+            self.client.event,
+            self.client.rest,
+            self.client.workflow_listener,
+            self.workflow_run_event_listener,
+            self.worker_context,
+            self.client.config.namespace,
+        )
+
+        self.contexts[action.get_group_key_run_id] = context
+
+        # Find the corresponding action function from the registry
+        action_func = self.action_registry.get(action_name)
+
+        if action_func:
+            # send an event that the group key run has started
+            self.event_queue.put(
+                ActionEvent(
+                    action=action,
+                    type=GROUP_KEY_EVENT_TYPE_STARTED,
                 )
+            )
 
-                task.add_done_callback(self.group_key_run_callback(action))
-                self.tasks[action.get_group_key_run_id] = task
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(
+                self.async_wrapped_action_func(
+                    context, action_func, action, action.get_group_key_run_id
+                )
+            )
 
-                try:
-                    await task
-                    span.set_status(StatusCode.OK)
-                except Exception as e:
-                    # do nothing, this should be caught in the callback
-                    span.set_status(StatusCode.ERROR)
-                    span.record_exception(e)
+            task.add_done_callback(self.group_key_run_callback(action))
+            self.tasks[action.get_group_key_run_id] = task
 
-            span.add_event("Finished group key run")
+            try:
+                await task
+            except Exception as e:
+                # do nothing, this should be caught in the callback
+                pass
 
     def force_kill_thread(self, thread: Thread) -> None:
         """Terminate a python threading.Thread."""
@@ -432,38 +398,29 @@ class Runner:
             logger.exception(f"Failed to terminate thread: {e}")
 
     async def handle_cancel_action(self, run_id: str) -> None:
-        with self.otel_tracer.start_as_current_span(
-            "hatchet.worker.handle_cancel_action"
-        ) as span:
-            span.add_event(f"Cancelling run id: {run_id}")
-            span.set_attribute("run_id", run_id)
+        try:
+            # call cancel to signal the context to stop
+            if run_id in self.contexts:
+                context = self.contexts.get(run_id)
 
-            try:
-                # call cancel to signal the context to stop
-                if run_id in self.contexts:
-                    context = self.contexts.get(run_id)
+                if context:
+                    context.cancel()
 
-                    if context:
-                        context.cancel()
+            await asyncio.sleep(1)
 
-                await asyncio.sleep(1)
+            if run_id in self.tasks:
+                future = self.tasks.get(run_id)
 
-                if run_id in self.tasks:
-                    future = self.tasks.get(run_id)
+                if future:
+                    future.cancel()
 
-                    if future:
-                        future.cancel()
-
-                # check if thread is still running, if so, print a warning
-                if run_id in self.threads:
-                    logger.warning(
-                        f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
-                    )
-
-                span.set_status(StatusCode.OK)
-            finally:
-                self.cleanup_run_id(run_id)
-                span.add_event(f"Finished cancelling run id: {run_id}")
+            # check if thread is still running, if so, print a warning
+            if run_id in self.threads:
+                logger.warning(
+                    f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
+                )
+        finally:
+            self.cleanup_run_id(run_id)
 
     def serialize_output(self, output: Any) -> str:
 
