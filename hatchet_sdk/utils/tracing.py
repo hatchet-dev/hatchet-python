@@ -31,10 +31,15 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         wrap_function_wrapper(
             hatchet_sdk,
             "worker.runner.runner.Runner.handle_start_step_run",
-            self._wrap_start_step_run,
+            self._wrap_handle_start_step_run,
+        )
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "worker.runner.runner.Runner.handle_cancel_action",
+            self._wrap_handle_cancel_action,
         )
 
-    async def _wrap_start_step_run(
+    async def _wrap_handle_start_step_run(
         self,
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
         instance: Runner,
@@ -53,6 +58,23 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
                 span.set_status(StatusCode.ERROR, str(result))
 
             return result
+
+    async def _wrap_handle_cancel_action(
+        self,
+        wrapped: Callable[[str], Coroutine[None, None, Exception | None]],
+        instance: Runner,
+        args: tuple[str],
+        kwargs: Never,
+    ) -> Exception | None:
+        step_run_id = args[0]
+
+        with self._tracer.start_as_current_span(
+            "hatchet.cancel_step_run",
+            attributes={
+                "hatchet.step_run_id": step_run_id,
+            },
+        ):
+            return await wrapped(*args, **kwargs)
 
     def _uninstrument(self, **kwargs: InstrumentKwargs) -> None:
         pass
