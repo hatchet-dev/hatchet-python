@@ -103,6 +103,12 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             self._wrap_run_workflow,
         )
 
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "clients.admin.AdminClientAioImpl.async_run_workflow",
+            self._wrap_async_run_workflow,
+        )
+
     async def _wrap_handle_start_step_run(
         self,
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
@@ -206,6 +212,21 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             "hatchet.run_workflow",
         ):
             return wrapped(*args, **kwargs)
+
+    async def _wrap_async_run_workflow(
+        self,
+        wrapped: Callable[
+            [str, Any, TriggerWorkflowOptions | None],
+            Coroutine[None, None, WorkflowRunRef],
+        ],
+        instance: AdminClient,
+        args: tuple[str, Any, TriggerWorkflowOptions | None],
+        kwargs: dict[str, str | Any | TriggerWorkflowOptions | None],
+    ) -> WorkflowRunRef:
+        with self._tracer.start_as_current_span(
+            "hatchet.run_workflow",
+        ):
+            return await wrapped(*args, **kwargs)
 
     def _uninstrument(self, **kwargs: InstrumentKwargs) -> None:
         pass
