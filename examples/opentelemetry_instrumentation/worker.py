@@ -18,7 +18,7 @@ HatchetInstrumentor().instrument(
 class OTelWorkflow:
     @hatchet.step()
     def step1(self, context: Context) -> dict[str, str]:
-        with trace.get_tracer(__name__).start_as_current_span("step1"):
+        with trace_provider.get_tracer(__name__).start_as_current_span("step1"):
             print("executed step1")
             return {
                 "step1": "step1",
@@ -26,7 +26,7 @@ class OTelWorkflow:
 
     @hatchet.step()
     def step2(self, context: Context) -> None:
-        with trace.get_tracer(__name__).start_as_current_span("step2"):
+        with trace_provider.get_tracer(__name__).start_as_current_span("step2"):
             raise Exception("step 2 failed")
 
 
