@@ -291,7 +291,7 @@ class Runner:
             validator_registry=self.validator_registry,
         )
 
-    async def handle_start_step_run(self, action: Action) -> None:
+    async def handle_start_step_run(self, action: Action) -> None | Exception:
         action_name = action.action_id
 
         # Find the corresponding action function from the registry
@@ -322,9 +322,11 @@ class Runner:
             try:
                 await task
             except Exception as e:
-                pass
+                return e
 
-    async def handle_start_group_key_run(self, action: Action) -> None:
+        return None
+
+    async def handle_start_group_key_run(self, action: Action) -> Exception | None:
         action_name = action.action_id
         context = Context(
             action,
@@ -365,8 +367,9 @@ class Runner:
             try:
                 await task
             except Exception as e:
-                # do nothing, this should be caught in the callback
-                pass
+                return e
+
+        return None
 
     def force_kill_thread(self, thread: Thread) -> None:
         """Terminate a python threading.Thread."""
