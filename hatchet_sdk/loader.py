@@ -39,10 +39,6 @@ class ClientConfig:
         logger: Logger = None,
         grpc_max_recv_message_length: int = 4 * 1024 * 1024,  # 4MB
         grpc_max_send_message_length: int = 4 * 1024 * 1024,  # 4MB
-        otel_exporter_oltp_endpoint: str | None = None,
-        otel_service_name: str | None = None,
-        otel_exporter_oltp_headers: dict[str, str] | None = None,
-        otel_exporter_oltp_protocol: str | None = None,
         worker_healthcheck_port: int | None = None,
         worker_healthcheck_enabled: bool | None = None,
         worker_preset_labels: dict[str, str] = {},
@@ -56,10 +52,6 @@ class ClientConfig:
         self.logInterceptor = logger
         self.grpc_max_recv_message_length = grpc_max_recv_message_length
         self.grpc_max_send_message_length = grpc_max_send_message_length
-        self.otel_exporter_oltp_endpoint = otel_exporter_oltp_endpoint
-        self.otel_service_name = otel_service_name
-        self.otel_exporter_oltp_headers = otel_exporter_oltp_headers
-        self.otel_exporter_oltp_protocol = otel_exporter_oltp_protocol
         self.worker_healthcheck_port = worker_healthcheck_port
         self.worker_healthcheck_enabled = worker_healthcheck_enabled
         self.worker_preset_labels = worker_preset_labels
@@ -142,33 +134,6 @@ class ConfigLoader:
 
         tls_config = self._load_tls_config(config_data["tls"], host_port)
 
-        otel_exporter_oltp_endpoint = get_config_value(
-            "otel_exporter_oltp_endpoint", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_ENDPOINT"
-        )
-
-        otel_service_name = get_config_value(
-            "otel_service_name", "HATCHET_CLIENT_OTEL_SERVICE_NAME"
-        )
-
-        _oltp_headers = get_config_value(
-            "otel_exporter_oltp_headers", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS"
-        )
-
-        if _oltp_headers:
-            try:
-                otel_header_key, api_key = _oltp_headers.split("=", maxsplit=1)
-                otel_exporter_oltp_headers = {otel_header_key: api_key}
-            except ValueError:
-                raise ValueError(
-                    "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS must be in the format `key=value`"
-                )
-        else:
-            otel_exporter_oltp_headers = None
-
-        otel_exporter_oltp_protocol = get_config_value(
-            "otel_exporter_oltp_protocol", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_PROTOCOL"
-        )
-
         worker_healthcheck_port = int(
             get_config_value(
                 "worker_healthcheck_port", "HATCHET_CLIENT_WORKER_HEALTHCHECK_PORT"
@@ -207,10 +172,6 @@ class ConfigLoader:
             logger=defaults.logInterceptor,
             grpc_max_recv_message_length=grpc_max_recv_message_length,
             grpc_max_send_message_length=grpc_max_send_message_length,
-            otel_exporter_oltp_endpoint=otel_exporter_oltp_endpoint,
-            otel_service_name=otel_service_name,
-            otel_exporter_oltp_headers=otel_exporter_oltp_headers,
-            otel_exporter_oltp_protocol=otel_exporter_oltp_protocol,
             worker_healthcheck_port=worker_healthcheck_port,
             worker_healthcheck_enabled=worker_healthcheck_enabled,
             worker_preset_labels=worker_preset_labels,
