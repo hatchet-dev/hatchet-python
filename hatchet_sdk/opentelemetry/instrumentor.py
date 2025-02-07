@@ -11,7 +11,11 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
 
 import hatchet_sdk
-from hatchet_sdk.clients.admin import AdminClient, TriggerWorkflowOptions
+from hatchet_sdk.clients.admin import (
+    AdminClient,
+    TriggerWorkflowOptions,
+    WorkflowRunDict,
+)
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.events import (
     BulkPushEventWithMetadata,
@@ -105,8 +109,20 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
 
         wrap_function_wrapper(
             hatchet_sdk,
-            "clients.admin.AdminClientAioImpl.async_run_workflow",
+            "clients.admin.AdminClientAioImpl.run_workflow",
             self._wrap_async_run_workflow,
+        )
+
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "clients.admin.AdminClient.run_workflows",
+            self._wrap_run_workflows,
+        )
+
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "clients.admin.AdminClientAioImpl.run_workflows",
+            self._wrap_async_run_workflows,
         )
 
     async def _wrap_handle_start_step_run(
@@ -225,6 +241,41 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
     ) -> WorkflowRunRef:
         with self._tracer.start_as_current_span(
             "hatchet.run_workflow",
+        ):
+            return await wrapped(*args, **kwargs)
+
+    def _wrap_run_workflows(
+        self,
+        wrapped: Callable[
+            [list[WorkflowRunDict], TriggerWorkflowOptions | None], list[WorkflowRunRef]
+        ],
+        instance: AdminClient,
+        args: tuple[
+            list[WorkflowRunDict],
+            TriggerWorkflowOptions | None,
+        ],
+        kwargs: dict[str, list[WorkflowRunDict] | TriggerWorkflowOptions | None],
+    ) -> list[WorkflowRunRef]:
+        with self._tracer.start_as_current_span(
+            "hatchet.run_workflows",
+        ):
+            return wrapped(*args, **kwargs)
+
+    async def _wrap_async_run_workflows(
+        self,
+        wrapped: Callable[
+            [list[WorkflowRunDict], TriggerWorkflowOptions | None],
+            Coroutine[None, None, list[WorkflowRunRef]],
+        ],
+        instance: AdminClient,
+        args: tuple[
+            list[WorkflowRunDict],
+            TriggerWorkflowOptions | None,
+        ],
+        kwargs: dict[str, list[WorkflowRunDict] | TriggerWorkflowOptions | None],
+    ) -> list[WorkflowRunRef]:
+        with self._tracer.start_as_current_span(
+            "hatchet.run_workflows",
         ):
             return await wrapped(*args, **kwargs)
 
