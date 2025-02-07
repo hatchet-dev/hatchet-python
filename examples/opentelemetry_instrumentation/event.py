@@ -11,7 +11,7 @@ client = new_client()
 
 # client.event.push("user:create", {"test": "test"})
 client.event.push(
-    "user:create", {"test": "test"}, options={"additional_metadata": {"hello": "moon"}}
+    "otel:event", {"test": "test"}, options={"additional_metadata": {"hello": "moon"}}
 )
 
 events: List[BulkPushEventWithMetadata] = [

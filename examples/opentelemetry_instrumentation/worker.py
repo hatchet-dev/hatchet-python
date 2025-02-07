@@ -1,10 +1,7 @@
 from dotenv import load_dotenv
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from examples.opentelemetry_instrumentation.tracer import trace_provider
 from hatchet_sdk import Context, Hatchet
 from hatchet_sdk.utils.tracing import HatchetInstrumentor
 
@@ -12,39 +9,25 @@ load_dotenv()
 
 hatchet = Hatchet(debug=True)
 
-resource = Resource(
-    attributes={SERVICE_NAME: hatchet.config.otel_service_name or "hatchet.run"}
+HatchetInstrumentor().instrument(
+    tracer_provider=trace_provider,
 )
 
-processor = BatchSpanProcessor(
-    OTLPSpanExporter(
-        endpoint=hatchet.config.otel_exporter_oltp_endpoint,
-        headers=hatchet.config.otel_exporter_oltp_headers,
-    ),
-)
 
-trace_provider = TracerProvider(resource=resource)
-trace_provider.add_span_processor(processor)
-trace.set_tracer_provider(trace_provider)
-
-HatchetInstrumentor().instrument()
-
-
-@hatchet.workflow(on_events=["user:create"])
+@hatchet.workflow(on_events=["otel:event"])
 class OTelWorkflow:
     @hatchet.step()
     def step1(self, context: Context) -> dict[str, str]:
-        with trace.get_tracer(__name__).start_as_current_span("step1") as span:
+        with trace.get_tracer(__name__).start_as_current_span("step1"):
             print("executed step1")
-            # raise Exception("test")
             return {
                 "step1": "step1",
             }
 
     @hatchet.step()
-    def step2(self, context: Context) -> dict[str, str]:
-        with trace.get_tracer(__name__).start_as_current_span("step1") as span:
-            raise Exception("test error")
+    def step2(self, context: Context) -> None:
+        with trace.get_tracer(__name__).start_as_current_span("step2"):
+            raise Exception("step 2 failed")
 
 
 def main() -> None:
