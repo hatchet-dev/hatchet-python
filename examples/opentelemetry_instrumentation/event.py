@@ -1,41 +1,14 @@
-from typing import List
-
 from dotenv import load_dotenv
 
-from hatchet_sdk import new_client
-from hatchet_sdk.clients.events import BulkPushEventWithMetadata
+from examples.opentelemetry_instrumentation.client import hatchet
+from examples.opentelemetry_instrumentation.tracer import trace_provider
 
-load_dotenv()
+with trace_provider.get_tracer(__name__).start_as_current_span("push_event") as span:
+    span.add_event("Pushing event")
+    event = hatchet.event.push(
+        "otel:event",
+        {"test": "test"},
+        options={"additional_metadata": {"hello": "moon"}},
+    )
 
-client = new_client()
-
-# client.event.push("user:create", {"test": "test"})
-client.event.push(
-    "otel:event", {"test": "test"}, options={"additional_metadata": {"hello": "moon"}}
-)
-
-events: List[BulkPushEventWithMetadata] = [
-    {
-        "key": "event1",
-        "payload": {"message": "This is event 1"},
-        "additional_metadata": {"source": "test", "user_id": "user123"},
-    },
-    {
-        "key": "event2",
-        "payload": {"message": "This is event 2"},
-        "additional_metadata": {"source": "test", "user_id": "user456"},
-    },
-    {
-        "key": "event3",
-        "payload": {"message": "This is event 3"},
-        "additional_metadata": {"source": "test", "user_id": "user789"},
-    },
-]
-
-
-result = client.event.bulk_push(
-    events,
-    options={"namespace": "bulk-test"},
-)
-
-print(result)
+    span.add_event("Pushed event", attributes={"event_id": event.eventId})

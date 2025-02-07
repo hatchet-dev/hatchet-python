@@ -1,12 +1,7 @@
-from dotenv import load_dotenv
-
+from examples.opentelemetry_instrumentation.client import hatchet
 from examples.opentelemetry_instrumentation.tracer import trace_provider
-from hatchet_sdk import Context, Hatchet
+from hatchet_sdk import Context
 from hatchet_sdk.utils.tracing import HatchetInstrumentor
-
-load_dotenv()
-
-hatchet = Hatchet(debug=True)
 
 HatchetInstrumentor().instrument(
     tracer_provider=trace_provider,

@@ -1,15 +1,9 @@
-from dotenv import load_dotenv
-from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from hatchet_sdk import Hatchet
-
-load_dotenv()
-
-hatchet = Hatchet(debug=True)
+from examples.opentelemetry_instrumentation.client import hatchet
 
 resource = Resource(
     attributes={SERVICE_NAME: hatchet.config.otel_service_name or "hatchet.run"}
