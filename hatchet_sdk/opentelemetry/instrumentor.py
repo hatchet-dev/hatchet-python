@@ -12,7 +12,11 @@ from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
 
 import hatchet_sdk
 from hatchet_sdk.clients.dispatcher.action_listener import Action
-from hatchet_sdk.clients.events import EventClient, PushEventOptions
+from hatchet_sdk.clients.events import (
+    BulkPushEventWithMetadata,
+    EventClient,
+    PushEventOptions,
+)
 from hatchet_sdk.contracts.events_pb2 import Event
 from hatchet_sdk.worker.runner.runner import Runner
 
@@ -83,6 +87,12 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             hatchet_sdk,
             "clients.events.EventClient.push",
             self._wrap_push_event,
+        )
+
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "clients.events.EventClient.bulk_push",
+            self._wrap_bulk_push_event,
         )
 
     async def _wrap_handle_start_step_run(
@@ -157,6 +167,23 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
     ) -> Event:
         with self._tracer.start_as_current_span(
             "hatchet.push_event",
+        ):
+            return wrapped(*args, **kwargs)
+
+    def _wrap_bulk_push_event(
+        self,
+        wrapped: Callable[
+            [list[BulkPushEventWithMetadata], PushEventOptions | None], list[Event]
+        ],
+        instance: EventClient,
+        args: tuple[
+            list[BulkPushEventWithMetadata],
+            PushEventOptions | None,
+        ],
+        kwargs: dict[str, list[BulkPushEventWithMetadata] | PushEventOptions | None],
+    ) -> list[Event]:
+        with self._tracer.start_as_current_span(
+            "hatchet.bulk_push_event",
         ):
             return wrapped(*args, **kwargs)
 
