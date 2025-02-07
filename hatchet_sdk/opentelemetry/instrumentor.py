@@ -11,6 +11,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
 
 import hatchet_sdk
+from hatchet_sdk.clients.admin import AdminClient, TriggerWorkflowOptions
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.events import (
     BulkPushEventWithMetadata,
@@ -19,6 +20,7 @@ from hatchet_sdk.clients.events import (
 )
 from hatchet_sdk.contracts.events_pb2 import Event
 from hatchet_sdk.worker.runner.runner import Runner
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 hatchet_sdk_version = version("hatchet-sdk")
 
@@ -93,6 +95,12 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             hatchet_sdk,
             "clients.events.EventClient.bulk_push",
             self._wrap_bulk_push_event,
+        )
+
+        wrap_function_wrapper(
+            hatchet_sdk,
+            "clients.admin.AdminClient.run_workflow",
+            self._wrap_run_workflow,
         )
 
     async def _wrap_handle_start_step_run(
@@ -184,6 +192,18 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
     ) -> list[Event]:
         with self._tracer.start_as_current_span(
             "hatchet.bulk_push_event",
+        ):
+            return wrapped(*args, **kwargs)
+
+    def _wrap_run_workflow(
+        self,
+        wrapped: Callable[[str, Any, TriggerWorkflowOptions | None], WorkflowRunRef],
+        instance: AdminClient,
+        args: tuple[str, Any, TriggerWorkflowOptions | None],
+        kwargs: dict[str, str | Any | TriggerWorkflowOptions | None],
+    ) -> WorkflowRunRef:
+        with self._tracer.start_as_current_span(
+            "hatchet.run_workflow",
         ):
             return wrapped(*args, **kwargs)
 
