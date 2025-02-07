@@ -85,7 +85,7 @@ files = [
   "hatchet_sdk/worker/runner/runner.py",
   "hatchet_sdk/workflow.py",
   "hatchet_sdk/utils/serialization.py",
-  "hatchet_sdk/utils/tracing.py",
+  "hatchet_sdk/opentelemetry/instrumentor.py",
   "hatchet_sdk/utils/types.py",
   "hatchet_sdk/utils/backoff.py",
   "examples/**/*.py",
