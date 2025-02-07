@@ -35,6 +35,11 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         )
         wrap_function_wrapper(
             hatchet_sdk,
+            "worker.runner.runner.Runner.handle_start_group_key_run",
+            self._wrap_handle_get_group_key_run,
+        )
+        wrap_function_wrapper(
+            hatchet_sdk,
             "worker.runner.runner.Runner.handle_cancel_action",
             self._wrap_handle_cancel_action,
         )
@@ -50,6 +55,26 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
 
         with self._tracer.start_as_current_span(
             "hatchet.start_step_run",
+            attributes=action.otel_attributes,
+        ) as span:
+            result = await wrapped(*args, **kwargs)
+
+            if isinstance(result, Exception):
+                span.set_status(StatusCode.ERROR, str(result))
+
+            return result
+
+    async def _wrap_handle_get_group_key_run(
+        self,
+        wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
+        instance: Runner,
+        args: tuple[Action],
+        kwargs: Never,
+    ) -> Exception | None:
+        action = args[0]
+
+        with self._tracer.start_as_current_span(
+            "hatchet.get_group_key_run",
             attributes=action.otel_attributes,
         ) as span:
             result = await wrapped(*args, **kwargs)
