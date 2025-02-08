@@ -3,9 +3,9 @@ from examples.opentelemetry_instrumentation.tracer import trace_provider
 from hatchet_sdk import Context
 from hatchet_sdk.opentelemetry.instrumentor import HatchetInstrumentor
 
-HatchetInstrumentor().instrument(
+HatchetInstrumentor(
     tracer_provider=trace_provider,
-)
+).instrument()
 
 
 @hatchet.workflow(on_events=["otel:event"])

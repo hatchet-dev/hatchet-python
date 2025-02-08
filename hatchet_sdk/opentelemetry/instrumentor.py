@@ -5,8 +5,13 @@ from opentelemetry.context import Context
 from opentelemetry.instrumentation.instrumentor import (  # type: ignore[attr-defined]
     BaseInstrumentor,
 )
-from opentelemetry.metrics import MeterProvider, get_meter
-from opentelemetry.trace import StatusCode, TracerProvider, get_tracer
+from opentelemetry.metrics import MeterProvider, NoOpMeterProvider, get_meter
+from opentelemetry.trace import (
+    NoOpTracerProvider,
+    StatusCode,
+    TracerProvider,
+    get_tracer,
+)
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
 
@@ -33,6 +38,16 @@ InstrumentKwargs = TracerProvider | MeterProvider | None
 
 class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
     OTEL_TRACEPARENT_KEY = "traceparent"
+
+    def __init__(
+        self,
+        tracer_provider: TracerProvider,
+        meter_provider: MeterProvider = NoOpMeterProvider(),
+    ):
+        self.tracer_provider = tracer_provider
+        self.meter_provider = meter_provider
+
+        super().__init__()
 
     def create_traceparent(self) -> str | None:
         carrier: dict[str, str] = {}
@@ -67,11 +82,8 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         return tuple()
 
     def _instrument(self, **kwargs: InstrumentKwargs) -> None:
-        tracer_provider = cast(TracerProvider, kwargs.get("tracer_provider"))
-        meter_provider = cast(MeterProvider, kwargs.get("meter_provider"))
-
-        self._tracer = get_tracer(__name__, hatchet_sdk_version, tracer_provider)
-        self._meter = get_meter(__name__, hatchet_sdk_version, meter_provider)
+        self._tracer = get_tracer(__name__, hatchet_sdk_version, self.tracer_provider)
+        self._meter = get_meter(__name__, hatchet_sdk_version, self.meter_provider)
 
         wrap_function_wrapper(
             hatchet_sdk,
@@ -280,4 +292,5 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             return await wrapped(*args, **kwargs)
 
     def _uninstrument(self, **kwargs: InstrumentKwargs) -> None:
-        pass
+        self.tracer_provider = NoOpTracerProvider()
+        self.meter_provider = NoOpMeterProvider()
