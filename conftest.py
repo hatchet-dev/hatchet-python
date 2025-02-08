@@ -84,12 +84,12 @@ def worker(
 
     time.sleep(5)
 
-    def log_output(pipe: BytesIO) -> None:
+    def log_output(pipe: BytesIO, log_func: Callable[[str], None]) -> None:
         for line in iter(pipe.readline, b""):
-            print(line.decode().strip())
+            log_func(line.decode().strip())
 
-    Thread(target=log_output, args=(proc.stdout, ), daemon=True).start()
-    Thread(target=log_output, args=(proc.stderr,), daemon=True).start()
+    Thread(target=log_output, args=(proc.stdout, logging.info), daemon=True).start()
+    Thread(target=log_output, args=(proc.stderr, logging.error), daemon=True).start()
 
     yield proc
 
