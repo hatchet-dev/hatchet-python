@@ -1,11 +1,20 @@
 from datetime import datetime, timedelta
-from typing import Any, cast
+
+from pydantic import BaseModel
 
 from hatchet_sdk import BaseWorkflow, Context, Hatchet
 
 hatchet = Hatchet(debug=True)
 
-print_schedule_wf = hatchet.declare_workflow(on_events=["printer:schedule"])
+
+class PrinterInput(BaseModel):
+    message: str
+
+
+print_schedule_wf = hatchet.declare_workflow(
+    on_events=["printer:schedule"], input_validator=PrinterInput
+)
+print_printer_wf = hatchet.declare_workflow(input_validator=PrinterInput)
 
 
 class PrintSchedule(BaseWorkflow):
@@ -18,12 +27,9 @@ class PrintSchedule(BaseWorkflow):
         future_time = now + timedelta(seconds=15)
         print(f"scheduling for \t {future_time.strftime('%H:%M:%S')}")
 
-        hatchet.admin.schedule_workflow(
-            "PrintPrinter", [future_time], cast(dict[str, Any], context.workflow_input)
-        )
+        input = print_schedule_wf.get_workflow_input(context)
 
-
-print_printer_wf = hatchet.declare_workflow()
+        print_printer_wf.schedule([future_time], input=input)
 
 
 class PrintPrinter(BaseWorkflow):
@@ -33,7 +39,7 @@ class PrintPrinter(BaseWorkflow):
     def step1(self, context: Context) -> None:
         now = datetime.now()
         print(f"printed at \t {now.strftime('%H:%M:%S')}")
-        print(f"message \t {cast(dict[str, Any], context.workflow_input)['message']}")
+        print(f"message \t {print_printer_wf.get_workflow_input(context).message}")
 
 
 def main() -> None:

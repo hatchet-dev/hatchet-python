@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import (
     TYPE_CHECKING,
@@ -15,9 +16,14 @@ from typing import (
     cast,
 )
 
+from google.protobuf import timestamp_pb2
 from pydantic import BaseModel, ConfigDict
 
-from hatchet_sdk.clients.admin import ChildTriggerWorkflowOptions, ChildWorkflowRunDict
+from hatchet_sdk.clients.admin import (
+    ChildTriggerWorkflowOptions,
+    ChildWorkflowRunDict,
+    ScheduleTriggerWorkflowOptions,
+)
 from hatchet_sdk.context.context import Context
 from hatchet_sdk.contracts.workflows_pb2 import (
     ConcurrencyLimitStrategy as ConcurrencyLimitStrategyProto,
@@ -30,7 +36,11 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     DesiredWorkerLabels,
 )
 from hatchet_sdk.contracts.workflows_pb2 import StickyStrategy as StickyStrategyProto
-from hatchet_sdk.contracts.workflows_pb2 import WorkflowConcurrencyOpts, WorkflowKind
+from hatchet_sdk.contracts.workflows_pb2 import (
+    WorkflowConcurrencyOpts,
+    WorkflowKind,
+    WorkflowVersion,
+)
 from hatchet_sdk.logger import logger
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
@@ -245,6 +255,38 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
             workflow_name=self.config.name,
             input=input.model_dump(),
             key=key,
+            options=options,
+        )
+
+    def schedule(
+        self,
+        schedules: list[datetime | timestamp_pb2.Timestamp],
+        input: TWorkflowInput,
+        options: ScheduleTriggerWorkflowOptions = ScheduleTriggerWorkflowOptions(),
+    ) -> WorkflowVersion:
+        if not self.hatchet:
+            raise ValueError("Hatchet client is not initialized.")
+
+        return self.hatchet.admin.schedule_workflow(
+            name=self.config.name,
+            schedules=schedules,
+            input=input.model_dump(),
+            options=options,
+        )
+
+    async def aschedule(
+        self,
+        schedules: list[datetime | timestamp_pb2.Timestamp],
+        input: TWorkflowInput,
+        options: ScheduleTriggerWorkflowOptions = ScheduleTriggerWorkflowOptions(),
+    ) -> WorkflowVersion:
+        if not self.hatchet:
+            raise ValueError("Hatchet client is not initialized.")
+
+        return await self.hatchet.admin.aio.schedule_workflow(
+            name=self.config.name,
+            schedules=schedules,
+            input=input.model_dump(),
             options=options,
         )
 
