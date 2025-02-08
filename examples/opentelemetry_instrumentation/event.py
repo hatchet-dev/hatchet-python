@@ -1,9 +1,10 @@
+import asyncio
+
 from examples.opentelemetry_instrumentation.client import hatchet
 from examples.opentelemetry_instrumentation.tracer import trace_provider
+from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.events import PushEventOptions
 from hatchet_sdk.opentelemetry.instrumentor import HatchetInstrumentor
-from hatchet_sdk.clients.admin import TriggerWorkflowOptions
-import asyncio
 
 instrumentor = HatchetInstrumentor(tracer_provider=trace_provider)
 tracer = trace_provider.get_tracer(__name__)
@@ -55,6 +56,7 @@ def bulk_push_event() -> None:
             ],
         )
 
+
 async def async_bulk_push_event() -> None:
     print("\nasync_bulk_push_event")
     with tracer.start_as_current_span("bulk_push_event") as span:
@@ -73,6 +75,7 @@ async def async_bulk_push_event() -> None:
             ],
         )
 
+
 def run_workflow() -> None:
     print("\nrun_workflow")
     with tracer.start_as_current_span("run_workflow") as span:
@@ -81,8 +84,9 @@ def run_workflow() -> None:
             {"test": "test"},
             options=TriggerWorkflowOptions(
                 additional_metadata=create_additional_metadata()
-            )
+            ),
         )
+
 
 async def async_run_workflow() -> None:
     print("\nasync_run_workflow")
@@ -92,8 +96,9 @@ async def async_run_workflow() -> None:
             {"test": "test"},
             options=TriggerWorkflowOptions(
                 additional_metadata=create_additional_metadata()
-            )
+            ),
         )
+
 
 def run_workflows() -> None:
     print("\nrun_workflows")
@@ -105,14 +110,14 @@ def run_workflows() -> None:
                     "input": {"test": "test"},
                     "options": TriggerWorkflowOptions(
                         additional_metadata=create_additional_metadata()
-                    )
+                    ),
                 },
                 {
                     "workflow_name": "OTelWorkflow",
                     "input": {"test": "test 2"},
                     "options": TriggerWorkflowOptions(
                         additional_metadata=create_additional_metadata()
-                    )
+                    ),
                 },
             ],
         )
@@ -128,27 +133,29 @@ async def async_run_workflows() -> None:
                     "input": {"test": "test"},
                     "options": TriggerWorkflowOptions(
                         additional_metadata=create_additional_metadata()
-                    )
+                    ),
                 },
                 {
                     "workflow_name": "OTelWorkflow",
                     "input": {"test": "test 2"},
                     "options": TriggerWorkflowOptions(
                         additional_metadata=create_additional_metadata()
-                    )
+                    ),
                 },
             ],
         )
 
+
 async def main() -> None:
-    # push_event()
-    # await async_push_event()
+    push_event()
+    await async_push_event()
     bulk_push_event()
-    # await async_bulk_push_event()
-    # run_workflow()
+    await async_bulk_push_event()
+    run_workflow()
     # await async_run_workflow()
-    # run_workflows()
+    run_workflows()
     # await async_run_workflows()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
