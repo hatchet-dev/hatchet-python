@@ -9,21 +9,29 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from examples.opentelemetry_instrumentation.client import hatchet
 
 resource = Resource(
-    attributes={SERVICE_NAME: os.environ["HATCHET_CLIENT_OTEL_SERVICE_NAME"]}
+    attributes={
+        SERVICE_NAME: os.getenv("HATCHET_CLIENT_OTEL_SERVICE_NAME", "test-service")
+    }
 )
 
 headers = dict(
     [
         cast(
             tuple[str, str],
-            tuple(os.environ["HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS"].split("=")),
+            tuple(
+                os.getenv("HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS", "foo=bar").split(
+                    "="
+                )
+            ),
         )
     ]
 )
 
 processor = BatchSpanProcessor(
     OTLPSpanExporter(
-        endpoint=os.environ["HATCHET_CLIENT_OTEL_EXPORTER_OTLP_ENDPOINT"],
+        endpoint=os.getenv(
+            "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+        ),
         headers=headers,
     ),
 )
