@@ -38,7 +38,8 @@ def test_push_event(hatchet: Hatchet, worker: Worker) -> None:
             options=create_push_options(),
         )
 
-        assert event.key == key
+        """Assert on `endswith` to ignore namespacing"""
+        assert event.key.endswith(key)
         assert event.payload == json.dumps(payload)
 
 
