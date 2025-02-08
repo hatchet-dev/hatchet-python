@@ -26,9 +26,8 @@ def create_push_options() -> PushEventOptions:
     return {"additional_metadata": create_additional_metadata()}
 
 
-@pytest.mark.asyncio(scope="session")
 @pytest.mark.parametrize("worker", ["otel"], indirect=True)
-async def test_push_event(hatchet: Hatchet, worker: Worker) -> None:
+def test_push_event(hatchet: Hatchet, worker: Worker) -> None:
     key = "otel:event"
     payload = {"test": "test"}
 
@@ -46,9 +45,9 @@ async def test_push_event(hatchet: Hatchet, worker: Worker) -> None:
 
 @pytest.mark.asyncio()
 @pytest.mark.parametrize("worker", ["otel"], indirect=True)
-async def test_run_workflow(hatchet: Hatchet, worker: Worker) -> None:
+async def test_run_workflow(aiohatchet: Hatchet, worker: Worker) -> None:
     with tracer.start_as_current_span("run_workflow") as span:
-        workflow = hatchet.admin.run_workflow(
+        workflow = aiohatchet.admin.run_workflow(
             "OTelWorkflow",
             {"test": "test"},
             options=TriggerWorkflowOptions(
