@@ -312,7 +312,7 @@ class Context:
 
         trigger_options = self._prepare_workflow_options(key, options, worker_id)
 
-        return await self.admin_client.aio.run_workflow(
+        return await self.admin_client.arun_workflow(
             workflow_name, input, trigger_options
         )
 
@@ -337,4 +337,4 @@ class Context:
             for child_workflow_run in child_workflow_runs
         ]
 
-        return await self.admin_client.aio.run_workflows(bulk_trigger_workflow_runs)
+        return await self.admin_client.arun_workflows(bulk_trigger_workflow_runs)

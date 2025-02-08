@@ -283,7 +283,7 @@ class WorkflowDeclaration(Generic[TWorkflowInput]):
         if not self.hatchet:
             raise ValueError("Hatchet client is not initialized.")
 
-        return await self.hatchet.admin.aio.schedule_workflow(
+        return await self.hatchet.admin.aschedule_workflow(
             name=self.config.name,
             schedules=schedules,
             input=input.model_dump(),
