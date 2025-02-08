@@ -3,15 +3,14 @@ from typing import Callable
 
 import grpc
 
+from hatchet_sdk.clients.admin import AdminClient
+from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
+from hatchet_sdk.clients.events import EventClient, new_event
+from hatchet_sdk.clients.rest_client import RestApi
 from hatchet_sdk.clients.run_event_listener import RunEventListenerClient
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.connection import new_conn
-
-from .clients.admin import AdminClient, new_admin
-from .clients.dispatcher.dispatcher import DispatcherClient, new_dispatcher
-from .clients.events import EventClient, new_event
-from .clients.rest_client import RestApi
-from .loader import ClientConfig
+from hatchet_sdk.loader import ClientConfig
 
 
 class Client:
@@ -55,8 +54,8 @@ class Client:
 
         # Instantiate clients
         event_client = new_event(conn, config)
-        admin_client = new_admin(config)
-        dispatcher_client = new_dispatcher(config)
+        admin_client = AdminClient(config)
+        dispatcher_client = DispatcherClient(config)
         rest_client = RestApi(config.server_url, config.token, config.tenant_id)
         workflow_listener = None  # Initialize this if needed
 

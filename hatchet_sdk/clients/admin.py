@@ -37,10 +37,6 @@ from hatchet_sdk.utils.types import JSONSerializableDict
 from hatchet_sdk.workflow_run import WorkflowRunRef
 
 
-def new_admin(config: ClientConfig) -> "AdminClient":
-    return AdminClient(config)
-
-
 class ScheduleTriggerWorkflowOptions(BaseModel):
     parent_id: str | None = None
     parent_step_run_id: str | None = None

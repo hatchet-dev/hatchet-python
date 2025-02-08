@@ -13,7 +13,7 @@ from hatchet_sdk.clients.dispatcher.action_listener import (
     ActionListener,
     GetActionListenerRequest,
 )
-from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
+from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_STARTED,
     STEP_EVENT_TYPE_STARTED,
@@ -86,7 +86,7 @@ class WorkerActionListenerProcess:
         logger.debug(f"starting action listener: {self.name}")
 
         try:
-            self.dispatcher_client = new_dispatcher(self.config)
+            self.dispatcher_client = DispatcherClient(self.config)
 
             self.listener = await self.dispatcher_client.get_action_listener(
                 GetActionListenerRequest(
