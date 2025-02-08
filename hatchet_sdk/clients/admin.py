@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime
-from typing import Any, TypeVar, Union, cast
+from typing import Any, Union, cast
 
 import grpc
 from google.protobuf import timestamp_pb2
@@ -78,9 +78,6 @@ class DedupeViolationErr(Exception):
     """Raised by the Hatchet library to indicate that a workflow has already been run with this deduplication value."""
 
     pass
-
-
-T = TypeVar("T")
 
 
 class AdminClient:
