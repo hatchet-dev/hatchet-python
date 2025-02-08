@@ -26,8 +26,9 @@ def create_push_options() -> PushEventOptions:
     return {"additional_metadata": create_additional_metadata()}
 
 
+@pytest.mark.asyncio(scope="session")
 @pytest.mark.parametrize("worker", ["otel"], indirect=True)
-def test_push_event(hatchet: Hatchet, worker: Worker) -> None:
+async def test_push_event(hatchet: Hatchet, worker: Worker) -> None:
     key = "otel:event"
     payload = {"test": "test"}
 
