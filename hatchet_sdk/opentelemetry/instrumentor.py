@@ -1,5 +1,5 @@
 from importlib.metadata import version
-from typing import Any, Callable, Collection, Coroutine, Never, cast
+from typing import Any, Callable, Collection, Coroutine
 
 from opentelemetry.context import Context
 from opentelemetry.instrumentation.instrumentor import (  # type: ignore[attr-defined]
@@ -143,7 +143,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
         instance: Runner,
         args: tuple[Action],
-        kwargs: Never,
+        kwargs: Any,
     ) -> Exception | None:
         action = args[0]
         traceparent = self.parse_carrier_from_metadata(action.additional_metadata)
@@ -166,7 +166,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
         instance: Runner,
         args: tuple[Action],
-        kwargs: Never,
+        kwargs: Any,
     ) -> Exception | None:
         action = args[0]
 
@@ -187,7 +187,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         wrapped: Callable[[str], Coroutine[None, None, Exception | None]],
         instance: Runner,
         args: tuple[str],
-        kwargs: Never,
+        kwargs: Any,
     ) -> Exception | None:
         step_run_id = args[0]
 
