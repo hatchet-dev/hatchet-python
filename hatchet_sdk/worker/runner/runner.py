@@ -14,9 +14,9 @@ from opentelemetry.trace import StatusCode
 from pydantic import BaseModel
 
 from hatchet_sdk.client import new_client_raw
-from hatchet_sdk.clients.admin import AdminClient
+from hatchet_sdk.clients.admin import new_admin
 from hatchet_sdk.clients.dispatcher.action_listener import Action
-from hatchet_sdk.clients.dispatcher.dispatcher import DispatcherClient
+from hatchet_sdk.clients.dispatcher.dispatcher import new_dispatcher
 from hatchet_sdk.clients.run_event_listener import new_listener
 from hatchet_sdk.clients.workflow_listener import PooledWorkflowRunListener
 from hatchet_sdk.context.context import Context
@@ -83,8 +83,8 @@ class Runner:
 
         # We need to initialize a new admin and dispatcher client *after* we've started the event loop,
         # otherwise the grpc.aio methods will use a different event loop and we'll get a bunch of errors.
-        self.dispatcher_client = DispatcherClient(self.config)
-        self.admin_client = AdminClient(self.config)
+        self.dispatcher_client = new_dispatcher(self.config)
+        self.admin_client = new_admin(self.config)
         self.workflow_run_event_listener = new_listener(self.config)
         self.client.workflow_listener = PooledWorkflowRunListener(self.config)
 
