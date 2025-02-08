@@ -24,6 +24,8 @@ from hatchet_sdk.contracts.workflows_pb2 import (
     WorkflowVersion,
 )
 from hatchet_sdk.contracts.workflows_pb2_grpc import WorkflowServiceStub
+from hatchet_sdk.loader import ClientConfig
+from hatchet_sdk.metadata import get_metadata
 from hatchet_sdk.utils.serialization import flatten
 from hatchet_sdk.utils.tracing import (
     create_carrier,
@@ -33,9 +35,6 @@ from hatchet_sdk.utils.tracing import (
 )
 from hatchet_sdk.utils.types import JSONSerializableDict
 from hatchet_sdk.workflow_run import WorkflowRunRef
-
-from ..loader import ClientConfig
-from ..metadata import get_metadata
 
 
 def new_admin(config: ClientConfig) -> "AdminClient":
