@@ -383,6 +383,7 @@ class AdminClient:
         options: TriggerWorkflowOptions = TriggerWorkflowOptions(),
     ) -> list[WorkflowRunRef]:
         workflow_run_requests: list[TriggerWorkflowRequest] = []
+
         if not self.pooled_workflow_listener:
             self.pooled_workflow_listener = PooledWorkflowRunListener(self.config)
 
@@ -393,13 +394,13 @@ class AdminClient:
 
             namespace = options.namespace or self.namespace
 
-        if namespace != "" and not workflow_name.startswith(self.namespace):
-            workflow_name = f"{namespace}{workflow_name}"
+            if namespace != "" and not workflow_name.startswith(self.namespace):
+                workflow_name = f"{namespace}{workflow_name}"
 
-        # Prepare and trigger workflow for each workflow name and input
-        request = self._prepare_workflow_request(workflow_name, input_data, options)
+            # Prepare and trigger workflow for each workflow name and input
+            request = self._prepare_workflow_request(workflow_name, input_data, options)
 
-        workflow_run_requests.append(request)
+            workflow_run_requests.append(request)
 
         bulk_request = BulkTriggerWorkflowRequest(workflows=workflow_run_requests)
 
