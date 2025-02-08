@@ -137,6 +137,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
             self._wrap_async_run_workflows,
         )
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     async def _wrap_handle_start_step_run(
         self,
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
@@ -159,6 +160,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
 
             return result
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     async def _wrap_handle_get_group_key_run(
         self,
         wrapped: Callable[[Action], Coroutine[None, None, Exception | None]],
@@ -179,6 +181,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
 
             return result
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     async def _wrap_handle_cancel_action(
         self,
         wrapped: Callable[[str], Coroutine[None, None, Exception | None]],
@@ -196,6 +199,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         ):
             return await wrapped(*args, **kwargs)
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     def _wrap_push_event(
         self,
         wrapped: Callable[[str, dict[str, Any], PushEventOptions | None], Event],
@@ -212,6 +216,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         ):
             return wrapped(*args, **kwargs)
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     def _wrap_bulk_push_event(
         self,
         wrapped: Callable[
@@ -229,6 +234,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         ):
             return wrapped(*args, **kwargs)
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     def _wrap_run_workflow(
         self,
         wrapped: Callable[[str, Any, TriggerWorkflowOptions | None], WorkflowRunRef],
@@ -241,6 +247,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         ):
             return wrapped(*args, **kwargs)
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     async def _wrap_async_run_workflow(
         self,
         wrapped: Callable[
@@ -256,6 +263,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         ):
             return await wrapped(*args, **kwargs)
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     def _wrap_run_workflows(
         self,
         wrapped: Callable[
@@ -273,6 +281,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         ):
             return wrapped(*args, **kwargs)
 
+    ## IMPORTANT: Keep these types in sync with the wrapped method's signature
     async def _wrap_async_run_workflows(
         self,
         wrapped: Callable[

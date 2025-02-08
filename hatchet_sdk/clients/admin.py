@@ -186,6 +186,7 @@ class AdminClientAioImpl(AdminClientBase):
             wrr.workflow_run_id, wrr.workflow_listener, wrr.workflow_run_event_listener
         )
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     @tenacity_retry
     async def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
@@ -224,6 +225,7 @@ class AdminClientAioImpl(AdminClientBase):
 
             raise e
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     @tenacity_retry
     async def run_workflows(
         self,
@@ -421,8 +423,7 @@ class AdminClient(AdminClientBase):
 
             raise e
 
-    ## TODO: `options` is treated as a dict (wrong type hint)
-    ## TODO: `any` type hint should come from `typing`
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     @tenacity_retry
     def run_workflow(
         self, workflow_name: str, input: any, options: TriggerWorkflowOptions = None
@@ -462,6 +463,7 @@ class AdminClient(AdminClientBase):
 
             raise e
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     @tenacity_retry
     def run_workflows(
         self, workflows: List[WorkflowRunDict], options: TriggerWorkflowOptions = None

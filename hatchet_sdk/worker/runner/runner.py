@@ -291,6 +291,7 @@ class Runner:
             validator_registry=self.validator_registry,
         )
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     async def handle_start_step_run(self, action: Action) -> None | Exception:
         action_name = action.action_id
 
@@ -326,6 +327,7 @@ class Runner:
 
         return None
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     async def handle_start_group_key_run(self, action: Action) -> Exception | None:
         action_name = action.action_id
         context = Context(
@@ -400,6 +402,7 @@ class Runner:
         except Exception as e:
             logger.exception(f"Failed to terminate thread: {e}")
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     async def handle_cancel_action(self, run_id: str) -> None:
         try:
             # call cancel to signal the context to stop

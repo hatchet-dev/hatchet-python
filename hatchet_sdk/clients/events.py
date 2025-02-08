@@ -72,6 +72,7 @@ class EventClient:
     ) -> List[Event]:
         return await asyncio.to_thread(self.bulk_push, events=events, options=options)
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     @tenacity_retry
     def push(self, event_key, payload, options: PushEventOptions = None) -> Event:
         namespace = self.namespace
@@ -105,6 +106,7 @@ class EventClient:
 
         return self.client.Push(request, metadata=get_metadata(self.token))
 
+    ## IMPORTANT: Keep this method's signature in sync with the wrapper in the OTel instrumentor
     @tenacity_retry
     def bulk_push(
         self,
