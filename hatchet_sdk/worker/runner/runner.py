@@ -10,7 +10,6 @@ from multiprocessing import Queue
 from threading import Thread, current_thread
 from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
 
-from opentelemetry.trace import StatusCode
 from pydantic import BaseModel
 
 from hatchet_sdk.client import new_client_raw

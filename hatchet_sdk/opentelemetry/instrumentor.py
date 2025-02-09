@@ -1,19 +1,26 @@
 from importlib.metadata import version
 from typing import Any, Callable, Collection, Coroutine
 
-from opentelemetry.context import Context
-from opentelemetry.instrumentation.instrumentor import (  # type: ignore[attr-defined]
-    BaseInstrumentor,
-)
-from opentelemetry.metrics import MeterProvider, NoOpMeterProvider, get_meter
-from opentelemetry.trace import (
-    NoOpTracerProvider,
-    StatusCode,
-    TracerProvider,
-    get_tracer,
-)
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
+try:
+    from opentelemetry.context import Context
+    from opentelemetry.instrumentation.instrumentor import (  # type: ignore[attr-defined]
+        BaseInstrumentor,
+    )
+    from opentelemetry.metrics import MeterProvider, NoOpMeterProvider, get_meter
+    from opentelemetry.trace import (
+        NoOpTracerProvider,
+        StatusCode,
+        TracerProvider,
+        get_tracer,
+    )
+    from opentelemetry.trace.propagation.tracecontext import (
+        TraceContextTextMapPropagator,
+    )
+    from wrapt import wrap_function_wrapper  # type: ignore[import-untyped]
+except (RuntimeError, ImportError, ModuleNotFoundError):
+    raise ModuleNotFoundError(
+        "To use the HatchetInstrumentor, you must install Hatchet's `otel` extra using (e.g.) `pip install hatchet-sdk[otel]`"
+    )
 
 import hatchet_sdk
 from hatchet_sdk.clients.admin import (
