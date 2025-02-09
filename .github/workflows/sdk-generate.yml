@@ -1,0 +1,49 @@
+name: Generate SDK Client and Make PR
+
+on:
+  repository_dispatch:
+    types: [generate-sdk]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    permissions: write-all
+  
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.TOKEN }}
+      - name: 'Checkout hatchet submodule'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+          repository: hatchet-dev/hatchet
+          path: ./hatchet
+      - name: Generate Python SDK Client
+        run: |
+          # Run generation script
+          pip install poetry
+          pip install pre-commit
+          python3 -m venv /home/runner/.cache/pypoetry/virtualenvs/hatchet-sdk-6GHYpsTj-py3.10
+          source /home/runner/.cache/pypoetry/virtualenvs/hatchet-sdk-6GHYpsTj-py3.10/bin/activate
+          pip install grpcio grpcio-tools
+          deactivate
+          bash generate.sh
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b feat/actions/generate-python-sdk-client
+          git add .
+          git commit -m "feat: generate Python SDK client"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: feat/actions/generate-python-sdk-client
+
+      - name: create pull request
+        run: gh pr create -B main -H feat/actions/generate-python-sdk-client --title 'Generate Python SDK client' --body 'This PR generates a Python SDK client for updated openapi spec.'
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
