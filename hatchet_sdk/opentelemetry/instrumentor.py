@@ -6,6 +6,7 @@ try:
     from opentelemetry.instrumentation.instrumentor import (  # type: ignore[attr-defined]
         BaseInstrumentor,
     )
+    from opentelemetry.instrumentation.utils import unwrap
     from opentelemetry.metrics import MeterProvider, NoOpMeterProvider, get_meter
     from opentelemetry.trace import (
         NoOpTracerProvider,
@@ -310,3 +311,13 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
     def _uninstrument(self, **kwargs: InstrumentKwargs) -> None:
         self.tracer_provider = NoOpTracerProvider()
         self.meter_provider = NoOpMeterProvider()
+
+        unwrap(hatchet_sdk, "worker.runner.runner.Runner.handle_start_step_run")
+        unwrap(hatchet_sdk, "worker.runner.runner.Runner.handle_start_group_key_run")
+        unwrap(hatchet_sdk, "worker.runner.runner.Runner.handle_cancel_action")
+        unwrap(hatchet_sdk, "clients.events.EventClient.push")
+        unwrap(hatchet_sdk, "clients.events.EventClient.bulk_push")
+        unwrap(hatchet_sdk, "clients.admin.AdminClient.run_workflow")
+        unwrap(hatchet_sdk, "clients.admin.AdminClientAioImpl.run_workflow")
+        unwrap(hatchet_sdk, "clients.admin.AdminClient.run_workflows")
+        unwrap(hatchet_sdk, "clients.admin.AdminClientAioImpl.run_workflows")
