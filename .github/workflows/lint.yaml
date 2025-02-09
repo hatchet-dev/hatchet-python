@@ -26,7 +26,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install linting tools
-        run: poetry install
+        run: poetry install --all-extras
 
       - name: Run Black
         run: poetry run black . --check --verbose --diff --color
