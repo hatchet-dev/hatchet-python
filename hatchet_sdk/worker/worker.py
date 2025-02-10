@@ -314,7 +314,10 @@ class Worker:
     def _setup_signal_handlers(self) -> None:
         signal.signal(signal.SIGTERM, self._handle_exit_signal)
         signal.signal(signal.SIGINT, self._handle_exit_signal)
-        signal.signal(signal.SIGQUIT, self._handle_force_quit_signal)
+        
+        sig_force_quit = "SIGBREAK" if os.name == "nt" else "SIGQUIT" # Windows doesn't have SIGQUIT
+        sig_force_quit_signal = getattr(signal, sig_force_quit, None)
+        signal.signal(sig_force_quit_signal, self._handle_force_quit_signal)
 
     def _handle_exit_signal(self, signum: int, frame: FrameType | None) -> None:
         sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"

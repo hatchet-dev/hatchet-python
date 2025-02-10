@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 import signal
@@ -73,8 +74,11 @@ class WorkerActionListenerProcess:
         loop = asyncio.get_event_loop()
         loop.add_signal_handler(signal.SIGINT, noop_handler)
         loop.add_signal_handler(signal.SIGTERM, noop_handler)
+        
+        sig_force_quit = "SIGBREAK" if os.name == "nt" else "SIGQUIT" # Windows doesn't have SIGQUIT
+        sig_force_quit_signal = getattr(signal, sig_force_quit, None)
         loop.add_signal_handler(
-            signal.SIGQUIT, lambda: asyncio.create_task(self.exit_gracefully())
+           sig_force_quit_signal, lambda: asyncio.create_task(self.exit_gracefully())
         )
 
     async def start(self, retry_attempt=0):
