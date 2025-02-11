@@ -90,27 +90,24 @@ class Action:
             self.additional_metadata = {}
 
     @property
-    def otel_attributes(self) -> dict[str, Any]:
-        return flatten(
-            xs={
-                "worker_id": self.worker_id,
-                "tenant_id": self.tenant_id,
-                "workflow_run_id": self.workflow_run_id,
-                "get_group_key_run_id": self.get_group_key_run_id,
-                "job_id": self.job_id,
-                "job_name": self.job_name,
-                "job_run_id": self.job_run_id,
-                "step_id": self.step_id,
-                "step_run_id": self.step_run_id,
-                "retry_count": self.retry_count,
-                "child_workflow_index": self.child_workflow_index,
-                "child_workflow_key": self.child_workflow_key,
-                "parent_workflow_run_id": self.parent_workflow_run_id,
-                "action_payload": self.action_payload,
-            },
-            parent_key="",
-            separator=".",
-        )
+    def otel_attributes(self) -> dict[str, str | int]:
+        attrs: dict[str, str | int | None] = {
+            "hatchet.tenant_id": self.tenant_id,
+            "hatchet.worker_id": self.worker_id,
+            "hatchet.workflow_run_id": self.workflow_run_id,
+            "hatchet.step_id": self.step_id,
+            "hatchet.step_run_id": self.step_run_id,
+            "hatchet.retry_count": self.retry_count,
+            "hatchet.parent_workflow_run_id": self.parent_workflow_run_id,
+            "hatchet.child_workflow_index": self.child_workflow_index,
+            "hatchet.child_workflow_key": self.child_workflow_key,
+            "hatchet.action_payload": self.action_payload,
+            "hatchet.workflow_name": self.job_name,
+            "hatchet.action_name": self.action_id,
+            "hatchet.get_group_key_run_id": self.get_group_key_run_id,
+        }
+
+        return {k: v for k, v in attrs.items() if v}
 
 
 START_STEP_RUN = 0
