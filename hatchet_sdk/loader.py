@@ -1,7 +1,7 @@
-import json
 import os
 from logging import Logger, getLogger
 from typing import Dict, Optional
+from warnings import warn
 
 import yaml
 
@@ -160,6 +160,19 @@ class ConfigLoader:
 
         if autoscaling_target:
             worker_preset_labels["hatchet-autoscaling-target"] = autoscaling_target
+
+        legacy_otlp_headers = get_config_value(
+            "otel_exporter_otlp_endpoint", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_ENDPOINT"
+        )
+
+        legacy_otlp_headers = get_config_value(
+            "otel_exporter_otlp_headers", "HATCHET_CLIENT_OTEL_EXPORTER_OTLP_HEADERS"
+        )
+
+        if legacy_otlp_headers or legacy_otlp_headers:
+            warn(
+                "The `otel_exporter_otlp_*` fields are no longer supported as of SDK version `0.46.0`. Please see the documentation on OpenTelemetry at https://docs.hatchet.run/home/features/opentelemetry for more information on how to migrate to the new `HatchetInstrumentor`."
+            )
 
         return ClientConfig(
             tenant_id=tenant_id,

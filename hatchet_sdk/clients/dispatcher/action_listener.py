@@ -104,6 +104,7 @@ class Action:
             "hatchet.action_payload": self.action_payload,
             "hatchet.workflow_name": self.job_name,
             "hatchet.action_name": self.action_id,
+            "hatchet.get_group_key_run_id": self.get_group_key_run_id,
         }
 
         return {k: v for k, v in attrs.items() if v}
