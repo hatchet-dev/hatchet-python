@@ -91,6 +91,11 @@ class Action:
 
     @property
     def otel_attributes(self) -> dict[str, str | int]:
+        try:
+            payload_str = json.dumps(self.action_payload, default=str)
+        except Exception:
+            payload_str = str(self.action_payload)
+
         attrs: dict[str, str | int | None] = {
             "hatchet.tenant_id": self.tenant_id,
             "hatchet.worker_id": self.worker_id,
@@ -101,7 +106,7 @@ class Action:
             "hatchet.parent_workflow_run_id": self.parent_workflow_run_id,
             "hatchet.child_workflow_index": self.child_workflow_index,
             "hatchet.child_workflow_key": self.child_workflow_key,
-            "hatchet.action_payload": self.action_payload,
+            "hatchet.action_payload": payload_str,
             "hatchet.workflow_name": self.job_name,
             "hatchet.action_name": self.action_id,
             "hatchet.get_group_key_run_id": self.get_group_key_run_id,
