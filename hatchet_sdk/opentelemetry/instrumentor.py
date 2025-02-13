@@ -47,6 +47,19 @@ OTEL_TRACEPARENT_KEY = "traceparent"
 
 
 def create_traceparent() -> str | None:
+    """
+    Creates and returns a W3C traceparent header value using OpenTelemetry's context propagation.
+
+    The traceparent header is used to propagate context information across service boundaries
+    in distributed tracing systems. It follows the W3C Trace Context specification.
+
+    Returns:
+        str | None: A W3C-formatted traceparent header value if successful, None if the context
+                    injection fails or no active span exists.
+
+                    Example: '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01'
+    """
+
     carrier: dict[str, str] = {}
     TraceContextTextMapPropagator().inject(carrier)
 
@@ -54,6 +67,21 @@ def create_traceparent() -> str | None:
 
 
 def parse_carrier_from_metadata(metadata: dict[str, str] | None) -> Context | None:
+    """
+    Parses OpenTelemetry trace context from metadata dictionary.
+    This function extracts the trace context from metadata using the W3C Trace Context format,
+    specifically looking for the traceparent header.
+    Args:
+        metadata (dict[str, str] | None): A dictionary containing metadata key-value pairs,
+            potentially including the traceparent header. Can be None.
+    Returns:
+        Context | None: The extracted OpenTelemetry Context object if a valid traceparent
+            is found in the metadata, None otherwise.
+    Example:
+        >>> metadata = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
+        >>> context = parse_carrier_from_metadata(metadata)
+    """
+
     if not metadata:
         return None
 
@@ -68,6 +96,21 @@ def parse_carrier_from_metadata(metadata: dict[str, str] | None) -> Context | No
 def inject_traceparent_into_metadata(
     metadata: dict[str, str], traceparent: str | None = None
 ) -> dict[str, str]:
+    """
+    Injects OpenTelemetry traceparent into metadata dictionary.
+    This function takes a metadata dictionary and an optional traceparent string,
+    and returns a new metadata dictionary with the traceparent added under the
+    OTEL_TRACEPARENT_KEY. If no traceparent is provided, it attempts to create one.
+
+    Args:
+        metadata (dict[str, str]): The metadata dictionary to inject the traceparent into
+        traceparent (str | None, optional): The traceparent string to inject. If None,
+            will attempt to use the current span. Defaults to None.
+    Returns:
+        dict[str, str]: A new metadata dictionary containing the original metadata plus
+            the injected traceparent if one was available or could be created.
+    """
+
     if not traceparent:
         traceparent = create_traceparent()
 
