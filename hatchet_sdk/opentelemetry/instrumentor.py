@@ -79,9 +79,10 @@ def parse_carrier_from_metadata(metadata: dict[str, str] | None) -> Context | No
               is found in the metadata, otherwise None.
     :rtype: Context | None
 
-    :example:
-        >>> metadata = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
-        >>> context = parse_carrier_from_metadata(metadata)
+    :Example:
+
+    >>> metadata = {"traceparent": "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"}
+    >>> context = parse_carrier_from_metadata(metadata)
     """
 
     if not metadata:
