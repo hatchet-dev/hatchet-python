@@ -4,16 +4,18 @@ from examples.opentelemetry_instrumentation.client import hatchet
 from examples.opentelemetry_instrumentation.tracer import trace_provider
 from hatchet_sdk.clients.admin import TriggerWorkflowOptions
 from hatchet_sdk.clients.events import PushEventOptions
-from hatchet_sdk.opentelemetry.instrumentor import HatchetInstrumentor
+from hatchet_sdk.opentelemetry.instrumentor import (
+    HatchetInstrumentor,
+    create_traceparent,
+    inject_traceparent_into_metadata,
+)
 
 instrumentor = HatchetInstrumentor(tracer_provider=trace_provider)
 tracer = trace_provider.get_tracer(__name__)
 
 
 def create_additional_metadata() -> dict[str, str]:
-    return instrumentor.inject_traceparent_into_metadata(
-        {"hello": "world"}, instrumentor.create_traceparent()
-    )
+    return inject_traceparent_into_metadata({"hello": "world"}, create_traceparent())
 
 
 def create_push_options() -> PushEventOptions:

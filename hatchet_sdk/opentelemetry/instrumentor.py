@@ -43,10 +43,38 @@ hatchet_sdk_version = version("hatchet-sdk")
 
 InstrumentKwargs = TracerProvider | MeterProvider | None
 
+OTEL_TRACEPARENT_KEY = "traceparent"
+
+
+def create_traceparent() -> str | None:
+    carrier: dict[str, str] = {}
+    TraceContextTextMapPropagator().inject(carrier)
+
+    return carrier.get("traceparent")
+
+
+def parse_carrier_from_metadata(metadata: dict[str, str] | None) -> Context | None:
+    if not metadata:
+        return None
+
+    traceparent = metadata.get(OTEL_TRACEPARENT_KEY)
+
+    if not traceparent:
+        return None
+
+    return TraceContextTextMapPropagator().extract({OTEL_TRACEPARENT_KEY: traceparent})
+
+
+def inject_traceparent_into_metadata(
+    metadata: dict[str, str], traceparent: str | None
+) -> dict[str, str]:
+    if traceparent:
+        metadata[OTEL_TRACEPARENT_KEY] = traceparent
+
+    return metadata
+
 
 class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
-    OTEL_TRACEPARENT_KEY = "traceparent"
-
     def __init__(
         self,
         tracer_provider: TracerProvider,
@@ -56,35 +84,6 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         self.meter_provider = meter_provider
 
         super().__init__()
-
-    def create_traceparent(self) -> str | None:
-        carrier: dict[str, str] = {}
-        TraceContextTextMapPropagator().inject(carrier)
-
-        return carrier.get("traceparent")
-
-    def parse_carrier_from_metadata(
-        self, metadata: dict[str, str] | None
-    ) -> Context | None:
-        if not metadata:
-            return None
-
-        traceparent = metadata.get(self.OTEL_TRACEPARENT_KEY)
-
-        if not traceparent:
-            return None
-
-        return TraceContextTextMapPropagator().extract(
-            {self.OTEL_TRACEPARENT_KEY: traceparent}
-        )
-
-    def inject_traceparent_into_metadata(
-        self, metadata: dict[str, str], traceparent: str | None
-    ) -> dict[str, str]:
-        if traceparent:
-            metadata[self.OTEL_TRACEPARENT_KEY] = traceparent
-
-        return metadata
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return tuple()
