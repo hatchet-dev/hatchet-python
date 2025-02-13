@@ -21,7 +21,7 @@ tracer = trace_provider.get_tracer(__name__)
 
 
 def create_additional_metadata() -> dict[str, str]:
-    return inject_traceparent_into_metadata({"hello": "world"}, create_traceparent())
+    return inject_traceparent_into_metadata({"hello": "world"})
 
 
 def create_push_options() -> PushEventOptions:
