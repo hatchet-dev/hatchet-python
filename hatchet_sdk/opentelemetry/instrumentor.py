@@ -66,12 +66,18 @@ def parse_carrier_from_metadata(metadata: dict[str, str] | None) -> Context | No
 
 
 def inject_traceparent_into_metadata(
-    metadata: dict[str, str], traceparent: str | None
+    metadata: dict[str, str], traceparent: str | None = None
 ) -> dict[str, str]:
-    if traceparent:
-        metadata[OTEL_TRACEPARENT_KEY] = traceparent
+    if not traceparent:
+        traceparent = create_traceparent()
 
-    return metadata
+    if not traceparent:
+        return metadata
+
+    return {
+        **metadata,
+        OTEL_TRACEPARENT_KEY: traceparent,
+    }
 
 
 class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
