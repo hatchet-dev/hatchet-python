@@ -13,6 +13,7 @@ try:
         StatusCode,
         TracerProvider,
         get_tracer,
+        get_tracer_provider,
     )
     from opentelemetry.trace.propagation.tracecontext import (
         TraceContextTextMapPropagator,
@@ -138,11 +139,11 @@ def inject_traceparent_into_metadata(
 class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
     def __init__(
         self,
-        tracer_provider: TracerProvider,
-        meter_provider: MeterProvider = NoOpMeterProvider(),
+        tracer_provider: TracerProvider | None = None,
+        meter_provider: MeterProvider | None = None,
     ):
-        self.tracer_provider = tracer_provider
-        self.meter_provider = meter_provider
+        self.tracer_provider = tracer_provider or get_tracer_provider()
+        self.meter_provider = meter_provider or NoOpMeterProvider()
 
         super().__init__()
 
@@ -214,7 +215,7 @@ class HatchetInstrumentor(BaseInstrumentor):  # type: ignore[misc]
         kwargs: Any,
     ) -> Exception | None:
         action = args[0]
-        traceparent = self.parse_carrier_from_metadata(action.additional_metadata)
+        traceparent = parse_carrier_from_metadata(action.additional_metadata)
 
         with self._tracer.start_as_current_span(
             "hatchet.start_step_run",
