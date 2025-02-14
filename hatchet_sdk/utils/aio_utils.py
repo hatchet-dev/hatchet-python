@@ -92,7 +92,7 @@ class EventLoopThread:
         self.loop = asyncio.new_event_loop()
         self.thread = Thread(target=self.run_loop_in_thread, args=(self.loop,))
 
-    def __enter__(self) -> asyncio.AbstractEventLoop:
+    def __enter__(self, *a, **kw) -> asyncio.AbstractEventLoop:
         """
         Starts the thread running the event loop when entering the context.
 
@@ -102,7 +102,7 @@ class EventLoopThread:
         self.thread.start()
         return self.loop
 
-    def __exit__(self) -> None:
+    def __exit__(self, *a, **kw) -> None:
         """
         Stops the event loop and joins the thread when exiting the context.
         """
