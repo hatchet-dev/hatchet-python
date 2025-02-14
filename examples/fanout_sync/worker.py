@@ -3,6 +3,7 @@ from typing import Any
 from dotenv import load_dotenv
 
 from hatchet_sdk import Context, Hatchet
+from hatchet_sdk.workflow_run import WorkflowRunRef
 
 load_dotenv()
 
@@ -15,16 +16,15 @@ class SyncFanoutParent:
     def spawn(self, context: Context) -> dict[str, Any]:
         print("spawning child")
 
-        context.put_stream("spawning...")
-        results = []
+        results: list[WorkflowRunRef] = []
 
-        n = context.workflow_input().get("n", 100)
+        n = context.workflow_input().get("n", 5)
 
         for i in range(n):
             results.append(
                 (
                     context.spawn_workflow(
-                        "Child",
+                        "SyncFanoutChild",
                         {"a": str(i)},
                         key=f"child{i}",
                         options={"additional_metadata": {"hello": "earth"}},
@@ -32,21 +32,19 @@ class SyncFanoutParent:
                 )
             )
 
+        results = [
+            r.sync_result()
+            for r in results
+        ]
+
+        print(f"results {results}")
+
 
 @hatchet.workflow(on_events=["child:create"])
 class SyncFanoutChild:
     @hatchet.step()
     def process(self, context: Context) -> dict[str, str]:
-        a = context.workflow_input()["a"]
-        print(f"child process {a}")
-        context.put_stream("child 1...")
-        return {"status": "success " + a}
-
-    @hatchet.step()
-    def process2(self, context: Context) -> dict[str, str]:
-        print("child process2")
-        context.put_stream("child 2...")
-        return {"status2": "success"}
+        return {"status": "success " + context.workflow_input()["a"]}
 
 
 def main() -> None:

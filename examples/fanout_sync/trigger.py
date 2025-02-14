@@ -15,7 +15,7 @@ async def main() -> None:
     hatchet = new_client()
 
     hatchet.admin.run_workflow(
-        "Parent",
+        "SyncFanoutParent",
         {"test": "test"},
         options={"additional_metadata": {"hello": "moon"}},
     )
