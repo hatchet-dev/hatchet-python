@@ -16,21 +16,19 @@ class SyncFanoutParent:
     def spawn(self, context: Context) -> dict[str, Any]:
         print("spawning child")
 
-        runs: list[WorkflowRunRef] = []
-
         n = context.workflow_input().get("n", 5)
 
-        for i in range(n):
-            runs.append(
-                (
-                    context.spawn_workflow(
-                        "SyncFanoutChild",
-                        {"a": str(i)},
-                        key=f"child{i}",
-                        options={"additional_metadata": {"hello": "earth"}},
-                    )
-                )
-            )
+        runs = context.spawn_workflows(
+            [
+                {
+                    "workflow_name": "SyncFanoutChild",
+                    "input": {"a": str(i)},
+                    "key": f"child{i}",
+                    "options": {"additional_metadata": {"hello": "earth"}},
+                }
+                for i in range(n)
+            ]
+        )
 
         results = [r.sync_result() for r in runs]
 
