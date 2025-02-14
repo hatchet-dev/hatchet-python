@@ -111,6 +111,7 @@ explicit_package_bases = true
 api = "examples.api.api:main"
 async = "examples.async.worker:main"
 fanout = "examples.fanout.worker:main"
+fanout_sync = "examples.fanout_sync.worker:main"
 cancellation = "examples.cancellation.worker:main"
 concurrency_limit = "examples.concurrency_limit.worker:main"
 concurrency_limit_rr = "examples.concurrency_limit_rr.worker:main"
