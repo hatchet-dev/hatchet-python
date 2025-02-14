@@ -16,12 +16,12 @@ class SyncFanoutParent:
     def spawn(self, context: Context) -> dict[str, Any]:
         print("spawning child")
 
-        results: list[WorkflowRunRef] = []
+        runs: list[WorkflowRunRef] = []
 
         n = context.workflow_input().get("n", 5)
 
         for i in range(n):
-            results.append(
+            runs.append(
                 (
                     context.spawn_workflow(
                         "SyncFanoutChild",
@@ -32,12 +32,11 @@ class SyncFanoutParent:
                 )
             )
 
-        results = [
-            r.sync_result()
-            for r in results
-        ]
+        results = [r.sync_result() for r in runs]
 
         print(f"results {results}")
+
+        return {"results": results}
 
 
 @hatchet.workflow(on_events=["child:create"])
