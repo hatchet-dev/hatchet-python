@@ -87,8 +87,6 @@ class Runner:
             labels=labels, client=new_client_raw(config).dispatcher
         )
 
-        self.cancellation_events: Dict[str, Event] = {}
-
 
     def create_workflow_run_url(self, action: Action) -> str:
         return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"
@@ -202,17 +200,15 @@ class Runner:
     def thread_action_func(
         self, context: Context, action_func: Callable[..., Any], action: Action
     ) -> Any:
-        run_id = action.step_run_id or action.get_group_key_run_id
-        if run_id:
-            self.threads[run_id] = current_thread()
-            self.cancellation_events[run_id] = Event()
+        if action.step_run_id is not None and action.step_run_id != "":
+            self.threads[action.step_run_id] = current_thread()
+        elif (
+            action.get_group_key_run_id is not None
+            and action.get_group_key_run_id != ""
+        ):
+            self.threads[action.get_group_key_run_id] = current_thread()
 
-        while not self.cancellation_events[run_id].is_set():
-            result = action_func(context)
-            if result is not None:
-                return result
-
-        return None
+        return action_func(context)
 
 
     ## TODO: Stricter type hinting here
@@ -266,9 +262,6 @@ class Runner:
 
         if run_id in self.contexts:
             del self.contexts[run_id]
-
-        if run_id in self.cancellation_events:
-            del self.cancellation_events[run_id]
 
     def create_context(
         self, action: Action, action_func: Callable[..., Any] | None
@@ -428,9 +421,6 @@ class Runner:
 
                 if future:
                     future.cancel()
-
-            if run_id in self.cancellation_events:
-                self.cancellation_events[run_id].set()
 
             # check if thread is still running, if so, print a warning
             if run_id in self.threads:
