@@ -2,12 +2,13 @@ import asyncio
 import contextvars
 import ctypes
 import functools
+import time
 import json
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
-from threading import Thread, current_thread
+from threading import Thread, current_thread, Event
 from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
 
 from pydantic import BaseModel
@@ -85,6 +86,9 @@ class Runner:
         self.worker_context = WorkerContext(
             labels=labels, client=new_client_raw(config).dispatcher
         )
+
+        self.cancellation_events: Dict[str, Event] = {}
+
 
     def create_workflow_run_url(self, action: Action) -> str:
         return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"
@@ -198,15 +202,18 @@ class Runner:
     def thread_action_func(
         self, context: Context, action_func: Callable[..., Any], action: Action
     ) -> Any:
-        if action.step_run_id is not None and action.step_run_id != "":
-            self.threads[action.step_run_id] = current_thread()
-        elif (
-            action.get_group_key_run_id is not None
-            and action.get_group_key_run_id != ""
-        ):
-            self.threads[action.get_group_key_run_id] = current_thread()
+        run_id = action.step_run_id or action.get_group_key_run_id
+        if run_id:
+            self.threads[run_id] = current_thread()
+            self.cancellation_events[run_id] = Event()
 
-        return action_func(context)
+        while not self.cancellation_events[run_id].is_set():
+            result = action_func(context)
+            if result is not None:
+                return result
+
+        return None
+
 
     ## TODO: Stricter type hinting here
     # We wrap all actions in an async func
@@ -259,6 +266,9 @@ class Runner:
 
         if run_id in self.contexts:
             del self.contexts[run_id]
+
+        if run_id in self.cancellation_events:
+            del self.cancellation_events[run_id]
 
     def create_context(
         self, action: Action, action_func: Callable[..., Any] | None
@@ -419,8 +429,16 @@ class Runner:
                 if future:
                     future.cancel()
 
+            if run_id in self.cancellation_events:
+                self.cancellation_events[run_id].set()
+
             # check if thread is still running, if so, print a warning
             if run_id in self.threads:
+                thread = self.threads.get(run_id)
+                if thread:
+                    self.force_kill_thread(thread)
+                    time.sleep(1)
+
                 logger.warning(
                     f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
                 )
