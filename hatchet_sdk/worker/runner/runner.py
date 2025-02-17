@@ -2,14 +2,14 @@ import asyncio
 import contextvars
 import ctypes
 import functools
-import time
 import json
+import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
-from threading import Thread, current_thread, Event
-from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
+from threading import Thread, current_thread
+from typing import Any, Callable, Dict, cast
 
 from pydantic import BaseModel
 
@@ -86,7 +86,6 @@ class Runner:
         self.worker_context = WorkerContext(
             labels=labels, client=new_client_raw(config).dispatcher
         )
-
 
     def create_workflow_run_url(self, action: Action) -> str:
         return f"{self.config.server_url}/workflow-runs/{action.workflow_run_id}?tenant={action.tenant_id}"
@@ -209,7 +208,6 @@ class Runner:
             self.threads[action.get_group_key_run_id] = current_thread()
 
         return action_func(context)
-
 
     ## TODO: Stricter type hinting here
     # We wrap all actions in an async func
