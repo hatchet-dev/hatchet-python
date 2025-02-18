@@ -42,6 +42,7 @@ class ClientConfig:
         worker_healthcheck_port: int | None = None,
         worker_healthcheck_enabled: bool | None = None,
         worker_preset_labels: dict[str, str] = {},
+        enable_force_kill_sync_threads: bool = False,
     ):
         self.tenant_id = tenant_id
         self.tls_config = tls_config
@@ -55,6 +56,7 @@ class ClientConfig:
         self.worker_healthcheck_port = worker_healthcheck_port
         self.worker_healthcheck_enabled = worker_healthcheck_enabled
         self.worker_preset_labels = worker_preset_labels
+        self.enable_force_kill_sync_threads = enable_force_kill_sync_threads
 
         if not self.logInterceptor:
             self.logInterceptor = getLogger()
@@ -174,6 +176,14 @@ class ConfigLoader:
                 "The `otel_exporter_otlp_*` fields are no longer supported as of SDK version `0.46.0`. Please see the documentation on OpenTelemetry at https://docs.hatchet.run/home/features/opentelemetry for more information on how to migrate to the new `HatchetInstrumentor`."
             )
 
+        enable_force_kill_sync_threads = bool(
+            get_config_value(
+                "enable_force_kill_sync_threads",
+                "HATCHET_CLIENT_ENABLE_FORCE_KILL_SYNC_THREADS",
+            )
+            == "True"
+            or False
+        )
         return ClientConfig(
             tenant_id=tenant_id,
             tls_config=tls_config,
@@ -188,6 +198,7 @@ class ConfigLoader:
             worker_healthcheck_port=worker_healthcheck_port,
             worker_healthcheck_enabled=worker_healthcheck_enabled,
             worker_preset_labels=worker_preset_labels,
+            enable_force_kill_sync_threads=enable_force_kill_sync_threads,
         )
 
     def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
