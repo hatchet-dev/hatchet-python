@@ -425,7 +425,7 @@ class Runner:
                 thread = self.threads.get(run_id)
                 if thread:
                     self.force_kill_thread(thread)
-                    time.sleep(1)
+                    await asyncio.sleep(1)
 
                 logger.warning(
                     f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
