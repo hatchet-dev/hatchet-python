@@ -32,16 +32,18 @@ class WorkflowRunRef:
         return self.workflow_listener.result(self.workflow_run_id)
 
     def sync_result(self) -> dict:
+        coro = self.workflow_listener.result(self.workflow_run_id)
         loop = get_active_event_loop()
+
         if loop is None:
-            with EventLoopThread() as loop:
-                coro = self.workflow_listener.result(self.workflow_run_id)
-                future = asyncio.run_coroutine_threadsafe(coro, loop)
-                return future.result()
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(coro)
+            finally:
+                asyncio.set_event_loop(None)
         else:
-            coro = self.workflow_listener.result(self.workflow_run_id)
-            future = asyncio.run_coroutine_threadsafe(coro, loop)
-            return future.result()
+            return loop.run_until_complete(coro)
 
 
 T = TypeVar("T")
