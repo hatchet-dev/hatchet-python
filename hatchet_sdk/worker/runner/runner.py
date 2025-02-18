@@ -3,12 +3,13 @@ import contextvars
 import ctypes
 import functools
 import json
+import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from multiprocessing import Queue
 from threading import Thread, current_thread
-from typing import Any, Callable, Dict, Literal, Type, TypeVar, cast, overload
+from typing import Any, Callable, Dict, cast
 
 from pydantic import BaseModel
 
@@ -421,6 +422,11 @@ class Runner:
 
             # check if thread is still running, if so, print a warning
             if run_id in self.threads:
+                thread = self.threads.get(run_id)
+                if thread:
+                    self.force_kill_thread(thread)
+                    time.sleep(1)
+
                 logger.warning(
                     f"Thread {self.threads[run_id].ident} with run id {run_id} is still running after cancellation. This could cause the thread pool to get blocked and prevent new tasks from running."
                 )
