@@ -75,6 +75,12 @@ class PooledWorkflowRunListener:
     interrupter: asyncio.Task = None
 
     def __init__(self, config: ClientConfig):
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         conn = new_conn(config, True)
         self.client = DispatcherStub(conn)
         self.token = config.token
@@ -260,12 +266,10 @@ class PooledWorkflowRunListener:
                 if self.curr_requester != 0:
                     self.requests.put_nowait(self.curr_requester)
 
-                listener = self.client.SubscribeToWorkflowRuns(
+                return self.client.SubscribeToWorkflowRuns(
                     self._request(),
                     metadata=get_metadata(self.token),
                 )
-
-                return listener
             except grpc.RpcError as e:
                 if e.code() == grpc.StatusCode.UNAVAILABLE:
                     retries = retries + 1

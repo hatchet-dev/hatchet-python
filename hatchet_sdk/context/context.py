@@ -403,3 +403,44 @@ class Context(BaseContext):
             for step_run in job_run.step_runs
             if step_run.error and step_run.step
         ]
+
+    @tenacity_retry
+    def spawn_workflow(
+        self,
+        workflow_name: str,
+        input: dict[str, Any] = {},
+        key: str | None = None,
+        options: ChildTriggerWorkflowOptions | None = None,
+    ) -> WorkflowRunRef:
+        worker_id = self.worker.id()
+        trigger_options = self._prepare_workflow_options(key, options, worker_id)
+
+        return self.admin_client.run_workflow(workflow_name, input, trigger_options)
+
+    @tenacity_retry
+    def spawn_workflows(
+        self, child_workflow_runs: list[ChildWorkflowRunDict]
+    ) -> list[WorkflowRunRef]:
+
+        if len(child_workflow_runs) == 0:
+            raise Exception("no child workflows to spawn")
+
+        worker_id = self.worker.id()
+
+        bulk_trigger_workflow_runs: list[WorkflowRunDict] = []
+        for child_workflow_run in child_workflow_runs:
+            workflow_name = child_workflow_run["workflow_name"]
+            input = child_workflow_run["input"]
+
+            key = child_workflow_run.get("key")
+            options = child_workflow_run.get("options", {})
+
+            trigger_options = self._prepare_workflow_options(key, options, worker_id)
+
+            bulk_trigger_workflow_runs.append(
+                WorkflowRunDict(
+                    workflow_name=workflow_name, input=input, options=trigger_options
+                )
+            )
+
+        return self.admin_client.run_workflows(bulk_trigger_workflow_runs)
