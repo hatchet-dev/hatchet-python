@@ -31,6 +31,7 @@ from hatchet_sdk.worker.runner.run_loop_manager import WorkerActionRunLoopManage
 from hatchet_sdk.workflow import WorkflowInterface
 from asyncio.exceptions import CancelledError
 
+
 T = TypeVar("T")
 
 
@@ -313,8 +314,8 @@ class Worker:
 
     ## Cleanup methods
     def _setup_signal_handlers(self) -> None:
-        signal.signal(signal.SIGTERM, self._handle_exit_signal)
-        signal.signal(signal.SIGINT, self._handle_exit_signal)
+        signal.signal(signal.SIGTERM, self._handle_force_quit_signal)
+        signal.signal(signal.SIGINT, self._handle_force_quit_signal)
         signal.signal(signal.SIGQUIT, self._handle_force_quit_signal)
 
     def _handle_exit_signal(self, signum: int, frame: FrameType | None) -> None:
@@ -324,7 +325,7 @@ class Worker:
 
     def _handle_force_quit_signal(self, signum: int, frame: FrameType | None) -> None:
         logger.info("received SIGQUIT...")
-        self.exit_forcefully()
+        self.loop.create_task(self.exit_forcefully())
 
     async def close(self) -> None:
         logger.info(f"closing worker '{self.name}'...")
@@ -369,9 +370,6 @@ class Worker:
                 self.action_listener_process.kill()  # Forcefully kill the process
 
             logger.info("👋")
-            # sys.exit(
-            #     1
-            # )  # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
 
         except CancelledError:
             logger.warning("Shutdown process was cancelled, ensuring cleanup...")
@@ -382,6 +380,9 @@ class Worker:
 
         finally:
             logger.info("Worker cleanup finished, allowing normal exit.")
+            # sys.exit(
+            # 1
+            # ) # Exit immediately TODO - should we exit with 1 here, there may be other workers to cleanup
             os._exit(1)
 
 
