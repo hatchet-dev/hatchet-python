@@ -8,12 +8,14 @@ from typing import Any, List, Mapping, Optional
 
 import grpc
 
+from hatchet_sdk.client import Client, new_client_raw
 from hatchet_sdk.clients.dispatcher.action_listener import Action
 from hatchet_sdk.clients.dispatcher.dispatcher import (
     ActionListener,
     GetActionListenerRequest,
     new_dispatcher,
 )
+from hatchet_sdk.clients.rest.models.update_worker_request import UpdateWorkerRequest
 from hatchet_sdk.contracts.dispatcher_pb2 import (
     GROUP_KEY_EVENT_TYPE_STARTED,
     STEP_EVENT_TYPE_STARTED,
@@ -40,11 +42,6 @@ BLOCKED_THREAD_WARNING = (
     "THE TIME TO START THE STEP RUN IS TOO LONG, THE MAIN THREAD MAY BE BLOCKED"
 )
 
-
-def noop_handler():
-    pass
-
-
 @dataclass
 class WorkerActionListenerProcess:
     name: str
@@ -70,9 +67,15 @@ class WorkerActionListenerProcess:
         if self.debug:
             logger.setLevel(logging.DEBUG)
 
+        self.client = new_client_raw(self.config, self.debug)
+
         loop = asyncio.get_event_loop()
-        loop.add_signal_handler(signal.SIGINT, noop_handler)
-        loop.add_signal_handler(signal.SIGTERM, noop_handler)
+        loop.add_signal_handler(
+            signal.SIGINT, lambda: asyncio.create_task(self.pause_task_assignment())
+        )
+        loop.add_signal_handler(
+            signal.SIGTERM, lambda: asyncio.create_task(self.pause_task_assignment())
+        )
         loop.add_signal_handler(
             signal.SIGQUIT, lambda: asyncio.create_task(self.exit_gracefully())
         )
@@ -249,7 +252,15 @@ class WorkerActionListenerProcess:
 
         self.event_queue.put(STOP_LOOP)
 
+    async def pause_task_assignment(self) -> None:
+        await self.client.rest.aio.worker_api.worker_update(
+            worker=self.listener.worker_id,
+            update_worker_request=UpdateWorkerRequest(isPaused=True),
+        )
+
     async def exit_gracefully(self, skip_unregister=False):
+        await self.pause_task_assignment()
+
         if self.killing:
             return
 
