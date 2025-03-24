@@ -1,6 +1,6 @@
 import os
 from logging import Logger, getLogger
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 from warnings import warn
 
 import yaml
@@ -134,7 +134,9 @@ class ConfigLoader:
         if not tenant_id:
             tenant_id = get_tenant_id_from_jwt(token)
 
-        tls_config = self._load_tls_config(config_data["tls"], host_port)
+        tls_config = self._load_tls_config(
+            config_data["tls"], host_port, defaults=defaults.tls_config
+        )
 
         worker_healthcheck_port = int(
             get_config_value(
@@ -201,15 +203,14 @@ class ConfigLoader:
             enable_force_kill_sync_threads=enable_force_kill_sync_threads,
         )
 
-    def _load_tls_config(self, tls_data: Dict, host_port) -> ClientTLSConfig:
+    def _load_tls_config(
+        self, tls_data: Dict, host_port: str, defaults: Union[ClientTLSConfig, None]
+    ) -> ClientTLSConfig:
         tls_strategy = (
             tls_data["tlsStrategy"]
             if "tlsStrategy" in tls_data
             else self._get_env_var("HATCHET_CLIENT_TLS_STRATEGY")
         )
-
-        if not tls_strategy:
-            tls_strategy = "tls"
 
         cert_file = (
             tls_data["tlsCertFile"]
@@ -232,6 +233,24 @@ class ConfigLoader:
             if "tlsServerName" in tls_data
             else self._get_env_var("HATCHET_CLIENT_TLS_SERVER_NAME")
         )
+
+        if not tls_strategy and defaults:
+            tls_strategy = defaults.tls_strategy
+
+        if not cert_file and defaults:
+            cert_file = defaults.cert_file
+
+        if not key_file and defaults:
+            key_file = defaults.key_file
+
+        if not ca_file and defaults:
+            ca_file = defaults.ca_file
+
+        if not server_name and defaults:
+            server_name = defaults.server_name
+
+        if not tls_strategy:
+            tls_strategy = "tls"
 
         # if server_name is not set, use the host from the host_port
         if not server_name:
