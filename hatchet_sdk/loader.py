@@ -1,6 +1,6 @@
 import os
 from logging import Logger, getLogger
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 from warnings import warn
 
 import yaml
@@ -204,7 +204,7 @@ class ConfigLoader:
         )
 
     def _load_tls_config(
-        self, tls_data: Dict, host_port: str, defaults: Union[ClientTLSConfig, None]
+        self, tls_data: Dict, host_port: str, defaults: Optional[ClientTLSConfig]
     ) -> ClientTLSConfig:
         tls_strategy = (
             tls_data["tlsStrategy"]
